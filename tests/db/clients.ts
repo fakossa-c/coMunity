@@ -56,6 +56,9 @@ export async function nouveauSyndic(): Promise<Compte> {
 
 export type StatutResident = "en_attente" | "valide" | "refuse" | "retire";
 
+/** Prénom, bâtiment et étage d'un résident de test. */
+export const FOYER = { prenom: "Danielle", batiment: "B", etage: 2 };
+
 /** Un résident connecté, validé sauf mention contraire. */
 export async function nouveauResident(
   statut: StatutResident = "valide",
@@ -69,9 +72,13 @@ export async function nouveauResident(
   });
   if (error) throw error;
   aSupprimer(data.user.id);
-  const insertion = await admin
-    .from("profil")
-    .insert({ id: data.user.id, email, role: "resident", statut });
+  const insertion = await admin.from("profil").insert({
+    id: data.user.id,
+    email,
+    role: "resident",
+    statut,
+    ...FOYER,
+  });
   if (insertion.error) throw insertion.error;
   return { id: data.user.id, email, client: await connecter(email) };
 }

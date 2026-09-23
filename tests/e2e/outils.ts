@@ -29,8 +29,10 @@ export async function nouveauSyndic() {
   return { id: utilisateur.id, email };
 }
 
-/** Un résident validé. */
-export async function nouveauResident() {
+/** Un résident, validé sauf mention contraire. */
+export async function nouveauResident(
+  statut: "en_attente" | "valide" | "refuse" | "retire" = "valide",
+) {
   const admin = clientAdmin();
   const email = nouvelEmail("resident");
   const { data, error } = await admin.auth.admin.createUser({
@@ -39,11 +41,27 @@ export async function nouveauResident() {
     email_confirm: true,
   });
   if (error) throw error;
-  const profil = await admin
-    .from("profil")
-    .insert({ id: data.user.id, email, role: "resident", statut: "valide" });
+  const profil = await admin.from("profil").insert({
+    id: data.user.id,
+    email,
+    role: "resident",
+    statut,
+    prenom: "Danielle",
+    batiment: "B",
+    etage: 2,
+  });
   if (profil.error) throw profil.error;
   return { id: data.user.id, email };
+}
+
+/** Le code de résidence en vigueur, lu comme le fait le serveur. */
+export async function codeResidence(): Promise<string> {
+  const { data, error } = await clientAdmin()
+    .from("residence")
+    .select("code")
+    .single();
+  if (error) throw error;
+  return data.code;
 }
 
 /** Supprime les comptes créés pendant un test, invités compris. */

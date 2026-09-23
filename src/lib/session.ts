@@ -55,6 +55,11 @@ export function estSyndicRetire(profil: Profil | null) {
   return profil?.role === "syndic" && profil.statut === "retire";
 }
 
+/** Statut d'un compte résident ; `null` pour un membre du syndic ou un compte sans profil. */
+export function statutResident(profil: Profil | null) {
+  return profil?.role === "resident" ? profil.statut : null;
+}
+
 /** Où envoyer une personne qui vient de se connecter ou de choisir son mot de passe. */
 export function accueilDe(profil: Profil | null) {
   return estSyndicActif(profil) ? "/syndic" : "/";
