@@ -21,7 +21,7 @@
 
 ### Issue tracker
 
-Les issues vivent sur GitHub Issues (`github.com/fakossa/coMunity`), via la CLI `gh`. Voir `docs/agents/issue-tracker.md`.
+Les issues vivent sur GitHub Issues (`github.com/fakossa-c/coMunity`), via la CLI `gh`. Voir `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
