@@ -1,0 +1,61 @@
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
+import { clientSession, configurationSupabase } from "./supabase/serveur";
+
+export type Role = "syndic" | "resident";
+export type StatutCompte = "en_attente" | "valide" | "refuse" | "retire";
+
+export type Session = {
+  id: string;
+  email: string;
+  /** `null` : compte sans profil, qui n'a accès à rien. */
+  role: Role | null;
+  statut: StatutCompte | null;
+};
+
+/** La personne connectée et son profil, lus une fois par requête. `null` si personne n'est connecté. */
+export const lireSession = cache(async (): Promise<Session | null> => {
+  if (!configurationSupabase()) return null;
+
+  const supabase = await clientSession();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims) return null;
+
+  const profil = await lireProfil(supabase, claims.sub);
+  return {
+    id: claims.sub,
+    email: claims.email ?? "",
+    role: profil?.role ?? null,
+    statut: profil?.statut ?? null,
+  };
+});
+
+type Profil = Pick<Session, "role" | "statut">;
+
+/** Rôle et statut d'un compte, tels que la personne connectée a le droit de les lire. */
+export async function lireProfil(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<Profil | null> {
+  const { data } = await supabase
+    .from("profil")
+    .select("role, statut")
+    .eq("id", id)
+    .maybeSingle();
+  return data;
+}
+
+export function estSyndicActif(profil: Profil | null) {
+  return profil?.role === "syndic" && profil.statut === "valide";
+}
+
+export function estSyndicRetire(profil: Profil | null) {
+  return profil?.role === "syndic" && profil.statut === "retire";
+}
+
+/** Où envoyer une personne qui vient de se connecter ou de choisir son mot de passe. */
+export function accueilDe(profil: Profil | null) {
+  return estSyndicActif(profil) ? "/syndic" : "/";
+}
