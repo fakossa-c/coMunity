@@ -17,9 +17,8 @@ async function inviter(
 ) {
   const invitation = await invitationSeule(inviteur, email);
   if (invitation.error) throw invitation.error;
-  const { data, error } = await clientAdmin().auth.admin.inviteUserByEmail(
-    email,
-  );
+  const { data, error } =
+    await clientAdmin().auth.admin.inviteUserByEmail(email);
   if (error) throw error;
   aSupprimer(data.user.id);
   return data.user.id;
@@ -99,10 +98,7 @@ describe("invitation d'un collègue", () => {
   it("un résident ne peut pas inviter", async () => {
     const resident = await nouveauResident();
 
-    const { error } = await invitationSeule(
-      resident,
-      nouvelEmail("invite"),
-    );
+    const { error } = await invitationSeule(resident, nouvelEmail("invite"));
 
     expect(error?.code).toBe("42501");
   });

@@ -3,7 +3,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, inject } from "vitest";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 
-const sansSession = { auth: { persistSession: false, autoRefreshToken: false } };
+const sansSession = {
+  auth: { persistSession: false, autoRefreshToken: false },
+};
 
 /** Un client sans session : ce que voit une personne qui ouvre un lien sans être connectée. */
 export function clientVisiteur() {

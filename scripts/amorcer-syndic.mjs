@@ -2,7 +2,6 @@
 // Usage : npm run syndic:amorcer -- <email> <mot-de-passe>
 // Lit NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SECRET_KEY dans l'environnement (ou .env.local).
 import { createClient } from "@supabase/supabase-js";
-import { fileURLToPath } from "node:url";
 
 /**
  * Crée un compte confirmé et lui donne le rôle syndic.
@@ -33,7 +32,8 @@ export async function amorcerSyndic({ url, cleSecrete, email, motDePasse }) {
   return data.user;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// Pas d'import.meta ni d'await au niveau du module : Playwright le charge en CommonJS.
+if (process.argv[1]?.endsWith("amorcer-syndic.mjs")) {
   const [email, motDePasse] = process.argv.slice(2);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const cleSecrete = process.env.SUPABASE_SECRET_KEY;
@@ -47,11 +47,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     );
     process.exit(1);
   }
-  try {
-    await amorcerSyndic({ url, cleSecrete, email, motDePasse });
-    console.log(`Membre du syndic créé : ${email}`);
-  } catch (erreur) {
-    console.error(erreur.message);
-    process.exit(1);
-  }
+  amorcerSyndic({ url, cleSecrete, email, motDePasse }).then(
+    () => console.log(`Membre du syndic créé : ${email}`),
+    (erreur) => {
+      console.error(erreur.message);
+      process.exit(1);
+    },
+  );
 }
