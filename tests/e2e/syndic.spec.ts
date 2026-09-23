@@ -52,7 +52,7 @@ test("un membre du syndic invite un collègue, qui choisit son mot de passe et a
 
   await page.getByLabel("Adresse email du collègue").fill(collegue);
   await page.getByRole("button", { name: "Envoyer l'invitation" }).click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
     `Invitation envoyée à ${collegue}`,
   );
   await expect(listeDesMembres(page)).toContainText(collegue);
@@ -89,6 +89,9 @@ test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entre
   emails.push(moi.email, collegue.email);
 
   await seConnecter(page, moi.email, MOT_DE_PASSE);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
+  ).toBeVisible();
   await page.goto("/syndic/membres");
   const ligne = listeDesMembres(page)
     .getByRole("listitem")
@@ -96,7 +99,7 @@ test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entre
   await ligne.getByRole("button", { name: "Retirer l'accès" }).click();
   await ligne.getByRole("button", { name: "Confirmer le retrait" }).click();
 
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
     `Accès retiré à ${collegue.email}`,
   );
   await expect(listeDesMembres(page)).not.toContainText(collegue.email);
@@ -107,6 +110,9 @@ test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entre
   });
   const pageDuCollegue = await appareilDuCollegue.newPage();
   await seConnecter(pageDuCollegue, collegue.email, MOT_DE_PASSE);
+  await expect(
+    pageDuCollegue.getByRole("heading", { level: 1, name: "Activités" }),
+  ).toBeVisible();
   await pageDuCollegue.goto("/syndic");
   await expect(pageDuCollegue.getByRole("main")).toContainText(
     "Votre accès à l'espace syndic a été retiré",
@@ -119,14 +125,14 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
   emails.push(syndic.email);
 
   await seConnecter(page, syndic.email, "pas-le-bon-mot-de-passe");
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Email ou mot de passe incorrect",
   );
 
   await page.getByRole("link", { name: "Mot de passe oublié ?" }).click();
   await page.getByLabel("Adresse email").fill(syndic.email);
   await page.getByRole("button", { name: "Recevoir un lien" }).click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
     "un email vient de vous être envoyé",
   );
 
