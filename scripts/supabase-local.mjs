@@ -29,14 +29,16 @@ export function lireSupabaseLocal() {
   return {
     url: statut.API_URL,
     cleAnonyme: statut.PUBLISHABLE_KEY ?? statut.ANON_KEY,
+    cleSecrete: statut.SECRET_KEY ?? statut.SERVICE_ROLE_KEY,
+    urlBoiteMail: statut.MAILPIT_URL ?? statut.INBUCKET_URL,
   };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { url, cleAnonyme } = lireSupabaseLocal();
+  const { url, cleAnonyme, cleSecrete } = lireSupabaseLocal();
   writeFileSync(
     ".env.local",
-    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${cleAnonyme}\n`,
+    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${cleAnonyme}\nSUPABASE_SECRET_KEY=${cleSecrete}\n`,
   );
   console.log(".env.local écrit pour le Supabase local.");
 }
