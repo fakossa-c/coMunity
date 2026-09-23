@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -44,6 +45,22 @@ describe("configuration de production", () => {
   it("ne porte aucune valeur dans le modèle de variables", () => {
     for (const [nom, valeur] of variablesExemple()) {
       expect(valeur, nom).toBe("");
+    }
+  });
+
+  it("ne commite aucune clé secrète Supabase ou Resend", () => {
+    const suivis = execFileSync("git", ["ls-files"], {
+      cwd: racine,
+      encoding: "utf8",
+    })
+      .split("\n")
+      .filter((f) =>
+        /\.(ts|tsx|mjs|js|json|md|toml|sql|html|ya?ml)$|^\.env/.test(f),
+      );
+    const cle =
+      /sb_secret_[A-Za-z0-9_-]{10,}|\bre_[A-Za-z0-9]{8}_[A-Za-z0-9]{16,}/;
+    for (const fichier of suivis) {
+      expect(lire(fichier), fichier).not.toMatch(cle);
     }
   });
 
