@@ -126,22 +126,32 @@ describe("droits selon le statut du compte", () => {
   });
 
   it.each(tousLesStatuts)(
-    "un résident %s peut consulter le catalogue : %s",
+    "un résident %s consulte le catalogue selon son statut : %s",
     async (statut) => {
       const resident = await nouveauResident(statut);
+      await clientAdmin()
+        .from("activite")
+        .insert({ ...ACTIVITE, organisateur: resident.id });
 
-      const { error } = await resident.client.from("activite").select("id");
+      const { data, error } = await resident.client
+        .from("activite")
+        .select("id")
+        .eq("organisateur", resident.id);
 
-      expect(error === null).toBe(statut !== "refuse" && statut !== "retire");
+      expect(error).toBeNull();
+      expect(data).toHaveLength(
+        statut === "refuse" || statut === "retire" ? 0 : 1,
+      );
     },
   );
 
   it("un visiteur ne consulte pas le catalogue", async () => {
     const visiteur = clientVisiteur();
 
-    const { error } = await visiteur.from("activite").select("id");
+    const { data, error } = await visiteur.from("activite").select("id");
 
     expect(error).not.toBeNull();
+    expect(data).toBeNull();
   });
 });
 
