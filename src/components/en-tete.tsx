@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { lireResidence } from "@/lib/residence";
 import { Icone } from "./icone";
+import { ZoneCompte } from "./zone-compte";
 
 export async function EnTete() {
   const residence = await lireResidence();
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-surface/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_8px_rgba(0,0,0,0.04)] backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-[980px] items-center px-margin desktop:px-margin-desktop">
+      <div className="mx-auto flex h-20 max-w-[980px] items-center justify-between gap-space-sm px-margin desktop:px-margin-desktop">
         <Link
           href="/"
           className="flex min-h-[52px] min-w-0 items-center gap-space-sm rounded-md"
@@ -19,6 +20,7 @@ export async function EnTete() {
             {residence?.nom ?? "Notre résidence"}
           </span>
         </Link>
+        <ZoneCompte />
       </div>
     </header>
   );

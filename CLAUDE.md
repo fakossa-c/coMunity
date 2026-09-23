@@ -14,11 +14,13 @@
 ## Commandes
 
 - Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx.
-- `npm run env:local` : écrit `.env.local` avec l'URL et la clé du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
+- `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
 - `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
+- Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
+- `npm run syndic:amorcer -- <email> <mot-de-passe>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.
 
 ## Next.js 16
 

@@ -2,11 +2,12 @@
 // Utilisé par les tests de base et par `npm run env:local`, qui écrit .env.local.
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const cliSupabase = createRequire(import.meta.url).resolve(
-  "supabase/dist/supabase.js",
+// Pas d'import.meta ici : Playwright charge ce module en CommonJS.
+const cliSupabase = join(
+  process.cwd(),
+  "node_modules/supabase/dist/supabase.js",
 );
 
 export function lireSupabaseLocal() {
@@ -29,14 +30,16 @@ export function lireSupabaseLocal() {
   return {
     url: statut.API_URL,
     cleAnonyme: statut.PUBLISHABLE_KEY ?? statut.ANON_KEY,
+    cleSecrete: statut.SECRET_KEY ?? statut.SERVICE_ROLE_KEY,
+    urlBoiteMail: statut.MAILPIT_URL ?? statut.INBUCKET_URL,
   };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { url, cleAnonyme } = lireSupabaseLocal();
+if (process.argv[1]?.endsWith("supabase-local.mjs")) {
+  const { url, cleAnonyme, cleSecrete } = lireSupabaseLocal();
   writeFileSync(
     ".env.local",
-    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${cleAnonyme}\n`,
+    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${cleAnonyme}\nSUPABASE_SECRET_KEY=${cleSecrete}\n`,
   );
   console.log(".env.local écrit pour le Supabase local.");
 }
