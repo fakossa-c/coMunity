@@ -174,6 +174,11 @@ test.describe("aide à l'installation sur Android", () => {
     const boite = await installer.boundingBox();
     expect(boite?.height).toBeGreaterThanOrEqual(52);
 
+    await page.screenshot({
+      path: test.info().outputPath("aide-installation-android.png"),
+      fullPage: true,
+    });
+
     await installer.click();
     await expect
       .poll(() => page.evaluate(() => window.__invitesOuvertes))
