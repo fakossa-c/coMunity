@@ -30,13 +30,14 @@ export function NavigationPrincipale() {
     >
       <ul className="mx-auto grid h-24 max-w-lg grid-cols-4 items-stretch px-1 desktop:h-16 desktop:max-w-[980px] desktop:gap-2 desktop:px-margin-desktop">
         {onglets.map(({ href, libelle, icone }) => {
-          const actif = href === "/" ? chemin === "/" : chemin.startsWith(href);
+          const actif =
+            chemin === href || (href !== "/" && chemin.startsWith(`${href}/`));
           return (
             <li key={href} className="flex">
               <Link
                 href={href}
                 aria-current={actif ? "page" : undefined}
-                className={`flex min-h-[56px] min-w-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 text-center font-headline text-label-sm transition-colors desktop:flex-row desktop:gap-2 desktop:text-label-md ${
+                className={`flex min-h-[56px] min-w-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 text-center font-headline text-label-sm transition-colors desktop:flex-row desktop:gap-2 desktop:text-label-md ${
                   actif
                     ? "text-primary"
                     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"

@@ -2,9 +2,8 @@
 
 /*
  * Design system « Warm Commons ».
- * Valeurs reprises telles quelles de l'export Stitch (docs/design/) : couleurs et
- * typographie de warm_commons/DESIGN.md, rayons et espacements de la configuration
- * Tailwind des maquettes (docs/design/*\/code.html).
+ * Valeurs reprises telles quelles de docs/design/warm_commons/DESIGN.md (export Stitch).
+ * Les maquettes code.html utilisent des rayons plus serrés : DESIGN.md fait foi.
  */
 @theme {
   --color-surface: #f8f9ff;
@@ -55,6 +54,7 @@
   --color-background: #f8f9ff;
   --color-on-background: #121c2a;
   --color-focus: #0d3b66;
+  --color-border-distinct: #2d312e;
 
   --font-headline: var(--font-plus-jakarta), system-ui, sans-serif;
   --font-body: var(--font-atkinson), system-ui, sans-serif;
@@ -98,9 +98,10 @@
   --text-label-sm--letter-spacing: 0.02em;
   --text-label-sm--font-weight: 700;
 
-  --radius-DEFAULT: 0.25rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
   --spacing-gutter: 1rem;

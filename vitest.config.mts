@@ -1,14 +1,14 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
-
 export default defineConfig({
-  resolve: { alias },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
   test: {
     projects: [
       {
-        resolve: { alias },
+        extends: true,
         test: {
           name: "unit",
           include: ["src/**/*.test.ts"],
@@ -16,7 +16,7 @@ export default defineConfig({
         },
       },
       {
-        resolve: { alias },
+        extends: true,
         test: {
           name: "db",
           include: ["tests/db/**/*.test.ts"],

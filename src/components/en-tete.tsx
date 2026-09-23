@@ -10,7 +10,7 @@ export async function EnTete() {
       <div className="mx-auto flex h-20 max-w-[980px] items-center px-margin desktop:px-margin-desktop">
         <Link
           href="/"
-          className="flex min-h-[52px] min-w-0 items-center gap-space-sm rounded-xl"
+          className="flex min-h-[52px] min-w-0 items-center gap-space-sm rounded-md"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
             <Icone nom="apartment" className="size-6" />

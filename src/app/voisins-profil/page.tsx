@@ -11,7 +11,7 @@ export default function VoisinsProfil() {
         titre="Voisins & Profil"
         sousTitre="Votre profil et les voisins qui partagent vos centres d'intérêt"
       />
-      <Bientot icone="group" message="Cette rubrique ouvrira bientôt." />
+      <Bientot icone="group" />
     </>
   );
 }

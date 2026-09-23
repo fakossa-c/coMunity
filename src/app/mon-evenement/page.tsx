@@ -11,10 +11,7 @@ export default function MonEvenement() {
         titre="Mon Événement"
         sousTitre="Les activités auxquelles vous participez et celles que vous organisez"
       />
-      <Bientot
-        icone="event_available"
-        message="Cette rubrique ouvrira bientôt."
-      />
+      <Bientot icone="event_available" />
     </>
   );
 }

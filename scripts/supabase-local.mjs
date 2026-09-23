@@ -29,7 +29,6 @@ export function lireSupabaseLocal() {
   return {
     url: statut.API_URL,
     cleAnonyme: statut.PUBLISHABLE_KEY ?? statut.ANON_KEY,
-    cleServeur: statut.SECRET_KEY ?? statut.SERVICE_ROLE_KEY,
   };
 }
 

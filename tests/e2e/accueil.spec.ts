@@ -14,9 +14,7 @@ test("l'accueil affiche la résidence, les activités et la navigation", async (
     page.getByRole("heading", { level: 1, name: "Activités" }),
   ).toBeVisible();
 
-  const navigation = page.getByRole("navigation", {
-    name: "Navigation principale",
-  });
+  const navigation = navigationPrincipale(page);
   await expect(navigation).toBeVisible();
   for (const onglet of onglets) {
     await expect(navigation.getByRole("link", { name: onglet })).toBeVisible();
@@ -36,9 +34,7 @@ test("chaque onglet offre une cible tactile d'au moins 52 px", async ({
 }) => {
   await page.goto("/");
 
-  const navigation = page.getByRole("navigation", {
-    name: "Navigation principale",
-  });
+  const navigation = navigationPrincipale(page);
   for (const onglet of onglets) {
     const boite = await navigation
       .getByRole("link", { name: onglet })
@@ -51,9 +47,7 @@ test("chaque onglet offre une cible tactile d'au moins 52 px", async ({
 test("la navigation se parcourt et s'active au clavier", async ({ page }) => {
   await page.goto("/");
 
-  const navigation = page.getByRole("navigation", {
-    name: "Navigation principale",
-  });
+  const navigation = navigationPrincipale(page);
   const proposer = navigation.getByRole("link", { name: "Proposer" });
   await tabulerJusqua(page, proposer);
   await expect(proposer).toBeFocused();
@@ -61,11 +55,13 @@ test("la navigation se parcourt et s'active au clavier", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/proposer$/);
   await expect(
-    page
-      .getByRole("navigation", { name: "Navigation principale" })
-      .getByRole("link", { name: "Proposer" }),
+    navigationPrincipale(page).getByRole("link", { name: "Proposer" }),
   ).toHaveAttribute("aria-current", "page");
 });
+
+function navigationPrincipale(page: Page) {
+  return page.getByRole("navigation", { name: "Navigation principale" });
+}
 
 /** Appuie sur Tab jusqu'à atteindre la cible, comme le ferait une personne au clavier. */
 async function tabulerJusqua(page: Page, cible: Locator, maxAppuis = 20) {

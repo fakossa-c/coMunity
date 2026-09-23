@@ -11,7 +11,7 @@ export default function Proposer() {
         titre="Proposer"
         sousTitre="Lancez une activité avec vos voisins"
       />
-      <Bientot icone="add_circle" message="Cette rubrique ouvrira bientôt." />
+      <Bientot icone="add_circle" />
     </>
   );
 }
