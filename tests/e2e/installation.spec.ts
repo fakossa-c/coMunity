@@ -1,4 +1,10 @@
-import { devices, expect, test, type Page } from "@playwright/test";
+import {
+  devices,
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+} from "@playwright/test";
 
 const iPhone = devices["iPhone 15"];
 
@@ -176,6 +182,23 @@ test.describe("aide à l'installation sur Android", () => {
       .poll(() => page.evaluate(() => window.__invitesOuvertes))
       .toBe(1);
     await expect(encart).toBeHidden();
+    await expect(page.locator("#contenu")).toBeFocused();
+  });
+
+  test("l'invite reçue sur une autre page sert en arrivant sur l'accueil", async ({
+    page,
+  }) => {
+    await page.goto("/proposer", { waitUntil: "networkidle" });
+    await proposerInstallation(page);
+
+    await page
+      .getByRole("navigation", { name: "Navigation principale" })
+      .getByRole("link", { name: "Activités" })
+      .click();
+
+    await expect(
+      aideInstallation(page).getByRole("button", { name: "Installer l'app" }),
+    ).toBeVisible();
   });
 });
 
@@ -243,10 +266,7 @@ async function simulerAppInstallee(page: Page) {
   });
 }
 
-async function attendreImagePng(
-  request: import("@playwright/test").APIRequestContext,
-  chemin: string,
-) {
+async function attendreImagePng(request: APIRequestContext, chemin: string) {
   const reponse = await request.get(chemin);
   expect(reponse.ok(), chemin).toBe(true);
   expect(reponse.headers()["content-type"], chemin).toBe("image/png");
