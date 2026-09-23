@@ -3,13 +3,16 @@
 import { useState, useTransition } from "react";
 import { Annonce, Bouton, BoutonEnvoi, Champ } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
-import { inviterCollegue, retirerMembre, type Resultat } from "./actions";
+import {
+  inviterCollegue,
+  retirerMembre,
+  type Membre,
+  type Resultat,
+} from "./actions";
 
-type Membre = { id: string; email: string };
+type Props = { membres: Membre[]; idMoi: string };
 
-type Props = { membres: Membre[]; moi: string };
-
-export function GestionMembres({ membres, moi }: Props) {
+export function GestionMembres({ membres, idMoi }: Props) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [email, setEmail] = useState("");
 
@@ -71,7 +74,7 @@ export function GestionMembres({ membres, moi }: Props) {
             <LigneMembre
               key={membre.id}
               membre={membre}
-              estMoi={membre.id === moi}
+              estMoi={membre.id === idMoi}
               onResultat={setResultat}
             />
           ))}
@@ -102,7 +105,7 @@ function LigneMembre({
   }
 
   return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md desktop:flex-row desktop:items-center">
+    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:flex-row desktop:items-center">
       <span className="flex min-w-0 flex-1 items-center gap-space-sm">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
           <Icone nom="shield_person" className="size-6" />
@@ -124,7 +127,7 @@ function LigneMembre({
               {enCours ? "Retrait…" : "Confirmer le retrait"}
             </Bouton>
             <Bouton
-              variante="secondaire"
+              variante="contour"
               onClick={() => setConfirmation(false)}
               disabled={enCours}
             >
@@ -132,7 +135,7 @@ function LigneMembre({
             </Bouton>
           </span>
         ) : (
-          <Bouton variante="secondaire" onClick={() => setConfirmation(true)}>
+          <Bouton variante="contour" onClick={() => setConfirmation(true)}>
             <Icone nom="person_remove" className="size-6" />
             Retirer l&apos;accès
           </Bouton>

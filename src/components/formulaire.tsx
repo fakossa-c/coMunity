@@ -37,7 +37,7 @@ const styles = {
   principal:
     "bg-inverse-surface text-on-primary hover:bg-on-surface disabled:opacity-70",
   danger: "bg-error text-on-error hover:bg-on-error-container",
-  secondaire:
+  contour:
     "border-2 border-inverse-surface bg-surface-container-lowest text-on-surface hover:bg-surface-container-low",
 };
 
@@ -88,7 +88,7 @@ export function Annonce({
     <div role={erreur ? "alert" : "status"}>
       {message && (
         <p
-          className={`rounded-lg p-space-md text-body-lg ${
+          className={`max-w-[65ch] rounded-lg p-space-md text-body-lg ${
             erreur
               ? "bg-error-container text-on-error-container"
               : "bg-secondary-container text-on-secondary-fixed"

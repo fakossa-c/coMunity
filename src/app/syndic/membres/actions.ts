@@ -5,6 +5,8 @@ import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
 
 export type Resultat = { ok: boolean; message: string };
 
+export type Membre = { id: string; email: string };
+
 const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
@@ -55,10 +57,7 @@ export async function inviterCollegue(email: string): Promise<Resultat> {
   };
 }
 
-export async function retirerMembre(membre: {
-  id: string;
-  email: string;
-}): Promise<Resultat> {
+export async function retirerMembre(membre: Membre): Promise<Resultat> {
   const supabase = await clientSession();
   const { error } = await supabase.rpc("retirer_membre_syndic", {
     membre: membre.id,

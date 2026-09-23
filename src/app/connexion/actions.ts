@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cheminInterne } from "@/lib/chemin-interne";
-import { accueilDe } from "@/lib/session";
+import { accueilDe, lireProfil } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
 export type EtatConnexion = { erreur?: string; email?: string };
@@ -32,12 +32,10 @@ export async function seConnecter(
     };
   }
 
-  const { data: profil } = await supabase
-    .from("profil")
-    .select("role, statut")
-    .eq("id", connexion.user.id)
-    .maybeSingle();
-  redirect(cheminInterne(donnees.get("suivant")) ?? accueilDe(profil));
+  redirect(
+    cheminInterne(donnees.get("suivant")) ??
+      accueilDe(await lireProfil(supabase, connexion.user.id)),
+  );
 }
 
 export async function seDeconnecter() {

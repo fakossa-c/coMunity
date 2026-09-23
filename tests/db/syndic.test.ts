@@ -8,7 +8,10 @@ import {
   nouveauResident,
   nouveauSyndic,
   nouvelEmail,
+  type StatutResident,
 } from "./clients";
+
+const statutsResident: StatutResident[] = ["en_attente", "valide", "refuse"];
 
 /** Invite un collègue comme le fait l'espace syndic : l'invitation, puis l'email. */
 async function inviter(
@@ -66,14 +69,17 @@ describe("liste des membres du syndic", () => {
     );
   });
 
-  it("un résident ne voit aucun membre du syndic", async () => {
-    await nouveauSyndic();
-    const resident = await nouveauResident();
+  it.each(statutsResident)(
+    "un résident %s ne voit aucun membre du syndic",
+    async (statut) => {
+      await nouveauSyndic();
+      const resident = await nouveauResident(statut);
 
-    const { data } = await membresVusPar(resident);
+      const { data } = await membresVusPar(resident);
 
-    expect(data).toEqual([]);
-  });
+      expect(data).toEqual([]);
+    },
+  );
 
   it("un visiteur ne lit aucun profil", async () => {
     await nouveauSyndic();
@@ -95,13 +101,16 @@ describe("invitation d'un collègue", () => {
     expect(data).toEqual([{ id, email }]);
   });
 
-  it("un résident ne peut pas inviter", async () => {
-    const resident = await nouveauResident();
+  it.each(statutsResident)(
+    "un résident %s ne peut pas inviter",
+    async (statut) => {
+      const resident = await nouveauResident(statut);
 
-    const { error } = await invitationSeule(resident, nouvelEmail("invite"));
+      const { error } = await invitationSeule(resident, nouvelEmail("invite"));
 
-    expect(error?.code).toBe("42501");
-  });
+      expect(error?.code).toBe("42501");
+    },
+  );
 
   it("un visiteur ne peut pas inviter", async () => {
     const { error } = await clientVisiteur()
@@ -165,18 +174,21 @@ describe("retrait d'un membre du syndic", () => {
     expect(invitation.error?.code).toBe("42501");
   });
 
-  it("un résident ne peut pas retirer un membre du syndic", async () => {
-    const syndic = await nouveauSyndic();
-    const resident = await nouveauResident();
+  it.each(statutsResident)(
+    "un résident %s ne peut pas retirer un membre du syndic",
+    async (statut) => {
+      const syndic = await nouveauSyndic();
+      const resident = await nouveauResident(statut);
 
-    const { error } = await resident.client.rpc("retirer_membre_syndic", {
-      membre: syndic.id,
-    });
+      const { error } = await resident.client.rpc("retirer_membre_syndic", {
+        membre: syndic.id,
+      });
 
-    expect(error?.code).toBe("42501");
-    const liste = await membresVusPar(syndic);
-    expect(liste.data?.map((m) => m.email)).toContain(syndic.email);
-  });
+      expect(error?.code).toBe("42501");
+      const liste = await membresVusPar(syndic);
+      expect(liste.data?.map((m) => m.email)).toContain(syndic.email);
+    },
+  );
 
   it("un visiteur ne peut pas retirer un membre du syndic", async () => {
     const syndic = await nouveauSyndic();

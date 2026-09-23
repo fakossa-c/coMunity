@@ -54,8 +54,12 @@ export async function nouveauSyndic(): Promise<Compte> {
   return { id: utilisateur.id, email, client: await connecter(email) };
 }
 
-/** Un résident validé, connecté. */
-export async function nouveauResident(): Promise<Compte> {
+export type StatutResident = "en_attente" | "valide" | "refuse" | "retire";
+
+/** Un résident connecté, validé sauf mention contraire. */
+export async function nouveauResident(
+  statut: StatutResident = "valide",
+): Promise<Compte> {
   const admin = clientAdmin();
   const email = nouvelEmail("resident");
   const { data, error } = await admin.auth.admin.createUser({
@@ -67,7 +71,7 @@ export async function nouveauResident(): Promise<Compte> {
   aSupprimer(data.user.id);
   const insertion = await admin
     .from("profil")
-    .insert({ id: data.user.id, email, role: "resident", statut: "valide" });
+    .insert({ id: data.user.id, email, role: "resident", statut });
   if (insertion.error) throw insertion.error;
   return { id: data.user.id, email, client: await connecter(email) };
 }

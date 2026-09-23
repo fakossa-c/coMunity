@@ -25,7 +25,7 @@ export default async function MembresDuSyndic() {
         titre="Membres du syndic"
         sousTitre="Invitez un collègue par email ou retirez l'accès d'un membre qui quitte l'équipe."
       />
-      <GestionMembres membres={membres} moi={session.id} />
+      <GestionMembres membres={membres} idMoi={session.id} />
     </>
   );
 }

@@ -3,7 +3,7 @@
  * Sert au retour après connexion : un lien piégé ne doit pas renvoyer vers un autre site.
  */
 export function cheminInterne(
-  valeur: FormDataEntryValue | string | null | undefined,
+  valeur: FormDataEntryValue | null | undefined,
 ): string | null {
   if (typeof valeur !== "string") return null;
   // « //site » et « /\site » sont lus par le navigateur comme une autre origine.

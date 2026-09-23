@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { LONGUEUR_MINIMALE_MOT_DE_PASSE as LONGUEUR_MINIMALE } from "@/lib/mot-de-passe";
-import { accueilDe } from "@/lib/session";
+import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { accueilDe, lireProfil } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
 export type EtatMotDePasse = { erreur?: string };
@@ -13,9 +13,9 @@ export async function enregistrerMotDePasse(
 ): Promise<EtatMotDePasse> {
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
   const confirmation = String(donnees.get("confirmation") ?? "");
-  if (motDePasse.length < LONGUEUR_MINIMALE) {
+  if (motDePasse.length < LONGUEUR_MINIMALE_MOT_DE_PASSE) {
     return {
-      erreur: `Choisissez un mot de passe d'au moins ${LONGUEUR_MINIMALE} caractères.`,
+      erreur: `Choisissez un mot de passe d'au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
     };
   }
   if (motDePasse !== confirmation) {
@@ -32,15 +32,10 @@ export async function enregistrerMotDePasse(
         error.code === "same_password"
           ? "Choisissez un mot de passe différent de l'ancien."
           : error.code === "weak_password"
-            ? `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE} caractères.`
+            ? `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`
             : "Le mot de passe n'a pas pu être enregistré. Redemandez un lien depuis « Mot de passe oublié ? ».",
     };
   }
 
-  const { data: profil } = await supabase
-    .from("profil")
-    .select("role, statut")
-    .eq("id", data.user.id)
-    .maybeSingle();
-  redirect(accueilDe(profil));
+  redirect(accueilDe(await lireProfil(supabase, data.user.id)));
 }
