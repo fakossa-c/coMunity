@@ -5,5 +5,10 @@
 export function cheminInterne(
   valeur: FormDataEntryValue | string | null | undefined,
 ): string | null {
-  return null;
+  if (typeof valeur !== "string") return null;
+  // « //site » et « /\site » sont lus par le navigateur comme une autre origine.
+  if (!valeur.startsWith("/") || valeur[1] === "/" || valeur[1] === "\\") {
+    return null;
+  }
+  return valeur;
 }
