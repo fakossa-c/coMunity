@@ -1,10 +1,21 @@
+// Teste le dépôt lui-même, pas un module : rangé dans src/ pour tourner avec les tests unitaires.
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const racine = join(import.meta.dirname, "..");
 const lire = (chemin: string) => readFileSync(join(racine, chemin), "utf8");
+
+/** Fichiers suivis par git. `-z` : noms accentués livrés tels quels, sans échappement. */
+function fichiersSuivis() {
+  return execFileSync("git", ["ls-files", "-z"], {
+    cwd: racine,
+    encoding: "utf8",
+  })
+    .split("\0")
+    .filter(Boolean);
+}
 
 /** Variables déclarées dans .env.example, avec leur valeur. */
 function variablesExemple() {
@@ -20,22 +31,28 @@ function variablesExemple() {
   );
 }
 
-/** Variables d'environnement lues par le code de l'app (hors tests). */
+/** Variables d'environnement lues par l'app et ses scripts (hors tests). */
 function variablesLues() {
-  const fichiers = readdirSync(join(racine, "src"), {
-    recursive: true,
-    encoding: "utf8",
-  }).filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f));
+  const sources = fichiersSuivis().filter(
+    (f) =>
+      /^(src|scripts)\//.test(f) &&
+      /\.(tsx?|mjs)$/.test(f) &&
+      !/\.test\.tsx?$/.test(f),
+  );
   const noms = new Set<string>();
-  for (const fichier of fichiers) {
-    for (const [, nom] of lire(join("src", fichier)).matchAll(
-      /process\.env\.([A-Z0-9_]+)/g,
+  for (const fichier of sources) {
+    for (const [, nom] of lire(fichier).matchAll(
+      /process\.env(?:\.|\[["'])([A-Z0-9_]+)/g,
     )) {
       noms.add(nom);
     }
   }
   return noms;
 }
+
+// Clé secrète Supabase, clé API Resend, ou jeton JWT (anciennes clés anon et service_role).
+const motifCleSecrete =
+  /\bsb_secret_[A-Za-z0-9_-]{10,}|\bre_[A-Za-z0-9]{8}_[A-Za-z0-9]{16,}|\beyJ[\w-]{10,}\.eyJ[\w-]{10,}\.[\w-]{10,}/;
 
 describe("configuration de production", () => {
   it("fait tourner les fonctions à Paris", () => {
@@ -48,19 +65,12 @@ describe("configuration de production", () => {
     }
   });
 
-  it("ne commite aucune clé secrète Supabase ou Resend", () => {
-    const suivis = execFileSync("git", ["ls-files"], {
-      cwd: racine,
-      encoding: "utf8",
-    })
-      .split("\n")
-      .filter((f) =>
-        /\.(ts|tsx|mjs|js|json|md|toml|sql|html|ya?ml)$|^\.env/.test(f),
-      );
-    const cle =
-      /sb_secret_[A-Za-z0-9_-]{10,}|\bre_[A-Za-z0-9]{8}_[A-Za-z0-9]{16,}/;
-    for (const fichier of suivis) {
-      expect(lire(fichier), fichier).not.toMatch(cle);
+  it("ne commite aucune clé secrète", () => {
+    const textes = fichiersSuivis().filter(
+      (f) => !/\.(png|jpe?g|gif|webp|ico|woff2?|pdf)$/.test(f),
+    );
+    for (const fichier of textes) {
+      expect(lire(fichier), fichier).not.toMatch(motifCleSecrete);
     }
   });
 

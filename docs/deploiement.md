@@ -4,114 +4,115 @@ Trois comptes, dans cet ordre : Supabase Cloud (base, Auth, photos), Resend (ema
 Vercel (l'app). Les créations de comptes et la saisie des secrets se font à la main ; aucun secret
 n'entre dans le dépôt. Les variables attendues sont listées dans `.env.example`.
 
-URL de production actuelle : `https://comunity-beta.vercel.app` (projet Vercel `comunity`). Si un domaine
-personnalisé la remplace, reporter la nouvelle URL partout où elle apparaît ci-dessous.
+Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (par exemple
+`https://comunity-beta.vercel.app`, ou le domaine personnalisé qui la remplace).
 
 ## 1. Supabase Cloud
 
-- [ ] Créer le projet sur [supabase.com](https://supabase.com/dashboard), région **West EU (Paris)**
-      (`eu-west-3`). Noter le mot de passe de la base dans un gestionnaire de mots de passe.
-- [ ] Appliquer les migrations depuis le dépôt :
+1. Créer le projet sur [supabase.com](https://supabase.com/dashboard), région **West EU (Paris)**
+   (`eu-west-3`). Ranger le mot de passe de la base dans un gestionnaire de mots de passe.
+2. Appliquer les migrations depuis le dépôt :
 
-  ```bash
-  npx supabase login
-  npx supabase link --project-ref <ref-du-projet>   # le ref est dans l'URL du tableau de bord
-  npx supabase db push
-  ```
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <ref-du-projet>   # le ref est dans l'URL du tableau de bord
+   npx supabase db push
+   ```
 
-  `db push` n'applique que `supabase/migrations/` : les données de `supabase/seed.sql` restent locales.
+   `db push` n'applique que `supabase/migrations/` : les données de `supabase/seed.sql` restent locales.
 
-- [ ] Créer la résidence (SQL Editor), avec le vrai nom et un code d'au moins 6 caractères à donner aux
-      résidents :
+3. Créer la résidence (SQL Editor), avec le vrai nom et un code d'au moins 6 caractères à donner aux
+   résidents :
 
-  ```sql
-  insert into public.residence (nom, code, heure_calme)
-  values ('<Nom de la résidence>', '<CODE-RESIDENCE>', '22:00');
-  ```
+   ```sql
+   insert into public.residence (nom, code, heure_calme)
+   values ('<Nom de la résidence>', '<CODE-RESIDENCE>', '22:00');
+   ```
 
-- [ ] **Authentication > URL Configuration** : Site URL = `https://comunity-beta.vercel.app`. Les liens
-      des emails sont construits à partir de cette URL.
-- [ ] **Authentication > Sign In / Providers > Email**, aligné sur `supabase/config.toml` :
-      « Confirm email » désactivé, longueur minimale du mot de passe 6.
-- [ ] **Authentication > Emails > Templates**, recopier sujet et contenu depuis le dépôt :
+4. **Authentication > URL Configuration** : Site URL = `<URL-PROD>`. Les liens des emails sont
+   construits à partir de cette URL ; aucune Redirect URL n'est nécessaire.
+5. **Authentication > Sign In / Providers > Email**, aligné sur `supabase/config.toml` :
+   « Confirm email » désactivé, longueur minimale du mot de passe 6.
+6. **Authentication > Emails > Templates**, recopier sujet et contenu depuis le dépôt :
 
-  | Modèle         | Sujet                                              | Contenu                                  |
-  | -------------- | -------------------------------------------------- | ---------------------------------------- |
-  | Invite user    | Vous êtes invité à rejoindre l'espace syndic       | `supabase/templates/invitation.html`     |
-  | Reset password | Choisissez un nouveau mot de passe                 | `supabase/templates/recuperation.html`   |
+   | Modèle         | Sujet                                        | Contenu                                |
+   | -------------- | -------------------------------------------- | -------------------------------------- |
+   | Invite user    | Vous êtes invité à rejoindre l'espace syndic | `supabase/templates/invitation.html`   |
+   | Reset password | Choisissez un nouveau mot de passe           | `supabase/templates/recuperation.html` |
 
-  Sans ce changement, les liens des emails par défaut ne passent pas par `/auth/confirmer` et
-  n'ouvrent pas la session.
+   Les modèles par défaut ne passent pas par `/auth/confirmer` : leurs liens n'ouvrent pas la session.
 
 ## 2. Resend
 
-- [ ] Créer le compte sur [resend.com](https://resend.com).
-- [ ] **Domains > Add Domain** : un domaine (ou sous-domaine) dont on gère la zone DNS, région
-      **Ireland (eu-west-1)**. Ajouter chez le registraire les enregistrements affichés (SPF, DKIM),
-      attendre le statut **Verified**.
-- [ ] **API Keys > Create API Key**, permission « Sending access » limitée à ce domaine. La clé ne
-      s'affiche qu'une fois : la coller directement à l'étape suivante, ne la garder nulle part ailleurs.
-- [ ] Dans Supabase, **Authentication > Emails > SMTP Settings**, activer le SMTP personnalisé :
+1. Créer le compte sur [resend.com](https://resend.com).
+2. **Domains > Add Domain** : un domaine (ou sous-domaine) dont on gère la zone DNS, région
+   **Ireland (eu-west-1)**. Ajouter chez le registraire les enregistrements affichés (SPF, DKIM), puis
+   attendre le statut **Verified**.
+3. **API Keys > Create API Key**, permission « Sending access » limitée à ce domaine. La clé ne
+   s'affiche qu'une fois : la coller directement à l'étape suivante, ne la garder nulle part ailleurs.
+4. Dans Supabase, **Authentication > Emails > SMTP Settings**, activer le SMTP personnalisé :
 
-  | Champ        | Valeur                                     |
-  | ------------ | ------------------------------------------ |
-  | Host         | `smtp.resend.com`                          |
-  | Port         | `465`                                      |
-  | Username     | `resend`                                   |
-  | Password     | la clé API Resend                          |
-  | Sender email | une adresse du domaine vérifié, ex. `ne-pas-repondre@<domaine>` |
-  | Sender name  | coMunity                                   |
+   | Champ        | Valeur                                                          |
+   | ------------ | --------------------------------------------------------------- |
+   | Host         | `smtp.resend.com`                                               |
+   | Port         | `465`                                                           |
+   | Username     | `resend`                                                        |
+   | Password     | la clé API Resend                                               |
+   | Sender email | une adresse du domaine vérifié, ex. `ne-pas-repondre@<domaine>` |
+   | Sender name  | coMunity                                                        |
 
 ## 3. Vercel
 
-Le projet `comunity` existe déjà (déployé en CLI). Il reste à le relier au dépôt et à lui donner ses
-variables.
+1. Relier le projet Vercel au dépôt : installer l'application Vercel sur le compte GitHub `fakossa-c`
+   ([github.com/apps/vercel](https://github.com/apps/vercel)) avec accès au dépôt `coMunity`, puis
+   **Settings > Git > Connect Git Repository**. Le compte Vercel appartient à `fakossa`, le dépôt à
+   `fakossa-c` : si le dépôt n'apparaît pas dans la liste, rattacher le GitHub `fakossa-c` au compte
+   Vercel (**Account Settings > Authentication**) puis recommencer.
+2. **Settings > Git** : branche de production `main`. Chaque push sur une autre branche donne une
+   preview.
+3. **Settings > Environment Variables**, environnement **Production** uniquement, valeurs lues dans
+   Supabase > **Project Settings > API Keys** :
 
-- [ ] Relier le dépôt : installer l'application Vercel sur le compte GitHub `fakossa-c`
-      ([github.com/apps/vercel](https://github.com/apps/vercel)) avec accès au dépôt `coMunity`, puis
-      **Settings > Git > Connect Git Repository**. Si le dépôt n'apparaît pas, le compte GitHub rattaché
-      au compte Vercel doit avoir accès au dépôt (l'ajouter comme collaborateur).
-- [ ] **Settings > Git** : branche de production `main`. Chaque push sur une autre branche donne une
-      preview.
-- [ ] **Settings > Environment Variables**, environnement **Production** uniquement :
+   | Variable                               | Valeur                             |
+   | -------------------------------------- | ---------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | Project URL                        |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key                    |
+   | `SUPABASE_SECRET_KEY`                  | Secret key (marquer « Sensitive ») |
 
-  | Variable                               | Source (Supabase > Project Settings > API Keys) |
-  | -------------------------------------- | ----------------------------------------------- |
-  | `NEXT_PUBLIC_SUPABASE_URL`             | Project URL                                     |
-  | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key                                 |
-  | `SUPABASE_SECRET_KEY`                  | Secret key (marquer « Sensitive »)              |
+   Les previews restent sans variables : elles s'affichent sans le nom de la résidence et n'écrivent
+   jamais dans la base de production.
 
-  Les previews restent sans variables : elles s'affichent sans le nom de la résidence et n'écrivent
-  jamais dans la base de production.
-
-- [ ] Région des fonctions : fixée à Paris (`cdg1`) par `vercel.json`, autorisée sur le plan Hobby
-      (une seule région). Vérifiable dans le résumé du déploiement.
-- [ ] Redéployer la production (**Deployments > Redeploy**, ou un merge sur `main`) pour qu'elle
-      prenne les variables.
+4. Région des fonctions : Paris (`cdg1`), fixée par `vercel.json` ; le plan Hobby autorise une région.
+   Elle apparaît dans le résumé du déploiement.
+5. Redéployer la production (**Deployments > Redeploy**, ou un merge sur `main`) : les variables
+   `NEXT_PUBLIC_*` sont intégrées au build.
 
 ## 4. Premier membre du syndic
 
-Depuis le poste, en pointant le script sur la production le temps d'une commande (PowerShell) :
+Choisir une adresse qui **n'est pas membre de l'équipe du projet Supabase** : elle sert aussi au test
+d'email de l'étape 5. Depuis le poste, en pointant le script sur la production le temps d'une commande
+(PowerShell) :
 
 ```powershell
 $env:NEXT_PUBLIC_SUPABASE_URL = "<Project URL>"
-$env:SUPABASE_SECRET_KEY = Read-Host "Clé secrète"
+$env:SUPABASE_SECRET_KEY = Read-Host -MaskInput "Clé secrète"
 npm run syndic:amorcer -- <email> <mot-de-passe-provisoire>
 Remove-Item Env:NEXT_PUBLIC_SUPABASE_URL, Env:SUPABASE_SECRET_KEY
 ```
 
-Puis choisir un vrai mot de passe par « Mot de passe oublié ». Si cette adresse n'est pas celle du
-compte Supabase, c'est aussi le test d'email ci-dessous.
 Les membres suivants arrivent par invitation depuis l'espace syndic.
 
 ## 5. Vérifications
 
-- [ ] `https://comunity-beta.vercel.app` affiche la page d'accueil avec le nom de la résidence.
-- [ ] « Mot de passe oublié » avec une adresse **qui n'est pas membre de l'équipe Supabase** : l'email
-      arrive (expéditeur du domaine Resend), le lien mène au choix du mot de passe, la connexion marche.
-      Le SMTP intégré de Supabase n'écrit qu'aux membres de l'équipe : un email reçu ici prouve que
-      Resend est branché.
-- [ ] Resend > **Emails** montre l'envoi au statut « Delivered ».
-- [ ] Aucun secret dans le dépôt : `npx vitest run src/configuration-production.test.ts` est vert. Il
-      vérifie aussi que `vercel.json` vise Paris et que `.env.example` déclare, sans valeur, chaque
-      variable lue par l'app.
+1. `<URL-PROD>` affiche la page d'accueil avec le nom de la résidence.
+2. Sur `<URL-PROD>/mot-de-passe-oublie`, saisir l'adresse du syndic créé à l'étape 4. L'email arrive,
+   expédié depuis le domaine Resend ; son lien mène au choix du mot de passe, puis la connexion marche.
+   Le SMTP intégré de Supabase n'écrit qu'aux membres de l'équipe : un email reçu ici prouve que
+   Resend est branché.
+   - La page répond « envoyé » même pour une adresse sans compte, sans rien envoyer : tester avec
+     une adresse qui a un compte.
+   - Supabase Cloud impose 60 secondes entre deux emails à la même adresse (1 seconde en local) :
+     attendre avant un deuxième essai.
+3. Resend > **Emails** montre l'envoi au statut « Delivered ».
+4. `npx vitest run src/configuration-production.test.ts` est vert : aucune clé secrète dans les
+   fichiers suivis, `vercel.json` vise Paris, `.env.example` déclare sans valeur chaque variable lue.
