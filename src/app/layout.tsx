@@ -4,7 +4,7 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import { EnTete } from "@/components/en-tete";
-import { GardeCompte } from "@/components/garde-compte";
+import { GardeCompte, SiCompteOuvert } from "@/components/garde-compte";
 import { NavigationPrincipale } from "@/components/navigation-principale";
 import "./globals.css";
 
@@ -52,7 +52,9 @@ export default function RootLayout({
           Aller au contenu
         </a>
         <EnTete />
-        <NavigationPrincipale />
+        <SiCompteOuvert>
+          <NavigationPrincipale />
+        </SiCompteOuvert>
         <main
           id="contenu"
           tabIndex={-1}
