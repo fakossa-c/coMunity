@@ -44,6 +44,10 @@ function ligne(page: Page, liste: string, email: string) {
     .filter({ hasText: email });
 }
 
+function navigationPrincipale(page: Page) {
+  return page.getByRole("navigation", { name: "Navigation principale" });
+}
+
 const BANDEAU = "Votre compte attend la validation du syndic";
 
 test("un résident s'inscrit avec le code de la résidence, puis le syndic le valide", async ({
@@ -130,6 +134,7 @@ test("un résident refusé ne voit qu'un message l'invitant à contacter le synd
     "Votre compte n'a pas été accepté",
   );
   await expect(page.getByRole("main")).toContainText("contactez le syndic");
+  await expect(navigationPrincipale(page)).toHaveCount(0);
   await page.goto("/proposer");
   await expect(
     page.getByRole("heading", { level: 1, name: "Proposer" }),
@@ -165,6 +170,7 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
   await expect(
     page.getByRole("heading", { level: 1, name: "Activités" }),
   ).toHaveCount(0);
+  await expect(navigationPrincipale(page)).toHaveCount(0);
 });
 
 test("le syndic consulte le code de la résidence", async ({ page }) => {
