@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const port = 3100;
+// PORT_E2E : un autre port quand un second worktree lance ses tests en même temps.
+const port = Number(process.env.PORT_E2E ?? 3100);
 
 export default defineConfig({
   testDir: "tests/e2e",
