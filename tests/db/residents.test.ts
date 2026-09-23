@@ -28,10 +28,7 @@ async function codeEnVigueur(): Promise<string> {
 }
 
 /** Crée un compte résident comme le fait la page d'inscription. */
-async function inscrire(
-  code: string,
-  foyer: Record<string, unknown> = FOYER,
-) {
+async function inscrire(code: string, foyer: Record<string, unknown> = FOYER) {
   const client = clientVisiteur();
   const email = nouvelEmail("inscrit");
   const { data, error } = await client.auth.signUp({
@@ -51,11 +48,7 @@ function profilDe(id: string) {
     .maybeSingle();
 }
 
-function statuer(
-  compte: Compte,
-  resident: string,
-  decision: StatutResident,
-) {
+function statuer(compte: Compte, resident: string, decision: StatutResident) {
   return compte.client.rpc("statuer_resident", { resident, decision });
 }
 
@@ -213,19 +206,16 @@ describe("validation des résidents par le syndic", () => {
     ["valider un résident refusé", "refuse", "valide"],
     ["retirer un résident en attente", "en_attente", "retire"],
     ["remettre en attente un résident validé", "valide", "en_attente"],
-  ] as const)(
-    "le syndic ne peut pas %s",
-    async (_, statut, decision) => {
-      const syndic = await nouveauSyndic();
-      const resident = await nouveauResident(statut);
+  ] as const)("le syndic ne peut pas %s", async (_, statut, decision) => {
+    const syndic = await nouveauSyndic();
+    const resident = await nouveauResident(statut);
 
-      const { error } = await statuer(syndic, resident.id, decision);
+    const { error } = await statuer(syndic, resident.id, decision);
 
-      expect(error?.code).toBe("P0002");
-      const { data } = await profilDe(resident.id);
-      expect(data?.statut).toBe(statut);
-    },
-  );
+    expect(error?.code).toBe("P0002");
+    const { data } = await profilDe(resident.id);
+    expect(data?.statut).toBe(statut);
+  });
 
   it("le syndic ne statue pas sur un membre du syndic par cette voie", async () => {
     const [moi, collegue] = [await nouveauSyndic(), await nouveauSyndic()];

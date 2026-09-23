@@ -4,6 +4,7 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import { EnTete } from "@/components/en-tete";
+import { GardeCompte } from "@/components/garde-compte";
 import { NavigationPrincipale } from "@/components/navigation-principale";
 import "./globals.css";
 
@@ -57,7 +58,7 @@ export default function RootLayout({
           tabIndex={-1}
           className="mx-auto w-full max-w-[980px] flex-1 px-margin pt-[calc(6rem+env(safe-area-inset-top))] pb-[calc(8rem+env(safe-area-inset-bottom))] desktop:px-margin-desktop desktop:pt-44 desktop:pb-16"
         >
-          {children}
+          <GardeCompte>{children}</GardeCompte>
         </main>
       </body>
     </html>

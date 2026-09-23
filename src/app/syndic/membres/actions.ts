@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
-
-export type Resultat = { ok: boolean; message: string };
+import type { Resultat } from "../resultat";
 
 export type Membre = { id: string; email: string };
 
