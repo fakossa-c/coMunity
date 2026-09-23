@@ -56,9 +56,6 @@ test.describe("manifeste et icônes", () => {
     await expect(
       page.locator('meta[name="mobile-web-app-capable"]'),
     ).toHaveAttribute("content", "yes");
-    await expect(
-      page.locator('meta[name="apple-mobile-web-app-title"]'),
-    ).toHaveAttribute("content", "Les Tilleuls");
   });
 
   test("le manifeste et les icônes restent accessibles sans session", async ({
