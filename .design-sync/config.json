@@ -1,0 +1,11 @@
+{
+  "projectId": "51f07db4-857f-4e5b-a5ad-67c65c1b2ae9",
+  "shape": "package",
+  "pkg": "comunity-ds",
+  "globalName": "CoMunity",
+  "buildCmd": "node .design-sync/build-ds.mjs",
+  "entry": ".design-sync/.cache/pkg/dist/index.js",
+  "cssEntry": "dist/styles.css",
+  "guidelinesGlob": ["*.md"],
+  "readmeHeader": ".design-sync/conventions.md"
+}
