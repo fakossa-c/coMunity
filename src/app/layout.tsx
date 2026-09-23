@@ -5,6 +5,8 @@ import {
 } from "next/font/google";
 import { EnTete } from "@/components/en-tete";
 import { NavigationPrincipale } from "@/components/navigation-principale";
+import { nomCourt } from "@/lib/nom-court";
+import { lireResidence } from "@/lib/residence";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -21,13 +23,23 @@ const atkinson = Atkinson_Hyperlegible_Next({
   adjustFontFallback: false,
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Vie de la résidence",
-    template: "%s · Vie de la résidence",
-  },
-  description: "Activités, annonces et voisins de la résidence.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const residence = await lireResidence();
+
+  return {
+    title: {
+      default: "Vie de la résidence",
+      template: "%s · Vie de la résidence",
+    },
+    description: "Activités, annonces et voisins de la résidence.",
+    // iPhone : ouverture en plein écran depuis l'écran d'accueil, sous le nom de la résidence.
+    appleWebApp: {
+      capable: true,
+      title: nomCourt(residence?.nom ?? "Notre résidence"),
+      statusBarStyle: "default",
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
