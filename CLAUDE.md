@@ -4,6 +4,13 @@
 - `main` = production. La fusion `develop` → `main` est décidée par l'utilisateur.
 - Hors-produit (l'agent fusionne lui-même) : PR qui ne touche que `CLAUDE.md`, `docs/` ou l'outillage (CI, hooks, config de lint et de test).
 
+## Compte GitHub
+
+- Le dépôt appartient à `fakossa-c`, alors que le compte `gh` actif de la machine est `fakossa`, sans droits ici. Chaque commande `gh` sur ce dépôt s'exécute avec le jeton de `fakossa-c` : `GH_TOKEN=$(gh auth token -u fakossa-c) gh ...` (PowerShell : `$env:GH_TOKEN = gh auth token -u fakossa-c` avant la commande).
+- `git push` passe par une configuration locale au dépôt. Sur un nouveau clone, la poser une fois :
+  `git config --local credential.https://github.com.helper ""` puis
+  `git config --local --add credential.https://github.com.helper '!f() { test "$1" = get || exit 0; echo username=fakossa-c; echo "password=$(gh auth token -u fakossa-c)"; }; f'`
+
 ## Commandes
 
 - Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx.
