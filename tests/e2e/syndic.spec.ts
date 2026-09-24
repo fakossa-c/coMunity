@@ -146,7 +146,11 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: "Espace syndic" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Se déconnecter" }).click();
+  await page.getByRole("button", { name: "Mon profil" }).click();
+  await page
+    .getByRole("dialog", { name: "Menu du profil" })
+    .getByRole("button", { name: "Se déconnecter" })
+    .click();
   await expect(page.getByRole("link", { name: "Se connecter" })).toBeVisible();
   await page.goto("/syndic");
   await expect(page).toHaveURL(/\/connexion/);

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { lireSession } from "@/lib/session";
 import { FormulaireNouveauMotDePasse } from "./formulaire";
@@ -11,25 +12,30 @@ export default async function NouveauMotDePasse() {
   const session = await lireSession();
 
   return (
-    <div className="max-w-md">
-      <TitrePage
-        titre="Choisissez votre mot de passe"
-        sousTitre={
-          session
-            ? `Pour le compte ${session.email}. Vous l'utiliserez à chaque connexion.`
-            : "Ouvrez le lien reçu par email pour choisir votre mot de passe."
-        }
-      />
-      {session ? (
-        <FormulaireNouveauMotDePasse email={session.email} />
-      ) : (
-        <Link
-          href="/mot-de-passe-oublie"
-          className="flex min-h-cible items-center self-start rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
-        >
-          Recevoir un nouveau lien
-        </Link>
-      )}
-    </div>
+    <EcranSecondaire
+      retour={{ href: "/", libelle: "Accueil" }}
+      avecCompte={session !== null}
+    >
+      <div className="max-w-md">
+        <TitrePage
+          titre="Choisissez votre mot de passe"
+          sousTitre={
+            session
+              ? `Pour le compte ${session.email}. Vous l'utiliserez à chaque connexion.`
+              : "Ouvrez le lien reçu par email pour choisir votre mot de passe."
+          }
+        />
+        {session ? (
+          <FormulaireNouveauMotDePasse email={session.email} />
+        ) : (
+          <Link
+            href="/mot-de-passe-oublie"
+            className="flex min-h-cible items-center self-start rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
+          >
+            Recevoir un nouveau lien
+          </Link>
+        )}
+      </div>
+    </EcranSecondaire>
   );
 }

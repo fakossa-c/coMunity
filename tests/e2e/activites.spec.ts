@@ -21,7 +21,11 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   emails.push(resident.email);
 
   await seConnecter(page, resident.email);
-  await page.getByRole("link", { name: /Proposer/ }).click();
+  await page
+    .getByRole("navigation", { name: "Navigation principale" })
+    .getByRole("link", { name: "Activités" })
+    .click();
+  await page.getByRole("link", { name: "Proposer" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Proposer" }),
   ).toBeVisible();

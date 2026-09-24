@@ -25,8 +25,10 @@ function configurationExigee() {
  * et les politiques RLS s'appliquent à ses droits.
  */
 export async function clientSession() {
-  const { url, cle } = configurationExigee();
+  // Les cookies d'abord : ils rendent la page dynamique, que le build ne tente donc pas de
+  // pré-calculer. Une preview, sans variables Supabase, se construit ainsi quand même.
   const magasin = await cookies();
+  const { url, cle } = configurationExigee();
   return createServerClient(url, cle, {
     cookies: {
       getAll: () => magasin.getAll(),

@@ -12,6 +12,9 @@ export type Session = {
   /** `null` : compte sans profil, qui n'a accès à rien. */
   role: Role | null;
   statut: StatutCompte | null;
+  /** `null` pour un membre du syndic amorcé, qui ne les a pas saisis. */
+  prenom: string | null;
+  nom: string | null;
 };
 
 /** La personne connectée et son profil, lus une fois par requête. `null` si personne n'est connecté. */
@@ -29,19 +32,21 @@ export const lireSession = cache(async (): Promise<Session | null> => {
     email: claims.email ?? "",
     role: profil?.role ?? null,
     statut: profil?.statut ?? null,
+    prenom: profil?.prenom ?? null,
+    nom: profil?.nom ?? null,
   };
 });
 
 type Profil = Pick<Session, "role" | "statut">;
 
-/** Rôle et statut d'un compte, tels que la personne connectée a le droit de les lire. */
+/** Rôle, statut et nom d'un compte, tels que la personne connectée a le droit de les lire. */
 export async function lireProfil(
   supabase: SupabaseClient,
   id: string,
-): Promise<Profil | null> {
+): Promise<Pick<Session, "role" | "statut" | "prenom" | "nom"> | null> {
   const { data } = await supabase
     .from("profil")
-    .select("role, statut")
+    .select("role, statut, prenom, nom")
     .eq("id", id)
     .maybeSingle();
   return data;

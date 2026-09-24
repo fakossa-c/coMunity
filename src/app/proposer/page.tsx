@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bientot } from "@/components/bientot";
+import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 import { FormulaireActivite } from "./formulaire-activite";
@@ -11,7 +12,7 @@ export default async function Proposer() {
   const { data: peutParticiper } = await supabase.rpc("peut_participer");
 
   return (
-    <>
+    <EcranSecondaire retour={{ href: "/activites", libelle: "Annuler" }}>
       <TitrePage
         titre="Proposer"
         sousTitre="Lancez une activité avec vos voisins"
@@ -24,6 +25,6 @@ export default async function Proposer() {
           message="Vous pourrez proposer une activité dès que votre compte sera validé par le syndic."
         />
       )}
-    </>
+    </EcranSecondaire>
   );
 }

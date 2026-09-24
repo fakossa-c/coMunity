@@ -25,6 +25,14 @@ export type PropsBouton = ComponentProps<"button"> & {
   pleineLargeur?: boolean;
 };
 
+/** Classes d'un bouton du design system, pour un lien qui en prend l'apparence. */
+export function classesBouton(
+  variante: VarianteBouton = "action",
+  pleineLargeur = false,
+) {
+  return `inline-flex items-center justify-center rounded-full text-center font-headline text-label-lg transition-transform active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${variantes[variante]} ${pleineLargeur ? "w-full" : ""}`;
+}
+
 /** Bouton en pilule du design system : 56 px de haut, 52 px en variante fantôme. */
 export function Bouton({
   variante = "action",
@@ -38,7 +46,7 @@ export function Bouton({
   return (
     <button
       type="button"
-      className={`inline-flex items-center justify-center rounded-full text-center font-headline text-label-lg transition-transform active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${variantes[variante]} ${pleineLargeur ? "w-full" : ""} ${className ?? ""}`}
+      className={`${classesBouton(variante, pleineLargeur)} ${className ?? ""}`}
       {...props}
     >
       {icone && <Icone nom={icone} taille={iconeTaille} />}

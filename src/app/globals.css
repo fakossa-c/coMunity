@@ -68,6 +68,8 @@
   --color-focus: #0d3b66;
   --color-border-distinct: #2d312e;
   --color-bordure-carte: rgba(45, 49, 46, 0.18);
+  /* Voile encre à 40 % sous la feuille du bas */
+  --color-voile: rgba(18, 28, 42, 0.4);
 
   /* Alias sémantiques : `bg-fond-action`, `text-texte-date`… */
   --color-fond-page: var(--color-surface);
@@ -156,6 +158,8 @@
   --spacing-flottant: 60px;
   --spacing-onglet: 60px;
   --spacing-ligne: 64px;
+  /* LigneMenu sur une page (64 dans la feuille du menu) */
+  --spacing-ligne-page: 72px;
   --spacing-barre-nav: 88px;
 
   /* Ombre plate des cartes de contenu, diffuse du bouton flottant, inversée de la barre d'action */
@@ -164,6 +168,21 @@
   --shadow-barre-action: 0 -8px 24px -4px rgba(24, 34, 48, 0.16);
 
   --breakpoint-desktop: 64rem;
+
+  /* Seul mouvement du design system : la feuille du bas monte, le voile apparaît. */
+  --animate-feuille: feuille-monte 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-voile: voile-apparait 0.25s ease-out;
+
+  @keyframes feuille-monte {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes voile-apparait {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 /* Thème sombre (docs/design/tokens/theme-sombre.css). Les alias sont redéclarés : un var() se
@@ -220,6 +239,7 @@
   --color-focus: #a9c7ff;
   --color-border-distinct: #d9e3f6;
   --color-bordure-carte: rgba(235, 241, 255, 0.14);
+  --color-voile: rgba(0, 0, 0, 0.6);
 
   --color-fond-page: var(--color-surface);
   --color-fond-carte: var(--color-surface-container-lowest);
