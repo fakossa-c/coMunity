@@ -147,8 +147,10 @@ describe("prénom et nom d'un membre du syndic", () => {
       await admin.auth.admin.inviteUserByEmail(email);
     if (error) throw error;
     aSupprimer(invite.user.id);
+    // Ce que fait l'ouverture du lien d'invitation, suivie du choix du mot de passe.
     await admin.auth.admin.updateUserById(invite.user.id, {
       password: "mot-de-passe-de-test",
+      email_confirm: true,
     });
 
     const avant = await profilDe(invite.user.id);
