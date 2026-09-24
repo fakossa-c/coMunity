@@ -69,6 +69,24 @@ test.describe("à 360 px", () => {
     }
   });
 
+  test("en grands caractères, l'en-tête d'un visiteur ne coupe ni la résidence ni « Se connecter »", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.evaluate(() =>
+      document.documentElement.setAttribute("data-taille", "grands"),
+    );
+
+    const entete = page.getByRole("banner");
+    expect(
+      await lignesDuLibelle(entete.getByRole("link", { name: "Se connecter" })),
+    ).toBe(1);
+    const residence = entete.getByText("Résidence Les Tilleuls");
+    expect(
+      await residence.evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+  });
+
   test("l'en-tête défile, la barre du bas reste fixe sans masquer le contenu", async ({
     page,
   }) => {
