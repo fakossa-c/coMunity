@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Annonce, Bouton } from "@/components/formulaire";
+import { Bouton } from "@/components/bouton";
+import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
 import { nomComplet } from "@/lib/nom-complet";

@@ -1,15 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
-import { Annonce, BoutonEnvoi, Champ } from "@/components/formulaire";
+import { Champ } from "@/components/champ";
+import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { demanderLien } from "./actions";
 
 export function FormulaireMotDePasseOublie() {
   const [etat, action] = useActionState(demanderLien, {});
 
   return (
-    <form action={action} className="flex flex-col gap-space-md">
-      <Annonce message={etat.erreur} erreur />
+    <form action={action} className="flex flex-col gap-5">
+      <Annonce message={etat.surEmail ? null : etat.erreur} erreur />
       <Annonce
         message={
           etat.envoye &&
@@ -22,8 +23,11 @@ export function FormulaireMotDePasseOublie() {
         type="email"
         autoComplete="email"
         required
+        erreur={etat.surEmail ? etat.erreur : undefined}
       />
-      <BoutonEnvoi enCours="Envoi…">Recevoir un lien</BoutonEnvoi>
+      <BoutonEnvoi enCours="Envoi…" pleineLargeur>
+        Recevoir un lien
+      </BoutonEnvoi>
     </form>
   );
 }

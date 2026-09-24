@@ -51,7 +51,10 @@ test("le thème sombre change le fond, le texte, les champs et le focus", async 
   await poserSurLaRacine(page, "data-theme", "sombre");
   expect(await style(corps, "background-color")).toBe("rgb(18, 28, 42)");
   expect(await style(corps, "color")).toBe("rgb(235, 241, 255)");
-  expect(await style(email, "background-color")).toBe("rgb(27, 38, 54)");
+  // Le fond visible d'un champ est celui de sa boîte, qui entoure la saisie.
+  expect(await style(email.locator(".."), "background-color")).toBe(
+    "rgb(27, 38, 54)",
+  );
 
   await email.focus();
   await page.keyboard.press("Tab");
@@ -102,9 +105,7 @@ test("les boutons sont des pilules et les liens des cibles de 52 px", async ({
   const bouton = page.getByRole("button", { name: "Se connecter" });
   const boite = (await bouton.boundingBox())!;
   expect(boite.height).toBeGreaterThanOrEqual(52);
-  expect(parseFloat(await style(bouton, "border-top-left-radius"))).toBe(
-    9999,
-  );
+  expect(parseFloat(await style(bouton, "border-top-left-radius"))).toBe(9999);
 
   for (const nom of ["Mot de passe oublié ?", "Créer mon compte"]) {
     const lien = (await page.getByRole("link", { name: nom }).boundingBox())!;
@@ -150,7 +151,9 @@ test("libellé au-dessus du champ, aide et erreur en dessous", async ({
 
   await nouveau.fill("un-mot-de-passe");
   await confirmation.fill("un-autre-mot-de-passe");
-  await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+  await page
+    .getByRole("button", { name: "Enregistrer le mot de passe" })
+    .click();
 
   const erreur = page
     .getByRole("alert")

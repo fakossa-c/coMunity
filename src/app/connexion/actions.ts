@@ -5,7 +5,12 @@ import { cheminInterne } from "@/lib/chemin-interne";
 import { accueilDe, lireProfil } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
-export type EtatConnexion = { erreur?: string; email?: string };
+export type EtatConnexion = {
+  erreur?: string;
+  /** Champ auquel se rapporte l'erreur, affichée sous lui ; sans champ, en tête du formulaire. */
+  champ?: "email" | "mot-de-passe";
+  email?: string;
+};
 
 export async function seConnecter(
   _: EtatConnexion,
@@ -13,8 +18,15 @@ export async function seConnecter(
 ): Promise<EtatConnexion> {
   const email = String(donnees.get("email") ?? "").trim();
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
-  if (!email || !motDePasse) {
-    return { erreur: "Saisissez votre email et votre mot de passe.", email };
+  if (!email) {
+    return { erreur: "Saisissez votre adresse email.", champ: "email" };
+  }
+  if (!motDePasse) {
+    return {
+      erreur: "Saisissez votre mot de passe.",
+      champ: "mot-de-passe",
+      email,
+    };
   }
 
   const supabase = await clientSession();

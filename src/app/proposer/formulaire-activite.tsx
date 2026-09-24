@@ -2,12 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import {
-  Annonce,
-  Champ,
-  ChampListe,
-  BoutonEnvoi,
-} from "@/components/formulaire";
+import { Champ, ChampListe } from "@/components/champ";
+import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import {
   categoriesActivite,
   categoriesActiviteListe,
