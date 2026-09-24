@@ -3,6 +3,7 @@ import {
   Atkinson_Hyperlegible_Next,
   Plus_Jakarta_Sans,
 } from "next/font/google";
+import { EcouteInstallation } from "@/components/ecoute-installation";
 import { EnTete } from "@/components/en-tete";
 import { GardeCompte, SiCompteOuvert } from "@/components/garde-compte";
 import { NavigationPrincipale } from "@/components/navigation-principale";
@@ -28,6 +29,9 @@ export const metadata: Metadata = {
     template: "%s · Vie de la résidence",
   },
   description: "Activités, annonces et voisins de la résidence.",
+  // iPhone : ouverture en plein écran depuis l'écran d'accueil. Le nom sous l'icône vient du
+  // `short_name` du manifeste : le lire ici rendrait les métadonnées de chaque page dynamiques.
+  appleWebApp: { capable: true, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -62,6 +66,7 @@ export default function RootLayout({
         >
           <GardeCompte>{children}</GardeCompte>
         </main>
+        <EcouteInstallation />
       </body>
     </html>
   );
