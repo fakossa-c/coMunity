@@ -33,31 +33,6 @@ export function Champ({ libelle, aide, id, className, ...props }: PropsChamp) {
   );
 }
 
-type PropsChampListe = ComponentProps<"select"> & { libelle: string };
-
-/** Liste déroulante native, à l'allure d'un `Champ`. */
-export function ChampListe({
-  libelle,
-  id,
-  className,
-  ...props
-}: PropsChampListe) {
-  const idAuto = useId();
-  const idChamp = id ?? idAuto;
-  return (
-    <div className={`flex flex-col gap-space-xs ${className ?? ""}`}>
-      <label htmlFor={idChamp} className="font-headline text-label-lg">
-        {libelle}
-      </label>
-      <select
-        id={idChamp}
-        className="min-h-14 w-full rounded-md border-2 border-border-distinct bg-surface-container-lowest px-4 text-body-lg text-on-surface"
-        {...props}
-      />
-    </div>
-  );
-}
-
 const styles = {
   principal:
     "bg-inverse-surface text-on-primary hover:bg-on-surface disabled:opacity-70",

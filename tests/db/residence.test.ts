@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientVisiteur } from "./clients";
+import { clientAdmin, clientVisiteur } from "./clients";
 
 describe("résidence, vue par un visiteur non connecté", () => {
   it("lit le nom de la résidence", async () => {
@@ -12,13 +12,13 @@ describe("résidence, vue par un visiteur non connecté", () => {
     expect(data?.nom).toBe("Résidence Les Tilleuls");
   });
 
-  it("ne lit pas le code de résidence", async () => {
-    const { data, error } = await clientVisiteur()
+  it("la résidence n'a plus de code d'inscription", async () => {
+    const { error } = await clientAdmin()
       .from("residence")
       .select("code")
       .single();
 
-    expect(data).toBeNull();
-    expect(error?.code).toBe("42501");
+    // 42703 : colonne inexistante.
+    expect(error?.code).toBe("42703");
   });
 });

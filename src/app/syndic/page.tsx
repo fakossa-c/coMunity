@@ -37,12 +37,6 @@ export default async function EspaceSyndic() {
           }
         />
         <Rubrique
-          href="/syndic/code-residence"
-          icone="key"
-          titre="Code de la résidence"
-          description="Partagez-le aux résidents, ou régénérez-le s'il a circulé trop loin."
-        />
-        <Rubrique
           href="/syndic/membres"
           icone="shield_person"
           titre="Membres du syndic"
