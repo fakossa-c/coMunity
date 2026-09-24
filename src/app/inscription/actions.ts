@@ -2,10 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
 import { clientSession } from "@/lib/supabase/serveur";
-
-/** Aligné sur la contrainte de `profil.prenom` et `profil.nom` en base. */
-const LONGUEUR_MAXIMALE_NOM = 40;
 
 /** Ce que la personne a saisi, rendu au formulaire en cas d'erreur (sauf les mots de passe). */
 export type Saisie = { email: string; prenom: string; nom: string };

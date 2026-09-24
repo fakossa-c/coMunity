@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { Annonce, Bouton } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
-import type { Resultat } from "../resultat";
 import { nomComplet } from "@/lib/nom-complet";
+import type { Resultat } from "../resultat";
 import { statuer, type Decision, type Resident } from "./actions";
 
 type Props = { enAttente: Resident[]; valides: Resident[] };

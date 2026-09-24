@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Annonce, BoutonEnvoi, Champ } from "@/components/formulaire";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
 import { inscrire } from "./actions";
 
 export function FormulaireInscription() {
@@ -48,7 +49,7 @@ export function FormulaireInscription() {
         libelle="Prénom"
         name="prenom"
         autoComplete="given-name"
-        maxLength={40}
+        maxLength={LONGUEUR_MAXIMALE_NOM}
         required
         defaultValue={saisie?.prenom}
       />
@@ -57,7 +58,7 @@ export function FormulaireInscription() {
         aide="Le syndic s'en sert pour vérifier que vous habitez la résidence."
         name="nom"
         autoComplete="family-name"
-        maxLength={40}
+        maxLength={LONGUEUR_MAXIMALE_NOM}
         required
         defaultValue={saisie?.nom}
       />

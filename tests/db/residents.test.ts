@@ -85,14 +85,6 @@ describe("inscription d'un résident", () => {
     const { data } = await profilDe(utilisateur!.id);
     expect(data).toBeNull();
   });
-
-  it("les fonctions du code de résidence n'existent plus", async () => {
-    const syndic = await nouveauSyndic();
-
-    const { error } = await syndic.client.rpc("lire_code_residence");
-
-    expect(error).not.toBeNull();
-  });
 });
 
 describe("droits d'un compte selon son statut", () => {

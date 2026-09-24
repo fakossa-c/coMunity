@@ -17,6 +17,8 @@ alter table public.profil
     role = 'syndic' or (prenom is not null and nom is not null)
   );
 
+comment on column public.profil.nom is 'Nom de famille : le syndic s''en sert pour reconnaître un résident avant de le valider.';
+
 -- Un compte ouvert avec un prénom ou un nom devient un résident en attente ; sans l'un ni
 -- l'autre, il n'a pas de profil, donc aucun accès. La contrainte `resident_complet` refuse
 -- un prénom ou un nom manquant, ce qui fait échouer la création du compte.
