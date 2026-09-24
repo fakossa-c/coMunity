@@ -1,0 +1,36 @@
+<!-- @dsCard group="App résident" viewport="430x884" name="App résident" subtitle="Accueil, fiche, Activités, Annonces, menu et pages Profil" -->
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="../../guidelines/charger-ds.js"></script>
+<style>body{margin:0;padding:20px;display:flex;justify-content:center;background:var(--color-surface-dim);color:var(--color-on-surface);font-family:var(--font-body)}
+*{scrollbar-width:none}*::-webkit-scrollbar{display:none}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="ecrans.jsx"></script>
+<script type="text/babel">
+DSReady.then(function (DS) {
+const EMPILES = ["fiche", "profil", "syndic", "copro", "identifiants", "informations", "interets", "reglages", "modifier-email", "modifier-mdp", "modifier-infos"];
+function App() {
+  const [pile, setPile] = React.useState(["accueil"]);
+  const [inscrit, setInscrit] = React.useState(null);
+  const [menu, setMenu] = React.useState(false);
+  const [grand, setGrand] = React.useState(false);
+  const [theme, setTheme] = React.useState("clair");
+  const ecran = pile[pile.length - 1];
+  const aller = (e) => setPile(EMPILES.includes(e) ? pile.concat(e) : [e]);
+  const retour = () => setPile(pile.length > 1 ? pile.slice(0, -1) : ["accueil"]);
+  const props = { aller, retour, inscrit, inscrire: (n) => { setInscrit(n); setPile(["activites"]); }, annuler: () => setInscrit(0), ouvrirMenu: () => setMenu(true), basculerTaille: () => setGrand(!grand), grand, theme, setTheme, ecran };
+  const E = { accueil: EcranAccueil, fiche: EcranFiche, activites: EcranActivites, annonces: EcranAnnonces, profil: EcranProfil, identifiants: EcranIdentifiants, informations: EcranInformations, interets: EcranInterets, reglages: EcranReglages, "modifier-email": EcranModifierEmail, "modifier-mdp": EcranModifierMotDePasse, "modifier-infos": EcranModifierInfos }[ecran] || EcranRubrique;
+  return (
+    <div data-taille={grand ? "grands" : undefined} data-theme={theme === "sombre" ? "sombre" : undefined} style={{ width: 390, height: 844, borderRadius: 40, boxShadow: "0 0 0 8px #121c2a", overflow: "hidden", flex: "none", position: "relative" }}>
+      <E key={ecran} {...props} />
+      <DS.MenuProfil ouvert={menu} onFermer={() => setMenu(false)} onChoisir={aller} initiale="D" nom="Danielle" adresse="Bât. B, 2e étage" />
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+});
+</script></body></html>

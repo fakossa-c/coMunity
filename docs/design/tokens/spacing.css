@@ -1,0 +1,28 @@
+:root {
+  --spacing: 0.25rem;
+  --spacing-gutter: 1rem;
+  --spacing-gutter-tablet: 1.5rem;
+  --spacing-margin: 1.25rem;          /* 20 px, marge de page mobile */
+  --spacing-margin-tablet: 2rem;
+  --spacing-margin-desktop: 3rem;
+  --spacing-space-xs: 0.375rem;       /* 6 */
+  --spacing-space-sm: 0.625rem;       /* 10 */
+  --spacing-space-md: 1.125rem;       /* 18 */
+  --spacing-space-lg: 1.75rem;        /* 28 */
+  --spacing-space-xl: 2.5rem;         /* 40 */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;               /* 12, bandeau de statut, champs, cases de choix, sondage */
+  --radius-lg: 1rem;                  /* 16, cartes, encarts, photos */
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;              /* tous les boutons, puces, badges */
+  --radius-feuille: 28px;             /* coins hauts de la feuille du bas (MenuProfil) */
+  /* Cibles */
+  --cible-min: 52px;                  /* bouton rond, puce, onglet retour */
+  --hauteur-bouton: 56px;             /* boutons de carte et CTA */
+  --hauteur-flottant: 60px;
+  --hauteur-onglet: 60px;
+  --hauteur-barre-nav: 88px;
+  --hauteur-barre-etat: 44px;
+  --hauteur-champ: 56px;
+  --hauteur-ligne: 64px;              /* ligne de CarteLignes, LigneMenu en feuille (72 en page) */
+}

@@ -1,0 +1,60 @@
+:root {
+  --text-headline-xl: 34px;
+  --text-headline-xl--line-height: 44px;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl--font-weight: 800;
+  --text-headline-xl-mobile: 28px;
+  --text-headline-xl-mobile--line-height: 36px;
+  --text-headline-xl-mobile--letter-spacing: -0.01em;
+  --text-headline-xl-mobile--font-weight: 800;
+  --text-headline-lg: 26px;
+  --text-headline-lg--line-height: 34px;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-md: 22px;
+  --text-headline-md--line-height: 30px;
+  --text-headline-md--font-weight: 700;
+  --text-headline-sm: 19px;
+  --text-headline-sm--line-height: 26px;
+  --text-headline-sm--font-weight: 700;
+  --text-body-xl: 20px;
+  --text-body-xl--line-height: 32px;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 29px;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 26px;
+  --text-body-bold: 18px;
+  --text-body-bold--line-height: 28px;
+  --text-body-bold--font-weight: 700;
+  --text-label-lg: 17px;
+  --text-label-lg--line-height: 22px;
+  --text-label-lg--font-weight: 700;
+  --text-label-md: 15px;
+  --text-label-md--line-height: 20px;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 700;
+  --text-label-sm: 14px;
+  --text-label-sm--line-height: 18px;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 700;
+  /* Tailles propres aux écrans 2a */
+  --text-etiquette: 15px;      /* badges confort, onglets de la barre */
+  --text-legende-photo: 13px;  /* légende d'emplacement photo (mono) */
+  --text-barre-etat: 15px;
+}
+
+/* Grands caractères (Profil › Mes réglages) : ×1,25 et interlignage 1,4.
+   Poser data-taille="grands" sur la racine de l'app. */
+[data-taille="grands"] {
+  --text-headline-xl-mobile: 35px; --text-headline-xl-mobile--line-height: 1.4;
+  --text-headline-md: 28px; --text-headline-md--line-height: 1.4;
+  --text-headline-sm: 24px; --text-headline-sm--line-height: 1.4;
+  --text-body-xl: 25px; --text-body-xl--line-height: 1.4;
+  --text-body-lg: 23px; --text-body-lg--line-height: 1.4;
+  --text-body-md: 20px; --text-body-md--line-height: 1.4;
+  --text-body-bold: 23px; --text-body-bold--line-height: 1.4;
+  --text-label-lg: 21px; --text-label-lg--line-height: 1.4;
+  --text-label-md: 19px; --text-label-md--line-height: 1.4;
+  --text-label-sm: 18px; --text-label-sm--line-height: 1.4;
+  --text-etiquette: 19px; --text-etiquette--line-height: 1.4;
+}
