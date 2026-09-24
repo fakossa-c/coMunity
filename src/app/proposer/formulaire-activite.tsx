@@ -11,10 +11,10 @@ import {
 import {
   categoriesActivite,
   categoriesActiviteListe,
-  pictogrammesDe,
+  pictogrammeDe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
-import type { Resultat } from "./resultat";
+import type { Resultat } from "@/lib/resultat";
 import { publier } from "./actions";
 
 const CATEGORIE_INITIALE = categoriesActiviteListe[0];
@@ -47,7 +47,7 @@ export function FormulaireActivite() {
       const issue = await publier({
         titre,
         categorie,
-        pictogramme: pictogrammesDe(categorie)[0],
+        pictogramme: pictogrammeDe(categorie),
         description,
         date_activite: dateActivite,
         heure_debut: heureDebut,

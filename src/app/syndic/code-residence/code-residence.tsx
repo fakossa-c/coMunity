@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Annonce, Bouton } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
-import type { Resultat } from "../resultat";
+import type { Resultat } from "@/lib/resultat";
 import { regenererCode } from "./actions";
 
 export function CodeResidence({ code }: { code: string }) {

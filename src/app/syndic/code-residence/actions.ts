@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { clientSession } from "@/lib/supabase/serveur";
-import type { Resultat } from "../resultat";
+import type { Resultat } from "@/lib/resultat";
 
 /** Remplace le code de résidence. La base refuse si la personne n'est pas membre du syndic. */
 export async function regenererCode(): Promise<Resultat> {

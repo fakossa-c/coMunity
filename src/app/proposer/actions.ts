@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { CategorieActivite } from "@/lib/categories-activite";
 import { clientSession } from "@/lib/supabase/serveur";
-import type { Resultat } from "./resultat";
+import type { Resultat } from "@/lib/resultat";
 
 export type NouvelleActivite = {
   titre: string;
