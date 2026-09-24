@@ -130,6 +130,10 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
   );
 
   await page.getByRole("link", { name: "Mot de passe oublié ?" }).click();
+  // La connexion a aussi un champ « Adresse email » : attendre la nouvelle page avant de saisir.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Mot de passe oublié" }),
+  ).toBeVisible();
   await page.getByLabel("Adresse email").fill(syndic.email);
   await page.getByRole("button", { name: "Recevoir un lien" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
