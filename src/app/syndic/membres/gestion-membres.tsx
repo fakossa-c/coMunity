@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Annonce, Bouton, BoutonEnvoi, Champ } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { inviterCollegue, retirerMembre, type Membre } from "./actions";
-import type { Resultat } from "../resultat";
+import type { Resultat } from "@/lib/resultat";
 
 type Props = { membres: Membre[]; idMoi: string };
 

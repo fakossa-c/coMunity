@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { nomComplet } from "@/lib/nom-complet";
 import { clientSession } from "@/lib/supabase/serveur";
-import type { Resultat } from "../resultat";
+import type { Resultat } from "@/lib/resultat";
 
 export type Resident = {
   id: string;
