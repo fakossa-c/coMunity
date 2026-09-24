@@ -195,6 +195,10 @@ test("les anciennes pages n'existent plus", async ({ page }) => {
   for (const chemin of ["/mon-evenement", "/voisins-profil"]) {
     const reponse = await page.goto(chemin);
     expect(reponse?.status()).toBe(404);
+    await expect(
+      page.getByRole("main").getByRole("heading", { name: "Page introuvable" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Accueil" })).toBeVisible();
   }
 });
 
