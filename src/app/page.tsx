@@ -3,7 +3,29 @@ import { CarteActivite } from "@/components/carte-activite";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 
+const MESSAGE_VIDE =
+  "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du syndic apparaîtront ici.";
+
 export default async function Activites() {
+  const supabase = await clientSession();
+  const { data: peutConsulter } = await supabase.rpc("peut_consulter");
+
+  return (
+    <>
+      <TitrePage
+        titre="Activités"
+        sousTitre="Découvrez et participez à la vie de la résidence"
+      />
+      {peutConsulter ? (
+        <Catalogue />
+      ) : (
+        <Bientot icone="diversity_3" message={MESSAGE_VIDE} />
+      )}
+    </>
+  );
+}
+
+async function Catalogue() {
   const supabase = await clientSession();
   const aujourdhui = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
@@ -17,29 +39,17 @@ export default async function Activites() {
   if (error)
     throw new Error(`Catalogue des activités illisible : ${error.message}`);
 
+  if (data.length === 0) {
+    return <Bientot icone="diversity_3" message={MESSAGE_VIDE} />;
+  }
+
   return (
-    <>
-      <TitrePage
-        titre="Activités"
-        sousTitre="Découvrez et participez à la vie de la résidence"
-      />
-      {data.length === 0 ? (
-        <Bientot
-          icone="diversity_3"
-          message="Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du syndic apparaîtront ici."
-        />
-      ) : (
-        <ul
-          aria-label="Activités à venir"
-          className="flex flex-col gap-space-sm"
-        >
-          {data.map((activite) => (
-            <li key={activite.id}>
-              <CarteActivite activite={activite} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+    <ul aria-label="Activités à venir" className="flex flex-col gap-space-sm">
+      {data.map((activite) => (
+        <li key={activite.id}>
+          <CarteActivite activite={activite} />
+        </li>
+      ))}
+    </ul>
   );
 }
