@@ -57,3 +57,6 @@ next-env.d.ts
 /.design-sync/.cache/
 /.design-sync/learnings/
 /.design-sync/node_modules
+
+# Divers
+z-prompt
