@@ -1,14 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  Annonce,
-  BoutonEnvoi,
-  Champ,
-  ChampListe,
-} from "@/components/formulaire";
-import { ETAGES, libelleEtage } from "@/lib/etage";
+import { Annonce, BoutonEnvoi, Champ } from "@/components/formulaire";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
 import { inscrire } from "./actions";
 
 export function FormulaireInscription() {
@@ -18,8 +13,8 @@ export function FormulaireInscription() {
   if (etat.confirmation) return <Annonce message={etat.confirmation} />;
 
   return (
-    // La clé change à chaque refus : les champs repartent de la saisie renvoyée,
-    // liste déroulante comprise, au lieu d'être vidés par React.
+    // La clé change à chaque refus : les champs repartent de la saisie renvoyée
+    // au lieu d'être vidés par React.
     <form
       key={etat.essai}
       action={action}
@@ -52,45 +47,20 @@ export function FormulaireInscription() {
       />
       <Champ
         libelle="Prénom"
-        aide="Vos voisins vous reconnaîtront à votre prénom."
         name="prenom"
         autoComplete="given-name"
-        maxLength={40}
+        maxLength={LONGUEUR_MAXIMALE_NOM}
         required
         defaultValue={saisie?.prenom}
       />
       <Champ
-        libelle="Bâtiment"
-        aide="Par exemple : A, B ou le nom de votre bâtiment."
-        name="batiment"
-        maxLength={40}
+        libelle="Nom"
+        aide="Le syndic s'en sert pour vérifier que vous habitez la résidence."
+        name="nom"
+        autoComplete="family-name"
+        maxLength={LONGUEUR_MAXIMALE_NOM}
         required
-        defaultValue={saisie?.batiment}
-      />
-      <ChampListe
-        libelle="Étage"
-        name="etage"
-        required
-        defaultValue={saisie?.etage ?? ""}
-      >
-        <option value="" disabled>
-          Choisissez votre étage
-        </option>
-        {ETAGES.map((etage) => (
-          <option key={etage} value={etage}>
-            {libelleEtage(etage)}
-          </option>
-        ))}
-      </ChampListe>
-      <Champ
-        libelle="Code de la résidence"
-        aide="Le syndic le communique aux résidents, par exemple dans le groupe WhatsApp de la résidence."
-        name="code"
-        autoComplete="off"
-        autoCapitalize="characters"
-        spellCheck={false}
-        required
-        defaultValue={saisie?.code}
+        defaultValue={saisie?.nom}
       />
       <BoutonEnvoi enCours="Création du compte…">Créer mon compte</BoutonEnvoi>
     </form>

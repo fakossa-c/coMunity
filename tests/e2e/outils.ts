@@ -47,21 +47,10 @@ export async function nouveauResident(
     role: "resident",
     statut,
     prenom: "Danielle",
-    batiment: "B",
-    etage: 2,
+    nom: "Martin",
   });
   if (profil.error) throw profil.error;
   return { id: data.user.id, email };
-}
-
-/** Le code de résidence en vigueur, lu comme le fait le serveur. */
-export async function codeResidence(): Promise<string> {
-  const { data, error } = await clientAdmin()
-    .from("residence")
-    .select("code")
-    .single();
-  if (error) throw error;
-  return data.code;
 }
 
 /** Supprime les comptes créés pendant un test, invités compris. */

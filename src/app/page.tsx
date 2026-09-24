@@ -1,3 +1,4 @@
+import { AideInstallation } from "@/components/aide-installation";
 import { Bientot } from "@/components/bientot";
 import { CarteActivite } from "@/components/carte-activite";
 import { TitrePage } from "@/components/titre-page";
@@ -16,6 +17,7 @@ export default async function Activites() {
         titre="Activités"
         sousTitre="Découvrez et participez à la vie de la résidence"
       />
+      <AideInstallation />
       {peutConsulter ? (
         <Catalogue />
       ) : (

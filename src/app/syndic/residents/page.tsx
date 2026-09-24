@@ -13,7 +13,7 @@ export default async function Residents() {
   const supabase = await clientSession();
   const { data, error } = await supabase
     .from("profil")
-    .select("id, email, prenom, batiment, etage, statut")
+    .select("id, email, prenom, nom, statut")
     .eq("role", "resident")
     .in("statut", ["en_attente", "valide"])
     .order("cree_le");
@@ -22,7 +22,9 @@ export default async function Residents() {
 
   const valides = data
     .filter((r) => r.statut === "valide")
-    .sort((a, b) => a.prenom.localeCompare(b.prenom, "fr"));
+    .sort((a, b) =>
+      `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, "fr"),
+    );
 
   return (
     <>

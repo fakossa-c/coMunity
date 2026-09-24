@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Annonce, Bouton } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
-import { libelleEtage } from "@/lib/etage";
+import { nomComplet } from "@/lib/nom-complet";
 import type { Resultat } from "@/lib/resultat";
 import { statuer, type Decision, type Resident } from "./actions";
 
@@ -45,7 +45,7 @@ export function GestionResidents({ enAttente, valides }: Props) {
                   Valider
                   <span className="sr-only">
                     {" "}
-                    le compte de {resident.prenom}
+                    le compte de {nomComplet(resident)}
                   </span>
                 </Bouton>
                 <Confirmation
@@ -54,7 +54,7 @@ export function GestionResidents({ enAttente, valides }: Props) {
                   confirmer="Confirmer le refus"
                   texteEnCours="Refus…"
                   enCours={enCours}
-                  prenom={resident.prenom}
+                  nom={nomComplet(resident)}
                   onConfirmer={() => executer("refuse")}
                 />
               </>
@@ -87,7 +87,7 @@ export function GestionResidents({ enAttente, valides }: Props) {
                 confirmer="Confirmer le retrait"
                 texteEnCours="Retrait…"
                 enCours={enCours}
-                prenom={resident.prenom}
+                nom={nomComplet(resident)}
                 onConfirmer={() => executer("retire")}
               />
             )}
@@ -147,13 +147,10 @@ function LigneResident({
           <Icone nom={icone} className="size-6" />
         </span>
         <span className="min-w-0">
-          <span className="block font-headline text-headline-sm">
-            {resident.prenom}
+          <span className="block font-headline text-headline-sm break-words">
+            {nomComplet(resident)}
           </span>
-          <span className="block text-body-lg">
-            Bâtiment {resident.batiment} · {libelleEtage(resident.etage)}
-          </span>
-          <span className="block text-body-md break-words text-on-surface-variant">
+          <span className="block text-body-lg break-words text-on-surface-variant">
             {resident.email}
           </span>
         </span>
@@ -172,7 +169,7 @@ function Confirmation({
   confirmer,
   texteEnCours,
   enCours,
-  prenom,
+  nom,
   onConfirmer,
 }: {
   libelle: string;
@@ -180,7 +177,7 @@ function Confirmation({
   confirmer: string;
   texteEnCours: string;
   enCours: boolean;
-  prenom: string;
+  nom: string;
   onConfirmer: () => void;
 }) {
   const [demandee, setDemandee] = useState(false);
@@ -190,7 +187,7 @@ function Confirmation({
       <Bouton variante="contour" onClick={() => setDemandee(true)}>
         <Icone nom={icone} className="size-6" />
         {libelle}
-        <span className="sr-only"> : {prenom}</span>
+        <span className="sr-only"> : {nom}</span>
       </Bouton>
     );
   }

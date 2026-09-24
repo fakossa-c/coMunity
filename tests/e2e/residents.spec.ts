@@ -1,6 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
-  codeResidence,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -50,7 +49,7 @@ function navigationPrincipale(page: Page) {
 
 const BANDEAU = "Votre compte attend la validation du syndic";
 
-test("un résident s'inscrit avec le code de la résidence, puis le syndic le valide", async ({
+test("un résident s'inscrit avec son prénom et son nom, puis le syndic le valide", async ({
   page,
   browser,
 }) => {
@@ -63,23 +62,22 @@ test("un résident s'inscrit avec le code de la résidence, puis le syndic le va
     page.getByRole("heading", { level: 1, name: "Créer mon compte" }),
   ).toBeVisible();
 
+  await expect(page.getByLabel("Code de la résidence")).toHaveCount(0);
   await page.getByLabel("Adresse email").fill(email);
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
-  await page.getByLabel("Confirmez le mot de passe").fill(MOT_DE_PASSE);
+  await page.getByLabel("Confirmez le mot de passe").fill("pas-le-meme");
   await page.getByLabel("Prénom").fill("Colette");
-  await page.getByLabel("Bâtiment").fill("B");
-  await page.getByLabel("Étage").selectOption({ label: "3e étage" });
-  await page.getByLabel("Code de la résidence").fill("PAS-LE-BON");
+  await page.getByLabel("Nom", { exact: true }).fill("Durand");
   await page.getByRole("button", { name: "Créer mon compte" }).click();
 
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
-    "Ce code de résidence n'est pas le bon",
+    "Les deux mots de passe ne sont pas identiques",
   );
   await expect(page.getByLabel("Prénom")).toHaveValue("Colette");
+  await expect(page.getByLabel("Nom", { exact: true })).toHaveValue("Durand");
 
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByLabel("Confirmez le mot de passe").fill(MOT_DE_PASSE);
-  await page.getByLabel("Code de la résidence").fill(await codeResidence());
   await page.getByRole("button", { name: "Créer mon compte" }).click();
 
   await expect(
@@ -93,15 +91,14 @@ test("un résident s'inscrit avec le code de la résidence, puis le syndic le va
 
   const syndic = await syndicSurLesResidents(browser);
   const enAttente = ligne(syndic.page, "Résidents en attente", email);
-  await expect(enAttente).toContainText("Colette");
-  await expect(enAttente).toContainText("Bâtiment B · 3e étage");
+  await expect(enAttente).toContainText("Colette Durand");
   await syndic.page.screenshot({
     path: test.info().outputPath("residents-en-attente.png"),
     fullPage: true,
   });
   await enAttente.getByRole("button", { name: "Valider" }).click();
   await expect(syndic.page.getByRole("main").getByRole("status")).toContainText(
-    "Compte de Colette validé",
+    "Compte de Colette Durand validé",
   );
   await expect(ligne(syndic.page, "Résidents validés", email)).toBeVisible();
   await syndic.appareil.close();
@@ -125,7 +122,7 @@ test("un résident refusé ne voit qu'un message l'invitant à contacter le synd
   await enAttente.getByRole("button", { name: "Refuser" }).click();
   await enAttente.getByRole("button", { name: "Confirmer le refus" }).click();
   await expect(syndic.page.getByRole("main").getByRole("status")).toContainText(
-    "Compte de Danielle refusé",
+    "Compte de Danielle Martin refusé",
   );
   await syndic.appareil.close();
 
@@ -156,7 +153,7 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
   await valide.getByRole("button", { name: "Retirer l'accès" }).click();
   await valide.getByRole("button", { name: "Confirmer le retrait" }).click();
   await expect(syndic.page.getByRole("main").getByRole("status")).toContainText(
-    "Accès retiré à Danielle",
+    "Accès retiré à Danielle Martin",
   );
   await expect(
     ligne(syndic.page, "Résidents validés", resident.email),
@@ -173,22 +170,18 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
   await expect(navigationPrincipale(page)).toHaveCount(0);
 });
 
-test("le syndic consulte le code de la résidence", async ({ page }) => {
+test("l'espace syndic ne propose plus de code de résidence", async ({
+  page,
+}) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
 
   await seConnecter(page, syndic.email);
-  await page.getByRole("link", { name: /Code de la résidence/ }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
+  ).toBeVisible();
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Code de la résidence" }),
-  ).toBeVisible();
-  await expect(page.getByRole("main")).toContainText(await codeResidence());
-  await expect(
-    page.getByRole("button", { name: "Régénérer le code" }),
-  ).toBeVisible();
-  await page.screenshot({
-    path: test.info().outputPath("code-residence.png"),
-    fullPage: true,
-  });
+    page.getByRole("link", { name: /Code de la résidence/ }),
+  ).toHaveCount(0);
 });

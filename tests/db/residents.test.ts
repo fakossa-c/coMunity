@@ -1,10 +1,10 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   aSupprimer,
   clientAdmin,
   clientVisiteur,
   type Compte,
-  FOYER,
+  IDENTITE,
   nouveauResident,
   nouveauSyndic,
   nouvelEmail,
@@ -18,32 +18,23 @@ const tousLesStatuts: StatutResident[] = [
   "retire",
 ];
 
-async function codeEnVigueur(): Promise<string> {
-  const { data, error } = await clientAdmin()
-    .from("residence")
-    .select("code")
-    .single();
-  if (error) throw error;
-  return data.code;
-}
-
 /** Crée un compte résident comme le fait la page d'inscription. */
-async function inscrire(code: string, foyer: Record<string, unknown> = FOYER) {
+async function inscrire(identite: Record<string, unknown> = IDENTITE) {
   const client = clientVisiteur();
   const email = nouvelEmail("inscrit");
   const { data, error } = await client.auth.signUp({
     email,
     password: "mot-de-passe-de-test",
-    options: { data: { ...foyer, code_residence: code } },
+    options: { data: identite },
   });
   if (data.user) aSupprimer(data.user.id);
-  return { email, client, utilisateur: data.user, error };
+  return { email, utilisateur: data.user, error };
 }
 
 function profilDe(id: string) {
   return clientAdmin()
     .from("profil")
-    .select("role, statut, prenom, batiment, etage")
+    .select("role, statut, prenom, nom")
     .eq("id", id)
     .maybeSingle();
 }
@@ -53,31 +44,31 @@ function statuer(compte: Compte, resident: string, decision: StatutResident) {
 }
 
 describe("inscription d'un résident", () => {
-  it("avec le code de la résidence, le compte est créé en attente avec son prénom, son bâtiment et son étage", async () => {
-    const { utilisateur, error } = await inscrire(await codeEnVigueur());
+  it("le compte est créé en attente avec son prénom et son nom", async () => {
+    const { utilisateur, error } = await inscrire({
+      prenom: "  Colette ",
+      nom: " Durand ",
+    });
 
     expect(error).toBeNull();
     const { data } = await profilDe(utilisateur!.id);
     expect(data).toEqual({
       role: "resident",
       statut: "en_attente",
-      prenom: "Danielle",
-      batiment: "B",
-      etage: 2,
+      prenom: "Colette",
+      nom: "Durand",
     });
   });
 
-  it("le code se saisit sans se soucier des majuscules, des espaces ni des tirets", async () => {
-    const code = await codeEnVigueur();
-    const saisie = ` ${code.toLowerCase().replaceAll("-", " ")} `;
-
-    const { error } = await inscrire(saisie);
-
-    expect(error).toBeNull();
-  });
-
-  it("avec un mauvais code, aucun compte n'est créé", async () => {
-    const { email, error } = await inscrire("PAS-LE-BON");
+  it.each([
+    ["sans prénom", { ...IDENTITE, prenom: "  " }],
+    ["sans nom", { ...IDENTITE, nom: "" }],
+    [
+      "avec un nom de plus de 40 caractères",
+      { ...IDENTITE, nom: "x".repeat(41) },
+    ],
+  ])("%s, l'inscription est refusée", async (_, identite) => {
+    const { email, error } = await inscrire(identite);
 
     expect(error).not.toBeNull();
     const { data } = await clientAdmin()
@@ -87,30 +78,12 @@ describe("inscription d'un résident", () => {
     expect(data).toEqual([]);
   });
 
-  it.each([
-    ["sans prénom", { ...FOYER, prenom: "  " }],
-    ["sans bâtiment", { ...FOYER, batiment: "" }],
-    ["avec un étage négatif", { ...FOYER, etage: -1 }],
-  ])("%s, l'inscription est refusée", async (_, foyer) => {
-    const { error } = await inscrire(await codeEnVigueur(), foyer);
+  it("un compte ouvert sans prénom ni nom n'a aucun profil, donc aucun accès", async () => {
+    const { utilisateur, error } = await inscrire({});
 
-    expect(error).not.toBeNull();
-  });
-
-  it("un visiteur vérifie un code sans pouvoir lire celui de la résidence", async () => {
-    const visiteur = clientVisiteur();
-
-    const bon = await visiteur.rpc("code_residence_valide", {
-      essai: await codeEnVigueur(),
-    });
-    const mauvais = await visiteur.rpc("code_residence_valide", {
-      essai: "PAS-LE-BON",
-    });
-    const lecture = await visiteur.rpc("lire_code_residence");
-
-    expect(bon.data).toBe(true);
-    expect(mauvais.data).toBe(false);
-    expect(lecture.data).toBeNull();
+    expect(error).toBeNull();
+    const { data } = await profilDe(utilisateur!.id);
+    expect(data).toBeNull();
   });
 });
 
@@ -163,18 +136,18 @@ describe("droits d'un compte selon son statut", () => {
 });
 
 describe("validation des résidents par le syndic", () => {
-  it("le syndic voit les résidents en attente avec leur prénom, leur bâtiment et leur étage", async () => {
+  it("le syndic voit les résidents en attente avec leur prénom et leur nom", async () => {
     const syndic = await nouveauSyndic();
     const resident = await nouveauResident("en_attente");
 
     const { data, error } = await syndic.client
       .from("profil")
-      .select("id, prenom, batiment, etage")
+      .select("id, prenom, nom")
       .eq("role", "resident")
       .eq("statut", "en_attente");
 
     expect(error).toBeNull();
-    expect(data).toContainEqual({ id: resident.id, ...FOYER });
+    expect(data).toContainEqual({ id: resident.id, ...IDENTITE });
   });
 
   it.each(["valide", "refuse"] as const)(
@@ -248,59 +221,5 @@ describe("validation des résidents par le syndic", () => {
       .eq("id", autre.id);
 
     expect(data).toEqual([]);
-  });
-});
-
-describe("code de résidence", () => {
-  let codeInitial: string | null = null;
-
-  afterEach(async () => {
-    if (codeInitial === null) return;
-    await clientAdmin()
-      .from("residence")
-      .update({ code: codeInitial })
-      .eq("id", true);
-    codeInitial = null;
-  });
-
-  it("le syndic consulte le code", async () => {
-    const syndic = await nouveauSyndic();
-
-    const { data, error } = await syndic.client.rpc("lire_code_residence");
-
-    expect(error).toBeNull();
-    expect(data).toBe(await codeEnVigueur());
-  });
-
-  it.each(tousLesStatuts)(
-    "un résident %s ne lit ni ne régénère le code",
-    async (statut) => {
-      const resident = await nouveauResident(statut);
-      const avant = await codeEnVigueur();
-
-      const lecture = await resident.client.rpc("lire_code_residence");
-      const regeneration = await resident.client.rpc(
-        "regenerer_code_residence",
-      );
-
-      expect(lecture.error?.code).toBe("42501");
-      expect(regeneration.error?.code).toBe("42501");
-      expect(await codeEnVigueur()).toBe(avant);
-    },
-  );
-
-  it("le syndic régénère le code : l'ancien ne permet plus de s'inscrire, le nouveau oui", async () => {
-    const syndic = await nouveauSyndic();
-    codeInitial = await codeEnVigueur();
-
-    const { data: nouveau, error } = await syndic.client.rpc(
-      "regenerer_code_residence",
-    );
-
-    expect(error).toBeNull();
-    expect(nouveau).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
-    expect(await codeEnVigueur()).toBe(nouveau);
-    expect((await inscrire(codeInitial)).error).not.toBeNull();
-    expect((await inscrire(nouveau)).error).toBeNull();
   });
 });
