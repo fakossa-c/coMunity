@@ -1,3 +1,4 @@
+/** Ce qu'il faut d'une activité pour l'annoncer hors de l'app. */
 export type ActivitePartagee = {
   titre: string;
   pictogramme: string;
@@ -5,28 +6,65 @@ export type ActivitePartagee = {
   heure_debut: string;
   heure_fin: string;
   lieu: string;
+  /** Absent tant que l'activité n'a pas de jauge. */
   placesRestantes?: number | null;
 };
 
-export function jourLong(date: string): string {
-  throw new Error(`à écrire : ${date}`);
+/** Équivalent emoji d'un pictogramme, pour les messages partagés : l'app, elle, n'en affiche pas. */
+const emojis: Record<string, string> = {
+  waving_hand: "👋",
+  handyman: "🛠️",
+  menu_book: "📚",
+  handshake: "🤝",
+  potted_plant: "🪴",
+};
+
+const FORMAT_JOUR = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+/** « Samedi 24 octobre », pour une date `AAAA-MM-JJ`. */
+export function jourLong(date: string) {
+  const jour = FORMAT_JOUR.format(new Date(`${date}T00:00:00Z`));
+  return jour.charAt(0).toUpperCase() + jour.slice(1);
 }
 
-export function creneau(debut: string, fin: string): string {
-  throw new Error(`à écrire : ${debut} ${fin}`);
+/** « 16h00 », pour une heure `HH:MM` ou `HH:MM:SS`. */
+function heure(valeur: string) {
+  const [heures, minutes] = valeur.split(":");
+  return `${Number(heures)}h${minutes}`;
 }
 
-export function placesRestantes(nombre: number): string {
-  throw new Error(`à écrire : ${nombre}`);
+/** « de 16h00 à 18h30 ». */
+export function creneau(debut: string, fin: string) {
+  return `de ${heure(debut)} à ${heure(fin)}`;
 }
 
-export function messageWhatsApp(
-  activite: ActivitePartagee,
-  lien: string,
-): string {
-  throw new Error(`à écrire : ${activite.titre} ${lien}`);
+/** « 4 places restantes », « 1 place restante » ou « Complet ». */
+export function placesRestantes(nombre: number) {
+  if (nombre <= 0) return "Complet";
+  return nombre === 1 ? "1 place restante" : `${nombre} places restantes`;
 }
 
-export function lienWhatsApp(message: string): string {
-  throw new Error(`à écrire : ${message}`);
+/** Le message à coller dans le groupe WhatsApp de la résidence. */
+export function messageWhatsApp(activite: ActivitePartagee, lien: string) {
+  const emoji = emojis[activite.pictogramme];
+  const lignes = [
+    emoji ? `${emoji} ${activite.titre}` : activite.titre,
+    `📅 ${jourLong(activite.date_activite)}, ${creneau(activite.heure_debut, activite.heure_fin)}`,
+    `📍 ${activite.lieu}`,
+  ];
+  if (activite.placesRestantes != null) {
+    lignes.push(placesRestantes(activite.placesRestantes));
+  }
+  lignes.push(lien);
+  return lignes.join("\n");
+}
+
+/** Lien qui ouvre WhatsApp avec `message` pré-rempli, sur téléphone comme sur ordinateur. */
+export function lienWhatsApp(message: string) {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
