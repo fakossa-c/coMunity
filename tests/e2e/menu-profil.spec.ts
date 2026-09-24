@@ -88,6 +88,10 @@ test("le menu se ferme en faisant glisser la feuille vers le bas", async ({
   await residentConnecte(page);
 
   await ouvrirMenu(page);
+  // La poignée n'est à sa place qu'une fois la feuille montée.
+  await menu(page).evaluate((el) =>
+    Promise.all(el.getAnimations().map((a) => a.finished)),
+  );
   const feuille = (await menu(page).boundingBox())!;
   const x = feuille.x + feuille.width / 2;
   const y = feuille.y + 20;
