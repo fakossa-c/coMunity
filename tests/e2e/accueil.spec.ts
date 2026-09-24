@@ -85,6 +85,7 @@ test.describe("à 360 px", () => {
     expect(
       await residence.evaluate((el) => el.scrollWidth <= el.clientWidth),
     ).toBe(true);
+    expect(await motsCoupes(residence)).toEqual([]);
   });
 
   test("l'en-tête défile, la barre du bas reste fixe sans masquer le contenu", async ({
@@ -234,6 +235,26 @@ function lignesDuLibelle(lien: Locator) {
       for (const r of plage.getClientRects()) lignes.add(Math.round(r.top));
     }
     return lignes.size;
+  });
+}
+
+/** Mots du texte coupés d'une ligne à l'autre. */
+function motsCoupes(cible: Locator) {
+  return cible.evaluate((el) => {
+    const texte = el.firstChild!;
+    const coupes: string[] = [];
+    for (const { 0: mot, index } of (texte.textContent ?? "").matchAll(
+      /\S+/g,
+    )) {
+      const plage = document.createRange();
+      plage.setStart(texte, index);
+      plage.setEnd(texte, index + mot.length);
+      const lignes = new Set(
+        [...plage.getClientRects()].map((r) => Math.round(r.top)),
+      );
+      if (lignes.size > 1) coupes.push(mot);
+    }
+    return coupes;
   });
 }
 
