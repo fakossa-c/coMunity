@@ -21,12 +21,11 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 
    `db push` n'applique que `supabase/migrations/` : les données de `supabase/seed.sql` restent locales.
 
-3. Créer la résidence (SQL Editor), avec son vrai nom. Le code est exigé par la base mais ne sert
-   plus : l'inscription d'un résident n'en demande pas (sa suppression est portée par #5).
+3. Créer la résidence (SQL Editor), avec son vrai nom :
 
    ```sql
-   insert into public.residence (nom, code, heure_calme)
-   values ('<Nom de la résidence>', 'PROVISOIRE', '22:00');
+   insert into public.residence (nom, heure_calme)
+   values ('<Nom de la résidence>', '22:00');
    ```
 
 4. **Authentication > URL Configuration** : Site URL = `<URL-PROD>`. Les liens des emails sont
