@@ -25,7 +25,7 @@ export default async function NouveauMotDePasse() {
       ) : (
         <Link
           href="/mot-de-passe-oublie"
-          className="flex min-h-[52px] items-center self-start rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
+          className="flex min-h-cible items-center self-start rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
         >
           Recevoir un nouveau lien
         </Link>

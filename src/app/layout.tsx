@@ -25,8 +25,8 @@ const atkinson = Atkinson_Hyperlegible_Next({
 
 export const metadata: Metadata = {
   title: {
-    default: "Vie de la résidence",
-    template: "%s · Vie de la résidence",
+    default: "coMunity",
+    template: "%s · coMunity",
   },
   description: "Activités, annonces et voisins de la résidence.",
   // iPhone : ouverture en plein écran depuis l'écran d'accueil. Le nom sous l'icône vient du
@@ -51,7 +51,7 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col bg-surface font-body text-body-lg text-on-surface antialiased">
         <a
           href="#contenu"
-          className="sr-only z-[60] min-h-[52px] rounded-md bg-inverse-surface px-4 py-3 font-headline text-label-lg text-inverse-on-surface focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+          className="sr-only z-[60] min-h-cible rounded-md bg-inverse-surface px-4 py-3 font-headline text-label-lg text-inverse-on-surface focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
         >
           Aller au contenu
         </a>

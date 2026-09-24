@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EncartPastel } from "@/components/encart-pastel";
+import { Logo } from "@/components/logo";
 import { TitrePage } from "@/components/titre-page";
 import { cheminInterne } from "@/lib/chemin-interne";
 import { FormulaireConnexion } from "./formulaire-connexion";
@@ -14,7 +16,10 @@ export default async function Connexion({
   const { suivant, lien } = await searchParams;
 
   return (
-    <div className="max-w-md">
+    <div className="flex max-w-md flex-col">
+      <div className="mb-space-lg">
+        <Logo hauteur={40} />
+      </div>
       <TitrePage
         titre="Connexion"
         sousTitre="Accédez à votre espace avec votre email et votre mot de passe."
@@ -27,15 +32,16 @@ export default async function Connexion({
             : null
         }
       />
-      <p className="mt-space-lg text-body-lg">
-        Nouveau dans la résidence ?{" "}
-        <Link
-          href="/inscription"
-          className="inline-flex min-h-[52px] items-center rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
-        >
-          Créer mon compte
-        </Link>
-      </p>
+      <div className="mt-space-lg">
+        <EncartPastel titre="Nouveau dans la résidence ?">
+          <Link
+            href="/inscription"
+            className="inline-flex min-h-cible items-center rounded-md font-headline text-label-lg underline underline-offset-4"
+          >
+            Créer mon compte
+          </Link>
+        </EncartPastel>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Annonce, Bouton, BoutonEnvoi, Champ } from "@/components/formulaire";
+import { Bouton } from "@/components/bouton";
+import { Champ } from "@/components/champ";
+import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { inviterCollegue, retirerMembre, type Membre } from "./actions";
 import type { Resultat } from "@/lib/resultat";

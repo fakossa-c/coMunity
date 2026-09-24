@@ -1,0 +1,9 @@
+:root {
+  --bordure-carte-couleur: rgba(45, 49, 46, .18);
+  --bordure-carte: 1.5px solid var(--bordure-carte-couleur);
+  --bordure-contour: 2px solid var(--color-primary-fixed-dim);
+  --ombre-carte: 0 3px 0 0 rgba(24, 34, 48, .08);
+  --ombre-flottant: 0 8px 24px -4px rgba(24, 34, 48, .35);
+  --ombre-barre-action: 0 -8px 24px -4px rgba(24, 34, 48, .16);
+  --rayures-photo: repeating-linear-gradient(135deg, var(--color-surface-container) 0 12px, var(--color-surface-container-high) 12px 24px);
+}
