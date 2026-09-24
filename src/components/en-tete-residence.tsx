@@ -13,7 +13,8 @@ export function EnTeteResidence({ residence, compte }: Props) {
     <header className="mx-auto flex w-full max-w-[980px] items-center justify-between gap-space-sm px-margin pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-space-sm desktop:px-margin-desktop">
       <div className="flex min-w-0 flex-col items-start gap-1">
         <Logo />
-        <p className="max-w-full truncate font-headline text-headline-sm text-on-surface">
+        {/* Jamais tronqué : c'est le repère de l'écran, il revient à la ligne s'il le faut. */}
+        <p className="max-w-full font-headline text-headline-sm break-words text-on-surface">
           {residence}
         </p>
       </div>

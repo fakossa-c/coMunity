@@ -46,7 +46,10 @@ async function Compte() {
 
   if (!session) {
     return (
-      <Link href="/connexion" className={`${classesBouton("contour")} px-4`}>
+      <Link
+        href="/connexion"
+        className={`${classesBouton("contour")} shrink-0 px-4 whitespace-nowrap`}
+      >
         <Icone nom="login" taille={24} />
         Se connecter
       </Link>
