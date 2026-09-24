@@ -1,5 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "../../src/lib/mot-de-passe";
 import { lienRecu, nouveauResident, supprimerComptes } from "./outils";
+
+const AIDE_MOT_DE_PASSE = `Au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`;
 
 const emails: string[] = [];
 
@@ -15,7 +18,7 @@ async function poserSurLaRacine(page: Page, nom: string, valeur: string) {
   );
 }
 
-function style(cible: Locator, propriete: string) {
+function styleCalcule(cible: Locator, propriete: string) {
   return cible.evaluate(
     (el, p) => getComputedStyle(el).getPropertyValue(p),
     propriete,
@@ -46,13 +49,15 @@ test("le thème sombre change le fond, le texte, les champs et le focus", async 
   await page.goto("/connexion");
   const corps = page.locator("body");
   const email = page.getByLabel("Adresse email");
-  expect(await style(corps, "background-color")).toBe("rgb(248, 249, 255)");
+  expect(await styleCalcule(corps, "background-color")).toBe(
+    "rgb(248, 249, 255)",
+  );
 
   await poserSurLaRacine(page, "data-theme", "sombre");
-  expect(await style(corps, "background-color")).toBe("rgb(18, 28, 42)");
-  expect(await style(corps, "color")).toBe("rgb(235, 241, 255)");
+  expect(await styleCalcule(corps, "background-color")).toBe("rgb(18, 28, 42)");
+  expect(await styleCalcule(corps, "color")).toBe("rgb(235, 241, 255)");
   // Le fond visible d'un champ est celui de sa boîte, qui entoure la saisie.
-  expect(await style(email.locator(".."), "background-color")).toBe(
+  expect(await styleCalcule(email.locator(".."), "background-color")).toBe(
     "rgb(27, 38, 54)",
   );
 
@@ -60,8 +65,8 @@ test("le thème sombre change le fond, le texte, les champs et le focus", async 
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
   await expect(email).toBeFocused();
-  expect(await style(email, "outline-color")).toBe("rgb(169, 199, 255)");
-  expect(await style(email, "outline-width")).toBe("3px");
+  expect(await styleCalcule(email, "outline-color")).toBe("rgb(169, 199, 255)");
+  expect(await styleCalcule(email, "outline-width")).toBe("3px");
 });
 
 test.describe("grands caractères", () => {
@@ -72,30 +77,37 @@ test.describe("grands caractères", () => {
     const texte = page
       .getByRole("main")
       .getByText("Accédez à votre espace avec votre email");
-    expect(await style(texte, "font-size")).toBe("18px");
+    expect(await styleCalcule(texte, "font-size")).toBe("18px");
 
     await poserSurLaRacine(page, "data-taille", "grands");
-    expect(await style(texte, "font-size")).toBe("23px");
+    expect(await styleCalcule(texte, "font-size")).toBe("23px");
   });
 
-  for (const chemin of [
-    "/connexion",
-    "/mot-de-passe-oublie",
-    "/nouveau-mot-de-passe",
-  ]) {
+  for (const chemin of ["/connexion", "/mot-de-passe-oublie"]) {
     test(`${chemin} ne défile pas horizontalement à 360 px`, async ({
       page,
     }) => {
       await page.goto(chemin);
       await poserSurLaRacine(page, "data-taille", "grands");
-      const debordement = await page.evaluate(
-        () =>
-          document.documentElement.scrollWidth -
-          document.documentElement.clientWidth,
-      );
-      expect(debordement).toBeLessThanOrEqual(0);
+      await attendreSansDefilementHorizontal(page);
     });
   }
+
+  test("le formulaire du nouveau mot de passe, erreur comprise, ne défile pas horizontalement à 360 px", async ({
+    page,
+  }) => {
+    await ouvrirLeLienDuNouveauMotDePasse(page);
+    await poserSurLaRacine(page, "data-taille", "grands");
+    await page.getByLabel("Nouveau mot de passe").fill("un-mot-de-passe");
+    await page.getByLabel("Confirmez le mot de passe").fill("un-autre");
+    await page
+      .getByRole("button", { name: "Enregistrer le mot de passe" })
+      .click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "pas identiques" }),
+    ).toBeVisible();
+    await attendreSansDefilementHorizontal(page);
+  });
 });
 
 test("les boutons sont des pilules et les liens des cibles de 52 px", async ({
@@ -105,7 +117,9 @@ test("les boutons sont des pilules et les liens des cibles de 52 px", async ({
   const bouton = page.getByRole("button", { name: "Se connecter" });
   const boite = (await bouton.boundingBox())!;
   expect(boite.height).toBeGreaterThanOrEqual(52);
-  expect(parseFloat(await style(bouton, "border-top-left-radius"))).toBe(9999);
+  expect(parseFloat(await styleCalcule(bouton, "border-top-left-radius"))).toBe(
+    9999,
+  );
 
   for (const nom of ["Mot de passe oublié ?", "Créer mon compte"]) {
     const lien = (await page.getByRole("link", { name: nom }).boundingBox())!;
@@ -129,25 +143,16 @@ test("le mot de passe s'affiche et se masque à la demande", async ({
 test("libellé au-dessus du champ, aide et erreur en dessous", async ({
   page,
 }) => {
-  const resident = await nouveauResident();
-  emails.push(resident.email);
-
-  await page.goto("/mot-de-passe-oublie");
-  await page.getByLabel("Adresse email").fill(resident.email);
-  await page.getByRole("button", { name: "Recevoir un lien" }).click();
-  await expect(page.getByRole("main").getByRole("status")).toContainText(
-    "un email vient de vous être envoyé",
-  );
-  await page.goto(await lienRecu(resident.email));
+  await ouvrirLeLienDuNouveauMotDePasse(page);
 
   const nouveau = page.getByLabel("Nouveau mot de passe");
   const confirmation = page.getByLabel("Confirmez le mot de passe");
-  await expect(nouveau).toHaveAccessibleDescription("Au moins 6 caractères.");
+  await expect(nouveau).toHaveAccessibleDescription(AIDE_MOT_DE_PASSE);
   await attendreAuDessus(
     page.locator("label", { hasText: "Nouveau mot de passe" }),
     nouveau,
   );
-  await attendreAuDessus(nouveau, page.getByText("Au moins 6 caractères."));
+  await attendreAuDessus(nouveau, page.getByText(AIDE_MOT_DE_PASSE));
 
   await nouveau.fill("un-mot-de-passe");
   await confirmation.fill("un-autre-mot-de-passe");
@@ -174,4 +179,28 @@ async function attendreAuDessus(haut: Locator, bas: Locator) {
   const a = (await haut.boundingBox())!;
   const b = (await bas.boundingBox())!;
   expect(a.y + a.height).toBeLessThanOrEqual(b.y);
+}
+
+/** Un résident demande un nouveau mot de passe et ouvre le lien reçu : la page a une session. */
+async function ouvrirLeLienDuNouveauMotDePasse(page: Page) {
+  const resident = await nouveauResident();
+  emails.push(resident.email);
+
+  await page.goto("/mot-de-passe-oublie");
+  await page.getByLabel("Adresse email").fill(resident.email);
+  await page.getByRole("button", { name: "Recevoir un lien" }).click();
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
+    "un email vient de vous être envoyé",
+  );
+  await page.goto(await lienRecu(resident.email));
+  await expect(page.getByLabel("Nouveau mot de passe")).toBeVisible();
+}
+
+async function attendreSansDefilementHorizontal(page: Page) {
+  const debordement = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
+  );
+  expect(debordement).toBeLessThanOrEqual(0);
 }

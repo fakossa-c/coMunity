@@ -3,14 +3,15 @@
 import { useActionState } from "react";
 import { Champ } from "@/components/champ";
 import { Annonce, BoutonEnvoi } from "@/components/formulaire";
+import { erreurDuChamp, erreurGenerale } from "@/lib/resultat";
 import { demanderLien } from "./actions";
 
 export function FormulaireMotDePasseOublie() {
   const [etat, action] = useActionState(demanderLien, {});
 
   return (
-    <form action={action} className="flex flex-col gap-5">
-      <Annonce message={etat.surEmail ? null : etat.erreur} erreur />
+    <form action={action} className="flex flex-col gap-bloc">
+      <Annonce message={erreurGenerale(etat)} erreur />
       <Annonce
         message={
           etat.envoye &&
@@ -23,7 +24,7 @@ export function FormulaireMotDePasseOublie() {
         type="email"
         autoComplete="email"
         required
-        erreur={etat.surEmail ? etat.erreur : undefined}
+        erreur={erreurDuChamp(etat, "email")}
       />
       <BoutonEnvoi enCours="Envoi…" pleineLargeur>
         Recevoir un lien

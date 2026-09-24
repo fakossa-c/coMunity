@@ -2,14 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import type { ErreurFormulaire } from "@/lib/resultat";
 import { accueilDe, lireProfil } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
-export type EtatMotDePasse = {
-  erreur?: string;
-  /** Champ auquel se rapporte l'erreur, affichée sous lui ; sans champ, en tête du formulaire. */
-  champ?: "mot-de-passe" | "confirmation";
-};
+export type EtatMotDePasse = ErreurFormulaire<"mot-de-passe" | "confirmation">;
 
 export async function enregistrerMotDePasse(
   _: EtatMotDePasse,

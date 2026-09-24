@@ -2,13 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { cheminInterne } from "@/lib/chemin-interne";
+import type { ErreurFormulaire } from "@/lib/resultat";
 import { accueilDe, lireProfil } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
-export type EtatConnexion = {
-  erreur?: string;
-  /** Champ auquel se rapporte l'erreur, affichée sous lui ; sans champ, en tête du formulaire. */
-  champ?: "email" | "mot-de-passe";
+export type EtatConnexion = ErreurFormulaire<"email" | "mot-de-passe"> & {
   email?: string;
 };
 

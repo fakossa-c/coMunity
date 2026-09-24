@@ -147,6 +147,8 @@
   --spacing-space-md: 1.125rem;
   --spacing-space-lg: 1.75rem;
   --spacing-space-xl: 2.5rem;
+  /* 20 px entre deux cartes ou deux champs */
+  --spacing-bloc: 1.25rem;
   /* Hauteurs de référence : `min-h-cible`, `h-bouton`, `h-barre-nav`… */
   --spacing-cible: 52px;
   --spacing-bouton: 56px;
@@ -235,8 +237,14 @@
   --shadow-barre-action: 0 -8px 24px -4px rgba(0, 0, 0, 0.45);
 }
 
-/* Grands caractères (docs/design/tokens/typography.css) : tailles × 1,25, interlignage 1,4. */
+/* Grands caractères (docs/design/tokens/typography.css) : tailles × 1,25, interlignage 1,4.
+   Écart au design system : les titres sur ordinateur (headline-xl, headline-lg) et la légende de
+   photo, qu'il oublie, grossissent aussi, pour que tous les textes de l'app suivent le réglage. */
 [data-taille="grands"] {
+  --text-headline-xl: 43px;
+  --text-headline-xl--line-height: 1.4;
+  --text-headline-lg: 33px;
+  --text-headline-lg--line-height: 1.4;
   --text-headline-xl-mobile: 35px;
   --text-headline-xl-mobile--line-height: 1.4;
   --text-headline-md: 28px;
@@ -259,6 +267,7 @@
   --text-label-sm--line-height: 1.4;
   --text-etiquette: 19px;
   --text-etiquette--line-height: 1.4;
+  --text-legende-photo: 16px;
 }
 
 @layer base {

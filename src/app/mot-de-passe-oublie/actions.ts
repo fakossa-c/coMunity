@@ -1,13 +1,9 @@
 "use server";
 
+import type { ErreurFormulaire } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
-export type EtatDemande = {
-  envoye?: boolean;
-  erreur?: string;
-  /** L'erreur porte sur l'adresse saisie : affichée sous le champ. */
-  surEmail?: boolean;
-};
+export type EtatDemande = ErreurFormulaire<"email"> & { envoye?: boolean };
 
 export async function demanderLien(
   _: EtatDemande,
@@ -15,7 +11,7 @@ export async function demanderLien(
 ): Promise<EtatDemande> {
   const email = String(donnees.get("email") ?? "").trim();
   if (!email) {
-    return { erreur: "Saisissez votre adresse email.", surEmail: true };
+    return { erreur: "Saisissez votre adresse email.", champ: "email" };
   }
 
   const supabase = await clientSession();

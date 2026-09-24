@@ -4,16 +4,15 @@ import { useActionState } from "react";
 import { Champ } from "@/components/champ";
 import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { erreurDuChamp, erreurGenerale } from "@/lib/resultat";
 import { enregistrerMotDePasse } from "./actions";
 
 export function FormulaireNouveauMotDePasse({ email }: { email: string }) {
   const [etat, action] = useActionState(enregistrerMotDePasse, {});
-  const erreurDe = (champ: typeof etat.champ) =>
-    etat.champ === champ ? etat.erreur : undefined;
 
   return (
-    <form action={action} className="flex flex-col gap-5">
-      <Annonce message={etat.champ ? null : etat.erreur} erreur />
+    <form action={action} className="flex flex-col gap-bloc">
+      <Annonce message={erreurGenerale(etat)} erreur />
       {/* Permet au gestionnaire de mots de passe d'associer le nouveau mot de passe au bon compte. */}
       <input
         type="email"
@@ -31,7 +30,7 @@ export function FormulaireNouveauMotDePasse({ email }: { email: string }) {
         minLength={LONGUEUR_MINIMALE_MOT_DE_PASSE}
         aide={`Au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`}
         required
-        erreur={erreurDe("mot-de-passe")}
+        erreur={erreurDuChamp(etat, "mot-de-passe")}
       />
       <Champ
         libelle="Confirmez le mot de passe"
@@ -40,7 +39,7 @@ export function FormulaireNouveauMotDePasse({ email }: { email: string }) {
         autoComplete="new-password"
         minLength={LONGUEUR_MINIMALE_MOT_DE_PASSE}
         required
-        erreur={erreurDe("confirmation")}
+        erreur={erreurDuChamp(etat, "confirmation")}
       />
       <BoutonEnvoi enCours="Enregistrement…" pleineLargeur>
         Enregistrer le mot de passe

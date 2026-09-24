@@ -1,11 +1,11 @@
 import type { ComponentProps } from "react";
-import { Icone } from "./icone";
+import { Icone, type TailleIcone } from "./icone";
 import type { NomIcone } from "./icones";
 
 const variantes = {
   /** Action principale, en pêche pastel. */
   action:
-    "min-h-bouton gap-2 px-5 bg-fond-action text-texte-action hover:bg-contour-action",
+    "min-h-bouton gap-2 px-5 bg-fond-action text-texte-action hover:bg-primary-fixed-dim",
   contour:
     "min-h-bouton gap-2 px-5 border-2 border-contour-action bg-fond-carte text-on-surface hover:bg-surface-container-low",
   /** Annuler, supprimer. */
@@ -21,7 +21,7 @@ export type VarianteBouton = keyof typeof variantes;
 export type PropsBouton = ComponentProps<"button"> & {
   variante?: VarianteBouton;
   icone?: NomIcone;
-  iconeTaille?: 20 | 22 | 24 | 26 | 28;
+  iconeTaille?: TailleIcone;
   pleineLargeur?: boolean;
 };
 

@@ -18,6 +18,8 @@ export function Logo({ variante = "couleur", hauteur = 24 }: Props) {
     width: largeur,
     height: hauteur,
     style: { width: largeur, height: hauteur },
+    // Toujours en haut d'écran : pas de chargement différé.
+    loading: "eager" as const,
   };
 
   if (variante === "inverse") {
