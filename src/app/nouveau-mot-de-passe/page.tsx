@@ -14,7 +14,7 @@ export default async function NouveauMotDePasse() {
   return (
     <EcranSecondaire
       retour={{ href: "/", libelle: "Accueil" }}
-      avecCompte={false}
+      avecCompte={session !== null}
     >
       <div className="max-w-md">
         <TitrePage

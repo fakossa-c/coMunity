@@ -12,7 +12,7 @@ export default async function Proposer() {
   const { data: peutParticiper } = await supabase.rpc("peut_participer");
 
   return (
-    <EcranSecondaire retour={{ href: "/activites", libelle: "Activités" }}>
+    <EcranSecondaire retour={{ href: "/activites", libelle: "Annuler" }}>
       <TitrePage
         titre="Proposer"
         sousTitre="Lancez une activité avec vos voisins"

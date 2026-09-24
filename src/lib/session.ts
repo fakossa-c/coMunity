@@ -26,11 +26,7 @@ export const lireSession = cache(async (): Promise<Session | null> => {
   const claims = data?.claims;
   if (!claims) return null;
 
-  const { data: profil } = await supabase
-    .from("profil")
-    .select("role, statut, prenom, nom")
-    .eq("id", claims.sub)
-    .maybeSingle();
+  const profil = await lireProfil(supabase, claims.sub);
   return {
     id: claims.sub,
     email: claims.email ?? "",
@@ -43,14 +39,14 @@ export const lireSession = cache(async (): Promise<Session | null> => {
 
 type Profil = Pick<Session, "role" | "statut">;
 
-/** Rôle et statut d'un compte, tels que la personne connectée a le droit de les lire. */
+/** Rôle, statut et nom d'un compte, tels que la personne connectée a le droit de les lire. */
 export async function lireProfil(
   supabase: SupabaseClient,
   id: string,
-): Promise<Profil | null> {
+): Promise<Pick<Session, "role" | "statut" | "prenom" | "nom"> | null> {
   const { data } = await supabase
     .from("profil")
-    .select("role, statut")
+    .select("role, statut, prenom, nom")
     .eq("id", id)
     .maybeSingle();
   return data;

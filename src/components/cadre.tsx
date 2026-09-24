@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { identite } from "@/lib/identite";
 import { lireResidence } from "@/lib/residence";
-import { estSyndicActif, lireSession, statutResident } from "@/lib/session";
+import {
+  estSyndicActif,
+  estSyndicRetire,
+  lireSession,
+  statutResident,
+} from "@/lib/session";
 import { BarreNavigation, type IdOnglet } from "./barre-navigation";
 import { BarreRetour } from "./barre-retour";
 import { classesBouton } from "./bouton";
@@ -56,8 +61,10 @@ async function Compte() {
     );
   }
 
+  // Un compte refusé ou retiré, résident ou membre du syndic, ne garde que la déconnexion.
   const statut = statutResident(session);
-  const bloque = statut === "refuse" || statut === "retire";
+  const bloque =
+    statut === "refuse" || statut === "retire" || estSyndicRetire(session);
   const rubriques = bloque
     ? []
     : estSyndicActif(session)

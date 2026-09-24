@@ -19,7 +19,7 @@ type Props = {
 
 const variantes = {
   carte:
-    "min-h-[72px] border-[1.5px] border-bordure-carte bg-fond-carte hover:bg-surface-container-low",
+    "min-h-ligne-page border-[1.5px] border-bordure-carte bg-fond-carte hover:bg-surface-container-low",
   feuille: "min-h-ligne bg-surface-container-low hover:bg-surface-container",
 };
 

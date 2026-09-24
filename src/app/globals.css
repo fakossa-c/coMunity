@@ -158,6 +158,8 @@
   --spacing-flottant: 60px;
   --spacing-onglet: 60px;
   --spacing-ligne: 64px;
+  /* LigneMenu sur une page (64 dans la feuille du menu) */
+  --spacing-ligne-page: 72px;
   --spacing-barre-nav: 88px;
 
   /* Ombre plate des cartes de contenu, diffuse du bouton flottant, inversée de la barre d'action */
