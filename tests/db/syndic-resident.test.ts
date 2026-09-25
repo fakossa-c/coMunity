@@ -32,26 +32,30 @@ function profilDe(id: string) {
     .single();
 }
 
-/** Ce qu'un compte peut lire et écrire dans la vie de la résidence, et dans l'espace syndic. */
-async function droitsDe(compte: Compte) {
-  const voisin = await nouveauResident("valide");
-  await voisin.client
-    .from("activite")
-    .insert({ ...ACTIVITE, organisateur: voisin.id });
-
-  const consulter = await compte.client.rpc("peut_consulter");
-  const participer = await compte.client.rpc("peut_participer");
-  const activitesDuVoisin = await compte.client
-    .from("activite")
-    .select("id")
-    .eq("organisateur", voisin.id);
-  const publication = await compte.client
-    .from("activite")
-    .insert({ ...ACTIVITE, organisateur: compte.id });
-  const syndic = await compte.client.rpc("est_syndic");
-  const invitation = await compte.client
-    .from("invitation_syndic")
-    .insert({ email: nouvelEmail("invite") });
+/**
+ * Ce qu'un compte peut lire et écrire dans la vie de la résidence, et dans l'espace syndic.
+ * `voisin` a publié une activité ; les mesures, indépendantes, partent ensemble.
+ */
+async function droitsDe(compte: Compte, voisin: Compte) {
+  const [
+    consulter,
+    participer,
+    activitesDuVoisin,
+    publication,
+    syndic,
+    invitation,
+  ] = await Promise.all([
+    compte.client.rpc("peut_consulter"),
+    compte.client.rpc("peut_participer"),
+    compte.client.from("activite").select("id").eq("organisateur", voisin.id),
+    compte.client
+      .from("activite")
+      .insert({ ...ACTIVITE, organisateur: compte.id }),
+    compte.client.rpc("est_syndic"),
+    compte.client
+      .from("invitation_syndic")
+      .insert({ email: nouvelEmail("invite") }),
+  ]);
 
   return {
     resident: {
@@ -69,10 +73,17 @@ async function droitsDe(compte: Compte) {
 
 describe("droits d'un membre du syndic", () => {
   it("un membre du syndic a les droits d'un résident validé, plus ceux du syndic", async () => {
-    // Quatre comptes à créer : les deux mesures, indépendantes, tournent en parallèle.
+    const [compteResident, compteSyndic, voisin] = await Promise.all([
+      nouveauResident("valide"),
+      nouveauSyndic(),
+      nouveauResident("valide"),
+    ]);
+    await voisin.client
+      .from("activite")
+      .insert({ ...ACTIVITE, organisateur: voisin.id });
     const [resident, syndic] = await Promise.all([
-      nouveauResident("valide").then(droitsDe),
-      nouveauSyndic().then(droitsDe),
+      droitsDe(compteResident, voisin),
+      droitsDe(compteSyndic, voisin),
     ]);
 
     expect(resident).toEqual({
