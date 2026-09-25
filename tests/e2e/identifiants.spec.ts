@@ -136,7 +136,7 @@ test("après un changement de mot de passe, on se reconnecte avec le nouveau, pa
   await expect(page.getByRole("link", { name: "Se connecter" })).toBeVisible();
 
   await seConnecter(page, resident.email, MOT_DE_PASSE);
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Email ou mot de passe incorrect",
   );
 

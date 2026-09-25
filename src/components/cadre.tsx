@@ -114,6 +114,11 @@ type PropsSecondaire = {
   avecCompte?: boolean;
   /** BarreActionFixe de l'écran. */
   action?: ReactNode;
+  /**
+   * Vrai quand le formulaire du contenu porte lui-même sa BarreActionFixe, pour que son bouton
+   * d'envoi suive l'envoi en cours : l'écran lui réserve alors la place en bas.
+   */
+  actionDansLeFormulaire?: boolean;
   children: ReactNode;
 };
 
@@ -122,6 +127,7 @@ export function EcranSecondaire({
   retour,
   avecCompte = true,
   action,
+  actionDansLeFormulaire = false,
   children,
 }: PropsSecondaire) {
   return (
@@ -134,7 +140,7 @@ export function EcranSecondaire({
         />
       }
       barreBas={action}
-      paddingBas={action ? 170 : 40}
+      paddingBas={action || actionDansLeFormulaire ? 170 : 40}
     >
       <GardeCompte>{children}</GardeCompte>
     </Ecran>
