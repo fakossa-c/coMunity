@@ -219,3 +219,41 @@ describe("inscription à une activité", () => {
     expect(count).toBe(1);
   });
 });
+
+describe("catalogue des activités à venir", () => {
+  it("indique mes accompagnants sur une activité où je suis inscrit", async () => {
+    const organisateur = await nouveauResident("valide");
+    const resident = await nouveauResident("valide");
+    const activite = await publier(organisateur, 12);
+    await resident.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+      p_accompagnants: 1,
+    });
+
+    const { data } = await resident.client.rpc("catalogue_activites");
+
+    const ligne = (data as { id: string; mes_accompagnants: number | null }[])
+      ?.find((a) => a.id === activite.id);
+    expect(ligne).toMatchObject({ mes_accompagnants: 1 });
+  });
+
+  it("n'indique aucune inscription pour une activité où je ne suis pas inscrit", async () => {
+    const organisateur = await nouveauResident("valide");
+    const resident = await nouveauResident("valide");
+    const activite = await publier(organisateur, 12);
+
+    const { data } = await resident.client.rpc("catalogue_activites");
+
+    const ligne = (data as { id: string; mes_accompagnants: number | null }[])
+      ?.find((a) => a.id === activite.id);
+    expect(ligne).toMatchObject({ mes_accompagnants: null });
+  });
+
+  it("un résident refusé ne voit pas le catalogue", async () => {
+    const refuse = await nouveauResident("refuse");
+
+    const { data } = await refuse.client.rpc("catalogue_activites");
+
+    expect(data ?? []).toHaveLength(0);
+  });
+});

@@ -207,3 +207,46 @@ $$;
 
 revoke execute on function public.participants_activite(text) from public, anon;
 grant execute on function public.participants_activite(text) to authenticated;
+
+/**
+ * Les activités à venir, comme le catalogue de l'accueil, avec l'inscription de la personne
+ * connectée : une carte où elle est déjà inscrite affiche « J'y vais » sans bouton. Minimale
+ * à dessein : #15 (Accueil groupé par jour) reviendra sur cette page.
+ */
+create function public.catalogue_activites()
+returns table (
+  id uuid,
+  identifiant_public text,
+  titre text,
+  categorie public.categorie_activite,
+  pictogramme text,
+  date_activite date,
+  heure_debut time,
+  lieu text,
+  mes_accompagnants smallint
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    a.id,
+    a.identifiant_public,
+    a.titre,
+    a.categorie,
+    a.pictogramme,
+    a.date_activite,
+    a.heure_debut,
+    a.lieu,
+    (
+      select i.accompagnants from public.inscription_activite i
+      where i.activite_id = a.id and i.resident_id = auth.uid()
+    )
+  from public.activite a
+  where a.date_activite >= current_date and public.peut_consulter()
+  order by a.date_activite, a.heure_debut;
+$$;
+
+revoke execute on function public.catalogue_activites() from public, anon;
+grant execute on function public.catalogue_activites() to authenticated;

@@ -22,6 +22,12 @@ export type FicheActivite = {
   /** « Danielle M. » ; `null` pour un visiteur, qui ne lit aucun nom. */
   organisateur_nom_affiche: string | null;
   est_organisateur: boolean;
+  /** `null` : pas de limite de participants. */
+  capacite_max: number | null;
+  /** Accompagnants compris. */
+  places_prises: number;
+  /** Accompagnants de la personne connectée ; `null` si elle n'est pas inscrite. */
+  mes_accompagnants: number | null;
 };
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */
