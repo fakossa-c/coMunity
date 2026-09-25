@@ -53,8 +53,8 @@ export async function nouveauSyndicSansNom() {
 
 /**
  * Le titre de la page où arrive un membre du syndic qui se connecte depuis `page` : l'espace
- * syndic sur ordinateur, l'accueil sur mobile. `mobile` vient de la fixture `isMobile` ; une
- * page ouverte dans un contexte créé par le test, sans appareil émulé, est un ordinateur.
+ * syndic sur ordinateur, l'accueil sur mobile. `mobile` vient de la fixture `isMobile` : un
+ * contexte ouvert par `browser.newContext()` émule le même appareil que le projet.
  */
 export function arriveeDuSyndic(page: Page, { mobile }: { mobile: boolean }) {
   return page.getByRole("heading", {
