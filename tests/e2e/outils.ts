@@ -53,6 +53,34 @@ export async function nouveauResident(
   return { id: data.user.id, email };
 }
 
+/** Une activité publiée au nom de `organisateur`, à venir ; renvoie son identifiant public. */
+export async function nouvelleActivite(
+  organisateur: string,
+  activite: Partial<Record<string, string>> = {},
+) {
+  const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const { data, error } = await clientAdmin()
+    .from("activite")
+    .insert({
+      titre: "Goûter crêpes",
+      categorie: "moments_partages",
+      pictogramme: "waving_hand",
+      description: "On fait les crêpes ensemble, les jeux sont pour tous.",
+      date_activite: dansUnMois,
+      heure_debut: "16:00",
+      heure_fin: "18:30",
+      lieu: "Jardin partagé",
+      organisateur,
+      ...activite,
+    })
+    .select("identifiant_public")
+    .single();
+  if (error) throw error;
+  return data.identifiant_public as string;
+}
+
 /** Supprime les comptes créés pendant un test, invités compris. */
 export async function supprimerComptes(emails: string[]) {
   const admin = clientAdmin();
