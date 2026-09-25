@@ -72,6 +72,10 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   ).toBeVisible();
   await pageDuCollegue.getByLabel("Prénom").fill("Bernard");
   await pageDuCollegue.getByLabel("Nom", { exact: true }).fill("Lefèvre");
+  await pageDuCollegue.screenshot({
+    path: test.info().outputPath("choix-du-mot-de-passe.png"),
+    fullPage: true,
+  });
   await choisirMotDePasse(pageDuCollegue, NOUVEAU_MOT_DE_PASSE);
 
   await expect(

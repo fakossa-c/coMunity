@@ -42,7 +42,7 @@ export default async function CompleterProfil({
       <div className="max-w-md">
         <TitrePage
           titre="Présentez-vous à vos voisins"
-          sousTitre="Membre du syndic, vous êtes aussi un résident : vos voisins vous reconnaîtront à votre prénom et à votre nom."
+          sousTitre="Membre du syndic, vous êtes aussi un résident. Vos voisins vous reconnaîtront à votre prénom et à votre nom."
         />
         <FormulaireCompletion suivant={destination} />
       </div>
