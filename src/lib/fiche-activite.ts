@@ -40,6 +40,9 @@ export type FicheActivite = {
   precision_acces: string | null;
   /** `annulee` : annulée par son créateur, elle reste visible de ses inscrits. */
   statut: StatutActivite;
+  /** Note du retour déjà laissé par la personne connectée ; `null` si elle n'en a pas laissé. */
+  mon_retour_note: number | null;
+  mon_retour_commentaire: string | null;
 };
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */

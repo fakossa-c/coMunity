@@ -29,10 +29,13 @@ import {
   jourLong,
   messageWhatsApp,
 } from "@/lib/partage-activite";
-import { lireSession } from "@/lib/session";
+import { activiteEstPassee } from "@/lib/retour-activite";
+import { estSyndicActif, lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
+import { FormulaireRetour } from "./formulaire-retour";
 import { GestionActivite } from "./gestion-activite";
 import { Participants } from "./participants";
+import { Retours } from "./retours";
 
 type Props = { params: Promise<{ identifiant: string }> };
 
@@ -96,6 +99,7 @@ export default async function Fiche({ params }: Props) {
   const session = await lireSession();
 
   const annulee = fiche.statut === "annulee";
+  const activitePassee = activiteEstPassee(fiche);
 
   return (
     <EcranSecondaire
@@ -173,6 +177,14 @@ export default async function Fiche({ params }: Props) {
         {session?.statut === "valide" && (
           <Participants identifiant={identifiant} />
         )}
+        {!annulee && activitePassee && fiche.mes_accompagnants !== null && (
+          <FormulaireRetour fiche={fiche} />
+        )}
+        {!annulee &&
+          activitePassee &&
+          (fiche.est_organisateur || estSyndicActif(session)) && (
+            <Retours identifiant={identifiant} />
+          )}
         {!annulee && (
           <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
         )}
