@@ -10,6 +10,17 @@ export type ActivitePartagee = {
   placesRestantes?: number | null;
 };
 
+/**
+ * Vrai quand le jour de l'activité est avant aujourd'hui. Les dates sont celles de la base (UTC),
+ * comme le « à venir » du catalogue de l'Accueil : le jour même n'est pas passé.
+ */
+export function estPassee(
+  date: string,
+  aujourdhui = new Date().toISOString().slice(0, 10),
+) {
+  return date < aujourdhui;
+}
+
 /** Chemin de la fiche d'une activité, celui du lien partagé. */
 export function cheminFiche(identifiant: string) {
   return `/activites/${identifiant}`;

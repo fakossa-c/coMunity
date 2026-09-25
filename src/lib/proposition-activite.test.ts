@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   LIMITES,
   SAISIE_VIDE,
+  saisieDeCopie,
+  saisieDepuisActivite,
   verifierEtape,
   versNouvelleActivite,
   type SaisieActivite,
@@ -164,5 +166,110 @@ describe("conversion vers l'activité à publier", () => {
       a_apporter: null,
       etiquettes: [],
     });
+  });
+});
+
+/** Une activité telle que la base la livre : heures avec secondes, champs absents à `null`. */
+const EXISTANTE = {
+  titre: "Goûter crêpes",
+  categorie: "moments_partages" as const,
+  mot_accueil: "Venez comme vous êtes.",
+  date_activite: "2026-10-24",
+  heure_debut: "16:00:00",
+  heure_fin: "18:30:00",
+  lieu: "Jardin partagé",
+  precision_acces: "Portail vert",
+  capacite_max: 12,
+  capacite_min: 4,
+  etiquettes: ["acces_plain_pied" as const, "enfants_bienvenus" as const],
+  conseils_pratiques: "Une petite laine.",
+  materiel_prevoir: null,
+  a_apporter: null,
+};
+
+describe("saisie pré-remplie depuis une activité existante", () => {
+  it("modifier reprend tout, heures sans les secondes, places limitées", () => {
+    expect(saisieDepuisActivite(EXISTANTE)).toEqual({
+      titre: "Goûter crêpes",
+      categorie: "moments_partages",
+      mot_accueil: "Venez comme vous êtes.",
+      date_activite: "2026-10-24",
+      heure_debut: "16:00",
+      heure_fin: "18:30",
+      lieu: "Jardin partagé",
+      precision_acces: "Portail vert",
+      places: "limitees",
+      capacite_max: "12",
+      capacite_min: "4",
+      etiquettes: ["acces_plain_pied", "enfants_bienvenus"],
+      conseils_pratiques: "Une petite laine.",
+      materiel_prevoir: "",
+      a_apporter: "",
+    });
+  });
+
+  it("sans capacité ni minimum : places sans limite et champs vides", () => {
+    const saisie = saisieDepuisActivite({
+      ...EXISTANTE,
+      capacite_max: null,
+      capacite_min: null,
+      precision_acces: null,
+      mot_accueil: null,
+    });
+
+    expect(saisie).toMatchObject({
+      places: "sans_limite",
+      capacite_max: "",
+      capacite_min: "",
+      precision_acces: "",
+      mot_accueil: "",
+    });
+  });
+
+  it("dupliquer reprend tout sauf la date", () => {
+    expect(saisieDeCopie(EXISTANTE)).toEqual({
+      ...saisieDepuisActivite(EXISTANTE),
+      date_activite: "",
+    });
+  });
+
+  it("la saisie rechargée se republie telle quelle", () => {
+    expect(versNouvelleActivite(saisieDepuisActivite(EXISTANTE))).toMatchObject({
+      titre: "Goûter crêpes",
+      heure_debut: "16:00",
+      capacite_max: 12,
+      capacite_min: 4,
+      materiel_prevoir: null,
+    });
+  });
+});
+
+describe("capacité et personnes déjà inscrites", () => {
+  const limitees = (max: string): SaisieActivite => ({
+    ...COMPLETE,
+    places: "limitees",
+    capacite_max: max,
+    capacite_min: "",
+  });
+
+  it("refuse une capacité sous les personnes inscrites, sous le champ concerné", () => {
+    expect(verifierEtape(3, limitees("4"), { placesPrises: 5 })).toEqual({
+      champ: "capacite_max",
+      erreur: "Indiquez au moins 5 places : elles sont déjà prises.",
+    });
+  });
+
+  it("une seule personne inscrite : la capacité minimale est 1", () => {
+    expect(verifierEtape(3, limitees("1"), { placesPrises: 1 })).toEqual({});
+  });
+
+  it("accepte une capacité égale aux personnes inscrites", () => {
+    expect(verifierEtape(3, limitees("5"), { placesPrises: 5 })).toEqual({});
+  });
+
+  it("des places sans limite ne posent jamais problème", () => {
+    expect(
+      verifierEtape(3, { ...COMPLETE, places: "sans_limite" }, { placesPrises: 50 }),
+    ).toEqual({});
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { categoriesActiviteListe, pictogrammeDe } from "./categories-activite";
 import {
   creneau,
+  estPassee,
   jourLong,
   lienWhatsApp,
   messageWhatsApp,
@@ -91,5 +92,19 @@ describe("message WhatsApp", () => {
     expect(lien.searchParams.get("text")).toBe(
       "Goûter & jeux\nhttps://x.fr/a?b=1",
     );
+  });
+});
+
+describe("activité passée", () => {
+  it("la veille est passée", () => {
+    expect(estPassee("2026-10-24", "2026-10-25")).toBe(true);
+  });
+
+  it("le jour même n'est pas passé", () => {
+    expect(estPassee("2026-10-25", "2026-10-25")).toBe(false);
+  });
+
+  it("le lendemain n'est pas passé", () => {
+    expect(estPassee("2026-10-26", "2026-10-25")).toBe(false);
   });
 });

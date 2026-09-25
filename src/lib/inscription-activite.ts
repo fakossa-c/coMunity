@@ -58,3 +58,35 @@ export function libelleStatutInscription(accompagnants: number) {
   const suffixe = libelleAccompagnants(accompagnants);
   return suffixe ? `J'y vais, ${suffixe}` : "J'y vais";
 }
+
+/** Où en est une activité par rapport à son minimum de participants ; `null` sans minimum. */
+export type EtatConfirmation =
+  | { confirmee: true }
+  | { confirmee: false; manquants: number }
+  | null;
+
+/**
+ * « Confirmée » quand les personnes inscrites, accompagnants compris, atteignent le minimum ;
+ * sinon le nombre de participants qui manquent. Sans minimum, rien n'est à confirmer.
+ */
+export function etatConfirmation({
+  capaciteMin,
+  placesPrises,
+}: {
+  capaciteMin: number | null;
+  placesPrises: number;
+}): EtatConfirmation {
+  if (capaciteMin === null) return null;
+  return placesPrises >= capaciteMin
+    ? { confirmee: true }
+    : { confirmee: false, manquants: capaciteMin - placesPrises };
+}
+
+/** « Confirmée », « Encore 3 participants pour confirmer », ou `null` sans minimum. */
+export function libelleConfirmation(etat: EtatConfirmation) {
+  if (etat === null) return null;
+  if (etat.confirmee) return "Confirmée";
+  return etat.manquants === 1
+    ? "Encore 1 participant pour confirmer"
+    : `Encore ${etat.manquants} participants pour confirmer`;
+}

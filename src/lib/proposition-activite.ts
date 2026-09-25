@@ -107,10 +107,15 @@ export function capaciteMaxDe(saisie: SaisieActivite) {
   return saisie.places === "limitees" ? nombre(saisie.capacite_max) : null;
 }
 
-/** La première erreur d'une étape, sous le champ qu'elle concerne ; `{}` quand tout va. */
+/**
+ * La première erreur d'une étape, sous le champ qu'elle concerne ; `{}` quand tout va.
+ * `placesPrises` : les personnes déjà inscrites à l'activité qu'on modifie, sous lesquelles la
+ * capacité ne peut pas descendre (la base le vérifie aussi).
+ */
 export function verifierEtape(
   etape: Etape,
   saisie: SaisieActivite,
+  { placesPrises = 0 }: { placesPrises?: number } = {},
 ): ErreurFormulaire<ChampSaisie> {
   const erreur = (champ: ChampSaisie, message: string) => ({
     champ,
@@ -151,6 +156,11 @@ export function verifierEtape(
         "capacite_max",
         "Indiquez le nombre de places, au moins 1.",
       );
+    if (max !== null && max < placesPrises)
+      return erreur(
+        "capacite_max",
+        `Indiquez au moins ${placesPrises} ${placesPrises === 1 ? "place" : "places"} : elles sont déjà prises.`,
+      );
     const min = nombre(saisie.capacite_min);
     if (saisie.capacite_min.trim() !== "" && (min === null || min < 1))
       return erreur(
@@ -186,4 +196,57 @@ export function versNouvelleActivite(saisie: SaisieActivite): NouvelleActivite {
     materiel_prevoir: texte(saisie.materiel_prevoir),
     a_apporter: texte(saisie.a_apporter),
   };
+}
+
+/** Ce qu'il faut d'une activité existante pour pré-remplir le parcours : la fiche telle que la base la livre. */
+export type ActiviteExistante = {
+  titre: string;
+  categorie: CategorieActivite;
+  mot_accueil: string | null;
+  date_activite: string;
+  heure_debut: string;
+  heure_fin: string;
+  lieu: string;
+  precision_acces: string | null;
+  capacite_max: number | null;
+  capacite_min: number | null;
+  etiquettes: EtiquetteActivite[];
+  conseils_pratiques: string | null;
+  materiel_prevoir: string | null;
+  a_apporter: string | null;
+};
+
+/** « 16:00:00 » devient « 16:00 », ce que le champ heure attend. */
+function heure(valeur: string) {
+  return valeur.slice(0, 5);
+}
+
+/** La saisie qui pré-remplit « Modifier » : tout ce que l'activité contient déjà. */
+export function saisieDepuisActivite(
+  activite: ActiviteExistante,
+): SaisieActivite {
+  return {
+    titre: activite.titre,
+    categorie: activite.categorie,
+    mot_accueil: activite.mot_accueil ?? "",
+    date_activite: activite.date_activite,
+    heure_debut: heure(activite.heure_debut),
+    heure_fin: heure(activite.heure_fin),
+    lieu: activite.lieu,
+    precision_acces: activite.precision_acces ?? "",
+    places: activite.capacite_max === null ? "sans_limite" : "limitees",
+    capacite_max:
+      activite.capacite_max === null ? "" : String(activite.capacite_max),
+    capacite_min:
+      activite.capacite_min === null ? "" : String(activite.capacite_min),
+    etiquettes: activite.etiquettes,
+    conseils_pratiques: activite.conseils_pratiques ?? "",
+    materiel_prevoir: activite.materiel_prevoir ?? "",
+    a_apporter: activite.a_apporter ?? "",
+  };
+}
+
+/** La saisie qui pré-remplit « Dupliquer » : tout sauf la date, à choisir de nouveau. */
+export function saisieDeCopie(activite: ActiviteExistante): SaisieActivite {
+  return { ...saisieDepuisActivite(activite), date_activite: "" };
 }

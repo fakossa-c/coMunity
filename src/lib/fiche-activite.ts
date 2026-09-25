@@ -1,6 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { cache } from "react";
+import type { StatutActivite } from "@/components/etat-activite";
 import type { CategorieActivite } from "./categories-activite";
 import type { EtiquetteActivite } from "./etiquettes-activite";
 import { origineDe } from "./origine";
@@ -37,6 +38,8 @@ export type FicheActivite = {
   materiel_prevoir: string | null;
   a_apporter: string | null;
   precision_acces: string | null;
+  /** `annulee` : annulée par son créateur, elle reste visible de ses inscrits. */
+  statut: StatutActivite;
 };
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */

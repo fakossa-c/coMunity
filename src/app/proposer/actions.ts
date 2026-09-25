@@ -46,3 +46,49 @@ export async function publier(activite: NouvelleActivite): Promise<Resultat> {
   revalidatePath("/");
   redirect(`${cheminFiche(data.identifiant_public)}/publiee`);
 }
+
+const messagesModification: Record<string, string> = {
+  "23514":
+    "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
+  "22P02":
+    "Une étiquette n'est pas reconnue. Revenez à l'étape 3 et cochez à nouveau.",
+  P0005:
+    "La capacité ne peut pas passer sous le nombre de personnes déjà inscrites. Revenez à l'étape 3.",
+};
+
+/**
+ * Enregistre la modification d'une activité, puis revient à sa fiche. La base ne laisse passer
+ * que le créateur, sur une activité non annulée : sinon aucune ligne n'est touchée.
+ */
+export async function enregistrer(
+  identifiant: string,
+  activite: NouvelleActivite,
+): Promise<Resultat> {
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("activite")
+    .update(activite)
+    .eq("identifiant_public", identifiant)
+    .select("identifiant_public");
+
+  if (error) {
+    return {
+      ok: false,
+      message:
+        messagesModification[error.code ?? ""] ??
+        "Les modifications n'ont pas pu être enregistrées. Réessayez dans un instant.",
+    };
+  }
+  if (data.length === 0) {
+    return {
+      ok: false,
+      message:
+        "Cette activité n'existe plus, ou elle n'est plus modifiable (elle est annulée).",
+    };
+  }
+
+  revalidatePath(cheminFiche(identifiant));
+  revalidatePath("/");
+  revalidatePath("/activites");
+  redirect(cheminFiche(identifiant));
+}

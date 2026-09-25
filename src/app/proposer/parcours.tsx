@@ -31,18 +31,35 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { publier } from "./actions";
+import { cheminFiche } from "@/lib/partage-activite";
+import { enregistrer, publier } from "./actions";
 import { Recapitulatif } from "./recapitulatif";
 
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
-/** Le parcours de création en 4 étapes : la saisie reste en mémoire d'une étape à l'autre. */
-export function ParcoursProposition() {
+type Props = {
+  /** La saisie de départ : vide pour une nouvelle activité, pré-remplie pour modifier ou dupliquer. */
+  initial?: SaisieActivite;
+  /**
+   * Présent quand on modifie une activité existante : le dernier écran enregistre au lieu de
+   * publier, et la capacité ne peut pas descendre sous les `placesPrises` personnes inscrites.
+   */
+  modification?: { identifiant: string; placesPrises: number };
+};
+
+/**
+ * Le parcours de création en 4 étapes : la saisie reste en mémoire d'une étape à l'autre. Il sert
+ * aussi à modifier une activité (pré-rempli) et à en dupliquer une (pré-rempli sans la date).
+ */
+export function ParcoursProposition({
+  initial = SAISIE_VIDE,
+  modification,
+}: Props) {
   const router = useRouter();
   const [etape, setEtape] = useState<Etape>(1);
   // Vrai après « Modifier » depuis le récapitulatif : « Continuer » y ramène directement.
   const [retourRecapitulatif, setRetourRecapitulatif] = useState(false);
-  const [saisie, setSaisie] = useState<SaisieActivite>(SAISIE_VIDE);
+  const [saisie, setSaisie] = useState<SaisieActivite>(initial);
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
@@ -80,7 +97,9 @@ export function ParcoursProposition() {
   }
 
   function continuer() {
-    const verdict = verifierEtape(etape, saisie);
+    const verdict = verifierEtape(etape, saisie, {
+      placesPrises: modification?.placesPrises,
+    });
     setErreur(verdict);
     if (verdict.erreur) return;
     aller(retourRecapitulatif ? NOMBRE_ETAPES : ((etape + 1) as Etape));
@@ -88,9 +107,14 @@ export function ParcoursProposition() {
 
   function publierMaintenant() {
     setResultat(null);
-    // Publiée, l'activité mène à son écran de partage : seul un échec revient ici.
+    // Publiée ou enregistrée, l'activité mène à son écran : seul un échec revient ici.
     demarrer(async () => {
-      setResultat(await publier(versNouvelleActivite(saisie)));
+      const activite = versNouvelleActivite(saisie);
+      setResultat(
+        modification
+          ? await enregistrer(modification.identifiant, activite)
+          : await publier(activite),
+      );
     });
   }
 
@@ -312,7 +336,13 @@ export function ParcoursProposition() {
         <Recapitulatif
           saisie={saisie}
           onModifier={modifier}
-          onAnnuler={() => router.push("/activites")}
+          onAnnuler={() =>
+            router.push(
+              modification
+                ? cheminFiche(modification.identifiant)
+                : "/activites",
+            )
+          }
         />
       )}
 
@@ -334,9 +364,13 @@ export function ParcoursProposition() {
           className="flex-1 text-body-lg"
         >
           {etape === NOMBRE_ETAPES
-            ? enCours
-              ? "Publication…"
-              : "Publier"
+            ? modification
+              ? enCours
+                ? "Enregistrement…"
+                : "Enregistrer"
+              : enCours
+                ? "Publication…"
+                : "Publier"
             : "Continuer"}
         </Bouton>
       </BarreActionFixe>

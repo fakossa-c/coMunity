@@ -13,6 +13,8 @@ const tons = {
   /** Familles, enfants. */
   abricot: "bg-tertiary-fixed text-on-tertiary-fixed",
   peche: "bg-fond-action text-texte-action",
+  /** Activité annulée. */
+  erreur: "bg-error-container text-on-error-container",
 };
 
 export type TonEtiquette = keyof typeof tons;

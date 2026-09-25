@@ -105,18 +105,6 @@ describe("champs du parcours de création", () => {
     expect(error).not.toBeNull();
   });
 
-  it("l'organisateur ne change pas la capacité après publication (ticket #12)", async () => {
-    const resident = await nouveauResident("valide");
-    const { data } = await publier(resident, { capacite_max: 12 });
-
-    const { error } = await resident.client
-      .from("activite")
-      .update({ capacite_max: 2 })
-      .eq("identifiant_public", data!.identifiant_public);
-
-    expect(error).not.toBeNull();
-  });
-
   it("une étiquette hors des listes fermées est refusée", async () => {
     const resident = await nouveauResident("valide");
 

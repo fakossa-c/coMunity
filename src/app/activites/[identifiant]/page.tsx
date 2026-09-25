@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { BlocTexte } from "@/components/bloc-texte";
 import { BoutonCopier } from "@/components/bouton-copier";
 import { BoutonPartager } from "@/components/bouton-partager";
 import { BoutonRelayer } from "@/components/bouton-relayer";
 import { EcranSecondaire } from "@/components/cadre";
 import { EncartPastel } from "@/components/encart-pastel";
+import { EtatActivite } from "@/components/etat-activite";
 import { EtiquettesActivite } from "@/components/etiquette";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
@@ -21,9 +23,15 @@ import {
   type FicheActivite,
 } from "@/lib/fiche-activite";
 import { libelleMinimum } from "@/lib/inscription-activite";
-import { creneau, jourLong, messageWhatsApp } from "@/lib/partage-activite";
+import {
+  creneau,
+  estPassee,
+  jourLong,
+  messageWhatsApp,
+} from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
+import { GestionActivite } from "./gestion-activite";
 import { Participants } from "./participants";
 
 type Props = { params: Promise<{ identifiant: string }> };
@@ -61,6 +69,23 @@ function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
   return statut === "valide" ? "valide" : "en_attente";
 }
 
+/**
+ * L'action fixée en bas de la fiche : l'inscription, pour tous, créateur compris ; pour une
+ * activité annulée, le seul constat. Le créateur gère son activité depuis le corps de la fiche.
+ */
+function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
+  if (fiche.statut === "annulee") {
+    return (
+      <BarreActionFixe>
+        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
+          L&apos;organisateur a annulé cette activité.
+        </p>
+      </BarreActionFixe>
+    );
+  }
+  return <BlocInscription fiche={fiche} statut={statut} />;
+}
+
 export default async function Fiche({ params }: Props) {
   const { identifiant } = await params;
   const fiche = await lireFiche(identifiant);
@@ -70,16 +95,13 @@ export default async function Fiche({ params }: Props) {
   const categorie = categoriesActivite[fiche.categorie];
   const session = await lireSession();
 
+  const annulee = fiche.statut === "annulee";
+
   return (
     <EcranSecondaire
       retour={{ href: "/", libelle: "Retour" }}
       partager={<BoutonPartager titre={fiche.titre} lien={lien} />}
-      action={
-        <BlocInscription
-          fiche={fiche}
-          statut={statutVisiteur(session?.statut)}
-        />
-      }
+      action={actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
     >
       <article className="flex flex-col gap-[14px]">
         <VisuelActivite pictogramme={fiche.pictogramme as NomIcone} />
@@ -92,6 +114,12 @@ export default async function Fiche({ params }: Props) {
         <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
           {fiche.titre}
         </h1>
+        <EtatActivite
+          statut={fiche.statut}
+          capaciteMin={fiche.capacite_min}
+          placesPrises={fiche.places_prises}
+          passee={estPassee(fiche.date_activite)}
+        />
         <PanneauInfos
           lignes={[
             {
@@ -145,12 +173,21 @@ export default async function Fiche({ params }: Props) {
         {session?.statut === "valide" && (
           <Participants identifiant={identifiant} />
         )}
-        <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
+        {!annulee && (
+          <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
+        )}
         <BoutonCopier
           texte={lien}
           libelle="Copier le lien"
           confirmation="Lien copié"
         />
+        {fiche.est_organisateur && (
+          <GestionActivite
+            identifiant={identifiant}
+            annulee={annulee}
+            placesPrises={fiche.places_prises}
+          />
+        )}
       </article>
     </EcranSecondaire>
   );
