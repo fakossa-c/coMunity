@@ -47,7 +47,7 @@ export function Notation({
                 className="absolute inset-0 cursor-pointer opacity-0"
               />
               <span aria-hidden="true">{note}</span>
-              <span className="sr-only"> : {note} sur 5</span>
+              <span className="sr-only">{note} sur 5</span>
             </label>
           );
         })}
