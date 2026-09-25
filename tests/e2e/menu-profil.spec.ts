@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  arriveeDuSyndic,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -179,13 +180,12 @@ test("« Se déconnecter » déconnecte et ramène à l'accueil", async ({
 
 test("un membre du syndic trouve « Espace syndic » dans le menu", async ({
   page,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
   await seConnecter(page, syndic.email);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
 
   await page.goto("/");
   await ouvrirMenu(page);

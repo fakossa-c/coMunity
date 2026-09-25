@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  arriveeDuSyndic,
   lienRecu,
   MOT_DE_PASSE,
   nouveauResident,
@@ -34,19 +35,19 @@ async function choisirMotDePasse(page: Page, motDePasse: string) {
     .click();
 }
 
-test("un membre du syndic invite un collègue, qui choisit son mot de passe et arrive dans l'espace syndic", async ({
+test("un membre du syndic invite un collègue, qui saisit son prénom, son nom et son mot de passe, et arrive dans l'espace syndic", async ({
   page,
   browser,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   const collegue = nouvelEmail("collegue");
   emails.push(syndic.email, collegue);
 
   await seConnecter(page, syndic.email, MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
 
+  await page.goto("/syndic");
   await page.getByRole("link", { name: /Membres du syndic/ }).click();
   await expect(listeDesMembres(page)).toContainText(syndic.email);
 
@@ -69,11 +70,17 @@ test("un membre du syndic invite un collègue, qui choisit son mot de passe et a
       name: "Choisissez votre mot de passe",
     }),
   ).toBeVisible();
+  await pageDuCollegue.getByLabel("Prénom").fill("Bernard");
+  await pageDuCollegue.getByLabel("Nom", { exact: true }).fill("Lefèvre");
   await choisirMotDePasse(pageDuCollegue, NOUVEAU_MOT_DE_PASSE);
 
   await expect(
-    pageDuCollegue.getByRole("heading", { level: 1, name: "Espace syndic" }),
+    arriveeDuSyndic(pageDuCollegue, { mobile: false }),
   ).toBeVisible();
+  await pageDuCollegue.getByRole("button", { name: "Mon profil" }).click();
+  await expect(
+    pageDuCollegue.getByRole("dialog", { name: "Menu du profil" }),
+  ).toContainText("Bernard Lefèvre");
   await page.screenshot({
     path: test.info().outputPath("membres-du-syndic.png"),
     fullPage: true,
@@ -84,14 +91,13 @@ test("un membre du syndic invite un collègue, qui choisit son mot de passe et a
 test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entrer dans l'espace syndic", async ({
   page,
   browser,
+  isMobile,
 }) => {
   const [moi, collegue] = [await nouveauSyndic(), await nouveauSyndic()];
   emails.push(moi.email, collegue.email);
 
   await seConnecter(page, moi.email, MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
   await page.goto("/syndic/membres");
   const ligne = listeDesMembres(page)
     .getByRole("listitem")
@@ -120,7 +126,10 @@ test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entre
   await appareilDuCollegue.close();
 });
 
-test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
+test("mot de passe oublié, déconnexion et reconnexion", async ({
+  page,
+  isMobile,
+}) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
 
@@ -142,9 +151,7 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
 
   await page.goto(await lienRecu(syndic.email));
   await choisirMotDePasse(page, NOUVEAU_MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
 
   await page.getByRole("button", { name: "Mon profil" }).click();
   await page
@@ -156,9 +163,7 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({ page }) => {
   await expect(page).toHaveURL(/\/connexion/);
 
   await seConnecter(page, syndic.email, NOUVEAU_MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
 });
 
 test("un résident n'entre pas dans l'espace syndic", async ({ page }) => {

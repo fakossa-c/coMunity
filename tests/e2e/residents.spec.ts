@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
+  arriveeDuSyndic,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -172,11 +173,14 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
 
 test("l'espace syndic ne propose plus de code de résidence", async ({
   page,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
 
   await seConnecter(page, syndic.email);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+  await page.goto("/syndic");
   await expect(
     page.getByRole("heading", { level: 1, name: "Espace syndic" }),
   ).toBeVisible();
