@@ -23,6 +23,12 @@ export default async function Profil() {
             titre="Mes identifiants"
             detail="Email, mot de passe, déconnexion"
           />
+          <LigneMenu
+            href="/profil/reglages"
+            icone="accessible"
+            titre="Mes réglages"
+            detail="Taille des caractères, thème"
+          />
         </nav>
       </div>
     </EcranSecondaire>
