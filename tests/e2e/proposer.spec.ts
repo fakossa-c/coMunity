@@ -24,9 +24,7 @@ function dansUnMois() {
 }
 
 function etape(page: Page, numero: number) {
-  return expect(page.getByRole("main")).toContainText(
-    `Étape ${numero} sur 4`,
-  );
+  return expect(page.getByRole("main")).toContainText(`Étape ${numero} sur 4`);
 }
 
 function continuer(page: Page) {
@@ -54,12 +52,14 @@ async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await continuer(page);
 
   await etape(page, 3);
-  await page.getByRole("radio", { name: "Limité" }).check();
+  await page.getByRole("radio", { name: "Limité", exact: true }).check();
   await page.getByLabel("Nombre de places").fill("12");
   await page.getByLabel("Minimum de participants").fill("4");
   await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
   await page.getByRole("checkbox", { name: "Enfants bienvenus" }).check();
-  await page.getByLabel("Conseils pratiques").fill("Prévoyez une petite laine.");
+  await page
+    .getByLabel("Conseils pratiques")
+    .fill("Prévoyez une petite laine.");
   await page.getByLabel("Matériel à prévoir").fill("Gants fournis.");
   await page
     .getByLabel("Ce que vous pouvez apporter")
@@ -87,7 +87,9 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await etape(page, 1);
   await expect(page.getByRole("main")).toContainText("Titre et catégorie");
   await continuer(page);
-  await expect(page.getByRole("alert")).toContainText("Donnez un titre");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Donnez un titre",
+  );
   await page.getByLabel("Titre de l'activité").fill("Atelier");
   await expect(page.getByRole("main")).toContainText("7 / 50");
   await page.getByLabel("Titre de l'activité").fill(titre);
@@ -103,7 +105,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await page.getByLabel("Heure de fin").fill("09:00");
   await page.getByLabel("Lieu").fill("Cour intérieure");
   await continuer(page);
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "L'heure de fin doit être après l'heure de début.",
   );
   await page.getByLabel("Heure de fin").fill("11:30");
@@ -114,17 +116,19 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   // Étape 3 : places limitées, minimum sous le maximum, deux étiquettes.
   await etape(page, 3);
   await expect(page.getByLabel("Nombre de places")).toHaveCount(0);
-  await page.getByRole("radio", { name: "Limité" }).check();
+  await page.getByRole("radio", { name: "Limité", exact: true }).check();
   await page.getByLabel("Nombre de places").fill("12");
   await page.getByLabel("Minimum de participants").fill("20");
   await continuer(page);
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Le minimum ne peut pas dépasser le nombre de places.",
   );
   await page.getByLabel("Minimum de participants").fill("4");
   await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
   await page.getByRole("checkbox", { name: "Enfants bienvenus" }).check();
-  await page.getByLabel("Conseils pratiques").fill("Prévoyez une petite laine.");
+  await page
+    .getByLabel("Conseils pratiques")
+    .fill("Prévoyez une petite laine.");
 
   // Précédent puis Continuer : rien n'est perdu, dans un sens comme dans l'autre.
   await page.getByRole("button", { name: "Précédent" }).click();

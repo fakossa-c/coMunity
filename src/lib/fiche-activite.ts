@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { cache } from "react";
 import type { CategorieActivite } from "./categories-activite";
+import type { EtiquetteActivite } from "./etiquettes-activite";
 import { origineDe } from "./origine";
 import { cheminFiche } from "./partage-activite";
 import { clientSession } from "./supabase/serveur";
@@ -28,6 +29,14 @@ export type FicheActivite = {
   places_prises: number;
   /** Accompagnants de la personne connectée ; `null` si elle n'est pas inscrite. */
   mes_accompagnants: number | null;
+  /** `null` : pas de minimum de participants. */
+  capacite_min: number | null;
+  etiquettes: EtiquetteActivite[];
+  mot_accueil: string | null;
+  conseils_pratiques: string | null;
+  materiel_prevoir: string | null;
+  a_apporter: string | null;
+  precision_acces: string | null;
 };
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */

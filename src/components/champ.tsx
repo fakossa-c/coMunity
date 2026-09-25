@@ -6,10 +6,15 @@ import { Icone } from "./icone";
 const saisie =
   "min-h-champ w-full min-w-0 flex-1 rounded-md bg-transparent px-4 font-body text-body-lg text-on-surface";
 
+/** Ce qu'affiche un compteur de caractères : « 12 / 50 caractères ». */
+export type Compteur = { longueur: number; max: number };
+
 type PropsCadre = {
   id: string;
   libelle: string;
   aide?: string;
+  /** Compteur de caractères, sous le champ, à la place de l'aide. */
+  compteur?: Compteur;
   erreur?: string;
   className?: string;
   /** Contenu de la boîte : la saisie, et le bouton d'affichage d'un mot de passe. */
@@ -17,7 +22,15 @@ type PropsCadre = {
 };
 
 /** Libellé au-dessus, boîte de 56 px, aide puis erreur en dessous. */
-function Cadre({ id, libelle, aide, erreur, className, children }: PropsCadre) {
+function Cadre({
+  id,
+  libelle,
+  aide,
+  compteur,
+  erreur,
+  className,
+  children,
+}: PropsCadre) {
   return (
     <div className={`flex flex-col gap-space-xs ${className ?? ""}`}>
       <label htmlFor={id} className="font-headline text-label-lg">
@@ -32,10 +45,19 @@ function Cadre({ id, libelle, aide, erreur, className, children }: PropsCadre) {
       >
         {children}
       </div>
-      {aide && (
-        <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
-          {aide}
+      {compteur ? (
+        <p
+          id={`${id}-aide`}
+          className={`text-body-md ${compteur.longueur > compteur.max ? "text-error" : "text-on-surface-variant"}`}
+        >
+          {compteur.longueur} / {compteur.max} caractères
         </p>
+      ) : (
+        aide && (
+          <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
+            {aide}
+          </p>
+        )
       )}
       {erreur && (
         <p
@@ -51,7 +73,7 @@ function Cadre({ id, libelle, aide, erreur, className, children }: PropsCadre) {
 }
 
 /** Attributs qui relient la saisie à son aide et à son erreur. */
-function liaisons(id: string, aide?: string, erreur?: string) {
+function liaisons(id: string, aide?: string | Compteur, erreur?: string) {
   const decrite = [aide && `${id}-aide`, erreur && `${id}-erreur`].filter(
     Boolean,
   );
@@ -66,6 +88,8 @@ type PropsChamp = ComponentProps<"input"> & {
   libelle: string;
   /** Texte d'aide sous le champ : « Au moins 6 caractères. » */
   aide?: string;
+  /** Compteur de caractères sous le champ, pour un texte court à longueur limitée. */
+  compteur?: Compteur;
   /** Erreur propre à ce champ, affichée sous lui et annoncée. */
   erreur?: string;
   /** Mot de passe : masqué, avec un bouton « Afficher / Masquer ». */
@@ -75,6 +99,7 @@ type PropsChamp = ComponentProps<"input"> & {
 export function Champ({
   libelle,
   aide,
+  compteur,
   erreur,
   secret = false,
   id,
@@ -91,11 +116,12 @@ export function Champ({
       id={idChamp}
       libelle={libelle}
       aide={aide}
+      compteur={compteur}
       erreur={erreur}
       className={className}
     >
       <input
-        {...liaisons(idChamp, aide, erreur)}
+        {...liaisons(idChamp, aide ?? compteur, erreur)}
         type={secret ? (visible ? "text" : "password") : type}
         className={saisie}
         {...props}
@@ -145,6 +171,45 @@ export function ChampListe({
       <select
         {...liaisons(idChamp, aide, erreur)}
         className={`${saisie} cursor-pointer`}
+        {...props}
+      />
+    </Cadre>
+  );
+}
+
+type PropsChampTexte = ComponentProps<"textarea"> & {
+  libelle: string;
+  aide?: string;
+  compteur?: Compteur;
+  erreur?: string;
+};
+
+/** Texte sur plusieurs lignes, à l'allure d'un `Champ` : mot d'accueil, conseils pratiques. */
+export function ChampTexte({
+  libelle,
+  aide,
+  compteur,
+  erreur,
+  id,
+  rows = 3,
+  className,
+  ...props
+}: PropsChampTexte) {
+  const idAuto = useId();
+  const idChamp = id ?? idAuto;
+  return (
+    <Cadre
+      id={idChamp}
+      libelle={libelle}
+      aide={aide}
+      compteur={compteur}
+      erreur={erreur}
+      className={className}
+    >
+      <textarea
+        {...liaisons(idChamp, aide ?? compteur, erreur)}
+        rows={rows}
+        className={`${saisie} resize-y py-3`}
         {...props}
       />
     </Cadre>

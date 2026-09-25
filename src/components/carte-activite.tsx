@@ -3,7 +3,9 @@ import {
   categoriesActivite,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import type { EtiquetteActivite } from "@/lib/etiquettes-activite";
 import { cheminFiche } from "@/lib/partage-activite";
+import { EtiquettesActivite } from "./etiquette";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 import { Jauge } from "./jauge";
@@ -22,6 +24,8 @@ export type Activite = {
   places_prises?: number;
   /** Accompagnants de la personne connectée ; `null` ou absent si elle n'est pas inscrite. */
   mes_accompagnants?: number | null;
+  /** Étiquettes cochées par l'organisateur ; absentes, la carte n'en montre aucune. */
+  etiquettes?: EtiquetteActivite[];
 };
 
 const FORMAT_DATE = new Intl.DateTimeFormat("fr-FR", {
@@ -75,6 +79,9 @@ export function CarteActivite({ activite }: { activite: Activite }) {
           capaciteMax={activite.capacite_max ?? null}
           placesPrises={activite.places_prises}
         />
+      )}
+      {activite.etiquettes && (
+        <EtiquettesActivite etiquettes={activite.etiquettes} />
       )}
       {inscrit && (
         <p className="flex items-center gap-space-xs font-headline text-body-bold text-primary">

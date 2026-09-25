@@ -201,6 +201,7 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await page.goto("/proposer");
   await page.getByLabel("Titre de l'activité").fill("Atelier compost");
   await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByRole("button", { name: "Continuer" }).click();
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
@@ -208,7 +209,9 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("11:30");
   await page.getByLabel("Lieu").fill("Cour intérieure");
-  await page.getByRole("button", { name: "Publier l'activité" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Publier" }).click();
 
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),

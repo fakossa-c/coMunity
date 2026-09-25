@@ -34,8 +34,9 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByLabel("Titre de l'activité").fill(titre);
   await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
   await page
-    .getByLabel("Description")
+    .getByLabel("Mot d'accueil")
     .fill("On apprend à composter ensemble, dans la cour.");
+  await page.getByRole("button", { name: "Continuer" }).click();
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
@@ -43,7 +44,9 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("11:30");
   await page.getByLabel("Lieu").fill("Cour intérieure");
-  await page.getByRole("button", { name: "Publier l'activité" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Publier" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
   ).toBeVisible();
