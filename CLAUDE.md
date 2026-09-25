@@ -4,6 +4,12 @@
 - `main` = production. La fusion `develop` → `main` est décidée par l'utilisateur.
 - Hors-produit (l'agent fusionne lui-même) : PR qui ne touche que `CLAUDE.md`, `docs/` ou l'outillage (CI, hooks, config de lint et de test).
 
+## Supabase distant
+
+- Les previews Vercel et la production partagent un seul projet Supabase Cloud : toute écriture sur son schéma ou ses données touche la production. Chacune attend l'accord de l'utilisateur.
+- Une PR qui ajoute une migration a une preview en erreur sur les écrans concernés tant que la migration n'est pas sur ce projet : sa vérification de preview attend cet accord.
+- Une migration s'y applique avec `npx supabase db push` (procédure dans `docs/deploiement.md`, section 1), qui tient l'historique des migrations à jour. Une migration exécutée à la main dans l'éditeur SQL se déclare ensuite avec `npx supabase migration repair --status applied <version>`.
+
 ## Compte GitHub
 
 - Le dépôt appartient à `fakossa-c`, alors que le compte `gh` actif de la machine est `fakossa`, sans droits ici. Chaque commande `gh` sur ce dépôt s'exécute avec le jeton de `fakossa-c` : `GH_TOKEN=$(gh auth token -u fakossa-c) gh ...` (PowerShell : `$env:GH_TOKEN = gh auth token -u fakossa-c` avant la commande).
