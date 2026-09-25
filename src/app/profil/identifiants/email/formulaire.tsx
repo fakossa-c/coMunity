@@ -13,9 +13,9 @@ export function FormulaireEmail({ actuel }: { actuel: string }) {
   return (
     <form action={action} className="flex max-w-md flex-col gap-bloc">
       <Annonce message={erreurGenerale(etat)} erreur />
-      <Champ libelle="E-mail actuel" type="email" value={actuel} readOnly />
+      <Champ libelle="Email actuel" type="email" value={actuel} readOnly />
       <Champ
-        libelle="Nouvel e-mail"
+        libelle="Nouvel email"
         name="email"
         type="email"
         autoComplete="email"

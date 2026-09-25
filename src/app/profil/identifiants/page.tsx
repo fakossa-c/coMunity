@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Mes identifiants" };
 
 const CONFIRMATIONS: Record<string, string> = {
   "mot-de-passe": "Votre mot de passe est modifié.",
-  "email-confirme": "Votre adresse e-mail est modifiée.",
+  "email-confirme": "Votre adresse email est modifiée.",
 };
 
 function Modifier({ href, quoi }: { href: string; quoi: string }) {
@@ -60,7 +60,7 @@ export default async function MesIdentifiants({
         <Annonce
           message={
             lien === "invalide"
-              ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Refaites la demande avec « Modifier » sur la ligne E-mail."
+              ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Refaites la demande avec « Modifier » sur la ligne Email."
               : null
           }
           erreur
@@ -70,10 +70,10 @@ export default async function MesIdentifiants({
           lignes={[
             {
               icone: "mail",
-              titre: "E-mail",
+              titre: "Email",
               detail: utilisateur.email,
               fin: (
-                <Modifier href="/profil/identifiants/email" quoi="l'e-mail" />
+                <Modifier href="/profil/identifiants/email" quoi="l'email" />
               ),
             },
             {

@@ -5,7 +5,7 @@ import type { NomIcone } from "./icones";
 type Ligne = {
   cle?: string;
   icone: NomIcone;
-  /** Libellé discret : « E-mail » */
+  /** Libellé discret : « Email » */
   titre: string;
   /** Valeur en gras : « danielle.m@exemple.fr » */
   detail?: string;

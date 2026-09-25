@@ -22,7 +22,7 @@ export type EtatEmail = ErreurFormulaire<"email" | "mot-de-passe"> & {
   email?: string;
 };
 
-/** Envoie un lien à la nouvelle adresse : l'e-mail du compte ne change qu'une fois ce lien ouvert. */
+/** Envoie un lien à la nouvelle adresse : l'email du compte ne change qu'une fois ce lien ouvert. */
 export async function modifierEmail(
   _: EtatEmail,
   donnees: FormData,
@@ -35,7 +35,7 @@ export async function modifierEmail(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return {
       erreur:
-        "Saisissez une adresse e-mail complète, par exemple prenom.nom@exemple.fr.",
+        "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.",
       champ: "email",
       email,
     };

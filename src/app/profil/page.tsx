@@ -21,7 +21,7 @@ export default async function Profil() {
             href="/profil/identifiants"
             icone="key"
             titre="Mes identifiants"
-            detail="E-mail, mot de passe, déconnexion"
+            detail="Email, mot de passe, déconnexion"
           />
         </nav>
       </div>
