@@ -36,8 +36,10 @@ comment on column public.activite.precision_acces is 'Comment trouver le lieu (Â
 grant insert (
   capacite_min, etiquettes, mot_accueil, conseils_pratiques, materiel_prevoir, a_apporter, precision_acces
 ) on public.activite to authenticated;
+-- `capacite_max` reste hors de la modification : la baisser sous les places prises se traite
+-- avec la modification d'une activitÃ© (ticket #12).
 grant update (
-  capacite_max, capacite_min, etiquettes, mot_accueil, conseils_pratiques, materiel_prevoir, a_apporter, precision_acces
+  capacite_min, etiquettes, mot_accueil, conseils_pratiques, materiel_prevoir, a_apporter, precision_acces
 ) on public.activite to authenticated;
 
 -- La fiche restitue tout ce que le parcours a saisi.
