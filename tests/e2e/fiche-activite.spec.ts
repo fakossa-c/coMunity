@@ -22,9 +22,7 @@ async function seConnecter(page: Page, email: string) {
 }
 
 function meta(page: Page, propriete: string) {
-  return page
-    .locator(`meta[property="${propriete}"]`)
-    .getAttribute("content");
+  return page.locator(`meta[property="${propriete}"]`).getAttribute("content");
 }
 
 test("un visiteur non connecté lit la fiche, sans aucun nom", async ({
@@ -40,7 +38,9 @@ test("un visiteur non connecté lit la fiche, sans aucun nom", async ({
     page.getByRole("heading", { level: 1, name: "Goûter crêpes" }),
   ).toBeVisible();
   const fiche = page.getByRole("main");
-  await expect(fiche).toContainText("Moments partagés · Initiative de résident");
+  await expect(fiche).toContainText(
+    "Moments partagés · Initiative de résident",
+  );
   await expect(fiche).toContainText("de 16h00 à 18h30");
   await expect(fiche).toContainText("Jardin partagé");
   await expect(fiche).toContainText("On fait les crêpes ensemble");
@@ -179,7 +179,9 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await expect(page.getByRole("main")).toContainText("🪴 Atelier compost");
 
   await page.getByRole("button", { name: "Copier le lien" }).click();
-  await expect(page.getByRole("status")).toContainText("Lien copié");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Lien copié" }),
+  ).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     adresse,
   );

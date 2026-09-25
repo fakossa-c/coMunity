@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Champ, ChampListe } from "@/components/champ";
 import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import {
@@ -16,8 +15,6 @@ import { publier } from "./actions";
 const CATEGORIE_INITIALE = categoriesActiviteListe[0];
 
 export function FormulaireActivite() {
-  const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
   const [categorie, setCategorie] =
     useState<CategorieActivite>(CATEGORIE_INITIALE);
   const [resultat, setResultat] = useState<Resultat | null>(null);
@@ -39,6 +36,7 @@ export function FormulaireActivite() {
       return;
     }
 
+    // Publiée, l'activité mène à son écran de partage : seul un échec revient ici.
     demarrer(async () => {
       const issue = await publier({
         titre,
@@ -51,20 +49,12 @@ export function FormulaireActivite() {
         lieu,
       });
       setResultat(issue);
-      if (issue.ok) {
-        formRef.current?.reset();
-        setCategorie(CATEGORIE_INITIALE);
-        router.push("/");
-      }
     });
   }
 
   return (
-    <form ref={formRef} action={envoyer} className="flex flex-col gap-space-lg">
-      <div>
-        <Annonce message={resultat?.ok && resultat.message} />
-        <Annonce message={resultat?.ok === false && resultat.message} erreur />
-      </div>
+    <form action={envoyer} className="flex flex-col gap-space-lg">
+      <Annonce message={resultat?.ok === false && resultat.message} erreur />
 
       <Champ
         libelle="Titre de l'activité"

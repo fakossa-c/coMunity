@@ -112,6 +112,8 @@ type PropsSecondaire = {
   retour: { href: string; libelle: string };
   /** Faux sur les écrans de connexion, où l'avatar n'a pas lieu d'être. */
   avecCompte?: boolean;
+  /** Bouton « Partager » d'une fiche, dans la barre de retour. */
+  partager?: ReactNode;
   /** BarreActionFixe de l'écran. */
   action?: ReactNode;
   children: ReactNode;
@@ -121,6 +123,7 @@ type PropsSecondaire = {
 export function EcranSecondaire({
   retour,
   avecCompte = true,
+  partager,
   action,
   children,
 }: PropsSecondaire) {
@@ -130,10 +133,11 @@ export function EcranSecondaire({
         <BarreRetour
           href={retour.href}
           libelle={retour.libelle}
+          partager={partager && <SiCompteOuvert>{partager}</SiCompteOuvert>}
           compte={avecCompte && <Compte />}
         />
       }
-      barreBas={action}
+      barreBas={action && <SiCompteOuvert>{action}</SiCompteOuvert>}
       paddingBas={action ? 170 : 40}
     >
       <GardeCompte>{children}</GardeCompte>

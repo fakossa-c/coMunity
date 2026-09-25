@@ -54,10 +54,7 @@ describe("message WhatsApp", () => {
   });
 
   it("donne les places restantes quand l'activité a une jauge", () => {
-    const message = messageWhatsApp(
-      { ...ACTIVITE, placesRestantes: 4 },
-      LIEN,
-    );
+    const message = messageWhatsApp({ ...ACTIVITE, placesRestantes: 4 }, LIEN);
 
     expect(message.split("\n")).toEqual([
       "👋 Goûter crêpes",
