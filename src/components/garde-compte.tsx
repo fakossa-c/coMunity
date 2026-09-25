@@ -1,4 +1,10 @@
-import { lireSession, statutResident } from "@/lib/session";
+import { redirect } from "next/navigation";
+import {
+  CHEMIN_COMPLETION,
+  doitCompleterProfil,
+  lireSession,
+  statutResident,
+} from "@/lib/session";
 import { Bientot } from "./bientot";
 import { Icone } from "./icone";
 import { TitrePage } from "./titre-page";
@@ -36,9 +42,21 @@ export async function SiCompteOuvert({
 /**
  * Ce que voit un résident selon son statut : la page demandée, précédée d'un bandeau
  * s'il attend la validation du syndic ; seulement un message d'état s'il a été refusé ou retiré.
+ * Un membre du syndic sans prénom ni nom est d'abord conduit à l'écran qui les demande, sauf
+ * sur les écrans où il les saisit (`completionExigee` à faux).
  */
-export async function GardeCompte({ children }: { children: React.ReactNode }) {
-  const statut = statutResident(await lireSession());
+export async function GardeCompte({
+  completionExigee = true,
+  children,
+}: {
+  completionExigee?: boolean;
+  children: React.ReactNode;
+}) {
+  const session = await lireSession();
+  if (completionExigee && doitCompleterProfil(session)) {
+    redirect(CHEMIN_COMPLETION);
+  }
+  const statut = statutResident(session);
 
   if (statut === "refuse" || statut === "retire") {
     const { titre, sousTitre, message } = etatsBloques[statut];

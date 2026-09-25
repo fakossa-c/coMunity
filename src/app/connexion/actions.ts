@@ -43,8 +43,10 @@ export async function seConnecter(
   }
 
   redirect(
-    cheminInterne(donnees.get("suivant")) ??
-      accueilDe(await lireProfil(supabase, connexion.user.id)),
+    await accueilDe(
+      await lireProfil(supabase, connexion.user.id),
+      cheminInterne(donnees.get("suivant")),
+    ),
   );
 }
 

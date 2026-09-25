@@ -1,7 +1,13 @@
 /** Aligné sur la contrainte de `profil.prenom` et `profil.nom` en base. */
 export const LONGUEUR_MAXIMALE_NOM = 40;
 
-type Identite = { prenom: string; nom: string };
+export type Identite = { prenom: string; nom: string };
+
+/** Le prénom et le nom envoyés par un formulaire, sans leurs espaces autour. */
+export function identiteSaisie(donnees: FormData): Identite {
+  const lire = (champ: string) => String(donnees.get(champ) ?? "").trim();
+  return { prenom: lire("prenom"), nom: lire("nom") };
+}
 
 /** « Colette Durand ». */
 export function nomComplet(personne: Identite) {
