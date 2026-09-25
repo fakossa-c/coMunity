@@ -115,6 +115,36 @@ export async function nouvelleActivite(
   return data.identifiant_public as string;
 }
 
+/** Inscrit `residentId` à l'activité désignée par son identifiant public, avec `accompagnants` personnes en plus. */
+export async function inscrireResident(
+  identifiant: string,
+  residentId: string,
+  accompagnants = 0,
+) {
+  const admin = clientAdmin();
+  const { data: activite, error } = await admin
+    .from("activite")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .single();
+  if (error) throw error;
+  const inscription = await admin.from("inscription_activite").insert({
+    activite_id: activite.id,
+    resident_id: residentId,
+    accompagnants,
+  });
+  if (inscription.error) throw inscription.error;
+}
+
+/** Passe l'activité à « annulée », comme le fait son créateur depuis la fiche. */
+export async function annulerActivite(identifiant: string) {
+  const { error } = await clientAdmin()
+    .from("activite")
+    .update({ statut: "annulee" })
+    .eq("identifiant_public", identifiant);
+  if (error) throw error;
+}
+
 /** Supprime les comptes créés pendant un test, invités compris. */
 export async function supprimerComptes(emails: string[]) {
   const admin = clientAdmin();
