@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { categoriesActiviteListe, pictogrammeDe } from "./categories-activite";
 import {
   creneau,
   jourLong,
@@ -75,13 +76,7 @@ describe("message WhatsApp", () => {
   });
 
   it("chaque catégorie a un emoji", () => {
-    for (const pictogramme of [
-      "waving_hand",
-      "handyman",
-      "menu_book",
-      "handshake",
-      "potted_plant",
-    ]) {
+    for (const pictogramme of categoriesActiviteListe.map(pictogrammeDe)) {
       const titre = messageWhatsApp({ ...ACTIVITE, pictogramme }, LIEN).split(
         "\n",
       )[0];

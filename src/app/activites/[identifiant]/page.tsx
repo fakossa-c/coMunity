@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { BlocTexte } from "@/components/bloc-texte";
-import { Bouton, classesBouton } from "@/components/bouton";
+import { Bouton } from "@/components/bouton";
 import { BoutonCopier } from "@/components/bouton-copier";
 import { BoutonPartager } from "@/components/bouton-partager";
+import { BoutonRelayer } from "@/components/bouton-relayer";
 import { EcranSecondaire } from "@/components/cadre";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
@@ -18,12 +19,7 @@ import {
   origine,
   type FicheActivite,
 } from "@/lib/fiche-activite";
-import {
-  creneau,
-  jourLong,
-  lienWhatsApp,
-  messageWhatsApp,
-} from "@/lib/partage-activite";
+import { creneau, jourLong, messageWhatsApp } from "@/lib/partage-activite";
 
 type Props = { params: Promise<{ identifiant: string }> };
 
@@ -113,15 +109,7 @@ export default async function Fiche({ params }: Props) {
         {fiche.description && (
           <BlocTexte titre="Description">{fiche.description}</BlocTexte>
         )}
-        <a
-          href={lienWhatsApp(messageWhatsApp(fiche, lien))}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={classesBouton("contour")}
-        >
-          <Icone nom="forum" />
-          Relayer sur le groupe WhatsApp
-        </a>
+        <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
         <BoutonCopier
           texte={lien}
           libelle="Copier le lien"

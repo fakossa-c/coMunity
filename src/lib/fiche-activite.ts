@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import type { CategorieActivite } from "./categories-activite";
 import { origineDe } from "./origine";
+import { cheminFiche } from "./partage-activite";
 import { clientSession } from "./supabase/serveur";
 
 /** Ce que la fonction `fiche_activite` livre d'une activité, visiteurs compris. */
@@ -51,5 +52,5 @@ export async function origine() {
 
 /** Le lien public de la fiche, celui qu'on colle dans le groupe WhatsApp. */
 export async function lienFiche(identifiant: string) {
-  return `${await origine()}/activites/${identifiant}`;
+  return `${await origine()}${cheminFiche(identifiant)}`;
 }

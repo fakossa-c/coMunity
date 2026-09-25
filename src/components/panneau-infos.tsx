@@ -8,7 +8,10 @@ export function PanneauInfos({ lignes }: { lignes: Ligne[] }) {
   return (
     <ul className="flex flex-col gap-space-md rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
       {lignes.map((ligne) => (
-        <li key={ligne.icone} className="flex items-start gap-space-sm">
+        <li
+          key={`${ligne.icone}-${ligne.titre}`}
+          className="flex items-start gap-space-sm"
+        >
           <span className="text-texte-date">
             <Icone nom={ligne.icone} taille={26} />
           </span>

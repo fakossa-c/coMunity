@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useConfirmation } from "./bouton-copier";
 import { Icone } from "./icone";
 
 type Props = { titre: string; lien: string };
@@ -11,13 +11,7 @@ type Props = { titre: string; lien: string };
  * pictogramme pour que la barre tienne sur 360 px à côté de « Se connecter ».
  */
 export function BoutonPartager({ titre, lien }: Props) {
-  const [copie, setCopie] = useState(false);
-
-  useEffect(() => {
-    if (!copie) return;
-    const minuterie = setTimeout(() => setCopie(false), 4000);
-    return () => clearTimeout(minuterie);
-  }, [copie]);
+  const [copie, confirmer] = useConfirmation();
 
   async function partager() {
     if (navigator.share) {
@@ -30,7 +24,7 @@ export function BoutonPartager({ titre, lien }: Props) {
     }
     try {
       await navigator.clipboard.writeText(lien);
-      setCopie(true);
+      confirmer();
     } catch {
       // Ni partage ni presse-papiers : les boutons de la fiche restent là.
     }

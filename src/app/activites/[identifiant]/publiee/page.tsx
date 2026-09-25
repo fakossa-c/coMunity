@@ -3,13 +3,14 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { classesBouton } from "@/components/bouton";
 import { BoutonCopier } from "@/components/bouton-copier";
+import { BoutonRelayer } from "@/components/bouton-relayer";
 import { EcranSecondaire } from "@/components/cadre";
 import { Champ } from "@/components/champ";
 import { EncartPastel } from "@/components/encart-pastel";
 import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
 import { lienFiche, lireFiche } from "@/lib/fiche-activite";
-import { lienWhatsApp, messageWhatsApp } from "@/lib/partage-activite";
+import { cheminFiche, messageWhatsApp } from "@/lib/partage-activite";
 
 export const metadata: Metadata = { title: "Activité publiée" };
 
@@ -21,7 +22,7 @@ export default async function ActivitePubliee({ params }: Props) {
   const fiche = await lireFiche(identifiant);
   if (!fiche) notFound();
   // Seul le créateur vient de publier ; les autres arrivent sur la fiche.
-  if (!fiche.est_organisateur) redirect(`/activites/${identifiant}`);
+  if (!fiche.est_organisateur) redirect(cheminFiche(identifiant));
 
   const lien = await lienFiche(identifiant);
   const message = messageWhatsApp(fiche, lien);
@@ -49,22 +50,14 @@ export default async function ActivitePubliee({ params }: Props) {
             {message}
           </p>
         </EncartPastel>
-        <a
-          href={lienWhatsApp(message)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={classesBouton("action")}
-        >
-          <Icone nom="forum" />
-          Relayer sur le groupe WhatsApp
-        </a>
+        <BoutonRelayer message={message} variante="action" />
         <BoutonCopier
           texte={message}
           libelle="Copier le message"
           confirmation="Message copié"
         />
         <Link
-          href={`/activites/${identifiant}`}
+          href={cheminFiche(identifiant)}
           className={classesBouton("contour")}
         >
           <Icone nom="visibility" />

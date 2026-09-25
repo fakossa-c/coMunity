@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { CategorieActivite } from "@/lib/categories-activite";
+import { cheminFiche } from "@/lib/partage-activite";
 import { clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
@@ -52,5 +53,5 @@ export async function publier(activite: NouvelleActivite): Promise<Resultat> {
   }
 
   revalidatePath("/");
-  redirect(`/activites/${data.identifiant_public}/publiee`);
+  redirect(`${cheminFiche(data.identifiant_public)}/publiee`);
 }

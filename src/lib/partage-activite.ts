@@ -10,7 +10,15 @@ export type ActivitePartagee = {
   placesRestantes?: number | null;
 };
 
-/** Équivalent emoji d'un pictogramme, pour les messages partagés : l'app, elle, n'en affiche pas. */
+/** Chemin de la fiche d'une activité, celui du lien partagé. */
+export function cheminFiche(identifiant: string) {
+  return `/activites/${identifiant}`;
+}
+
+/**
+ * Équivalent emoji d'un pictogramme, pour le message partagé. L'interface n'en emploie pas ;
+ * seul l'aperçu du message, sur l'écran qui suit la publication, les montre tels qu'ils partiront.
+ */
 const emojis: Record<string, string> = {
   waving_hand: "👋",
   handyman: "🛠️",

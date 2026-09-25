@@ -3,6 +3,7 @@ import {
   categoriesActivite,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import { cheminFiche } from "@/lib/partage-activite";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
@@ -46,7 +47,7 @@ export function CarteActivite({ activite }: { activite: Activite }) {
           <h2 className="font-headline text-headline-sm text-on-surface">
             {/* Toute la carte ouvre la fiche : le lien s'étend sur elle. */}
             <Link
-              href={`/activites/${activite.identifiant_public}`}
+              href={cheminFiche(activite.identifiant_public)}
               className="after:absolute after:inset-0 after:rounded-lg"
             >
               {activite.titre}
