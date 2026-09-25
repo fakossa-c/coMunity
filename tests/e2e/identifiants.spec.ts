@@ -88,6 +88,8 @@ test("le changement de mot de passe est refusé, avec le message sous le champ e
   await expect(actuel).toHaveAccessibleDescription(
     /Mot de passe actuel incorrect/,
   );
+  // L'erreur vise ce champ précis : un seul `alert` dans le DOM, pas un second vide au-dessus.
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(1);
 
   await actuel.fill(MOT_DE_PASSE);
   await nouveau.fill("court");
