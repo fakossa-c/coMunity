@@ -145,7 +145,8 @@ test("chaque entrée du menu mène à sa page, depuis un écran secondaire aussi
   await residentConnecte(page);
 
   for (const [entree, chemin, titre] of [
-    ["Profil", "/profil", "Profil"],
+    // La page Profil s'ouvre sur l'identité de la personne, comme dans le kit.
+    ["Profil", "/profil", "Danielle Martin"],
     ["Mon syndic", "/mon-syndic", "Mon syndic"],
     ["Ma copro", "/ma-copro", "Ma copro"],
   ]) {
