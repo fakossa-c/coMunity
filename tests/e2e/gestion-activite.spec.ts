@@ -220,6 +220,7 @@ test("J'organise liste mes activités à venir, annulées comprises, puis les pa
   await nouvelleActivite(createur.id, {
     titre: "Vide-grenier passé",
     date_activite: il(-15),
+    capacite_min: "3",
   });
 
   await page.goto("/activites?onglet=j_organise");
@@ -231,7 +232,22 @@ test("J'organise liste mes activités à venir, annulées comprises, puis les pa
 
   await page.getByRole("link", { name: "Passées" }).click();
   await expect(page.getByText("Vide-grenier passé")).toBeVisible();
+  // Le minimum n'a plus rien à confirmer une fois l'activité passée.
+  await expect(page.getByRole("main")).not.toContainText("pour confirmer");
   await expect(page.getByText("Goûter à venir")).toHaveCount(0);
+});
+
+test("le créateur garde « Je participe » sur sa propre fiche, avec ses outils de gestion en plus", async ({
+  page,
+}) => {
+  const { identifiant } = await createurAvecActivite(page);
+
+  await page.goto(`/activites/${identifiant}`);
+
+  await expect(
+    page.getByRole("button", { name: "Je participe" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Modifier" })).toBeVisible();
 });
 
 test("un autre résident n'a aucun outil de gestion et ne peut pas ouvrir la modification", async ({
