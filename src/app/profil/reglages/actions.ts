@@ -1,12 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { TailleAffichage, ThemeAffichage } from "@/lib/attributs-affichage";
+import type {
+  TailleAffichage,
+  ThemeAffichage,
+} from "@/lib/attributs-affichage";
 import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
 /** Enregistre la taille des caractères choisie par la personne connectée. */
-export async function choisirTaille(taille: TailleAffichage): Promise<Resultat> {
+export async function choisirTaille(
+  taille: TailleAffichage,
+): Promise<Resultat> {
   return enregistrer({ taille });
 }
 
@@ -31,7 +36,8 @@ async function enregistrer(
   if (error) {
     return {
       ok: false,
-      message: "Le réglage n'a pas pu être enregistré. Réessayez dans un instant.",
+      message:
+        "Le réglage n'a pas pu être enregistré. Réessayez dans un instant.",
     };
   }
 

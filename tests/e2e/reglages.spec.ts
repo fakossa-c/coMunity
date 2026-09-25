@@ -1,9 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
-  MOT_DE_PASSE,
-  nouveauResident,
-  supprimerComptes,
-} from "./outils";
+import { MOT_DE_PASSE, nouveauResident, supprimerComptes } from "./outils";
 
 const emails: string[] = [];
 
@@ -40,19 +36,23 @@ test("Mes réglages propose la taille des caractères et l'apparence", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: "Mes réglages" }),
   ).toBeVisible();
-  const taille = page.getByRole("radiogroup", { name: "Taille des caractères" });
+  const taille = page.getByRole("radiogroup", {
+    name: "Taille des caractères",
+  });
   await expect(taille.getByRole("radio", { name: "Standard" })).toHaveAttribute(
     "aria-checked",
     "true",
   );
-  await expect(
-    taille.getByRole("radio", { name: "Grands" }),
-  ).toHaveAttribute("aria-checked", "false");
+  await expect(taille.getByRole("radio", { name: "Grands" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
 
   const apparence = page.getByRole("radiogroup", { name: "Apparence" });
-  await expect(
-    apparence.getByRole("radio", { name: "Clair" }),
-  ).toHaveAttribute("aria-checked", "true");
+  await expect(apparence.getByRole("radio", { name: "Clair" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
   await expect(
     apparence.getByRole("radio", { name: "Sombre" }),
   ).toHaveAttribute("aria-checked", "false");
@@ -87,8 +87,7 @@ test("le choix persiste après reconnexion", async ({ page, context }) => {
   async function choisir(nom: string) {
     const enregistre = page.waitForResponse(
       (reponse) =>
-        reponse.url() === page.url() &&
-        reponse.request().method() === "POST",
+        reponse.url() === page.url() && reponse.request().method() === "POST",
     );
     await page.getByRole("radio", { name: nom }).click();
     await enregistre;

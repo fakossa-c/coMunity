@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import { ChoixSegmente } from "@/components/choix-segmente";
 import { TitreSection } from "@/components/titre-section";
-import type { TailleAffichage, ThemeAffichage } from "@/lib/attributs-affichage";
+import type {
+  TailleAffichage,
+  ThemeAffichage,
+} from "@/lib/attributs-affichage";
 import { choisirTaille, choisirTheme } from "./actions";
 
 type Props = { taille: TailleAffichage; theme: ThemeAffichage };
