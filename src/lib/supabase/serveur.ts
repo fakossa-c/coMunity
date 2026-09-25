@@ -62,3 +62,26 @@ export function clientAdmin() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
+
+/**
+ * Vérifie que `motDePasse` est bien celui du compte `email`, avant un changement d'identifiant.
+ * Passe par une connexion à part, sans cookies, refermée aussitôt : la session en cours n'est pas touchée.
+ */
+export async function verifierMotDePasse(
+  email: string,
+  motDePasse: string,
+): Promise<"correct" | "incorrect" | "indisponible"> {
+  const { url, cle } = configurationExigee();
+  const client = createClient(url, cle, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await client.auth.signInWithPassword({
+    email,
+    password: motDePasse,
+  });
+  if (error) {
+    return error.code === "invalid_credentials" ? "incorrect" : "indisponible";
+  }
+  await client.auth.signOut({ scope: "local" });
+  return "correct";
+}
