@@ -31,7 +31,9 @@ export async function sInscrire(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(`/connexion?suivant=${encodeURIComponent(cheminFiche(identifiant))}`);
+    redirect(
+      `/connexion?suivant=${encodeURIComponent(cheminFiche(identifiant))}`,
+    );
   }
 
   const { error } = await supabase.rpc("s_inscrire", {
@@ -111,4 +113,36 @@ export async function supprimerActivite(identifiant: string): Promise<Resultat> 
   revalidatePath("/");
   revalidatePath("/activites");
   redirect("/activites?onglet=j_organise");
+}
+
+const messagesRetour: Record<string, string> = {
+  "42501": "Seul un participant inscrit peut laisser un retour.",
+  "23514": "La note doit être comprise entre 1 et 5.",
+  P0002: "Cette activité n'existe plus.",
+  P0003: "L'activité n'est pas encore terminée.",
+};
+
+/** Dépose ou remplace le retour de la personne connectée sur l'activité. */
+export async function laisserRetour(
+  identifiant: string,
+  note: number,
+  commentaire: string,
+): Promise<Resultat> {
+  const supabase = await clientSession();
+  const { error } = await supabase.rpc("laisser_retour", {
+    p_identifiant: identifiant,
+    p_note: note,
+    p_commentaire: commentaire,
+  });
+  if (error) {
+    return {
+      ok: false,
+      message:
+        messagesRetour[error.code ?? ""] ??
+        "Votre retour n'a pas pu être enregistré. Réessayez dans un instant.",
+    };
+  }
+
+  revalidatePath(cheminFiche(identifiant));
+  return { ok: true, message: "Merci pour votre retour." };
 }

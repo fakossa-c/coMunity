@@ -29,10 +29,13 @@ import {
   jourLong,
   messageWhatsApp,
 } from "@/lib/partage-activite";
-import { lireSession } from "@/lib/session";
+import { activiteEstPassee } from "@/lib/retour-activite";
+import { estSyndicActif, lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
+import { FormulaireRetour } from "./formulaire-retour";
 import { GestionActivite } from "./gestion-activite";
 import { Participants } from "./participants";
+import { Retours } from "./retours";
 
 type Props = { params: Promise<{ identifiant: string }> };
 
@@ -96,6 +99,9 @@ export default async function Fiche({ params }: Props) {
   const session = await lireSession();
 
   const annulee = fiche.statut === "annulee";
+  // Distinct de `estPassee` (jour calendaire, ci-dessus pour EtatActivite) : ici la date et
+  // l'heure de fin précises, l'échéance que la RLS de laisser_retour vérifie aussi.
+  const activitePassee = activiteEstPassee(fiche);
 
   return (
     <EcranSecondaire
@@ -173,6 +179,14 @@ export default async function Fiche({ params }: Props) {
         {session?.statut === "valide" && (
           <Participants identifiant={identifiant} />
         )}
+        {!annulee && activitePassee && fiche.mes_accompagnants !== null && (
+          <FormulaireRetour fiche={fiche} />
+        )}
+        {!annulee &&
+          activitePassee &&
+          (fiche.est_organisateur || estSyndicActif(session)) && (
+            <Retours identifiant={identifiant} />
+          )}
         {!annulee && (
           <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
         )}
