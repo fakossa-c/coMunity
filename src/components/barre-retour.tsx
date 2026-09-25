@@ -17,12 +17,13 @@ type Props = {
 export function BarreRetour({ href, libelle, partager, compte }: Props) {
   return (
     <header className="sticky top-0 z-30 bg-fond-page pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex min-h-[4.5rem] max-w-[980px] items-center justify-between gap-space-sm px-3 desktop:px-margin-desktop">
-        <Link href={href} className={classesBouton("fantome")}>
+      {/* Marges resserrées : Retour, Partager et Se connecter tiennent ensemble sur 360 px. */}
+      <div className="mx-auto flex min-h-[4.5rem] max-w-[980px] items-center justify-between gap-1 px-2 desktop:px-margin-desktop">
+        <Link href={href} className={`${classesBouton("fantome")} px-2.5!`}>
           <Icone nom="arrow_back" taille={28} />
           {libelle}
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5">
           {partager}
           {compte}
         </div>

@@ -35,13 +35,14 @@ function resume(fiche: FicheActivite) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { identifiant } = await params;
   const fiche = await lireFiche(identifiant);
-  if (!fiche) return { title: "Activité introuvable" };
+  const metadataBase = new URL(await origine());
+  if (!fiche) return { title: "Activité introuvable", metadataBase };
 
   const description = resume(fiche);
   return {
     title: fiche.titre,
     description,
-    metadataBase: new URL(await origine()),
+    metadataBase,
     openGraph: {
       type: "website",
       siteName: "coMunity",

@@ -105,7 +105,17 @@ export default async function Image({
             color: COULEURS.terreCuite,
           }}
         >
-          {`${jourLong(fiche.date_activite)}, ${creneau(fiche.heure_debut, fiche.heure_fin)}`}
+          {jourLong(fiche.date_activite)}
+        </div>
+        <div
+          style={{
+            marginTop: -12,
+            fontSize: 36,
+            fontWeight: 700,
+            color: COULEURS.terreCuite,
+          }}
+        >
+          {creneau(fiche.heure_debut, fiche.heure_fin)}
         </div>
         <div style={{ fontSize: 36, color: COULEURS.texte }}>{fiche.lieu}</div>
         {/* eslint-disable-next-line @next/next/no-img-element -- rendu par ImageResponse, pas par le navigateur */}
