@@ -14,6 +14,16 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
+## Project board
+
+Issues are also tracked on the GitHub Project **coMunity** (`https://github.com/users/fakossa-c/projects/2`, a user project of `fakossa-c`). Its `Status` field has three columns: `Todo`, `In Progress`, `Done`. Assigning an issue does **not** move it, so:
+
+- **Take a ticket** (gate step 3 of the shared method rules): assign yourself, then `node scripts/statut-ticket.mjs <number> "In Progress"`.
+- **Close a ticket**: `node scripts/statut-ticket.mjs <number> Done` before or after `gh issue close`.
+- **New ticket**: created issues land in `Todo` once added to the board.
+
+The script resolves the token the same way as every other `gh` call here (`GH_TOKEN`, else `gh auth token -u fakossa-c`).
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
