@@ -21,24 +21,25 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 
    `db push` n'applique que `supabase/migrations/` : les données de `supabase/seed.sql` restent locales.
 
-3. Créer la résidence (SQL Editor), avec son vrai nom. Le code est exigé par la base mais ne sert
-   plus : l'inscription d'un résident n'en demande pas (sa suppression est portée par #5).
+3. Créer la résidence (SQL Editor), avec son vrai nom :
 
    ```sql
-   insert into public.residence (nom, code, heure_calme)
-   values ('<Nom de la résidence>', 'PROVISOIRE', '22:00');
+   insert into public.residence (nom, heure_calme)
+   values ('<Nom de la résidence>', '22:00');
    ```
 
 4. **Authentication > URL Configuration** : Site URL = `<URL-PROD>`. Les liens des emails sont
    construits à partir de cette URL ; aucune Redirect URL n'est nécessaire.
 5. **Authentication > Sign In / Providers > Email**, aligné sur `supabase/config.toml` :
-   « Confirm email » désactivé, longueur minimale du mot de passe 6.
+   « Confirm email » désactivé, « Secure email change » désactivé (le lien part vers la seule
+   nouvelle adresse), longueur minimale du mot de passe 6.
 6. **Authentication > Emails > Templates**, recopier sujet et contenu depuis le dépôt :
 
-   | Modèle         | Sujet                                        | Contenu                                |
-   | -------------- | -------------------------------------------- | -------------------------------------- |
-   | Invite user    | Vous êtes invité à rejoindre l'espace syndic | `supabase/templates/invitation.html`   |
-   | Reset password | Choisissez un nouveau mot de passe           | `supabase/templates/recuperation.html` |
+   | Modèle               | Sujet                                        | Contenu                                    |
+   | -------------------- | -------------------------------------------- | ------------------------------------------ |
+   | Invite user          | Vous êtes invité à rejoindre l'espace syndic | `supabase/templates/invitation.html`       |
+   | Reset password       | Choisissez un nouveau mot de passe           | `supabase/templates/recuperation.html`     |
+   | Change email address | Confirmez votre nouvelle adresse             | `supabase/templates/changement-email.html` |
 
    Les modèles par défaut ne passent pas par `/auth/confirmer` : leurs liens n'ouvrent pas la session.
 
@@ -70,8 +71,8 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
    Vercel (**Account Settings > Authentication**) puis recommencer.
 2. **Settings > Git** : branche de production `main`. Chaque push sur une autre branche donne une
    preview.
-3. **Settings > Environment Variables**, environnement **Production** uniquement, valeurs lues dans
-   Supabase > **Project Settings > API Keys** :
+3. **Settings > Environment Variables**, environnements **Production** et **Preview**, valeurs lues
+   dans Supabase > **Project Settings > API Keys** :
 
    | Variable                               | Valeur                             |
    | -------------------------------------- | ---------------------------------- |
@@ -79,8 +80,9 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key                    |
    | `SUPABASE_SECRET_KEY`                  | Secret key (marquer « Sensitive ») |
 
-   Les previews restent sans variables : elles s'affichent sans le nom de la résidence et n'écrivent
-   jamais dans la base de production.
+   Les previews utilisent donc la base de production : ce qu'on y crée est réel. Une PR qui ajoute
+   une migration a une preview en erreur sur les écrans concernés tant que la migration n'est pas
+   appliquée à cette base (`npx supabase db push`, voir section 1).
 
 4. Région des fonctions : Paris (`cdg1`), fixée par `vercel.json` ; le plan Hobby autorise une région.
    Elle apparaît dans le résumé du déploiement.
@@ -92,17 +94,23 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 Choisir une adresse qui **n'est pas membre de l'équipe du projet Supabase** : elle sert aussi au test
 d'email de l'étape 5. Depuis le dossier du dépôt, dans un terminal bash (Git Bash sous Windows), en
 pointant le script sur la production le temps d'une commande. La clé et le mot de passe se saisissent
-sans s'afficher ni rester dans l'historique :
+sans s'afficher ni rester dans l'historique. Le prénom et le nom sont obligatoires : un membre du
+syndic est aussi un résident, et les voisins le reconnaissent à son nom.
 
 ```bash
 read -rsp "Clé secrète : " CLE; echo
 read -rsp "Mot de passe provisoire : " MDP; echo
 NEXT_PUBLIC_SUPABASE_URL="<Project URL>" SUPABASE_SECRET_KEY="$CLE" \
-  npm run syndic:amorcer -- <email> "$MDP"
+  npm run syndic:amorcer -- <email> "$MDP" "<Prénom>" "<Nom>"
 unset CLE MDP
 ```
 
-Les membres suivants arrivent par invitation depuis l'espace syndic.
+Les membres suivants arrivent par invitation depuis l'espace syndic : chacun saisit son prénom et son
+nom en choisissant son mot de passe. Un membre créé avant que le prénom et le nom soient demandés les
+saisit à sa prochaine connexion.
+
+Après connexion, un membre du syndic arrive sur l'espace syndic sur ordinateur, et sur l'accueil sur
+mobile ; l'espace syndic reste accessible depuis le menu de l'avatar.
 
 ## 5. Vérifications
 

@@ -21,7 +21,11 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   emails.push(resident.email);
 
   await seConnecter(page, resident.email);
-  await page.getByRole("link", { name: /Proposer/ }).click();
+  await page
+    .getByRole("navigation", { name: "Navigation principale" })
+    .getByRole("link", { name: "Activités" })
+    .click();
+  await page.getByRole("link", { name: "Proposer" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Proposer" }),
   ).toBeVisible();
@@ -40,6 +44,10 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByLabel("Heure de fin").fill("11:30");
   await page.getByLabel("Lieu").fill("Cour intérieure");
   await page.getByRole("button", { name: "Publier l'activité" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Accueil" }).click();
 
   await expect(
     page.getByRole("heading", { level: 1, name: "Activités" }),

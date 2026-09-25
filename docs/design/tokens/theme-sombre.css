@@ -1,0 +1,75 @@
+/* Thème sombre : data-theme="sombre" sur la racine de l'app. Valeurs validées sur tweakcn (sept. 2026).
+   Les alias et bordures sont redéclarés : un var() se résout là où il est déclaré. */
+[data-theme="sombre"] {
+  color-scheme: dark;
+  --color-surface: #121c2a;
+  --color-surface-dim: #0d1622;
+  --color-surface-bright: #273140;
+  --color-surface-container-lowest: #1b2636;
+  --color-surface-container-low: #17212f;
+  --color-surface-container: #273140;
+  --color-surface-container-high: #2f3a4a;
+  --color-surface-container-highest: #3a4556;
+  --color-surface-variant: #3a4556;
+  --color-background: #121c2a;
+  --color-on-surface: #ebf1ff;
+  --color-on-surface-variant: #d9c2ba;
+  --color-on-background: #ebf1ff;
+  --color-inverse-surface: #d9e3f6;
+  --color-inverse-on-surface: #121c2a;
+  --color-outline: #8d7168;
+  --color-outline-variant: #3a4556;
+  --color-primary: #ffb59c;
+  --color-on-primary: #390c00;
+  --color-primary-container: #832700;
+  --color-on-primary-container: #ffdbd0;
+  --color-inverse-primary: #8f2b00;
+  --color-surface-tint: #ffb59c;
+  --color-secondary: #8ed79c;
+  --color-on-secondary: #00210b;
+  --color-secondary-container: #005226;
+  --color-on-secondary-container: #a9f4b6;
+  --color-tertiary: #ffb77d;
+  --color-on-tertiary: #2f1500;
+  --color-tertiary-container: #6e3900;
+  --color-on-tertiary-container: #ffdcc3;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --color-primary-fixed: #ffb59c;
+  --color-primary-fixed-dim: #ffb59c;
+  --color-on-primary-fixed: #390c00;
+  --color-on-primary-fixed-variant: #832700;
+  --color-secondary-fixed: #8ed79c;
+  --color-secondary-fixed-dim: #8ed79c;
+  --color-on-secondary-fixed: #00210b;
+  --color-on-secondary-fixed-variant: #005226;
+  --color-tertiary-fixed: #ffb77d;
+  --color-tertiary-fixed-dim: #ffb77d;
+  --color-on-tertiary-fixed: #2f1500;
+  --color-on-tertiary-fixed-variant: #6e3900;
+  --color-focus: #a9c7ff;
+  --color-border-distinct: #d9e3f6;
+
+  --fond-page: var(--color-surface);
+  --fond-carte: var(--color-surface-container-lowest);
+  --fond-action: var(--color-primary-fixed);
+  --texte-action: var(--color-on-primary-fixed);
+  --contour-action: var(--color-primary-fixed-dim);
+  --texte-date: var(--color-primary);
+  --fond-confirme: var(--color-secondary-fixed);
+  --texte-confirme: var(--color-on-secondary-fixed);
+  --fond-syndic: var(--color-inverse-surface);
+  --texte-syndic: var(--color-inverse-on-surface);
+
+  --bordure-carte-couleur: rgba(235, 241, 255, .14);
+  --bordure-carte: 1.5px solid var(--bordure-carte-couleur);
+  --bordure-contour: 2px solid var(--color-primary-fixed-dim);
+  --ombre-carte: 0 3px 0 0 rgba(0, 0, 0, .35);
+  --ombre-flottant: 0 8px 24px -4px rgba(0, 0, 0, .6);
+  --ombre-barre-action: 0 -8px 24px -4px rgba(0, 0, 0, .45);
+  --rayures-photo: repeating-linear-gradient(135deg, var(--color-surface-container) 0 12px, var(--color-surface-container-high) 12px 24px);
+  background: var(--fond-page);
+  color: var(--color-on-surface);
+}

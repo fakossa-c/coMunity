@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { EcranSecondaire } from "@/components/cadre";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "./acces";
 
+const RETOUR = { href: "/", libelle: "Accueil" };
+
 export const metadata: Metadata = { title: "Espace syndic" };
 
 export default async function EspaceSyndic() {
   const { refus } = await accesSyndic("/syndic");
-  if (refus) return refus;
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const supabase = await clientSession();
   const { count: enAttente } = await supabase
@@ -20,7 +23,7 @@ export default async function EspaceSyndic() {
     .eq("statut", "en_attente");
 
   return (
-    <>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Espace syndic"
         sousTitre="Gérez la vie de la résidence et les accès de l'équipe."
@@ -43,7 +46,7 @@ export default async function EspaceSyndic() {
           description="Invitez un collègue ou retirez un accès."
         />
       </ul>
-    </>
+    </EcranSecondaire>
   );
 }
 

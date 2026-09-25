@@ -1,0 +1,74 @@
+:root {
+  /* Fonds */
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #d0daee;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff3ff;
+  --color-surface-container: #e6eeff;
+  --color-surface-container-high: #dfe9fc;
+  --color-surface-container-highest: #d9e3f6;
+  --color-surface-variant: #d9e3f6;
+  --color-background: #f8f9ff;
+  /* Texte */
+  --color-on-surface: #121c2a;
+  --color-on-surface-variant: #594139;
+  --color-on-background: #121c2a;
+  --color-inverse-surface: #273140;
+  --color-inverse-on-surface: #ebf1ff;
+  --color-outline: #8d7168;
+  --color-outline-variant: #e1bfb5;
+  /* Terre cuite */
+  --color-primary: #8f2b00;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #b83a00;
+  --color-on-primary-container: #ffddd3;
+  --color-inverse-primary: #ffb59c;
+  --color-surface-tint: #ab3500;
+  /* Vert */
+  --color-secondary: #236b3b;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #a9f4b6;
+  --color-on-secondary-container: #2a7240;
+  /* Abricot */
+  --color-tertiary: #783f00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #9b5300;
+  --color-on-tertiary-container: #ffdec7;
+  /* Erreur */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  /* Pastels : pêche (actions), vert (confort, jauge, inscription), abricot (familles) */
+  --color-primary-fixed: #ffdbd0;
+  --color-primary-fixed-dim: #ffb59c;
+  --color-on-primary-fixed: #390c00;
+  --color-on-primary-fixed-variant: #832700;
+  --color-secondary-fixed: #a9f4b6;
+  --color-secondary-fixed-dim: #8ed79c;
+  --color-on-secondary-fixed: #00210b;
+  --color-on-secondary-fixed-variant: #005226;
+  --color-tertiary-fixed: #ffdcc3;
+  --color-tertiary-fixed-dim: #ffb77d;
+  --color-on-tertiary-fixed: #2f1500;
+  --color-on-tertiary-fixed-variant: #6e3900;
+  /* Couleurs du logo : réservées au logo et aux supports de marque, jamais à l'interface */
+  --color-marque-terre: #c4580a;
+  --color-marque-menthe: #9fecb5;
+  /* Contours */
+  --color-focus: #0d3b66;
+  --color-border-distinct: #2d312e;
+
+  /* Alias sémantiques */
+  --fond-page: var(--color-surface);
+  --fond-carte: var(--color-surface-container-lowest);
+  --fond-action: var(--color-primary-fixed);
+  --texte-action: var(--color-on-primary-fixed);
+  --contour-action: var(--color-primary-fixed-dim);
+  --texte-date: var(--color-primary);
+  --fond-confirme: var(--color-secondary-fixed);
+  --texte-confirme: var(--color-on-secondary-fixed);
+  --fond-syndic: var(--color-inverse-surface);
+  --texte-syndic: var(--color-inverse-on-surface);
+}

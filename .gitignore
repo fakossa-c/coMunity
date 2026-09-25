@@ -51,9 +51,5 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 
-# design-sync (synchro avec Claude Design) : scripts, sorties et état machine
-/.ds-sync/
-/ds-bundle/
-/.design-sync/.cache/
-/.design-sync/learnings/
-/.design-sync/node_modules
+# Divers
+z-prompt

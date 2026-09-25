@@ -1,0 +1,3 @@
+*, *::before, *::after { box-sizing: border-box; }
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }

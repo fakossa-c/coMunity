@@ -221,7 +221,8 @@ web3 = 30
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
+# Un seul lien, envoyé à la nouvelle adresse (Profil > Mes identifiants > Modifier l'e-mail).
+double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
@@ -244,7 +245,8 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Les liens des emails mènent à /auth/confirmer, qui ouvre la session puis la page
-# « Choisissez votre mot de passe ». En production, reporter ces modèles dans le tableau de bord.
+# « Choisissez votre mot de passe » (invitation, récupération) ou Mes identifiants (changement
+# d'adresse). En production, reporter ces modèles dans le tableau de bord.
 [auth.email.template.invite]
 subject = "Vous êtes invité à rejoindre l'espace syndic"
 content_path = "./supabase/templates/invitation.html"
@@ -252,6 +254,10 @@ content_path = "./supabase/templates/invitation.html"
 [auth.email.template.recovery]
 subject = "Choisissez un nouveau mot de passe"
 content_path = "./supabase/templates/recuperation.html"
+
+[auth.email.template.email_change]
+subject = "Confirmez votre nouvelle adresse"
+content_path = "./supabase/templates/changement-email.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

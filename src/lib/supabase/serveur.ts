@@ -25,8 +25,10 @@ function configurationExigee() {
  * et les politiques RLS s'appliquent à ses droits.
  */
 export async function clientSession() {
-  const { url, cle } = configurationExigee();
+  // Les cookies d'abord : ils rendent la page dynamique, que le build ne tente donc pas de
+  // pré-calculer. Une preview, sans variables Supabase, se construit ainsi quand même.
   const magasin = await cookies();
+  const { url, cle } = configurationExigee();
   return createServerClient(url, cle, {
     cookies: {
       getAll: () => magasin.getAll(),
@@ -59,4 +61,27 @@ export function clientAdmin() {
   return createClient(url, cleSecrete, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+/**
+ * Vérifie que `motDePasse` est bien celui du compte `email`, avant un changement d'identifiant.
+ * Passe par une connexion à part, sans cookies, refermée aussitôt : la session en cours n'est pas touchée.
+ */
+export async function verifierMotDePasse(
+  email: string,
+  motDePasse: string,
+): Promise<"correct" | "incorrect" | "indisponible"> {
+  const { url, cle } = configurationExigee();
+  const client = createClient(url, cle, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await client.auth.signInWithPassword({
+    email,
+    password: motDePasse,
+  });
+  if (error) {
+    return error.code === "invalid_credentials" ? "incorrect" : "indisponible";
+  }
+  await client.auth.signOut({ scope: "local" });
+  return "correct";
 }

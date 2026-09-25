@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Annonce, BoutonEnvoi, Champ } from "@/components/formulaire";
+import { Champ } from "@/components/champ";
+import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
 import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
 import { inscrire } from "./actions";

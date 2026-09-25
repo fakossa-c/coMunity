@@ -1,12 +1,15 @@
+import Link from "next/link";
 import {
   categoriesActivite,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import { cheminFiche } from "@/lib/partage-activite";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
 export type Activite = {
   id: string;
+  identifiant_public: string;
   titre: string;
   categorie: CategorieActivite;
   pictogramme: string;
@@ -32,7 +35,7 @@ function dateEtHeure(activite: Activite) {
 
 export function CarteActivite({ activite }: { activite: Activite }) {
   return (
-    <article className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+    <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <div className="flex items-start gap-space-sm">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
           <Icone nom={activite.pictogramme as NomIcone} className="size-7" />
@@ -42,7 +45,13 @@ export function CarteActivite({ activite }: { activite: Activite }) {
             {categoriesActivite[activite.categorie].libelle}
           </span>
           <h2 className="font-headline text-headline-sm text-on-surface">
-            {activite.titre}
+            {/* Toute la carte ouvre la fiche : le lien s'étend sur elle. */}
+            <Link
+              href={cheminFiche(activite.identifiant_public)}
+              className="after:absolute after:inset-0 after:rounded-lg"
+            >
+              {activite.titre}
+            </Link>
           </h2>
         </div>
       </div>

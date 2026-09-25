@@ -1,5 +1,6 @@
 import { AideInstallation } from "@/components/aide-installation";
 import { Bientot } from "@/components/bientot";
+import { EcranPrincipal } from "@/components/cadre";
 import { CarteActivite } from "@/components/carte-activite";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
@@ -12,7 +13,7 @@ export default async function Activites() {
   const { data: peutConsulter } = await supabase.rpc("peut_consulter");
 
   return (
-    <>
+    <EcranPrincipal onglet="accueil">
       <TitrePage
         titre="Activités"
         sousTitre="Découvrez et participez à la vie de la résidence"
@@ -23,7 +24,7 @@ export default async function Activites() {
       ) : (
         <Bientot icone="diversity_3" message={MESSAGE_VIDE} />
       )}
-    </>
+    </EcranPrincipal>
   );
 }
 
@@ -33,7 +34,7 @@ async function Catalogue() {
   const { data, error } = await supabase
     .from("activite")
     .select(
-      "id, titre, categorie, pictogramme, date_activite, heure_debut, lieu",
+      "id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu",
     )
     .gte("date_activite", aujourdhui)
     .order("date_activite")

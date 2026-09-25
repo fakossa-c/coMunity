@@ -4,9 +4,6 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import { EcouteInstallation } from "@/components/ecoute-installation";
-import { EnTete } from "@/components/en-tete";
-import { GardeCompte, SiCompteOuvert } from "@/components/garde-compte";
-import { NavigationPrincipale } from "@/components/navigation-principale";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -25,8 +22,8 @@ const atkinson = Atkinson_Hyperlegible_Next({
 
 export const metadata: Metadata = {
   title: {
-    default: "Vie de la résidence",
-    template: "%s · Vie de la résidence",
+    default: "coMunity",
+    template: "%s · coMunity",
   },
   description: "Activités, annonces et voisins de la résidence.",
   // iPhone : ouverture en plein écran depuis l'écran d'accueil. Le nom sous l'icône vient du
@@ -51,21 +48,12 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col bg-surface font-body text-body-lg text-on-surface antialiased">
         <a
           href="#contenu"
-          className="sr-only z-[60] min-h-[52px] rounded-md bg-inverse-surface px-4 py-3 font-headline text-label-lg text-inverse-on-surface focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+          className="sr-only z-[60] min-h-cible rounded-md bg-inverse-surface px-4 py-3 font-headline text-label-lg text-inverse-on-surface focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
         >
           Aller au contenu
         </a>
-        <EnTete />
-        <SiCompteOuvert>
-          <NavigationPrincipale />
-        </SiCompteOuvert>
-        <main
-          id="contenu"
-          tabIndex={-1}
-          className="mx-auto w-full max-w-[980px] flex-1 px-margin pt-[calc(6rem+env(safe-area-inset-top))] pb-[calc(8rem+env(safe-area-inset-bottom))] desktop:px-margin-desktop desktop:pt-44 desktop:pb-16"
-        >
-          <GardeCompte>{children}</GardeCompte>
-        </main>
+        {/* Chaque page pose son cadre (EcranPrincipal, EcranSecondaire), qui porte le contenu principal. */}
+        {children}
         <EcouteInstallation />
       </body>
     </html>

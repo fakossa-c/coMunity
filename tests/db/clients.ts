@@ -40,6 +40,9 @@ export function aSupprimer(id: string) {
   comptesCrees.push(id);
 }
 
+/** Prénom et nom d'un membre du syndic de test. */
+export const IDENTITE_SYNDIC = { prenom: "Colette", nom: "Durand" };
+
 /** Un membre du syndic, créé comme le fait le script d'amorçage, et connecté. */
 export async function nouveauSyndic(): Promise<Compte> {
   const { url, cleSecrete } = inject("supabase");
@@ -49,9 +52,28 @@ export async function nouveauSyndic(): Promise<Compte> {
     cleSecrete,
     email,
     motDePasse: MOT_DE_PASSE,
+    ...IDENTITE_SYNDIC,
   });
   aSupprimer(utilisateur.id);
   return { id: utilisateur.id, email, client: await connecter(email) };
+}
+
+/** Un membre du syndic amorcé avant que son prénom et son nom soient demandés, et connecté. */
+export async function nouveauSyndicSansNom(): Promise<Compte> {
+  const admin = clientAdmin();
+  const email = nouvelEmail("syndic");
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: MOT_DE_PASSE,
+    email_confirm: true,
+  });
+  if (error) throw error;
+  aSupprimer(data.user.id);
+  const insertion = await admin
+    .from("profil")
+    .insert({ id: data.user.id, email, role: "syndic", statut: "valide" });
+  if (insertion.error) throw insertion.error;
+  return { id: data.user.id, email, client: await connecter(email) };
 }
 
 export type StatutResident = "en_attente" | "valide" | "refuse" | "retire";

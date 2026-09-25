@@ -190,12 +190,12 @@ test.describe("aide à l'installation sur Android", () => {
   test("l'invite reçue sur une autre page sert en arrivant sur l'accueil", async ({
     page,
   }) => {
-    await page.goto("/proposer", { waitUntil: "networkidle" });
+    await page.goto("/annonces", { waitUntil: "networkidle" });
     await proposerInstallation(page);
 
     await page
       .getByRole("navigation", { name: "Navigation principale" })
-      .getByRole("link", { name: "Activités" })
+      .getByRole("link", { name: "Accueil" })
       .click();
 
     await expect(
