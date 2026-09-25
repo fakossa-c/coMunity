@@ -27,20 +27,22 @@ export function libelleJauge({ capaciteMax, placesPrises }: JaugeActivite) {
   return capaciteMax === null ? inscrits : `${inscrits} sur ${capaciteMax} places`;
 }
 
-/** « avec 2 personnes », « avec 1 personne », ou rien sans accompagnant. */
-function suffixeAccompagnants(accompagnants: number) {
-  if (accompagnants === 0) return "";
+/** « avec 2 personnes », « avec 1 personne », ou `null` sans accompagnant. */
+export function libelleAccompagnants(accompagnants: number) {
+  if (accompagnants === 0) return null;
   return accompagnants === 1
-    ? ", avec 1 personne"
-    : `, avec ${accompagnants} personnes`;
+    ? "avec 1 personne"
+    : `avec ${accompagnants} personnes`;
 }
 
 /** « Je participe », « Je participe, avec 2 personnes ». */
 export function libelleBoutonInscription(accompagnants: number) {
-  return `Je participe${suffixeAccompagnants(accompagnants)}`;
+  const suffixe = libelleAccompagnants(accompagnants);
+  return suffixe ? `Je participe, ${suffixe}` : "Je participe";
 }
 
 /** « J'y vais », « J'y vais, avec 2 personnes » : le statut d'un résident déjà inscrit. */
 export function libelleStatutInscription(accompagnants: number) {
-  return `J'y vais${suffixeAccompagnants(accompagnants)}`;
+  const suffixe = libelleAccompagnants(accompagnants);
+  return suffixe ? `J'y vais, ${suffixe}` : "J'y vais";
 }

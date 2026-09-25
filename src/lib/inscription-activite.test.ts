@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  libelleAccompagnants,
   libelleBoutonInscription,
   libelleJauge,
   libelleStatutInscription,
@@ -82,5 +83,19 @@ describe("libellé du statut d'inscription", () => {
 
   it("« J'y vais, avec 1 personne » au singulier", () => {
     expect(libelleStatutInscription(1)).toBe("J'y vais, avec 1 personne");
+  });
+});
+
+describe("libellé des accompagnants d'un participant", () => {
+  it("rien sans accompagnant", () => {
+    expect(libelleAccompagnants(0)).toBeNull();
+  });
+
+  it("« avec 1 personne » au singulier", () => {
+    expect(libelleAccompagnants(1)).toBe("avec 1 personne");
+  });
+
+  it("« avec 2 personnes » au pluriel", () => {
+    expect(libelleAccompagnants(2)).toBe("avec 2 personnes");
   });
 });
