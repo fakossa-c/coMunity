@@ -1,6 +1,7 @@
 -- Décision du 25/09/2026 : partout où un résident en voit un autre, il lit son prénom et l'initiale
 -- de son nom (« Danielle M. »), membre du syndic compris. La fiche d'activité ne dit plus qu'une
 -- activité vient du syndic ; `proposee_par_syndic` reste livré, pour que la base le sache.
+-- `nom_affiche` est le seul endroit qui décide du nom lu : le ticket #18 lui fera renvoyer le pseudo.
 
 /** « Danielle M. » : ce qu'un résident lit d'un autre. Vide si le prénom ou le nom manque. */
 create function public.nom_affiche(prenom text, nom text)

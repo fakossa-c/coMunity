@@ -153,6 +153,10 @@ test("un résident voit le membre du syndic qui organise, comme un voisin", asyn
     `${IDENTITE_SYNDIC.prenom} ${IDENTITE_SYNDIC.nom.charAt(0)}.`,
   );
   await expect(page.getByRole("main")).not.toContainText("syndic");
+  await page.screenshot({
+    path: test.info().outputPath("fiche-organisee-par-le-syndic.png"),
+    fullPage: true,
+  });
 });
 
 test("une adresse d'activité inconnue affiche une page claire", async ({
