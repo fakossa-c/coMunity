@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
 import { cache } from "react";
+import type { TailleAffichage, ThemeAffichage } from "./attributs-affichage";
 import { clientSession, configurationSupabase } from "./supabase/serveur";
 
 export type Role = "syndic" | "resident";
@@ -17,6 +18,8 @@ export type Session = {
   /** `null` pour un membre du syndic qui ne les a pas encore saisis. */
   prenom: string | null;
   nom: string | null;
+  taille: TailleAffichage;
+  theme: ThemeAffichage;
 };
 
 /** La personne connectée et son profil, lus une fois par requête. `null` si personne n'est connecté. */
@@ -28,7 +31,11 @@ export const lireSession = cache(async (): Promise<Session | null> => {
   const claims = data?.claims;
   if (!claims) return null;
 
-  const profil = await lireProfil(supabase, claims.sub);
+  const { data: profil } = await supabase
+    .from("profil")
+    .select("role, statut, prenom, nom, taille, theme")
+    .eq("id", claims.sub)
+    .maybeSingle();
   return {
     id: claims.sub,
     email: claims.email ?? "",
@@ -36,6 +43,8 @@ export const lireSession = cache(async (): Promise<Session | null> => {
     statut: profil?.statut ?? null,
     prenom: profil?.prenom ?? null,
     nom: profil?.nom ?? null,
+    taille: profil?.taille ?? "standard",
+    theme: profil?.theme ?? "clair",
   };
 });
 

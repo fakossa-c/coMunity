@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
@@ -8,6 +8,8 @@ export type OptionSegmentee<Id extends string> = {
   id: Id;
   libelle: string;
   icone?: NomIcone;
+  /** Élément libre au-dessus du libellé (ex. un « A » à la taille réelle), sinon `icone`. */
+  visuel?: ReactNode;
 };
 
 type Props<Id extends string> = {
@@ -52,9 +54,10 @@ export function ChoixSegmente<Id extends string>({
                 onChange={() => onChange(option.id)}
                 className="absolute inset-0 cursor-pointer opacity-0"
               />
-              {option.icone && (
-                <Icone nom={option.icone} plein={actif} taille={24} />
-              )}
+              {option.visuel ??
+                (option.icone && (
+                  <Icone nom={option.icone} plein={actif} taille={24} />
+                ))}
               {option.libelle}
             </label>
           );
