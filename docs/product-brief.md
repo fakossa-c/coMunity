@@ -13,7 +13,7 @@ Un endroit unique, sous la main et très simple à consulter, où les voisins se
 Deux promesses, dans cet ordre d'importance :
 
 1. **Les activités** sont la raison d'être : des voisins qui proposent des moments et s'y retrouvent. Si l'on devait couper, on garderait celle-là.
-2. **Le point central d'information** (les annonces, et le règlement intérieur dans Ma copro) est ce qui rend l'app utile tous les jours, même sans activité prévue.
+2. **Le point central d'information** (les annonces, et dans Ma copro le règlement intérieur et les espaces communs) est ce qui rend l'app utile tous les jours, même sans activité prévue.
 
 coMunity ne remplace pas le groupe WhatsApp : il en est la source de vérité, et WhatsApp le porte-voix. On y poste des liens qui ramènent vers l'app, pas l'information elle-même.
 
@@ -86,7 +86,7 @@ Ces cibles sont des ordres de grandeur, à réviser après le premier trimestre.
 - Proposer une activité, fiche publique et relais WhatsApp, inscription (#6, #9, #7, #8)
 - Accueil par jour (#15)
 - Annonces (#13)
-- Ma copro : le règlement intérieur, mis en forme et dépliable (#43)
+- Ma copro : le règlement intérieur, mis en forme et dépliable (#43), et les espaces communs (#55)
 - Page du conseil syndical (#42)
 - Modération (#14)
 - Cadre des écrans et design system (#34 et ses tickets)
@@ -123,7 +123,7 @@ Ces cibles sont des ordres de grandeur, à réviser après le premier trimestre.
 - Plusieurs résidences dans une même instance, tant que le signal « au-delà du pilote » n'est pas atteint.
 - Comptes pour les mineurs.
 - Une bibliothèque de documents (procès-verbaux, contrats, plans) : écartée pour concentrer le pilote sur les activités et les annonces (spec #53, abandonnée).
-- Dans Ma copro, tout ce qui n'est pas le règlement intérieur (salles partagées, spécificités de la résidence), et le règlement en PDF.
+- Dans Ma copro, les spécificités de la résidence, et le règlement intérieur en PDF.
 - Pièces jointes d'annonces contenant des données personnelles (procès-verbaux non anonymisés, impayés, litiges).
 - Écran de gestion des rôles, tant qu'aucun quatrième rôle n'est demandé.
 - Tout ce que la spec #1 exclut déjà : messagerie entre voisins, notifications hors authentification, réservation de salles, application native, texte rédigé par une IA.
