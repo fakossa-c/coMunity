@@ -99,6 +99,8 @@ export default async function Fiche({ params }: Props) {
   const session = await lireSession();
 
   const annulee = fiche.statut === "annulee";
+  // Distinct de `estPassee` (jour calendaire, ci-dessus pour EtatActivite) : ici la date et
+  // l'heure de fin précises, l'échéance que la RLS de laisser_retour vérifie aussi.
   const activitePassee = activiteEstPassee(fiche);
 
   return (
