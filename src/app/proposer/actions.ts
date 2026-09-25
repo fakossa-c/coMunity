@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { CategorieActivite } from "@/lib/categories-activite";
+import { cheminFiche } from "@/lib/partage-activite";
 import { clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
@@ -22,7 +24,10 @@ const messages: Record<string, string> = {
     "Vérifiez le titre, la date, le créneau et le lieu : un champ n'est pas valide.",
 };
 
-/** Publie une activité. La base vérifie les droits et les contraintes. */
+/**
+ * Publie une activité, puis mène à l'écran qui donne son lien et son message WhatsApp.
+ * La base vérifie les droits et les contraintes ; seul un échec revient au formulaire.
+ */
 export async function publier(activite: NouvelleActivite): Promise<Resultat> {
   const supabase = await clientSession();
   const {
@@ -32,9 +37,11 @@ export async function publier(activite: NouvelleActivite): Promise<Resultat> {
     return { ok: false, message: "Vous devez être connecté pour publier." };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("activite")
-    .insert({ ...activite, organisateur: user.id });
+    .insert({ ...activite, organisateur: user.id })
+    .select("identifiant_public")
+    .single();
 
   if (error) {
     return {
@@ -46,8 +53,5 @@ export async function publier(activite: NouvelleActivite): Promise<Resultat> {
   }
 
   revalidatePath("/");
-  return {
-    ok: true,
-    message: `« ${activite.titre} » est publiée dans le catalogue.`,
-  };
+  redirect(`${cheminFiche(data.identifiant_public)}/publiee`);
 }

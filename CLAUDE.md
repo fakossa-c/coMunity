@@ -4,6 +4,12 @@
 - `main` = production. La fusion `develop` → `main` est décidée par l'utilisateur.
 - Hors-produit (l'agent fusionne lui-même) : PR qui ne touche que `CLAUDE.md`, `docs/` ou l'outillage (CI, hooks, config de lint et de test).
 
+## Supabase distant
+
+- Les previews Vercel et la production partagent un seul projet Supabase Cloud : toute écriture sur son schéma ou ses données touche la production. Chacune attend l'accord de l'utilisateur.
+- Une PR qui ajoute une migration a une preview en erreur sur les écrans concernés tant que la migration n'est pas sur ce projet : sa vérification de preview attend cet accord.
+- Une migration s'y applique avec `npx supabase db push` (procédure dans `docs/deploiement.md`, section 1), qui tient l'historique des migrations à jour. Une migration exécutée à la main dans l'éditeur SQL se déclare ensuite avec `npx supabase migration repair --status applied <version>`.
+
 ## Compte GitHub
 
 - Le dépôt appartient à `fakossa-c`, alors que le compte `gh` actif de la machine est `fakossa`, sans droits ici. Chaque commande `gh` sur ce dépôt s'exécute avec le jeton de `fakossa-c` : `GH_TOKEN=$(gh auth token -u fakossa-c) gh ...` (PowerShell : `$env:GH_TOKEN = gh auth token -u fakossa-c` avant la commande).
@@ -14,6 +20,7 @@
 ## Commandes
 
 - Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx.
+- Worktree de ticket : les worktrees partagent sinon le même conteneur Docker et les mêmes ports 544xx, ce qui casse les tests d'un ticket pendant qu'un autre tourne. Juste après la création du worktree, dans son dossier : `node scripts/isoler-supabase-worktree.mjs` (attribue un `project_id` et des ports dédiés au ticket) puis `git update-index --skip-worktree supabase/config.toml` (ne jamais commiter ces ports isolés), puis `npx supabase start` et `npm run env:local`.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
 - `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
