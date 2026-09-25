@@ -1,6 +1,6 @@
 # coMunity
 
-La vie collective d'une résidence en copropriété : des voisins qui proposent des activités et s'y retrouvent, et un point central où retrouver vite l'information et les documents de la résidence.
+La vie collective d'une résidence en copropriété : des voisins qui proposent des activités et s'y retrouvent, et un point central où retrouver vite l'information de la résidence.
 
 ## Language
 
@@ -44,6 +44,6 @@ _Avoid_ : événement, atelier (qui n'est qu'un genre d'activité)
 Une information publiée pour les résidents par le conseil syndical ou l'équipe coMunity, sans inscription, qui dit « il y a du nouveau » et vieillit.
 _Avoid_ : actualité, post, message
 
-**Document** :
-Un fichier de référence de la résidence (règlement intérieur, procès-verbal d'assemblée générale, contrat, plan) qu'on doit pouvoir retrouver vite, des années plus tard.
-_Avoid_ : pièce jointe, fichier
+**Règlement intérieur** :
+Les règles de vie communes de la résidence, présentées dans Ma copro en sections qu'on déplie.
+_Avoid_ : règlement de copropriété (le texte juridique qui fixe les droits des copropriétaires), document
