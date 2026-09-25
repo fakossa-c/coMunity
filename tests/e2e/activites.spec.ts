@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { MOT_DE_PASSE, nouveauResident, supprimerComptes } from "./outils";
 
 const emails: string[] = [];
@@ -77,4 +77,80 @@ test("un résident en attente ne voit pas le formulaire de création", async ({
   await expect(page.getByRole("main")).toContainText(
     "Vous pourrez proposer une activité dès que votre compte sera validé",
   );
+});
+
+function styleCalcule(cible: Locator, propriete: string) {
+  return cible.evaluate(
+    (el, p) => getComputedStyle(el).getPropertyValue(p),
+    propriete,
+  );
+}
+
+test.describe("onglets et puces de l'écran Activités", () => {
+  test("l'onglet actif se souligne en terre cuite, sans fond pilule", async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    await seConnecter(page, resident.email);
+    await page.goto("/activites");
+
+    const ongletActif = page.getByRole("tab", { name: "J'y vais" });
+    await expect(ongletActif).toHaveAttribute("aria-selected", "true");
+    // Terre cuite d'interface (--color-primary : #8f2b00), en bordure basse, pas en fond.
+    expect(await styleCalcule(ongletActif, "background-color")).toBe(
+      "rgba(0, 0, 0, 0)",
+    );
+    expect(await styleCalcule(ongletActif, "border-bottom-width")).toBe("4px");
+    expect(await styleCalcule(ongletActif, "border-bottom-color")).toBe(
+      "rgb(143, 43, 0)",
+    );
+
+    const ongletInactif = page.getByRole("tab", { name: "J'organise" });
+    await expect(ongletInactif).toHaveAttribute("aria-selected", "false");
+    expect(await styleCalcule(ongletInactif, "border-bottom-width")).toBe(
+      "0px",
+    );
+  });
+
+  test("la puce sélectionnée est pêche pleine avec coche et pictogramme, non sélectionnée blanche bordée pêche", async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    await seConnecter(page, resident.email);
+    await page.goto("/activites");
+
+    const puceSelectionnee = page.getByRole("link", { name: /À venir/ });
+    await expect(puceSelectionnee).toHaveAttribute("aria-current", "true");
+    expect(
+      await styleCalcule(puceSelectionnee, "background-color"),
+    ).toBe("rgb(255, 219, 208)");
+    await expect(
+      puceSelectionnee.locator('svg[aria-hidden="true"]'),
+    ).toHaveCount(2); // pictogramme "event" + coche.
+    expect(await styleCalcule(puceSelectionnee, "height")).toBe("52px");
+
+    const puceNonSelectionnee = page.getByRole("link", { name: /Passées/ });
+    await expect(puceNonSelectionnee).toHaveAttribute("aria-current", "false");
+    expect(
+      await styleCalcule(puceNonSelectionnee, "background-color"),
+    ).toBe("rgb(255, 255, 255)");
+    expect(await styleCalcule(puceNonSelectionnee, "border-color")).toBe(
+      "rgb(255, 181, 156)",
+    );
+  });
+
+  test("les onglets et les puces collent ensemble en haut de l'écran", async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    await seConnecter(page, resident.email);
+    await page.goto("/activites");
+
+    const bloc = page.getByRole("tablist", { name: "Mes activités" }).locator("..");
+    expect(await styleCalcule(bloc, "position")).toBe("sticky");
+    expect(await styleCalcule(bloc, "top")).toBe("0px");
+  });
 });
