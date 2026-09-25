@@ -19,8 +19,10 @@ export function BoutonEnvoi({
 }
 
 /**
- * Zone où s'affiche le résultat d'une action. Elle existe avant le message,
- * pour que les lecteurs d'écran l'annoncent quand il apparaît.
+ * Zone où s'affiche le résultat d'une action, annoncée aux lecteurs d'écran
+ * (`role="alert"`/`"status"`) uniquement quand un message est présent : sans
+ * message, elle ne porte aucun rôle, pour ne pas coexister avec l'alerte
+ * d'un `Champ` en erreur (deux `role="alert"` à la fois sur un même écran).
  */
 export function Annonce({
   message,
@@ -30,7 +32,7 @@ export function Annonce({
   erreur?: boolean;
 }) {
   return (
-    <div role={erreur ? "alert" : "status"}>
+    <div role={message ? (erreur ? "alert" : "status") : undefined}>
       {message && (
         <p
           className={`max-w-[65ch] rounded-md p-space-md text-body-lg ${
