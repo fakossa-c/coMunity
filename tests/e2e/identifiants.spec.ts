@@ -146,6 +146,24 @@ test("après un changement de mot de passe, on se reconnecte avec le nouveau, pa
   ).toBeVisible();
 });
 
+test("un lien de changement d'adresse périmé, ouvert sans être connecté, s'explique après la connexion", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+
+  await page.goto("/auth/confirmer?token_hash=perime&type=email_change");
+  await expect(page).toHaveURL(/\/connexion/);
+  await page.getByLabel("Adresse email").fill(resident.email);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page).toHaveURL(/\/profil\/identifiants/);
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Ce lien n'est plus valable",
+  );
+});
+
 test("l'e-mail ne change qu'une fois le lien ouvert, et jamais sans le bon mot de passe", async ({
   page,
 }) => {
