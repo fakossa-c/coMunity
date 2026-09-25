@@ -178,8 +178,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
     .click();
   await etape(page, 1);
   await expect(page.getByLabel("Titre de l'activité")).toHaveValue(titre);
-  await continuer(page);
-  await continuer(page);
+  // Depuis le récapitulatif, « Continuer » y ramène sans repasser par les autres étapes.
   await continuer(page);
   await etape(page, 4);
 

@@ -40,6 +40,8 @@ type Erreur = ErreurFormulaire<ChampSaisie>;
 export function ParcoursProposition() {
   const router = useRouter();
   const [etape, setEtape] = useState<Etape>(1);
+  // Vrai après « Modifier » depuis le récapitulatif : « Continuer » y ramène directement.
+  const [retourRecapitulatif, setRetourRecapitulatif] = useState(false);
   const [saisie, setSaisie] = useState<SaisieActivite>(SAISIE_VIDE);
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
@@ -69,12 +71,19 @@ export function ParcoursProposition() {
     setErreur({});
     setResultat(null);
     setEtape(cible);
+    if (cible === NOMBRE_ETAPES) setRetourRecapitulatif(false);
+  }
+
+  function modifier(cible: Etape) {
+    setRetourRecapitulatif(true);
+    aller(cible);
   }
 
   function continuer() {
     const verdict = verifierEtape(etape, saisie);
     setErreur(verdict);
-    if (!verdict.erreur) aller((etape + 1) as Etape);
+    if (verdict.erreur) return;
+    aller(retourRecapitulatif ? NOMBRE_ETAPES : ((etape + 1) as Etape));
   }
 
   function publierMaintenant() {
@@ -302,7 +311,7 @@ export function ParcoursProposition() {
       {etape === 4 && (
         <Recapitulatif
           saisie={saisie}
-          onModifier={aller}
+          onModifier={modifier}
           onAnnuler={() => router.push("/activites")}
         />
       )}
