@@ -4,16 +4,16 @@ Ce document dit pourquoi coMunity existe, pour qui, et comment savoir s'il march
 
 ## Problème
 
-Aux Reflets de l'Ourcq (5 bâtiments, environ 200 logements), la vie collective passe par un groupe WhatsApp qui dit tout et n'importe quoi. Une proposition d'activité s'y noie, on ne sait plus qui vient ni où. Une information utile y est impossible à retrouver une semaine plus tard. Les documents de la résidence (règlement intérieur, contrats, consignes) sont introuvables quand on en a besoin.
+Aux Reflets de l'Ourcq (5 bâtiments, environ 200 logements), la vie collective passe par un groupe WhatsApp qui dit tout et n'importe quoi. Une proposition d'activité s'y noie, on ne sait plus qui vient ni où. Une information utile y est impossible à retrouver une semaine plus tard. Le règlement intérieur est introuvable quand on en a besoin, et illisible quand on le retrouve.
 
 ## Vision
 
-Un endroit unique, sous la main et très simple à consulter, où les voisins se retrouvent autour d'activités et où chacun retrouve en quelques secondes l'information et les documents de la résidence.
+Un endroit unique, sous la main et très simple à consulter, où les voisins se retrouvent autour d'activités et où chacun retrouve en quelques secondes l'information de la résidence.
 
 Deux promesses, dans cet ordre d'importance :
 
 1. **Les activités** sont la raison d'être : des voisins qui proposent des moments et s'y retrouvent. Si l'on devait couper, on garderait celle-là.
-2. **Le point central d'information** (annonces, documents, Ma copro) est ce qui rend l'app utile tous les jours, même sans activité prévue.
+2. **Le point central d'information** (les annonces, et le règlement intérieur dans Ma copro) est ce qui rend l'app utile tous les jours, même sans activité prévue.
 
 coMunity ne remplace pas le groupe WhatsApp : il en est la source de vérité, et WhatsApp le porte-voix. On y poste des liens qui ramènent vers l'app, pas l'information elle-même.
 
@@ -42,7 +42,7 @@ Trois rôles de départ, cumulables, qui ajoutent des permissions au socle Rési
 | | Résident | Conseil syndical | Équipe coMunity |
 |---|---|---|---|
 | S'inscrire, proposer une activité | oui | oui | oui |
-| Publier annonces, sondages, documents, Ma copro | non | oui | oui, signé « équipe coMunity » |
+| Publier annonces et sondages, tenir le règlement intérieur | non | oui | oui, signé « équipe coMunity » |
 | Valider ou refuser un résident | non | oui | oui |
 | Modérer les activités | non | oui | oui |
 | Lieux, heure de calme | non | oui | oui |
@@ -54,7 +54,7 @@ Sur une carte, les résidents voient « Proposée par le conseil syndical » ou 
 ## Lancement
 
 1. **Présenter coMunity au conseil syndical** et obtenir son soutien. S'il ne suit pas, le projet continue en initiative de résident.
-2. **Préparer le contenu** : le règlement intérieur et les documents les plus demandés en ligne, au moins 3 activités programmées sur les 4 semaines suivantes (par l'équipe coMunity et le conseil syndical).
+2. **Préparer le contenu** : le règlement intérieur en ligne, au moins 3 activités programmées sur les 4 semaines suivantes (par l'équipe coMunity et le conseil syndical).
 3. **Annoncer sur le groupe WhatsApp**, par un message signé de l'équipe coMunity et du conseil syndical, avec le lien de la première activité.
 
 ## Mesure du succès
@@ -65,7 +65,7 @@ Indicateurs secondaires :
 
 - **Comptes validés**, rapportés aux environ 200 logements.
 - **Part des activités proposées par des résidents** hors conseil syndical et équipe coMunity : le signe que l'app vit sans ceux qui l'ont lancée.
-- **Consultation** : visites et pages vues par rubrique (Documents, Ma copro, Annonces), par une mesure d'audience anonyme et sans cookie.
+- **Consultation** : visites et pages vues par rubrique (Annonces, Ma copro), par une mesure d'audience anonyme et sans cookie.
 
 | Depuis le lancement | Comptes validés | Participants distincts par mois | Autre |
 |---|---|---|---|
@@ -86,8 +86,8 @@ Ces cibles sont des ordres de grandeur, à réviser après le premier trimestre.
 - Proposer une activité, fiche publique et relais WhatsApp, inscription (#6, #9, #7, #8)
 - Accueil par jour (#15)
 - Annonces (#13)
-- Documents : consultation rapide, classés par type (à spécifier)
-- Ma copro et page du conseil syndical (#43, #42)
+- Ma copro : le règlement intérieur, mis en forme et dépliable (#43)
+- Page du conseil syndical (#42)
 - Modération (#14)
 - Cadre des écrans et design system (#34 et ses tickets)
 - Identifiants et suppression du compte (#40, #41)
@@ -111,10 +111,10 @@ Ces cibles sont des ordres de grandeur, à réviser après le premier trimestre.
 
 | Hypothèse | Comment on le saura |
 |---|---|
-| Le conseil syndical soutient coMunity et y publie. | Son accord au premier jalon, puis au moins une annonce ou un document publié par lui dans le premier mois. |
+| Le conseil syndical soutient coMunity et y publie. | Son accord au premier jalon, puis au moins une annonce publiée par lui dans le premier mois. |
 | Les résidents rejoignent l'app depuis un lien posté sur WhatsApp. | 50 comptes validés à 3 mois. |
 | Des résidents hors équipe proposent des activités d'eux-mêmes. | Un tiers des activités à 6 mois. |
-| Les documents et les infos pratiques sont réellement consultés. | Pages vues des rubriques Documents et Ma copro, mois après mois. |
+| Les annonces et le règlement intérieur sont réellement consultés. | Pages vues des rubriques Annonces et Ma copro, mois après mois. |
 | Le groupe WhatsApp accepte des liens à la place de l'information brute. | Observation du groupe : les messages d'information renvoient-ils vers coMunity ? |
 
 ## Hors périmètre
@@ -122,6 +122,8 @@ Ces cibles sont des ordres de grandeur, à réviser après le premier trimestre.
 - Remplacer le groupe WhatsApp.
 - Plusieurs résidences dans une même instance, tant que le signal « au-delà du pilote » n'est pas atteint.
 - Comptes pour les mineurs.
-- Documents contenant des données personnelles (procès-verbaux non anonymisés, impayés, litiges), et documents réservés aux seuls copropriétaires.
+- Une bibliothèque de documents (procès-verbaux, contrats, plans) : écartée pour concentrer le pilote sur les activités et les annonces (spec #53, abandonnée).
+- Dans Ma copro, tout ce qui n'est pas le règlement intérieur (salles partagées, spécificités de la résidence), et le règlement en PDF.
+- Pièces jointes d'annonces contenant des données personnelles (procès-verbaux non anonymisés, impayés, litiges).
 - Écran de gestion des rôles, tant qu'aucun quatrième rôle n'est demandé.
 - Tout ce que la spec #1 exclut déjà : messagerie entre voisins, notifications hors authentification, réservation de salles, application native, texte rédigé par une IA.
