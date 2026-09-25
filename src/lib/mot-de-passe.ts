@@ -8,7 +8,10 @@ type RefusMotDePasse = {
   champ: "mot-de-passe" | "confirmation";
 };
 
-/** Pourquoi un nouveau mot de passe et sa confirmation sont refusés, sous le champ concerné ; `null` s'ils conviennent. */
+/**
+ * Pourquoi un nouveau mot de passe et sa confirmation sont refusés, sous le champ concerné ;
+ * `null` s'ils conviennent.
+ */
 export function refusNouveauMotDePasse(
   motDePasse: string,
   confirmation: string,

@@ -37,7 +37,7 @@ export async function modifierEmail(
     .toLowerCase();
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
   const formatRefuse = refusFormatEmail(email);
-  if (formatRefuse) return { erreur: formatRefuse, champ: "email", email };
+  if (formatRefuse) return { ...formatRefuse, email };
   if (email === session.email.toLowerCase()) {
     return {
       erreur: "C'est déjà votre adresse actuelle.",

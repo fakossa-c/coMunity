@@ -9,9 +9,11 @@ describe("refusFormatEmail", () => {
   it.each(["prenom.nom", "prenom@exemple", "prenom nom@exemple.fr", ""])(
     "refuse %o",
     (adresse) => {
-      expect(refusFormatEmail(adresse)).toBe(
-        "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.",
-      );
+      expect(refusFormatEmail(adresse)).toEqual({
+        erreur:
+          "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.",
+        champ: "email",
+      });
     },
   );
 });

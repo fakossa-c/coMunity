@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
 import { refusFormatEmail } from "@/lib/email";
+import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
 export type Membre = { id: string; email: string };
@@ -14,7 +14,7 @@ export type Membre = { id: string; email: string };
 export async function inviterCollegue(email: string): Promise<Resultat> {
   const adresse = email.trim().toLowerCase();
   const formatRefuse = refusFormatEmail(adresse);
-  if (formatRefuse) return { ok: false, message: formatRefuse };
+  if (formatRefuse) return { ok: false, message: formatRefuse.erreur };
 
   const supabase = await clientSession();
   const invitation = await supabase
