@@ -181,7 +181,7 @@ test("un résident n'entre pas dans l'espace syndic", async ({ page }) => {
   await page.goto("/syndic/membres");
 
   await expect(page.getByRole("main")).toContainText(
-    "Cet espace est réservé aux membres du syndic",
+    "Cet espace est réservé aux membres du conseil syndical",
   );
   await expect(listeDesMembres(page)).toHaveCount(0);
 });

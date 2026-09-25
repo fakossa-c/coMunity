@@ -61,7 +61,7 @@ export function FormulaireInscription() {
       />
       <Champ
         libelle="Nom"
-        aide="Le syndic s'en sert pour vérifier que vous habitez la résidence."
+        aide="Le conseil syndical s'en sert pour vérifier que vous habitez la résidence."
         name="nom"
         autoComplete="family-name"
         maxLength={LONGUEUR_MAXIMALE_NOM}

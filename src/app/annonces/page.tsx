@@ -8,7 +8,10 @@ export const metadata: Metadata = { title: "Annonces" };
 export default function Annonces() {
   return (
     <EcranPrincipal onglet="annonces">
-      <TitrePage titre="Annonces" sousTitre="Les informations du syndic" />
+      <TitrePage
+        titre="Annonces"
+        sousTitre="Les informations du conseil syndical"
+      />
       <Bientot icone="campaign" />
     </EcranPrincipal>
   );

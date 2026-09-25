@@ -19,7 +19,7 @@ export default async function Inscription() {
       <div className="max-w-md">
         <TitrePage
           titre="Créer mon compte"
-          sousTitre="Rejoignez la vie de votre résidence. Le syndic validera votre compte, puis vous pourrez participer aux activités."
+          sousTitre="Rejoignez la vie de votre résidence. Le conseil syndical validera votre compte, puis vous pourrez participer aux activités."
         />
         <FormulaireInscription />
         <p className="mt-space-lg text-body-lg">

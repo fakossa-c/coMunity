@@ -64,7 +64,7 @@ async function Compte({ compact = false }: { compact?: boolean }) {
     );
   }
 
-  // Un compte refusé ou retiré, résident ou membre du syndic, ne garde que la déconnexion.
+  // Un compte refusé ou retiré, résident ou membre du conseil syndical, ne garde que la déconnexion.
   const statut = statutResident(session);
   const bloque =
     statut === "refuse" || statut === "retire" || estSyndicRetire(session);
@@ -124,7 +124,7 @@ type PropsSecondaire = {
    * d'envoi suive l'envoi en cours : l'écran lui réserve alors la place en bas.
    */
   actionDansLeFormulaire?: boolean;
-  /** Faux sur les écrans où un membre du syndic saisit son prénom et son nom. */
+  /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
   completionExigee?: boolean;
   children: ReactNode;
 };

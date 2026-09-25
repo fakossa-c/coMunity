@@ -10,7 +10,7 @@ import {
 } from "@/lib/session";
 
 /**
- * Vérifie, page par page, que la personne connectée est un membre actif du syndic.
+ * Vérifie, page par page, que la personne connectée est un membre actif du conseil syndical.
  * Sans session : direction la connexion, avec retour sur `chemin`.
  * Sinon : `refus` contient la page à afficher à la place.
  */
@@ -30,8 +30,8 @@ export async function accesSyndic(
           icone="lock"
           message={
             estSyndicRetire(session)
-              ? "Votre accès à l'espace syndic a été retiré. Si c'est une erreur, adressez-vous à un membre du syndic."
-              : "Cet espace est réservé aux membres du syndic."
+              ? "Votre accès à l'espace syndic a été retiré. Si c'est une erreur, adressez-vous à un membre du conseil syndical."
+              : "Cet espace est réservé aux membres du conseil syndical."
           }
         />
       </>
