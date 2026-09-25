@@ -7,6 +7,8 @@ alter table public.activite
 
 comment on column public.activite.capacite_max is '`null` : pas de limite de participants. Le formulaire de création la propose à partir du ticket #9.';
 
+grant insert (capacite_max) on public.activite to authenticated;
+
 create table public.inscription_activite (
   id uuid primary key default gen_random_uuid(),
   activite_id uuid not null references public.activite (id) on delete cascade,
@@ -30,9 +32,10 @@ create policy "Un compte actif voit les inscriptions d'une activité qu'il consu
 
 -- Personne n'écrit directement sur la table : l'inscription et l'annulation passent par des
 -- fonctions qui vérifient atomiquement le statut du résident, celui de l'activité et les places.
+-- Les paramètres sont préfixés `p_` : `activite` seul se confondrait avec la table du même nom.
 
 /** Le nombre de personnes déjà inscrites à une activité, accompagnants compris. */
-create function public.places_prises(activite uuid)
+create function public.places_prises(p_activite uuid)
 returns integer
 language sql
 stable
@@ -41,20 +44,20 @@ set search_path = ''
 as $$
   select coalesce(sum(1 + accompagnants), 0)::integer
   from public.inscription_activite
-  where activite_id = activite;
+  where activite_id = p_activite;
 $$;
 
 revoke execute on function public.places_prises(uuid) from public, anon;
 grant execute on function public.places_prises(uuid) to authenticated;
 
 /**
- * Inscrit la personne connectée à une activité, avec `accompagnants` personnes en plus.
+ * Inscrit la personne connectée à une activité, avec `p_accompagnants` personnes en plus.
  * Vérifie atomiquement que le compte peut participer et, si l'activité a une capacité, qu'il
  * reste assez de places : la capacité est revérifiée dans la même transaction que l'insertion,
  * verrou sur la ligne de l'activité, pour qu'une dernière place ne parte jamais deux fois.
  * Sans capacité, aucune limite : ni sur les places, ni sur le nombre d'accompagnants.
  */
-create function public.s_inscrire(activite uuid, accompagnants smallint default 0)
+create function public.s_inscrire(p_activite uuid, p_accompagnants smallint default 0)
 returns void
 language plpgsql
 security definer
@@ -62,35 +65,35 @@ set search_path = ''
 as $$
 declare
   capacite_activite integer;
-  places_prises integer;
+  total_places_prises integer;
 begin
   if not public.peut_participer() then
     raise exception 'Seul un résident validé peut s''inscrire' using errcode = '42501';
   end if;
-  if accompagnants < 0 then
+  if p_accompagnants < 0 then
     raise exception 'Le nombre d''accompagnants ne peut pas être négatif' using errcode = '23514';
   end if;
 
   select capacite_max into capacite_activite
   from public.activite
-  where id = activite
+  where id = p_activite
   for update;
   if not found then
     raise exception 'Activité introuvable' using errcode = 'P0002';
   end if;
 
   if capacite_activite is not null then
-    select coalesce(sum(1 + i.accompagnants), 0) into places_prises
+    select coalesce(sum(1 + i.accompagnants), 0) into total_places_prises
     from public.inscription_activite i
-    where i.activite_id = activite;
+    where i.activite_id = p_activite;
 
-    if places_prises + 1 + accompagnants > capacite_activite then
+    if total_places_prises + 1 + p_accompagnants > capacite_activite then
       raise exception 'Il ne reste pas assez de places' using errcode = 'P0003';
     end if;
   end if;
 
   insert into public.inscription_activite (activite_id, resident_id, accompagnants)
-  values (activite, (select auth.uid()), accompagnants)
+  values (p_activite, (select auth.uid()), p_accompagnants)
   on conflict (activite_id, resident_id) do update
     set accompagnants = excluded.accompagnants;
 end;
@@ -100,7 +103,7 @@ revoke execute on function public.s_inscrire(uuid, smallint) from public, anon;
 grant execute on function public.s_inscrire(uuid, smallint) to authenticated;
 
 /** Annule l'inscription de la personne connectée à une activité. */
-create function public.se_desister(activite uuid)
+create function public.se_desister(p_activite uuid)
 returns void
 language plpgsql
 security definer
@@ -108,7 +111,7 @@ set search_path = ''
 as $$
 begin
   delete from public.inscription_activite
-  where activite_id = activite and resident_id = (select auth.uid());
+  where activite_id = p_activite and resident_id = (select auth.uid());
   if not found then
     raise exception 'Vous n''êtes pas inscrit à cette activité' using errcode = 'P0002';
   end if;
