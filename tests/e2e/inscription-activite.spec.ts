@@ -101,7 +101,7 @@ test("un résident en attente voit le bouton désactivé avec une explication", 
     page.getByRole("button", { name: "Je participe" }),
   ).toBeDisabled();
   await expect(
-    page.getByText("Votre compte doit être validé par le syndic"),
+    page.getByText("Votre compte doit être validé par le conseil syndical"),
   ).toBeVisible();
 });
 

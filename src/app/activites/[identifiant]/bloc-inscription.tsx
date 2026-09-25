@@ -15,7 +15,7 @@ import { sInscrire, seDesister } from "./actions";
 /**
  * Ce que peut faire la personne qui consulte la fiche : `visiteur` n'est pas connectée
  * (« Je participe » l'envoie se connecter), `en_attente` l'est mais n'est pas encore validée
- * par le syndic (bouton désactivé), `valide` peut s'inscrire.
+ * par le conseil syndical (bouton désactivé), `valide` peut s'inscrire.
  */
 export type StatutVisiteur = "visiteur" | "en_attente" | "valide";
 
@@ -88,7 +88,7 @@ export function BlocInscription({ fiche, statut }: Props) {
         </Bouton>
         {statut === "en_attente" && (
           <p className="text-body-md text-on-surface-variant">
-            Votre compte doit être validé par le syndic pour vous inscrire.
+            Votre compte doit être validé par le conseil syndical pour vous inscrire.
           </p>
         )}
         {erreur && <p className="text-body-md text-error">{erreur}</p>}
