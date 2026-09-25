@@ -32,7 +32,7 @@ export async function modifierEmail(
     .trim()
     .toLowerCase();
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
-  if (!/^[^\s@]+@[^\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return {
       erreur:
         "Saisissez une adresse e-mail complète, par exemple prenom.nom@exemple.fr.",
