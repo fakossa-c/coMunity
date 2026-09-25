@@ -28,7 +28,11 @@ const COMPLETE: SaisieActivite = {
 
 describe("limites de saisie", () => {
   it("titre 50, précision d'accès 120, mot d'accueil 300", () => {
-    expect(LIMITES).toEqual({ titre: 50, precision_acces: 120, mot_accueil: 300 });
+    expect(LIMITES).toEqual({
+      titre: 50,
+      precision_acces: 120,
+      mot_accueil: 300,
+    });
   });
 });
 
@@ -71,7 +75,11 @@ describe("vérification d'une étape", () => {
 
   it("étape 2 : l'heure de fin suit l'heure de début", () => {
     expect(
-      verifierEtape(2, { ...COMPLETE, heure_debut: "18:00", heure_fin: "16:00" }),
+      verifierEtape(2, {
+        ...COMPLETE,
+        heure_debut: "18:00",
+        heure_fin: "16:00",
+      }),
     ).toMatchObject({
       champ: "heure_fin",
       erreur: "L'heure de fin doit être après l'heure de début.",

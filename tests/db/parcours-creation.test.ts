@@ -128,10 +128,13 @@ describe("champs du parcours de création", () => {
     );
 
     expect(error).toBeNull();
-    const carte = (catalogue as { identifiant_public: string; etiquettes: string[] }[]).find(
-      (a) => a.identifiant_public === data!.identifiant_public,
-    );
+    const carte = (
+      catalogue as { identifiant_public: string; etiquettes: string[] }[]
+    ).find((a) => a.identifiant_public === data!.identifiant_public);
     expect(carte?.etiquettes).toEqual(["ascenseur", "animaux_acceptes"]);
-    await clientAdmin().from("activite").delete().eq("organisateur", resident.id);
+    await clientAdmin()
+      .from("activite")
+      .delete()
+      .eq("organisateur", resident.id);
   });
 });
