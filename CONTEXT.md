@@ -11,7 +11,7 @@ Toute personne majeure qui habite la résidence, copropriétaire ou locataire, a
 _Avoid_ : copropriétaire, habitant, utilisateur
 
 **Pseudo** :
-Le seul nom sous lequel les voisins voient un résident, membre du conseil syndical compris. Prérempli avec son prénom et son nom, il le modifie librement. Le prénom et le nom réels, demandés à l'inscription, ne servent qu'au conseil syndical pour valider le compte.
+Le seul nom sous lequel les voisins voient un résident, membre du conseil syndical compris. Prérempli avec son prénom et l'initiale de son nom (« Danielle M. »), il le modifie librement. Le prénom et le nom réels, demandés à l'inscription, ne servent qu'au conseil syndical pour valider le compte.
 _Avoid_ : nom affiché, surnom, nom d'utilisateur
 
 **Conseil syndical** :
