@@ -1,23 +1,21 @@
-import type { ReactNode } from "react";
-
-export type Onglet = {
-  id: string;
-  libelle: ReactNode;
-  href: string;
-};
+export type Onglet = { id: string; libelle: string; href: string };
 
 type Props = {
-  libelleGroupe: string;
   onglets: Onglet[];
   actif: string;
+  /** Nom du groupe d'onglets pour le lecteur d'écran (`aria-label` du `tablist`). */
+  libelleGroupe: string;
 };
 
 /**
  * Onglets internes d'une rubrique (« J'y vais » / « J'organise »). Soulignement terre cuite de
  * 4 px : seul usage de la terre cuite en aplat. La pilule pêche est réservée à l'onglet actif de
  * la barre de navigation du bas.
+ *
+ * Navigation par lien (`href` par onglet), comme `BarreNavigation` : cohérent avec le reste de
+ * l'app, en server components, sans état client.
  */
-export function Onglets({ libelleGroupe, onglets, actif }: Props) {
+export function Onglets({ onglets, actif, libelleGroupe }: Props) {
   return (
     <div role="tablist" aria-label={libelleGroupe} className="flex gap-6">
       {onglets.map((onglet) => (
