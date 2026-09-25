@@ -36,6 +36,14 @@ _Avoid_ : droit, accès
 L'ensemble d'immeubles d'une même copropriété, et le périmètre d'une instance de coMunity.
 _Avoid_ : copro, immeuble
 
+**Espace commun** :
+Un lieu de la résidence défini par le conseil syndical (salle commune, cour, jardin), avec ses horaires d'accès, son contact et ses règles, où une activité peut se tenir.
+_Avoid_ : salle, salle partagée, espace copro
+
+**Lieu libre** :
+Le lieu d'une activité qui se tient hors des espaces communs, saisi par son créateur (« chez Danielle, 2e étage »).
+_Avoid_ : autre lieu
+
 **Activité** :
 Un moment proposé par un résident ou le conseil syndical, à une date et dans un lieu, auquel les résidents s'inscrivent. C'est la raison d'être de coMunity.
 _Avoid_ : événement, atelier (qui n'est qu'un genre d'activité)
