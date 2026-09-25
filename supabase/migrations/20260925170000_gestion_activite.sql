@@ -9,7 +9,7 @@ comment on type public.statut_activite is 'L''état d''une activité : publiée,
 alter table public.activite
   add column statut public.statut_activite not null default 'publiee';
 
--- `statut` ne figure dans aucun grant : il ne change que par `annuler_activite`.
+comment on column public.activite.statut is '`publiee` par défaut ; `annulee` par `annuler_activite`, jamais par une modification directe (la colonne ne figure dans aucun grant).';
 
 -- La capacité maximale se modifie enfin (#9 l'avait laissée hors du droit de modification), à
 -- condition de ne pas passer sous le nombre de personnes déjà inscrites, accompagnants compris.

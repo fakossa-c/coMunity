@@ -13,32 +13,46 @@ type Props = {
   capaciteMin: number | null;
   /** Accompagnants compris. */
   placesPrises: number;
+  /** Une activité passée n'a plus de minimum à confirmer ; son annulation reste dite. */
+  passee: boolean;
 };
 
 /**
  * L'état d'une activité, en pastille : « Annulée » (rouge pâle), sinon « Confirmée » (vert) ou
- * « Encore N participants pour confirmer » (abricot) selon le minimum. Rien sans minimum.
+ * « Encore N participants pour confirmer » (abricot) selon le minimum. Rien sans minimum, ni une
+ * fois l'activité passée. La pastille ne s'étire pas dans une colonne.
  */
-export function EtatActivite({ statut, capaciteMin, placesPrises }: Props) {
+export function EtatActivite({
+  statut,
+  capaciteMin,
+  placesPrises,
+  passee,
+}: Props) {
   if (statut === "annulee") {
     return (
-      <Etiquette ton="erreur" icone="event_busy">
-        Annulée
-      </Etiquette>
+      <div>
+        <Etiquette ton="erreur" icone="event_busy">
+          Annulée
+        </Etiquette>
+      </div>
     );
   }
 
-  const etat = etatConfirmation({ capaciteMin, placesPrises });
+  const etat = passee ? null : etatConfirmation({ capaciteMin, placesPrises });
   const libelle = libelleConfirmation(etat);
   if (!etat || !libelle) return null;
 
-  return etat.confirmee ? (
-    <Etiquette ton="vert" icone="event_available">
-      {libelle}
-    </Etiquette>
-  ) : (
-    <Etiquette ton="abricot" icone="hourglass_top">
-      {libelle}
-    </Etiquette>
+  return (
+    <div>
+      {etat.confirmee ? (
+        <Etiquette ton="vert" icone="event_available">
+          {libelle}
+        </Etiquette>
+      ) : (
+        <Etiquette ton="abricot" icone="hourglass_top">
+          {libelle}
+        </Etiquette>
+      )}
+    </div>
   );
 }

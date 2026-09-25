@@ -6,3 +6,5 @@ Badge confort ou accessibilité d'une activité, pastille pastel.
 ```
 
 Les valeurs sont deux listes fermées (voir « Étiquettes d'activité » dans le README) ; le formulaire les coche avec `ChoixEtiquettes`.
+
+La même pastille dit aussi l'état d'une activité (ticket #12, à maquetter) : `ton="erreur"` pour « Annulée », `vert` pour « Confirmée », `abricot` pour « Encore N participants pour confirmer ».

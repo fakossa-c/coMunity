@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { BlocTexte } from "@/components/bloc-texte";
-import { classesBouton } from "@/components/bouton";
 import { BoutonCopier } from "@/components/bouton-copier";
 import { BoutonPartager } from "@/components/bouton-partager";
 import { BoutonRelayer } from "@/components/bouton-relayer";
@@ -26,8 +24,8 @@ import {
 } from "@/lib/fiche-activite";
 import { libelleMinimum } from "@/lib/inscription-activite";
 import {
-  cheminFiche,
   creneau,
+  estPassee,
   jourLong,
   messageWhatsApp,
 } from "@/lib/partage-activite";
@@ -72,30 +70,11 @@ function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
 }
 
 /**
- * L'action fixée en bas de la fiche : « Modifier » pour son créateur, « Je participe » pour un
- * voisin, et pour une activité annulée, le seul constat. Une annulée n'a plus rien à proposer
- * à son créateur, qui la gère depuis le corps de la fiche.
+ * L'action fixée en bas de la fiche : l'inscription, pour tous, créateur compris ; pour une
+ * activité annulée, le seul constat. Le créateur gère son activité depuis le corps de la fiche.
  */
-function actionDeLaFiche(
-  fiche: FicheActivite,
-  statut: StatutVisiteur,
-  identifiant: string,
-) {
-  const annulee = fiche.statut === "annulee";
-  if (fiche.est_organisateur) {
-    return annulee ? undefined : (
-      <BarreActionFixe>
-        <Link
-          href={`${cheminFiche(identifiant)}/modifier`}
-          className={`${classesBouton("action", true)} text-body-lg`}
-        >
-          <Icone nom="edit" taille={24} />
-          Modifier
-        </Link>
-      </BarreActionFixe>
-    );
-  }
-  if (annulee) {
+function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
+  if (fiche.statut === "annulee") {
     return (
       <BarreActionFixe>
         <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
@@ -122,7 +101,7 @@ export default async function Fiche({ params }: Props) {
     <EcranSecondaire
       retour={{ href: "/", libelle: "Retour" }}
       partager={<BoutonPartager titre={fiche.titre} lien={lien} />}
-      action={actionDeLaFiche(fiche, statutVisiteur(session?.statut), identifiant)}
+      action={actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
     >
       <article className="flex flex-col gap-[14px]">
         <VisuelActivite pictogramme={fiche.pictogramme as NomIcone} />
@@ -135,13 +114,12 @@ export default async function Fiche({ params }: Props) {
         <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
           {fiche.titre}
         </h1>
-        <div>
-          <EtatActivite
-            statut={fiche.statut}
-            capaciteMin={fiche.capacite_min}
-            placesPrises={fiche.places_prises}
-          />
-        </div>
+        <EtatActivite
+          statut={fiche.statut}
+          capaciteMin={fiche.capacite_min}
+          placesPrises={fiche.places_prises}
+          passee={estPassee(fiche.date_activite)}
+        />
         <PanneauInfos
           lignes={[
             {

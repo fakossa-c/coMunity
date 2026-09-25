@@ -4,7 +4,7 @@ import {
   type CategorieActivite,
 } from "@/lib/categories-activite";
 import type { EtiquetteActivite } from "@/lib/etiquettes-activite";
-import { cheminFiche } from "@/lib/partage-activite";
+import { cheminFiche, estPassee } from "@/lib/partage-activite";
 import { EtatActivite, type StatutActivite } from "./etat-activite";
 import { EtiquettesActivite } from "./etiquette";
 import { Icone } from "./icone";
@@ -87,13 +87,12 @@ export function CarteActivite({ activite }: { activite: Activite }) {
         />
       )}
       {activite.statut && (
-        <div>
-          <EtatActivite
-            statut={activite.statut}
-            capaciteMin={activite.capacite_min ?? null}
-            placesPrises={activite.places_prises ?? 0}
-          />
-        </div>
+        <EtatActivite
+          statut={activite.statut}
+          capaciteMin={activite.capacite_min ?? null}
+          placesPrises={activite.places_prises ?? 0}
+          passee={estPassee(activite.date_activite)}
+        />
       )}
       {activite.etiquettes && (
         <EtiquettesActivite etiquettes={activite.etiquettes} />
