@@ -1,7 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { EMAIL_INCOMPLET } from "@/lib/email";
+import {
+  MOT_DE_PASSE_TROP_FAIBLE,
+  refusNouveauMotDePasse,
+} from "@/lib/mot-de-passe";
 import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
 import { clientSession } from "@/lib/supabase/serveur";
 
@@ -17,17 +21,15 @@ export type EtatInscription = {
   saisie?: Saisie;
 };
 
-const MESSAGE_EMAIL_INVALIDE =
-  "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.";
 const MESSAGE_DEJA_INSCRIT =
   "Un compte existe déjà avec cette adresse. Connectez-vous, ou choisissez « Mot de passe oublié ? » sur la page de connexion.";
 
 const messagesAuth: Record<string, string> = {
   user_already_exists: MESSAGE_DEJA_INSCRIT,
   email_exists: MESSAGE_DEJA_INSCRIT,
-  email_address_invalid: MESSAGE_EMAIL_INVALIDE,
-  validation_failed: MESSAGE_EMAIL_INVALIDE,
-  weak_password: `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
+  email_address_invalid: EMAIL_INCOMPLET,
+  validation_failed: EMAIL_INCOMPLET,
+  weak_password: MOT_DE_PASSE_TROP_FAIBLE,
 };
 
 export async function inscrire(
@@ -55,14 +57,8 @@ export async function inscrire(
       `Le prénom et le nom tiennent en ${LONGUEUR_MAXIMALE_NOM} caractères au plus.`,
     );
   }
-  if (motDePasse.length < LONGUEUR_MINIMALE_MOT_DE_PASSE) {
-    return refus(
-      `Choisissez un mot de passe d'au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
-    );
-  }
-  if (motDePasse !== confirmation) {
-    return refus("Les deux mots de passe ne sont pas identiques.");
-  }
+  const motDePasseRefuse = refusNouveauMotDePasse(motDePasse, confirmation);
+  if (motDePasseRefuse) return refus(motDePasseRefuse.erreur);
 
   // La base crée le profil du résident, en attente, à partir du prénom et du nom.
   const supabase = await clientSession();
