@@ -20,7 +20,8 @@ export interface CarteActiviteProps {
   /** À FAIRE : les valeurs des étiquettes (accessibilité, pour qui…) seront des enums à définir.
    *  En attendant, texte libre ; ton vert → rangée « Accessibilité », autres → « Pour qui ». */
   etiquettes?: { ton?: "vert" | "abricot" | "peche"; icone?: string; libelle: string }[];
-  /** Bandeau marine « Proposée par le syndic » en tête */
+  /** Bandeau marine « Proposée par le syndic » en tête. Abandonné le 25/09/2026 : une activité
+   *  du syndic se présente comme celle d'un voisin. */
   syndic?: boolean;
   /** Bandeau vert d'inscription ("Inscrite, avec 2 personnes") */
   statut?: string;

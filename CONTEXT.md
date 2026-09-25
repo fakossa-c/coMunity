@@ -10,6 +10,10 @@ La vie collective d'une résidence en copropriété : des voisins qui proposent 
 Toute personne majeure qui habite la résidence, copropriétaire ou locataire, avec un compte validé par le conseil syndical. Un mineur vient en accompagnant.
 _Avoid_ : copropriétaire, habitant, utilisateur
 
+**Nom affiché** :
+Ce qu'un résident lit d'un autre : son prénom et l'initiale de son nom (« Danielle M. »), membre du syndic compris. Une activité ne dit pas qu'elle vient du syndic.
+_Avoid_ : nom complet, nom d'utilisateur
+
 **Conseil syndical** :
 Les copropriétaires élus et bénévoles qui habitent la résidence. Ceux qui ont un compte y portent l'information officielle de la copropriété.
 _Avoid_ : syndic (pour ce rôle), admin, gestionnaire
