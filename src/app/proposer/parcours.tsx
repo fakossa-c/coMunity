@@ -2,14 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { analyserProposition, type AvisAssistant } from "@/assistant";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { Bouton } from "@/components/bouton";
-import { CarteLignes } from "@/components/carte-lignes";
 import { Champ, ChampListe, ChampTexte } from "@/components/champ";
 import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
-import { EncartAssistant } from "@/components/encart-assistant";
 import { Annonce } from "@/components/formulaire";
 import { TitreSection } from "@/components/titre-section";
 import {
@@ -17,12 +14,6 @@ import {
   categoriesActiviteListe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
-import {
-  etiquettesActivite,
-  etiquettesDuGroupe,
-  type EtiquetteActivite,
-} from "@/lib/etiquettes-activite";
-import { creneau, jourLong } from "@/lib/partage-activite";
 import {
   LIMITES,
   NOMBRE_ETAPES,
@@ -41,6 +32,7 @@ import {
   type Resultat,
 } from "@/lib/resultat";
 import { publier } from "./actions";
+import { Recapitulatif } from "./recapitulatif";
 
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
@@ -108,7 +100,7 @@ export function ParcoursProposition() {
       className="flex flex-col gap-bloc"
     >
       <div>
-        <p className="font-headline text-label-md text-on-surface-variant">
+        <p className="font-headline text-label-lg text-on-surface-variant">
           Étape {etape} sur {NOMBRE_ETAPES}
         </p>
         <h2
@@ -152,6 +144,7 @@ export function ParcoursProposition() {
           <ChampTexte
             libelle="Mot d'accueil"
             name="mot_accueil"
+            autoComplete="off"
             rows={4}
             value={saisie.mot_accueil}
             onChange={(e) => poser("mot_accueil", e.target.value)}
@@ -229,8 +222,9 @@ export function ParcoursProposition() {
 
       {etape === 3 && (
         <>
+          <TitreSection>Places</TitreSection>
           <ChoixSegmente
-            libelle="Nombre de places"
+            libelle="Limite de places"
             valeur={saisie.places}
             onChange={(places) => poser("places", places)}
             options={[
@@ -281,6 +275,7 @@ export function ParcoursProposition() {
           <ChampTexte
             libelle="Conseils pratiques"
             name="conseils_pratiques"
+            autoComplete="off"
             value={saisie.conseils_pratiques}
             onChange={(e) => poser("conseils_pratiques", e.target.value)}
             aide="Une petite laine, des chaussures fermées…"
@@ -288,6 +283,7 @@ export function ParcoursProposition() {
           <ChampTexte
             libelle="Matériel à prévoir"
             name="materiel_prevoir"
+            autoComplete="off"
             value={saisie.materiel_prevoir}
             onChange={(e) => poser("materiel_prevoir", e.target.value)}
             aide="Ce que vous fournissez sur place."
@@ -295,6 +291,7 @@ export function ParcoursProposition() {
           <ChampTexte
             libelle="Ce que vous pouvez apporter"
             name="a_apporter"
+            autoComplete="off"
             value={saisie.a_apporter}
             onChange={(e) => poser("a_apporter", e.target.value)}
             aide="Ce que chacun peut amener, s'il le souhaite."
@@ -335,167 +332,5 @@ export function ParcoursProposition() {
         </Bouton>
       </BarreActionFixe>
     </form>
-  );
-}
-
-type PropsRecapitulatif = {
-  saisie: SaisieActivite;
-  onModifier: (etape: Etape) => void;
-  onAnnuler: () => void;
-};
-
-/** « 12 places », « Sans limite ». */
-function libellePlaces(saisie: SaisieActivite) {
-  if (saisie.places !== "limitees") return "Sans limite";
-  const n = Number.parseInt(saisie.capacite_max, 10);
-  return n === 1 ? "1 place" : `${n} places`;
-}
-
-/** « Au moins 4 participants », « Aucun minimum ». */
-function libelleMinimum(saisie: SaisieActivite) {
-  const n = Number.parseInt(saisie.capacite_min, 10);
-  if (Number.isNaN(n)) return "Aucun minimum";
-  return n === 1 ? "Au moins 1 participant" : `Au moins ${n} participants`;
-}
-
-function libellesEtiquettes(
-  etiquettes: EtiquetteActivite[],
-  groupe: "accessibilite" | "pour_qui",
-) {
-  const libelles = etiquettesDuGroupe(groupe)
-    .filter((cle) => etiquettes.includes(cle))
-    .map((cle) => etiquettesActivite[cle].libelle);
-  return libelles.length > 0 ? libelles.join(", ") : "Rien de coché";
-}
-
-/** Tout ce qui a été saisi, étape par étape, avec un retour vers chacune ; puis l'avis de l'assistant. */
-function Recapitulatif({ saisie, onModifier, onAnnuler }: PropsRecapitulatif) {
-  const [avis, setAvis] = useState<AvisAssistant | null>(null);
-
-  useEffect(() => {
-    let actif = true;
-    analyserProposition({
-      titre: saisie.titre,
-      description: saisie.mot_accueil,
-      categorie: saisie.categorie,
-      date: saisie.date_activite,
-      heureDebut: saisie.heure_debut,
-      heureFin: saisie.heure_fin,
-      lieu: { type: "libre", libelle: saisie.lieu },
-      capaciteMax:
-        saisie.places === "limitees"
-          ? Number.parseInt(saisie.capacite_max, 10)
-          : null,
-    }).then((resultat) => {
-      if (actif) setAvis(resultat);
-    });
-    return () => {
-      actif = false;
-    };
-  }, [saisie]);
-
-  const sections: {
-    etape: Etape;
-    lignes: Parameters<typeof CarteLignes>[0]["lignes"];
-  }[] = [
-    {
-      etape: 1,
-      lignes: [
-        { icone: "edit", titre: "Titre", detail: saisie.titre },
-        {
-          icone: categoriesActivite[saisie.categorie].pictogramme,
-          titre: "Catégorie",
-          detail: categoriesActivite[saisie.categorie].libelle,
-        },
-        {
-          icone: "waving_hand",
-          titre: "Mot d'accueil",
-          detail: saisie.mot_accueil || "Aucun",
-        },
-      ],
-    },
-    {
-      etape: 2,
-      lignes: [
-        {
-          icone: "event",
-          titre: "Date",
-          detail: jourLong(saisie.date_activite),
-        },
-        {
-          icone: "schedule",
-          titre: "Horaire",
-          detail: creneau(saisie.heure_debut, saisie.heure_fin),
-        },
-        { icone: "location_on", titre: "Lieu", detail: saisie.lieu },
-        {
-          icone: "description",
-          titre: "Précision d'accès",
-          detail: saisie.precision_acces || "Aucune",
-        },
-      ],
-    },
-    {
-      etape: 3,
-      lignes: [
-        {
-          icone: "group",
-          titre: "Nombre de places",
-          detail: libellePlaces(saisie),
-        },
-        { icone: "groups", titre: "Minimum", detail: libelleMinimum(saisie) },
-        {
-          icone: "accessible",
-          titre: "Accessibilité",
-          detail: libellesEtiquettes(saisie.etiquettes, "accessibilite"),
-        },
-        {
-          icone: "child_care",
-          titre: "Pour qui",
-          detail: libellesEtiquettes(saisie.etiquettes, "pour_qui"),
-        },
-        {
-          icone: "lightbulb",
-          titre: "Conseils pratiques",
-          detail: saisie.conseils_pratiques || "Aucun",
-        },
-        {
-          icone: "handyman",
-          titre: "Matériel à prévoir",
-          detail: saisie.materiel_prevoir || "Aucun",
-        },
-        {
-          icone: "add_box",
-          titre: "Ce que vous pouvez apporter",
-          detail: saisie.a_apporter || "Rien de particulier",
-        },
-      ],
-    },
-  ];
-
-  return (
-    <>
-      {sections.map(({ etape, lignes }) => (
-        <section key={etape} className="flex flex-col gap-space-sm">
-          <div className="flex items-center justify-between gap-space-sm">
-            <TitreSection>{TITRES_ETAPES[etape]}</TitreSection>
-            <Bouton
-              variante="fantome"
-              icone="edit"
-              iconeTaille={22}
-              onClick={() => onModifier(etape)}
-            >
-              Modifier
-              <span className="sr-only"> : {TITRES_ETAPES[etape]}</span>
-            </Bouton>
-          </div>
-          <CarteLignes libelle={TITRES_ETAPES[etape]} lignes={lignes} />
-        </section>
-      ))}
-      <EncartAssistant avis={avis} />
-      <Bouton variante="danger" icone="close" onClick={onAnnuler}>
-        Annuler la proposition
-      </Bouton>
-    </>
   );
 }

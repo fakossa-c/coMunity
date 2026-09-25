@@ -2,17 +2,13 @@
 
 import {
   etiquettesActivite,
+  etiquettesActiviteListe,
   etiquettesDuGroupe,
   groupesEtiquettes,
   type EtiquetteActivite,
   type GroupeEtiquettes,
 } from "@/lib/etiquettes-activite";
 import { Icone } from "./icone";
-
-const tonsCoches = {
-  vert: "bg-fond-confirme text-texte-confirme",
-  abricot: "bg-tertiary-fixed text-on-tertiary-fixed",
-};
 
 type Props = {
   groupe: GroupeEtiquettes;
@@ -22,21 +18,18 @@ type Props = {
 
 /**
  * Une liste fermée d'étiquettes à cocher : chaque option est une pastille, blanche bordée au
- * repos, pastel avec sa coche une fois choisie (sélection = passage au pastel plein + coche).
+ * repos, pêche avec sa coche une fois choisie (sélection = passage au pêche plein + coche).
+ * La carte et la fiche montreront ensuite l'étiquette dans le ton de son groupe.
  */
 export function ChoixEtiquettes({ groupe, valeurs, onChange }: Props) {
-  const { titre, ton } = groupesEtiquettes[groupe];
+  const { titre } = groupesEtiquettes[groupe];
 
   function basculer(cle: EtiquetteActivite, cochee: boolean) {
     // L'ordre des listes fermées est conservé, quel que soit l'ordre des clics.
     const suivantes = cochee
       ? [...valeurs, cle]
       : valeurs.filter((v) => v !== cle);
-    onChange(
-      etiquettesDuGroupe("accessibilite")
-        .concat(etiquettesDuGroupe("pour_qui"))
-        .filter((v) => suivantes.includes(v)),
-    );
+    onChange(etiquettesActiviteListe.filter((v) => suivantes.includes(v)));
   }
 
   return (
@@ -52,7 +45,7 @@ export function ChoixEtiquettes({ groupe, valeurs, onChange }: Props) {
               key={cle}
               className={`relative inline-flex min-h-cible cursor-pointer items-center gap-1.5 rounded-full py-2 pr-4 pl-3 font-headline text-label-md has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
                 cochee
-                  ? tonsCoches[ton]
+                  ? "bg-fond-action text-texte-action"
                   : "border-2 border-bordure-carte bg-fond-carte text-on-surface"
               }`}
             >

@@ -7,14 +7,14 @@ const saisie =
   "min-h-champ w-full min-w-0 flex-1 rounded-md bg-transparent px-4 font-body text-body-lg text-on-surface";
 
 /** Ce qu'affiche un compteur de caractères : « 12 / 50 caractères ». */
-export type Compteur = { longueur: number; max: number };
+export type CompteurCaracteres = { longueur: number; max: number };
 
 type PropsCadre = {
   id: string;
   libelle: string;
   aide?: string;
   /** Compteur de caractères, sous le champ, à la place de l'aide. */
-  compteur?: Compteur;
+  compteur?: CompteurCaracteres;
   erreur?: string;
   className?: string;
   /** Contenu de la boîte : la saisie, et le bouton d'affichage d'un mot de passe. */
@@ -73,8 +73,8 @@ function Cadre({
 }
 
 /** Attributs qui relient la saisie à son aide et à son erreur. */
-function liaisons(id: string, aide?: string | Compteur, erreur?: string) {
-  const decrite = [aide && `${id}-aide`, erreur && `${id}-erreur`].filter(
+function liaisons(id: string, decrit: boolean, erreur?: string) {
+  const decrite = [decrit && `${id}-aide`, erreur && `${id}-erreur`].filter(
     Boolean,
   );
   return {
@@ -89,7 +89,7 @@ type PropsChamp = ComponentProps<"input"> & {
   /** Texte d'aide sous le champ : « Au moins 6 caractères. » */
   aide?: string;
   /** Compteur de caractères sous le champ, pour un texte court à longueur limitée. */
-  compteur?: Compteur;
+  compteur?: CompteurCaracteres;
   /** Erreur propre à ce champ, affichée sous lui et annoncée. */
   erreur?: string;
   /** Mot de passe : masqué, avec un bouton « Afficher / Masquer ». */
@@ -121,7 +121,7 @@ export function Champ({
       className={className}
     >
       <input
-        {...liaisons(idChamp, aide ?? compteur, erreur)}
+        {...liaisons(idChamp, Boolean(aide ?? compteur), erreur)}
         type={secret ? (visible ? "text" : "password") : type}
         className={saisie}
         {...props}
@@ -169,7 +169,7 @@ export function ChampListe({
       className={className}
     >
       <select
-        {...liaisons(idChamp, aide, erreur)}
+        {...liaisons(idChamp, Boolean(aide), erreur)}
         className={`${saisie} cursor-pointer`}
         {...props}
       />
@@ -180,7 +180,7 @@ export function ChampListe({
 type PropsChampTexte = ComponentProps<"textarea"> & {
   libelle: string;
   aide?: string;
-  compteur?: Compteur;
+  compteur?: CompteurCaracteres;
   erreur?: string;
 };
 
@@ -207,7 +207,7 @@ export function ChampTexte({
       className={className}
     >
       <textarea
-        {...liaisons(idChamp, aide ?? compteur, erreur)}
+        {...liaisons(idChamp, Boolean(aide ?? compteur), erreur)}
         rows={rows}
         className={`${saisie} resize-y py-3`}
         {...props}

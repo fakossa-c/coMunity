@@ -11,7 +11,7 @@ export type OptionSegmentee<Id extends string> = {
 };
 
 type Props<Id extends string> = {
-  /** Nom du groupe, lu par le lecteur d'écran et affiché au-dessus. */
+  /** Nom du groupe pour le lecteur d'écran : à l'écran, un `TitreSection` le précède. */
   libelle: string;
   options: OptionSegmentee<Id>[];
   valeur: Id;
@@ -31,9 +31,7 @@ export function ChoixSegmente<Id extends string>({
   const nom = useId();
   return (
     <fieldset className="flex flex-col gap-space-xs">
-      <legend className="mb-space-xs font-headline text-label-lg">
-        {libelle}
-      </legend>
+      <legend className="sr-only">{libelle}</legend>
       <div className="flex gap-1.5 rounded-md bg-surface-container p-1.5">
         {options.map((option) => {
           const actif = option.id === valeur;

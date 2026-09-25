@@ -102,6 +102,11 @@ function tropLong(valeur: string, champ: keyof typeof LIMITES) {
     : undefined;
 }
 
+/** La capacité maximale saisie, ou `null` sans limite de places (quoi que contienne le champ). */
+export function capaciteMaxDe(saisie: SaisieActivite) {
+  return saisie.places === "limitees" ? nombre(saisie.capacite_max) : null;
+}
+
 /** La première erreur d'une étape, sous le champ qu'elle concerne ; `{}` quand tout va. */
 export function verifierEtape(
   etape: Etape,
@@ -140,8 +145,7 @@ export function verifierEtape(
   }
 
   if (etape === 3) {
-    const max =
-      saisie.places === "limitees" ? nombre(saisie.capacite_max) : null;
+    const max = capaciteMaxDe(saisie);
     if (saisie.places === "limitees" && (max === null || max < 1))
       return erreur(
         "capacite_max",
@@ -175,8 +179,7 @@ export function versNouvelleActivite(saisie: SaisieActivite): NouvelleActivite {
     heure_fin: saisie.heure_fin,
     lieu: saisie.lieu.trim(),
     precision_acces: texte(saisie.precision_acces),
-    capacite_max:
-      saisie.places === "limitees" ? nombre(saisie.capacite_max) : null,
+    capacite_max: capaciteMaxDe(saisie),
     capacite_min: nombre(saisie.capacite_min),
     etiquettes: saisie.etiquettes,
     conseils_pratiques: texte(saisie.conseils_pratiques),

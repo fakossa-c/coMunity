@@ -20,6 +20,7 @@ import {
   origine,
   type FicheActivite,
 } from "@/lib/fiche-activite";
+import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong, messageWhatsApp } from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
@@ -52,13 +53,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: await lienFiche(identifiant),
     },
   };
-}
-
-/** « Au moins 4 participants », « Au moins 1 participant ». */
-function libelleMinimum(minimum: number) {
-  return minimum === 1
-    ? "Au moins 1 participant"
-    : `Au moins ${minimum} participants`;
 }
 
 /** Ce que peut faire la personne qui consulte la fiche, à partir de sa session. */
