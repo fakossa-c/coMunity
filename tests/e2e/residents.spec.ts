@@ -52,7 +52,7 @@ function navigationPrincipale(page: Page) {
   return page.getByRole("navigation", { name: "Navigation principale" });
 }
 
-const BANDEAU = "Votre compte attend la validation du syndic";
+const BANDEAU = "Votre compte attend la validation du conseil syndical";
 
 test("un résident s'inscrit avec son prénom et son nom, puis le syndic le valide", async ({
   page,
@@ -135,7 +135,9 @@ test("un résident refusé ne voit qu'un message l'invitant à contacter le synd
   await expect(page.getByRole("main")).toContainText(
     "Votre compte n'a pas été accepté",
   );
-  await expect(page.getByRole("main")).toContainText("contactez le syndic");
+  await expect(page.getByRole("main")).toContainText(
+    "contactez le conseil syndical",
+  );
   await expect(navigationPrincipale(page)).toHaveCount(0);
   await page.goto("/proposer");
   await expect(

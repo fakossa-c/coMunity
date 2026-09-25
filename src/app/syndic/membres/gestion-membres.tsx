@@ -66,11 +66,11 @@ export function GestionMembres({ membres, idMoi }: Props) {
           {membres.length === 1 ? "1 membre" : `${membres.length} membres`}
         </h2>
         <CarteLignes
-          libelle="Membres du syndic"
+          libelle="Membres du conseil syndical"
           lignes={membres.map((membre) => ({
             cle: membre.id,
             icone: "shield_person",
-            titre: membre.id === idMoi ? "Vous" : "Membre du syndic",
+            titre: membre.id === idMoi ? "Vous" : "Membre du conseil syndical",
             detail: membre.email,
             fin: (
               <LigneMembre
