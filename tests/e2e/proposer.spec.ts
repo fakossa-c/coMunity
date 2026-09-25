@@ -144,6 +144,10 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await page
     .getByLabel("Ce que vous pouvez apporter")
     .fill("Vos épluchures de la semaine.");
+  await page.screenshot({
+    path: test.info().outputPath("etape-3.png"),
+    fullPage: true,
+  });
   await continuer(page);
 
   // Étape 4 : tout est repris, chaque bloc ramène à son étape, l'assistant a son encart.
