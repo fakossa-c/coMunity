@@ -88,7 +88,7 @@ describe("fiche publique d'une activité", () => {
       .rpc("fiche_activite", { identifiant })
       .single();
 
-    expect(data).toMatchObject({ organisateur_prenom: null });
+    expect(data).toMatchObject({ organisateur_nom_affiche: null });
     const reponse = JSON.stringify(data);
     expect(reponse).not.toContain(IDENTITE.prenom);
     expect(reponse).not.toContain(IDENTITE.nom);
@@ -108,7 +108,7 @@ describe("fiche publique d'une activité", () => {
     expect(activites.data ?? []).toHaveLength(0);
   });
 
-  it("un résident voit le prénom de l'organisateur", async () => {
+  it("un résident voit le prénom et l'initiale du nom de l'organisateur", async () => {
     const organisateur = await nouveauResident("valide");
     const voisin = await nouveauResident("en_attente");
     const identifiant = await publier(organisateur);
@@ -118,12 +118,25 @@ describe("fiche publique d'une activité", () => {
       .single();
 
     expect(data).toMatchObject({
-      organisateur_prenom: IDENTITE.prenom,
+      organisateur_nom_affiche: "Danielle M.",
       est_organisateur: false,
     });
+    expect(JSON.stringify(data)).not.toContain(IDENTITE.nom);
   });
 
-  it("un résident refusé ne voit pas le prénom de l'organisateur", async () => {
+  it("un membre du syndic qui organise apparaît comme un voisin", async () => {
+    const syndic = await nouveauSyndic();
+    const voisin = await nouveauResident("valide");
+    const identifiant = await publier(syndic);
+
+    const { data } = await voisin.client
+      .rpc("fiche_activite", { identifiant })
+      .single();
+
+    expect(data).toMatchObject({ organisateur_nom_affiche: "Colette D." });
+  });
+
+  it("un résident refusé ne voit pas le nom de l'organisateur", async () => {
     const organisateur = await nouveauResident("valide");
     const refuse = await nouveauResident("refuse");
     const identifiant = await publier(organisateur);
@@ -132,7 +145,7 @@ describe("fiche publique d'une activité", () => {
       .rpc("fiche_activite", { identifiant })
       .single();
 
-    expect(data).toMatchObject({ organisateur_prenom: null });
+    expect(data).toMatchObject({ organisateur_nom_affiche: null });
   });
 
   it("l'organisateur se reconnaît sur sa fiche", async () => {
@@ -146,6 +159,7 @@ describe("fiche publique d'une activité", () => {
     expect(data).toMatchObject({ est_organisateur: true });
   });
 
+  // L'écran ne le dit plus (décision du 25/09/2026), mais la base sait d'où vient l'activité.
   it("une activité du syndic est marquée comme telle", async () => {
     const syndic = await nouveauSyndic();
     const identifiant = await publier(syndic);

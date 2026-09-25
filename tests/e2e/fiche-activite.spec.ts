@@ -115,10 +115,13 @@ test("un résident voit qui propose l'activité", async ({ page }) => {
   await page.goto(`/activites/${identifiant}`);
 
   await expect(page.getByRole("main")).toContainText("Proposé par");
-  await expect(page.getByRole("main")).toContainText("Danielle");
+  await expect(page.getByRole("main")).toContainText("Danielle M.");
+  await expect(page.getByRole("main")).not.toContainText("Martin");
 });
 
-test("une activité du syndic dit son origine", async ({ page }) => {
+test("une activité du syndic s'affiche comme celle d'un voisin", async ({
+  page,
+}) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
   const identifiant = await nouvelleActivite(syndic.id, {
@@ -130,8 +133,9 @@ test("une activité du syndic dit son origine", async ({ page }) => {
   await page.goto(`/activites/${identifiant}`);
 
   await expect(page.getByRole("main")).toContainText(
-    "Jardin & Nature · Proposée par le syndic",
+    "Jardin & Nature · Initiative de résident",
   );
+  await expect(page.getByRole("main")).not.toContainText("syndic");
 });
 
 test("un résident voit le membre du syndic qui organise, comme un voisin", async ({
@@ -145,7 +149,10 @@ test("un résident voit le membre du syndic qui organise, comme un voisin", asyn
   await page.goto(`/activites/${identifiant}`);
 
   await expect(page.getByRole("main")).toContainText("Proposé par");
-  await expect(page.getByRole("main")).toContainText(IDENTITE_SYNDIC.prenom);
+  await expect(page.getByRole("main")).toContainText(
+    `${IDENTITE_SYNDIC.prenom} ${IDENTITE_SYNDIC.nom.charAt(0)}.`,
+  );
+  await expect(page.getByRole("main")).not.toContainText("syndic");
 });
 
 test("une adresse d'activité inconnue affiche une page claire", async ({
