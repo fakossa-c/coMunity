@@ -1,21 +1,24 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { EMAIL_INCOMPLET } from "@/lib/email";
+import { EMAIL_INCOMPLET, refusFormatEmail } from "@/lib/email";
 import {
   MOT_DE_PASSE_TROP_FAIBLE,
   refusNouveauMotDePasse,
 } from "@/lib/mot-de-passe";
 import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
+import type { ErreurFormulaire } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
 /** Ce que la personne a saisi, rendu au formulaire en cas d'erreur (sauf les mots de passe). */
 export type Saisie = { email: string; prenom: string; nom: string };
 
-export type EtatInscription = {
+type ChampInscription =
+  "email" | "mot-de-passe" | "confirmation" | "prenom" | "nom";
+
+export type EtatInscription = ErreurFormulaire<ChampInscription> & {
   /** Change à chaque envoi refusé : le formulaire repart de la saisie renvoyée. */
   essai: number;
-  erreur?: string;
   /** Compte créé, mais l'adresse email doit encore être confirmée. */
   confirmation?: string;
   saisie?: Saisie;
@@ -24,12 +27,15 @@ export type EtatInscription = {
 const MESSAGE_DEJA_INSCRIT =
   "Un compte existe déjà avec cette adresse. Connectez-vous, ou choisissez « Mot de passe oublié ? » sur la page de connexion.";
 
-const messagesAuth: Record<string, string> = {
-  user_already_exists: MESSAGE_DEJA_INSCRIT,
-  email_exists: MESSAGE_DEJA_INSCRIT,
-  email_address_invalid: EMAIL_INCOMPLET,
-  validation_failed: EMAIL_INCOMPLET,
-  weak_password: MOT_DE_PASSE_TROP_FAIBLE,
+const messagesAuth: Record<
+  string,
+  { erreur: string; champ?: ChampInscription }
+> = {
+  user_already_exists: { erreur: MESSAGE_DEJA_INSCRIT, champ: "email" },
+  email_exists: { erreur: MESSAGE_DEJA_INSCRIT, champ: "email" },
+  email_address_invalid: { erreur: EMAIL_INCOMPLET, champ: "email" },
+  validation_failed: { erreur: EMAIL_INCOMPLET, champ: "email" },
+  weak_password: { erreur: MOT_DE_PASSE_TROP_FAIBLE, champ: "mot-de-passe" },
 };
 
 export async function inscrire(
@@ -44,21 +50,31 @@ export async function inscrire(
   };
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
   const confirmation = String(donnees.get("confirmation") ?? "");
-  const refus = (erreur: string) => ({ essai: etat.essai + 1, erreur, saisie });
+  const refus = (erreur: string, champ?: ChampInscription) => ({
+    essai: etat.essai + 1,
+    erreur,
+    champ,
+    saisie,
+  });
 
-  if (Object.values(saisie).some((valeur) => valeur === "")) {
-    return refus("Remplissez tous les champs pour créer votre compte.");
-  }
-  if (
-    saisie.prenom.length > LONGUEUR_MAXIMALE_NOM ||
-    saisie.nom.length > LONGUEUR_MAXIMALE_NOM
-  ) {
+  if (!saisie.email) return refus("Saisissez votre adresse email.", "email");
+  if (!motDePasse) return refus("Choisissez un mot de passe.", "mot-de-passe");
+  if (!saisie.prenom) return refus("Saisissez votre prénom.", "prenom");
+  if (!saisie.nom) return refus("Saisissez votre nom.", "nom");
+
+  const formatEmailRefuse = refusFormatEmail(saisie.email);
+  if (formatEmailRefuse) return refus(formatEmailRefuse.erreur, "email");
+  const prenomTropLong = saisie.prenom.length > LONGUEUR_MAXIMALE_NOM;
+  const nomTropLong = saisie.nom.length > LONGUEUR_MAXIMALE_NOM;
+  if (prenomTropLong || nomTropLong) {
     return refus(
       `Le prénom et le nom tiennent en ${LONGUEUR_MAXIMALE_NOM} caractères au plus.`,
+      prenomTropLong ? "prenom" : "nom",
     );
   }
   const motDePasseRefuse = refusNouveauMotDePasse(motDePasse, confirmation);
-  if (motDePasseRefuse) return refus(motDePasseRefuse.erreur);
+  if (motDePasseRefuse)
+    return refus(motDePasseRefuse.erreur, motDePasseRefuse.champ);
 
   // La base crée le profil du résident, en attente, à partir du prénom et du nom.
   const supabase = await clientSession();
@@ -68,9 +84,11 @@ export async function inscrire(
     options: { data: { prenom: saisie.prenom, nom: saisie.nom } },
   });
   if (error) {
+    const connu = error.code && messagesAuth[error.code];
     return refus(
-      (error.code && messagesAuth[error.code]) ??
+      connu?.erreur ??
         "Votre compte n'a pas pu être créé. Réessayez dans un instant.",
+      connu?.champ,
     );
   }
 

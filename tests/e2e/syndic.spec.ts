@@ -24,7 +24,7 @@ async function seConnecter(page: Page, email: string, motDePasse: string) {
 }
 
 function listeDesMembres(page: Page) {
-  return page.getByRole("list", { name: "Membres du syndic" });
+  return page.getByRole("list", { name: "Membres du conseil syndical" });
 }
 
 async function choisirMotDePasse(page: Page, motDePasse: string) {

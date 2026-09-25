@@ -5,6 +5,7 @@ import { Champ } from "@/components/champ";
 import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
 import { LONGUEUR_MAXIMALE_NOM } from "@/lib/nom-complet";
+import { erreurDuChamp, erreurGenerale } from "@/lib/resultat";
 import { inscrire } from "./actions";
 
 export function FormulaireInscription() {
@@ -21,7 +22,14 @@ export function FormulaireInscription() {
       action={action}
       className="flex flex-col gap-space-md"
     >
-      <Annonce message={etat.erreur} erreur />
+      {/*
+       * `Annonce` garde son `role="alert"` même sans message (l'accessibilité l'exige) :
+       * un second `alert` coexisterait avec celui d'un `Champ` en erreur. Ne la rendre
+       * que pour un message qui vise le formulaire entier, jamais un champ précis.
+       */}
+      {erreurGenerale(etat) && (
+        <Annonce message={erreurGenerale(etat)} erreur />
+      )}
       <Champ
         libelle="Adresse email"
         name="email"
@@ -29,22 +37,25 @@ export function FormulaireInscription() {
         autoComplete="email"
         required
         defaultValue={saisie?.email}
+        erreur={erreurDuChamp(etat, "email")}
       />
       <Champ
         libelle="Mot de passe"
         aide={`Au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`}
         name="mot-de-passe"
-        type="password"
+        secret
         autoComplete="new-password"
         minLength={LONGUEUR_MINIMALE_MOT_DE_PASSE}
         required
+        erreur={erreurDuChamp(etat, "mot-de-passe")}
       />
       <Champ
         libelle="Confirmez le mot de passe"
         name="confirmation"
-        type="password"
+        secret
         autoComplete="new-password"
         required
+        erreur={erreurDuChamp(etat, "confirmation")}
       />
       <Champ
         libelle="Prénom"
@@ -53,6 +64,7 @@ export function FormulaireInscription() {
         maxLength={LONGUEUR_MAXIMALE_NOM}
         required
         defaultValue={saisie?.prenom}
+        erreur={erreurDuChamp(etat, "prenom")}
       />
       <Champ
         libelle="Nom"
@@ -62,6 +74,7 @@ export function FormulaireInscription() {
         maxLength={LONGUEUR_MAXIMALE_NOM}
         required
         defaultValue={saisie?.nom}
+        erreur={erreurDuChamp(etat, "nom")}
       />
       <BoutonEnvoi enCours="Création du compte…">Créer mon compte</BoutonEnvoi>
     </form>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Bouton } from "@/components/bouton";
+import { CarteLignes } from "@/components/carte-lignes";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
@@ -31,38 +32,31 @@ export function GestionResidents({ enAttente, valides }: Props) {
               : `${enAttente.length} comptes en attente`
         }
         liste="Résidents en attente"
-      >
-        {enAttente.map((resident) => (
-          <LigneResident
-            key={resident.id}
-            resident={resident}
-            icone="hourglass_top"
-            onResultat={setResultat}
-          >
-            {(executer, enCours) => (
-              <>
-                <Bouton disabled={enCours} onClick={() => executer("valide")}>
-                  <Icone nom="how_to_reg" className="size-6" />
-                  Valider
-                  <span className="sr-only">
-                    {" "}
-                    le compte de {nomComplet(resident)}
-                  </span>
-                </Bouton>
-                <Confirmation
-                  libelle="Refuser"
-                  icone="block"
-                  confirmer="Confirmer le refus"
-                  texteEnCours="Refus…"
-                  enCours={enCours}
-                  nom={nomComplet(resident)}
-                  onConfirmer={() => executer("refuse")}
-                />
-              </>
-            )}
-          </LigneResident>
-        ))}
-      </Section>
+        residents={enAttente}
+        icone="hourglass_top"
+        onResultat={setResultat}
+        actions={(resident, executer, enCours) => (
+          <>
+            <Bouton disabled={enCours} onClick={() => executer("valide")}>
+              <Icone nom="how_to_reg" className="size-6" />
+              Valider
+              <span className="sr-only">
+                {" "}
+                le compte de {nomComplet(resident)}
+              </span>
+            </Bouton>
+            <Confirmation
+              libelle="Refuser"
+              icone="block"
+              confirmer="Confirmer le refus"
+              texteEnCours="Refus…"
+              enCours={enCours}
+              nom={nomComplet(resident)}
+              onConfirmer={() => executer("refuse")}
+            />
+          </>
+        )}
+      />
 
       <Section
         titre={
@@ -73,28 +67,21 @@ export function GestionResidents({ enAttente, valides }: Props) {
               : `${valides.length} résidents validés`
         }
         liste="Résidents validés"
-      >
-        {valides.map((resident) => (
-          <LigneResident
-            key={resident.id}
-            resident={resident}
-            icone="how_to_reg"
-            onResultat={setResultat}
-          >
-            {(executer, enCours) => (
-              <Confirmation
-                libelle="Retirer l'accès"
-                icone="person_remove"
-                confirmer="Confirmer le retrait"
-                texteEnCours="Retrait…"
-                enCours={enCours}
-                nom={nomComplet(resident)}
-                onConfirmer={() => executer("retire")}
-              />
-            )}
-          </LigneResident>
-        ))}
-      </Section>
+        residents={valides}
+        icone="how_to_reg"
+        onResultat={setResultat}
+        actions={(resident, executer, enCours) => (
+          <Confirmation
+            libelle="Retirer l'accès"
+            icone="person_remove"
+            confirmer="Confirmer le retrait"
+            texteEnCours="Retrait…"
+            enCours={enCours}
+            nom={nomComplet(resident)}
+            onConfirmer={() => executer("retire")}
+          />
+        )}
+      />
     </div>
   );
 }
@@ -102,32 +89,54 @@ export function GestionResidents({ enAttente, valides }: Props) {
 function Section({
   titre,
   liste,
-  children,
+  residents,
+  icone,
+  onResultat,
+  actions,
 }: {
   titre: string;
   liste: string;
-  children: React.ReactNode;
+  residents: Resident[];
+  icone: NomIcone;
+  onResultat: (resultat: Resultat) => void;
+  actions: (
+    resident: Resident,
+    executer: (decision: Decision) => void,
+    enCours: boolean,
+  ) => React.ReactNode;
 }) {
   return (
     <section>
       <h2 className="mb-space-sm font-headline text-headline-sm">{titre}</h2>
-      <ul aria-label={liste} className="flex flex-col gap-space-sm">
-        {children}
-      </ul>
+      <CarteLignes
+        libelle={liste}
+        lignes={residents.map((resident) => ({
+          cle: resident.id,
+          icone,
+          titre: nomComplet(resident),
+          detail: resident.email,
+          fin: (
+            <LigneActions
+              resident={resident}
+              onResultat={onResultat}
+              actions={actions}
+            />
+          ),
+        }))}
+      />
     </section>
   );
 }
 
-function LigneResident({
+function LigneActions({
   resident,
-  icone,
   onResultat,
-  children,
+  actions,
 }: {
   resident: Resident;
-  icone: NomIcone;
   onResultat: (resultat: Resultat) => void;
-  children: (
+  actions: (
+    resident: Resident,
     executer: (decision: Decision) => void,
     enCours: boolean,
   ) => React.ReactNode;
@@ -139,27 +148,9 @@ function LigneResident({
   }
 
   return (
-    <li
-      aria-busy={enCours}
-      className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:flex-row desktop:items-center"
-    >
-      <span className="flex min-w-0 flex-1 items-start gap-space-sm">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
-          <Icone nom={icone} className="size-6" />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-headline text-headline-sm break-words">
-            {nomComplet(resident)}
-          </span>
-          <span className="block text-body-lg break-words text-on-surface-variant">
-            {resident.email}
-          </span>
-        </span>
-      </span>
-      <span className="flex flex-wrap gap-space-sm">
-        {children(executer, enCours)}
-      </span>
-    </li>
+    <span aria-busy={enCours} className="flex flex-wrap gap-space-sm">
+      {actions(resident, executer, enCours)}
+    </span>
   );
 }
 
