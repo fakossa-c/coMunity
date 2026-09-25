@@ -4,6 +4,8 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import { EcouteInstallation } from "@/components/ecoute-installation";
+import { attributsAffichage } from "@/lib/attributs-affichage";
+import { lireSession } from "@/lib/session";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -38,13 +40,19 @@ export const viewport: Viewport = {
   themeColor: "#f8f9ff",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await lireSession();
+
   return (
-    <html lang="fr" className={`${plusJakarta.variable} ${atkinson.variable}`}>
+    <html
+      lang="fr"
+      className={`${plusJakarta.variable} ${atkinson.variable}`}
+      {...attributsAffichage(session)}
+    >
       <body className="flex min-h-screen flex-col bg-surface font-body text-body-lg text-on-surface antialiased">
         <a
           href="#contenu"

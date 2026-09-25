@@ -50,8 +50,7 @@ describe("réglages d'affichage", () => {
 
     const { error } = await resident.client
       .from("profil")
-      // @ts-expect-error valeur volontairement invalide pour vérifier la contrainte
-      .update({ taille: "immense" })
+      .update({ taille: "immense" as "grands" })
       .eq("id", resident.id);
 
     expect(error).not.toBeNull();
