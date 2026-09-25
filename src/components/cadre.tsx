@@ -45,17 +45,20 @@ const ESPACE_SYNDIC: Rubrique = {
   detail: "Résidents et membres du syndic",
 };
 
-/** Avatar qui ouvre le menu du profil, ou « Se connecter » pour un visiteur. */
-async function Compte() {
+/**
+ * Avatar qui ouvre le menu du profil, ou « Se connecter » pour un visiteur. `compact` : sans
+ * pictogramme, quand « Partager » occupe déjà la barre.
+ */
+async function Compte({ compact = false }: { compact?: boolean }) {
   const session = await lireSession();
 
   if (!session) {
     return (
       <Link
         href="/connexion"
-        className={`${classesBouton("contour")} shrink-0 px-4 whitespace-nowrap`}
+        className={`${classesBouton("contour")} shrink-0 whitespace-nowrap ${compact ? "px-3!" : "px-4"}`}
       >
-        <Icone nom="login" taille={24} />
+        {!compact && <Icone nom="login" taille={24} />}
         Se connecter
       </Link>
     );
@@ -112,6 +115,8 @@ type PropsSecondaire = {
   retour: { href: string; libelle: string };
   /** Faux sur les écrans de connexion, où l'avatar n'a pas lieu d'être. */
   avecCompte?: boolean;
+  /** Bouton « Partager » d'une fiche, dans la barre de retour. */
+  partager?: ReactNode;
   /** BarreActionFixe de l'écran. */
   action?: ReactNode;
   children: ReactNode;
@@ -121,6 +126,7 @@ type PropsSecondaire = {
 export function EcranSecondaire({
   retour,
   avecCompte = true,
+  partager,
   action,
   children,
 }: PropsSecondaire) {
@@ -130,10 +136,11 @@ export function EcranSecondaire({
         <BarreRetour
           href={retour.href}
           libelle={retour.libelle}
-          compte={avecCompte && <Compte />}
+          partager={partager && <SiCompteOuvert>{partager}</SiCompteOuvert>}
+          compte={avecCompte && <Compte compact={Boolean(partager)} />}
         />
       }
-      barreBas={action}
+      barreBas={action && <SiCompteOuvert>{action}</SiCompteOuvert>}
       paddingBas={action ? 170 : 40}
     >
       <GardeCompte>{children}</GardeCompte>

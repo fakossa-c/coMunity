@@ -34,7 +34,7 @@ async function Catalogue() {
   const { data, error } = await supabase
     .from("activite")
     .select(
-      "id, titre, categorie, pictogramme, date_activite, heure_debut, lieu",
+      "id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu",
     )
     .gte("date_activite", aujourdhui)
     .order("date_activite")
