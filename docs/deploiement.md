@@ -69,8 +69,8 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
    Vercel (**Account Settings > Authentication**) puis recommencer.
 2. **Settings > Git** : branche de production `main`. Chaque push sur une autre branche donne une
    preview.
-3. **Settings > Environment Variables**, environnement **Production** uniquement, valeurs lues dans
-   Supabase > **Project Settings > API Keys** :
+3. **Settings > Environment Variables**, environnements **Production** et **Preview**, valeurs lues
+   dans Supabase > **Project Settings > API Keys** :
 
    | Variable                               | Valeur                             |
    | -------------------------------------- | ---------------------------------- |
@@ -78,8 +78,9 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key                    |
    | `SUPABASE_SECRET_KEY`                  | Secret key (marquer « Sensitive ») |
 
-   Les previews restent sans variables : elles s'affichent sans le nom de la résidence et n'écrivent
-   jamais dans la base de production.
+   Les previews utilisent donc la base de production : ce qu'on y crée est réel. Une PR qui ajoute
+   une migration a une preview en erreur sur les écrans concernés tant que la migration n'est pas
+   appliquée à cette base (`npx supabase db push`, voir section 1).
 
 4. Région des fonctions : Paris (`cdg1`), fixée par `vercel.json` ; le plan Hobby autorise une région.
    Elle apparaît dans le résumé du déploiement.
