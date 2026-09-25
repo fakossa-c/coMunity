@@ -4,7 +4,7 @@ type Personne = { prenom: string | null; nom: string | null; email: string };
 
 /**
  * Ce que l'avatar et le menu du profil affichent de la personne connectée. Un membre du syndic
- * amorcé n'a ni prénom ni nom : son email en tient lieu.
+ * qui n'a pas encore saisi son prénom et son nom est représenté par son email.
  */
 export function identite({ prenom, nom, email }: Personne) {
   const libelle =

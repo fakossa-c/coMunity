@@ -91,17 +91,23 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 Choisir une adresse qui **n'est pas membre de l'équipe du projet Supabase** : elle sert aussi au test
 d'email de l'étape 5. Depuis le dossier du dépôt, dans un terminal bash (Git Bash sous Windows), en
 pointant le script sur la production le temps d'une commande. La clé et le mot de passe se saisissent
-sans s'afficher ni rester dans l'historique :
+sans s'afficher ni rester dans l'historique. Le prénom et le nom sont obligatoires : un membre du
+syndic est aussi un résident, et les voisins le reconnaissent à son nom.
 
 ```bash
 read -rsp "Clé secrète : " CLE; echo
 read -rsp "Mot de passe provisoire : " MDP; echo
 NEXT_PUBLIC_SUPABASE_URL="<Project URL>" SUPABASE_SECRET_KEY="$CLE" \
-  npm run syndic:amorcer -- <email> "$MDP"
+  npm run syndic:amorcer -- <email> "$MDP" "<Prénom>" "<Nom>"
 unset CLE MDP
 ```
 
-Les membres suivants arrivent par invitation depuis l'espace syndic.
+Les membres suivants arrivent par invitation depuis l'espace syndic : chacun saisit son prénom et son
+nom en choisissant son mot de passe. Un membre créé avant que le prénom et le nom soient demandés les
+saisit à sa prochaine connexion.
+
+Après connexion, un membre du syndic arrive sur l'espace syndic sur ordinateur, et sur l'accueil sur
+mobile ; l'espace syndic reste accessible depuis le menu de l'avatar.
 
 ## 5. Vérifications
 
