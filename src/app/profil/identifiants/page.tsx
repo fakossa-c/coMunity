@@ -33,13 +33,20 @@ export default async function MesIdentifiants({
 }: {
   searchParams: Promise<{ [cle: string]: string | string[] | undefined }>;
 }) {
+  const { fait, lien } = await searchParams;
   // Le compte lu à la source, et non dans le jeton de session : il porte l'adresse en attente.
   const utilisateur = configurationSupabase()
     ? (await (await clientSession()).auth.getUser()).data.user
     : null;
-  if (!utilisateur) redirect("/connexion?suivant=%2Fprofil%2Fidentifiants");
+  if (!utilisateur) {
+    // Un lien d'email périmé, ouvert sans session : son explication attend la connexion.
+    const suivant =
+      lien === "invalide"
+        ? "/profil/identifiants?lien=invalide"
+        : "/profil/identifiants";
+    redirect(`/connexion?suivant=${encodeURIComponent(suivant)}`);
+  }
 
-  const { fait, lien } = await searchParams;
   const confirmation = typeof fait === "string" ? CONFIRMATIONS[fait] : null;
   const enAttente = utilisateur.new_email
     ? `Un lien de confirmation a été envoyé à ${utilisateur.new_email}. Votre adresse changera quand vous l'aurez ouvert.`
