@@ -176,7 +176,16 @@ test("l'e-mail ne change qu'une fois le lien ouvert, et jamais sans le bon mot d
   await expect(page.getByLabel("E-mail actuel")).toHaveValue(resident.email);
 
   const motDePasse = page.getByLabel("Mot de passe", { exact: true });
-  await page.getByLabel("Nouvel e-mail").fill(nouvelle);
+  const nouvelEmailSaisi = page.getByLabel("Nouvel e-mail");
+  // Même règle que l'invitation d'un membre du syndic : un point après l'arobase.
+  await nouvelEmailSaisi.fill("prenom@exemple");
+  await motDePasse.fill(MOT_DE_PASSE);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(nouvelEmailSaisi).toHaveAccessibleDescription(
+    /adresse e-mail complète/,
+  );
+
+  await nouvelEmailSaisi.fill(nouvelle);
   await motDePasse.fill("pas-le-bon");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(motDePasse).toHaveAccessibleDescription(
