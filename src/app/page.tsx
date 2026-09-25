@@ -1,7 +1,7 @@
 import { AideInstallation } from "@/components/aide-installation";
 import { Bientot } from "@/components/bientot";
 import { EcranPrincipal } from "@/components/cadre";
-import { CarteActivite } from "@/components/carte-activite";
+import { CarteActivite, type Activite } from "@/components/carte-activite";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 
@@ -30,25 +30,18 @@ export default async function Activites() {
 
 async function Catalogue() {
   const supabase = await clientSession();
-  const aujourdhui = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabase
-    .from("activite")
-    .select(
-      "id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu",
-    )
-    .gte("date_activite", aujourdhui)
-    .order("date_activite")
-    .order("heure_debut");
+  const { data, error } = await supabase.rpc("catalogue_activites");
   if (error)
     throw new Error(`Catalogue des activités illisible : ${error.message}`);
+  const activites = data as Activite[];
 
-  if (data.length === 0) {
+  if (activites.length === 0) {
     return <Bientot icone="diversity_3" message={MESSAGE_VIDE} />;
   }
 
   return (
     <ul aria-label="Activités à venir" className="flex flex-col gap-space-sm">
-      {data.map((activite) => (
+      {activites.map((activite) => (
         <li key={activite.id}>
           <CarteActivite activite={activite} />
         </li>

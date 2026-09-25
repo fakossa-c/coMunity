@@ -162,7 +162,6 @@ test("les rubriques pas encore ouvertes ont leur titre et un message d'attente",
   page,
 }) => {
   for (const [chemin, titre] of [
-    ["/activites", "Activités"],
     ["/annonces", "Annonces"],
     ["/mon-syndic", "Mon syndic"],
     ["/ma-copro", "Ma copro"],
@@ -173,6 +172,19 @@ test("les rubriques pas encore ouvertes ont leur titre et un message d'attente",
     ).toBeVisible();
     await expect(page.getByRole("main")).toContainText("ouvrira bientôt");
   }
+});
+
+test("un visiteur sur Activités est invité à se connecter pour voir ses inscriptions", async ({
+  page,
+}) => {
+  await page.goto("/activites");
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Activités" }),
+  ).toBeVisible();
+  await expect(page.getByRole("main")).toContainText(
+    "Connectez-vous pour voir les activités où vous êtes inscrit.",
+  );
 });
 
 test("une page secondaire a une barre de retour collante, sans barre du bas", async ({

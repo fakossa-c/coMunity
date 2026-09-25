@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { BlocTexte } from "@/components/bloc-texte";
-import { Bouton } from "@/components/bouton";
 import { BoutonCopier } from "@/components/bouton-copier";
 import { BoutonPartager } from "@/components/bouton-partager";
 import { BoutonRelayer } from "@/components/bouton-relayer";
 import { EcranSecondaire } from "@/components/cadre";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
+import { Jauge } from "@/components/jauge";
 import { PanneauInfos } from "@/components/panneau-infos";
 import { ProposePar } from "@/components/propose-par";
 import { VisuelActivite } from "@/components/visuel-activite";
@@ -20,6 +19,9 @@ import {
   type FicheActivite,
 } from "@/lib/fiche-activite";
 import { creneau, jourLong, messageWhatsApp } from "@/lib/partage-activite";
+import { lireSession } from "@/lib/session";
+import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
+import { Participants } from "./participants";
 
 type Props = { params: Promise<{ identifiant: string }> };
 
@@ -50,6 +52,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+/** Ce que peut faire la personne qui consulte la fiche, à partir de sa session. */
+function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
+  if (!statut) return "visiteur";
+  return statut === "valide" ? "valide" : "en_attente";
+}
+
 export default async function Fiche({ params }: Props) {
   const { identifiant } = await params;
   const fiche = await lireFiche(identifiant);
@@ -57,23 +65,14 @@ export default async function Fiche({ params }: Props) {
 
   const lien = await lienFiche(identifiant);
   const categorie = categoriesActivite[fiche.categorie];
+  const session = await lireSession();
 
   return (
     <EcranSecondaire
       retour={{ href: "/", libelle: "Retour" }}
       partager={<BoutonPartager titre={fiche.titre} lien={lien} />}
       action={
-        // L'inscription arrive avec le ticket #8 : le bouton annonce déjà sa place.
-        <BarreActionFixe>
-          <div className="flex w-full flex-col items-center gap-1">
-            <Bouton pleineLargeur disabled className="text-body-lg">
-              Je participe
-            </Bouton>
-            <p className="text-body-md text-on-surface-variant">
-              Les inscriptions ouvrent bientôt.
-            </p>
-          </div>
-        </BarreActionFixe>
+        <BlocInscription fiche={fiche} statut={statutVisiteur(session?.statut)} />
       }
     >
       <article className="flex flex-col gap-[14px]">
@@ -97,6 +96,7 @@ export default async function Fiche({ params }: Props) {
             { icone: "location_on", titre: fiche.lieu },
           ]}
         />
+        <Jauge capaciteMax={fiche.capacite_max} placesPrises={fiche.places_prises} />
         {fiche.organisateur_nom_affiche && (
           <ProposePar
             initiale={fiche.organisateur_nom_affiche.charAt(0).toUpperCase()}
@@ -106,6 +106,7 @@ export default async function Fiche({ params }: Props) {
         {fiche.description && (
           <BlocTexte titre="Description">{fiche.description}</BlocTexte>
         )}
+        {session?.statut === "valide" && <Participants identifiant={identifiant} />}
         <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
         <BoutonCopier
           texte={lien}
