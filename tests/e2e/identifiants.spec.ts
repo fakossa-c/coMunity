@@ -52,7 +52,7 @@ test("Mes identifiants s'ouvre depuis le menu de l'avatar, et on s'y déconnecte
   await expect(carteIdentifiants(page)).toContainText(resident.email);
   await expect(carteIdentifiants(page)).toContainText("••••••••");
   await expect(
-    page.getByRole("link", { name: "Modifier l'e-mail" }),
+    page.getByRole("link", { name: "Modifier l'email" }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Modifier le mot de passe" }),
@@ -164,7 +164,7 @@ test("un lien de changement d'adresse périmé, ouvert sans être connecté, s'e
   );
 });
 
-test("l'e-mail ne change qu'une fois le lien ouvert, et jamais sans le bon mot de passe", async ({
+test("l'email ne change qu'une fois le lien ouvert, et jamais sans le bon mot de passe", async ({
   page,
 }) => {
   const resident = await residentConnecte(page);
@@ -172,17 +172,17 @@ test("l'e-mail ne change qu'une fois le lien ouvert, et jamais sans le bon mot d
   emails.push(nouvelle);
 
   await page.goto("/profil/identifiants");
-  await page.getByRole("link", { name: "Modifier l'e-mail" }).click();
-  await expect(page.getByLabel("E-mail actuel")).toHaveValue(resident.email);
+  await page.getByRole("link", { name: "Modifier l'email" }).click();
+  await expect(page.getByLabel("Email actuel")).toHaveValue(resident.email);
 
   const motDePasse = page.getByLabel("Mot de passe", { exact: true });
-  const nouvelEmailSaisi = page.getByLabel("Nouvel e-mail");
+  const nouvelEmailSaisi = page.getByLabel("Nouvel email");
   // Même règle que l'invitation d'un membre du syndic : un point après l'arobase.
   await nouvelEmailSaisi.fill("prenom@exemple");
   await motDePasse.fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(nouvelEmailSaisi).toHaveAccessibleDescription(
-    /adresse e-mail complète/,
+    /adresse email complète/,
   );
 
   await nouvelEmailSaisi.fill(nouvelle);
@@ -202,7 +202,7 @@ test("l'e-mail ne change qu'une fois le lien ouvert, et jamais sans le bon mot d
   await page.goto(await lienRecu(nouvelle));
   await expect(page).toHaveURL(/\/profil\/identifiants/);
   await expect(page.getByRole("status")).toContainText(
-    "Votre adresse e-mail est modifiée.",
+    "Votre adresse email est modifiée.",
   );
   await expect(carteIdentifiants(page)).toContainText(nouvelle);
 
