@@ -6,7 +6,7 @@ import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const MESSAGE_VIDE =
-  "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du syndic apparaîtront ici.";
+  "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du conseil syndical apparaîtront ici.";
 
 export default async function Activites() {
   const supabase = await clientSession();
