@@ -128,6 +128,24 @@ describe("laisser un retour sur une activité passée", () => {
 
     expect(error).not.toBeNull();
   });
+
+  it("une activité annulée n'accepte pas de retour, même passée", async () => {
+    const organisateur = await nouveauResident("valide");
+    const participant = await nouveauResident("valide");
+    const activite = await publier(organisateur);
+    await inscrire(participant, activite.identifiant_public);
+    await organisateur.client.rpc("annuler_activite", {
+      p_identifiant: activite.identifiant_public,
+    });
+
+    const { error } = await participant.client.rpc("laisser_retour", {
+      p_identifiant: activite.identifiant_public,
+      p_note: 3,
+      p_commentaire: "Ça n'a jamais eu lieu.",
+    });
+
+    expect(error).not.toBeNull();
+  });
 });
 
 describe("lire les retours d'une activité", () => {
