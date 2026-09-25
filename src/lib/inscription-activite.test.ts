@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   libelleAccompagnants,
+  etatConfirmation,
   libelleBoutonInscription,
+  libelleConfirmation,
   libelleJauge,
   libelleStatutInscription,
   estComplete,
@@ -97,5 +99,35 @@ describe("libellé des accompagnants d'un participant", () => {
 
   it("« avec 2 personnes » au pluriel", () => {
     expect(libelleAccompagnants(2)).toBe("avec 2 personnes");
+  });
+});
+
+describe("état de confirmation selon le minimum", () => {
+  it("sans minimum, il n'y a rien à confirmer", () => {
+    expect(etatConfirmation({ capaciteMin: null, placesPrises: 0 })).toBeNull();
+    expect(libelleConfirmation(null)).toBeNull();
+  });
+
+  it("confirmée quand les personnes inscrites atteignent le minimum", () => {
+    const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 4 });
+    expect(etat).toEqual({ confirmee: true });
+    expect(libelleConfirmation(etat)).toBe("Confirmée");
+  });
+
+  it("confirmée au-delà du minimum", () => {
+    expect(etatConfirmation({ capaciteMin: 4, placesPrises: 9 })).toEqual({
+      confirmee: true,
+    });
+  });
+
+  it("« encore 3 participants pour confirmer » sous le minimum", () => {
+    const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 1 });
+    expect(etat).toEqual({ confirmee: false, manquants: 3 });
+    expect(libelleConfirmation(etat)).toBe("Encore 3 participants pour confirmer");
+  });
+
+  it("« encore 1 participant pour confirmer » au singulier", () => {
+    const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 3 });
+    expect(libelleConfirmation(etat)).toBe("Encore 1 participant pour confirmer");
   });
 });
