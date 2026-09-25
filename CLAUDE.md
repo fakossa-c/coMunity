@@ -29,6 +29,11 @@
 - Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
 - `npm run syndic:amorcer -- <email> <mot-de-passe> <prénom> <nom>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.
 
+## Design system
+
+- Tout écran et tout composant de `src/app/` et `src/components/` suit `docs/design/README.md` (couleurs, espacements, formes, états) et la fiche du composant dans `docs/design/components/<famille>/<Composant>.prompt.md`. Un composant qui a une fiche se livre dans `src/components/` d'après elle, jamais en version provisoire dans une page.
+- Ces fichiers sont des standards de revue : `/code-review` relit contre eux toute PR qui touche `src/app/` ou `src/components/`.
+
 ## Next.js 16
 
 @AGENTS.md
