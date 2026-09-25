@@ -4,8 +4,8 @@ import { PuceFiltre } from "@/components/puce-filtre";
 
 /**
  * Onglets « J'y vais / J'organise » et puces « À venir / Passées » de l'onglet Activités.
- * Ce ticket (#8) ne remplit que « J'y vais · À venir » : les autres combinaisons affichent un
- * message d'attente. #12 (J'organise) et #15 (Passées) les rempliront à leur tour.
+ * « J'y vais · À venir » (#8) et « J'organise » à venir et passées (#12) sont remplis ; « J'y vais ·
+ * Passées » affiche encore un message d'attente, #15 le remplira.
  * Conformes au design system (#74) : soulignement terre cuite pour l'onglet actif, puces pêche
  * pleines avec pictogramme et coche, le tout collé en haut de l'écran.
  */

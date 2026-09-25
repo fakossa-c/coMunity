@@ -5,6 +5,7 @@ import {
 } from "@/lib/categories-activite";
 import type { EtiquetteActivite } from "@/lib/etiquettes-activite";
 import { cheminFiche } from "@/lib/partage-activite";
+import { EtatActivite, type StatutActivite } from "./etat-activite";
 import { EtiquettesActivite } from "./etiquette";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
@@ -26,6 +27,10 @@ export type Activite = {
   mes_accompagnants?: number | null;
   /** Étiquettes cochées par l'organisateur ; absentes, la carte n'en montre aucune. */
   etiquettes?: EtiquetteActivite[];
+  /** Absent, la carte ne montre aucun état. */
+  statut?: StatutActivite;
+  /** `null` ou absent : pas de minimum de participants, donc rien à confirmer. */
+  capacite_min?: number | null;
 };
 
 const FORMAT_DATE = new Intl.DateTimeFormat("fr-FR", {
@@ -44,7 +49,8 @@ function dateEtHeure(activite: Activite) {
 }
 
 export function CarteActivite({ activite }: { activite: Activite }) {
-  const inscrit = activite.mes_accompagnants != null;
+  const annulee = activite.statut === "annulee";
+  const inscrit = activite.mes_accompagnants != null && !annulee;
   return (
     <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <div className="flex items-start gap-space-sm">
@@ -79,6 +85,15 @@ export function CarteActivite({ activite }: { activite: Activite }) {
           capaciteMax={activite.capacite_max ?? null}
           placesPrises={activite.places_prises}
         />
+      )}
+      {activite.statut && (
+        <div>
+          <EtatActivite
+            statut={activite.statut}
+            capaciteMin={activite.capacite_min ?? null}
+            placesPrises={activite.places_prises ?? 0}
+          />
+        </div>
       )}
       {activite.etiquettes && (
         <EtiquettesActivite etiquettes={activite.etiquettes} />

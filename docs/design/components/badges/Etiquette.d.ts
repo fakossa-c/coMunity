@@ -1,6 +1,6 @@
 export interface EtiquetteProps {
-  /** vert : accessibilité, confort · abricot : familles, enfants · peche : autre */
-  ton?: "vert" | "abricot" | "peche";
+  /** vert : accessibilité, confort · abricot : familles, enfants · peche : autre · erreur : activité annulée */
+  ton?: "vert" | "abricot" | "peche" | "erreur";
   icone?: string;
   children: React.ReactNode;
 }
