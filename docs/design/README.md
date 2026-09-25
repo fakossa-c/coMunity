@@ -74,3 +74,4 @@ Deux listes fermées (décision du 24/09/2026, ticket #9) : Accessibilité (Acc�
 ## Ouvert
 - Thème sombre : le choix existe dans Mes réglages, pas encore les couleurs.
 - Non maquettés : J'organise, Passées, Mon syndic, Ma copro, Mes intérêts.
+- États d'une activité et gestion par son créateur (ticket #12), posés avec les composants existants faute de maquette : pastille `Etiquette` « Annulée » (ton `erreur`), « Confirmée » (vert) ou « Encore N participants pour confirmer » (abricot) sur la carte et la fiche ; sous la fiche, « Gérer mon activité » (Dupliquer, puis Supprimer ou Annuler l'activité derrière une feuille de confirmation) et « Modifier » dans la barre du bas. À maquetter.
