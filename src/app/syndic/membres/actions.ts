@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
+import { refusFormatEmail } from "@/lib/email";
 import type { Resultat } from "@/lib/resultat";
 
 export type Membre = { id: string; email: string };
-
-const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Invite un collègue. L'invitation est d'abord enregistrée au nom de la personne connectée :
@@ -14,13 +13,8 @@ const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export async function inviterCollegue(email: string): Promise<Resultat> {
   const adresse = email.trim().toLowerCase();
-  if (!FORMAT_EMAIL.test(adresse)) {
-    return {
-      ok: false,
-      message:
-        "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.",
-    };
-  }
+  const formatRefuse = refusFormatEmail(adresse);
+  if (formatRefuse) return { ok: false, message: formatRefuse };
 
   const supabase = await clientSession();
   const invitation = await supabase

@@ -1,8 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
-import { identiteSaisie, refusIdentite, type Identite } from "@/lib/nom-complet";
+import {
+  refusMotDePasseAuth,
+  refusNouveauMotDePasse,
+} from "@/lib/mot-de-passe";
+import {
+  identiteSaisie,
+  refusIdentite,
+  type Identite,
+} from "@/lib/nom-complet";
 import type { ErreurFormulaire } from "@/lib/resultat";
 import {
   accueilDe,
@@ -39,35 +46,15 @@ export async function enregistrerMotDePasse(
 
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
   const confirmation = String(donnees.get("confirmation") ?? "");
-  if (motDePasse.length < LONGUEUR_MINIMALE_MOT_DE_PASSE) {
-    return refus({
-      erreur: `Choisissez un mot de passe d'au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
-      champ: "mot-de-passe",
-    });
-  }
-  if (motDePasse !== confirmation) {
-    return refus({
-      erreur: "Les deux mots de passe ne sont pas identiques.",
-      champ: "confirmation",
-    });
-  }
+  const motDePasseRefuse = refusNouveauMotDePasse(motDePasse, confirmation);
+  if (motDePasseRefuse) return refus(motDePasseRefuse);
 
   const supabase = await clientSession();
   const { data, error } = await supabase.auth.updateUser({
     password: motDePasse,
   });
-  if (error?.code === "same_password") {
-    return refus({
-      erreur: "Choisissez un mot de passe différent de l'ancien.",
-      champ: "mot-de-passe",
-    });
-  }
-  if (error?.code === "weak_password") {
-    return refus({
-      erreur: `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
-      champ: "mot-de-passe",
-    });
-  }
+  const refusAuth = refusMotDePasseAuth(error?.code, "l'ancien");
+  if (refusAuth) return refus(refusAuth);
   if (error) {
     return refus({
       erreur:

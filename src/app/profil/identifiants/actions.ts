@@ -1,7 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "@/lib/mot-de-passe";
+import { refusFormatEmail } from "@/lib/email";
+import {
+  refusMotDePasseAuth,
+  refusNouveauMotDePasse,
+} from "@/lib/mot-de-passe";
 import type { ErreurFormulaire } from "@/lib/resultat";
 import { lireSession } from "@/lib/session";
 import { clientSession, verifierMotDePasse } from "@/lib/supabase/serveur";
@@ -32,14 +36,8 @@ export async function modifierEmail(
     .trim()
     .toLowerCase();
   const motDePasse = String(donnees.get("mot-de-passe") ?? "");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return {
-      erreur:
-        "Saisissez une adresse email complète, par exemple prenom.nom@exemple.fr.",
-      champ: "email",
-      email,
-    };
-  }
+  const formatRefuse = refusFormatEmail(email);
+  if (formatRefuse) return { erreur: formatRefuse, champ: "email", email };
   if (email === session.email.toLowerCase()) {
     return {
       erreur: "C'est déjà votre adresse actuelle.",
@@ -105,18 +103,8 @@ export async function modifierMotDePasse(
       champ: "mot-de-passe-actuel",
     };
   }
-  if (motDePasse.length < LONGUEUR_MINIMALE_MOT_DE_PASSE) {
-    return {
-      erreur: `Choisissez un mot de passe d'au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
-      champ: "mot-de-passe",
-    };
-  }
-  if (motDePasse !== confirmation) {
-    return {
-      erreur: "Les deux mots de passe ne sont pas identiques.",
-      champ: "confirmation",
-    };
-  }
+  const motDePasseRefuse = refusNouveauMotDePasse(motDePasse, confirmation);
+  if (motDePasseRefuse) return motDePasseRefuse;
 
   const verification = await verifierMotDePasse(session.email, actuel);
   if (verification === "incorrect") {
@@ -131,18 +119,8 @@ export async function modifierMotDePasse(
 
   const supabase = await clientSession();
   const { error } = await supabase.auth.updateUser({ password: motDePasse });
-  if (error?.code === "same_password") {
-    return {
-      erreur: "Choisissez un mot de passe différent de l'actuel.",
-      champ: "mot-de-passe",
-    };
-  }
-  if (error?.code === "weak_password") {
-    return {
-      erreur: `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`,
-      champ: "mot-de-passe",
-    };
-  }
+  const refusAuth = refusMotDePasseAuth(error?.code, "l'actuel");
+  if (refusAuth) return refusAuth;
   if (error) {
     return {
       erreur:
