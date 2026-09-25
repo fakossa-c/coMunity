@@ -29,8 +29,7 @@ export function ReglagesAffichage({
     else document.documentElement.removeAttribute(nom);
   }
 
-  function changerTaille(id: string) {
-    const valeur = id as TailleAffichage;
+  function changerTaille(valeur: TailleAffichage) {
     setTaille(valeur);
     appliquer("data-taille", valeur === "grands" ? "grands" : null);
     setErreur(null);
@@ -40,8 +39,7 @@ export function ReglagesAffichage({
     });
   }
 
-  function changerTheme(id: string) {
-    const valeur = id as ThemeAffichage;
+  function changerTheme(valeur: ThemeAffichage) {
     setTheme(valeur);
     appliquer("data-theme", valeur === "sombre" ? "sombre" : null);
     setErreur(null);

@@ -36,26 +36,17 @@ test("Mes réglages propose la taille des caractères et l'apparence", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: "Mes réglages" }),
   ).toBeVisible();
-  const taille = page.getByRole("radiogroup", {
-    name: "Taille des caractères",
-  });
-  await expect(taille.getByRole("radio", { name: "Standard" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
-  await expect(taille.getByRole("radio", { name: "Grands" })).toHaveAttribute(
-    "aria-checked",
-    "false",
-  );
+  const taille = page.getByRole("group", { name: "Taille des caractères" });
+  await expect(
+    taille.getByRole("radio", { name: "Standard" }),
+  ).toBeChecked();
+  await expect(taille.getByRole("radio", { name: "Grands" })).not.toBeChecked();
 
-  const apparence = page.getByRole("radiogroup", { name: "Apparence" });
-  await expect(apparence.getByRole("radio", { name: "Clair" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
+  const apparence = page.getByRole("group", { name: "Apparence" });
+  await expect(apparence.getByRole("radio", { name: "Clair" })).toBeChecked();
   await expect(
     apparence.getByRole("radio", { name: "Sombre" }),
-  ).toHaveAttribute("aria-checked", "false");
+  ).not.toBeChecked();
 });
 
 test("le choix s'applique tout de suite sur la racine du document", async ({
@@ -124,10 +115,10 @@ test("les choix segmentés se pilotent au clavier, l'état est annoncé", async 
 
   await page.keyboard.press("ArrowRight");
   await expect(grands).toBeFocused();
-  await expect(grands).toHaveAttribute("aria-checked", "true");
+  await expect(grands).toBeChecked();
   await expect(racine(page)).toHaveAttribute("data-taille", "grands");
 
   await page.keyboard.press("ArrowLeft");
   await expect(standard).toBeFocused();
-  await expect(standard).toHaveAttribute("aria-checked", "true");
+  await expect(standard).toBeChecked();
 });
