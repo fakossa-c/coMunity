@@ -22,7 +22,14 @@ export function FormulaireInscription() {
       action={action}
       className="flex flex-col gap-space-md"
     >
-      <Annonce message={erreurGenerale(etat)} erreur />
+      {/*
+       * `Annonce` garde son `role="alert"` même sans message (l'accessibilité l'exige) :
+       * un second `alert` coexisterait avec celui d'un `Champ` en erreur. Ne la rendre
+       * que pour un message qui vise le formulaire entier, jamais un champ précis.
+       */}
+      {erreurGenerale(etat) && (
+        <Annonce message={erreurGenerale(etat)} erreur />
+      )}
       <Champ
         libelle="Adresse email"
         name="email"
