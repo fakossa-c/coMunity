@@ -6,7 +6,10 @@ export type JaugeActivite = {
 };
 
 /** Les places encore ouvertes, ou `null` si l'activité n'a pas de capacité. */
-export function placesRestantesDe({ capaciteMax, placesPrises }: JaugeActivite) {
+export function placesRestantesDe({
+  capaciteMax,
+  placesPrises,
+}: JaugeActivite) {
   return capaciteMax === null ? null : capaciteMax - placesPrises;
 }
 
@@ -24,7 +27,16 @@ export function libelleJauge({ capaciteMax, placesPrises }: JaugeActivite) {
       : placesPrises === 1
         ? "1 inscrit"
         : `${placesPrises} inscrits`;
-  return capaciteMax === null ? inscrits : `${inscrits} sur ${capaciteMax} places`;
+  return capaciteMax === null
+    ? inscrits
+    : `${inscrits} sur ${capaciteMax} places`;
+}
+
+/** « Au moins 4 participants », « Au moins 1 participant » : le minimum sous lequel l'activité n'a pas lieu. */
+export function libelleMinimum(minimum: number) {
+  return minimum === 1
+    ? "Au moins 1 participant"
+    : `Au moins ${minimum} participants`;
 }
 
 /** « avec 2 personnes », « avec 1 personne », ou `null` sans accompagnant. */

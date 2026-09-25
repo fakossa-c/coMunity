@@ -61,14 +61,16 @@ Material Symbols Rounded (`opsz 24, wght 500, FILL 0..1`), via `<Icone nom="…"
   - identite : Logo, Avatar, EnTeteResidence, EnTeteProfil, ProposePar, Salutation
   - cartes : CarteActivite, CarteAnnonce, CarteLignes, PanneauInfos, EncartPastel, BlocTexte
   - navigation : BarreNavigation, Onglets, BarreRetour, BarreActionFixe, LigneMenu, MenuProfil
-  - formulaires : Champ, ChoixSegmente, BoutonVisibilite
+  - formulaires : Champ, ChoixSegmente, ChoixEtiquettes, BoutonVisibilite
   - structure : Ecran
 - `assets/` : logo, logo inversé, symbole
 - `guidelines/` : cartes de fondations + `charger-ds.js`
 - `ui_kits/app-resident/` : l'app cliquable (12 écrans + menu)
 - `SKILL.md`
 
+## Étiquettes d'activité
+Deux listes fermées (décision du 24/09/2026, ticket #9) : Accessibilité (Accès plain-pied, Ascenseur, Chaises prévues, Sièges confortables, Ambiance calme), en vert ; Pour qui (Enfants bienvenus, Tous âges, Animaux acceptés), en abricot. Cochées avec `ChoixEtiquettes`, affichées avec `Etiquette` sur la carte et la fiche.
+
 ## Ouvert
-- Étiquettes d'activité : listes fermées à définir.
 - Thème sombre : le choix existe dans Mes réglages, pas encore les couleurs.
 - Non maquettés : J'organise, Passées, Mon syndic, Ma copro, Mes intérêts.

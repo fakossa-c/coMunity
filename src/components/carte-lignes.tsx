@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-type Ligne = {
+export type LigneCarte = {
   cle?: string;
   icone: NomIcone;
   /** Libellé discret : « Email » */
@@ -13,7 +13,7 @@ type Ligne = {
   fin?: ReactNode;
 };
 
-type Props = { lignes: Ligne[]; libelle?: string };
+type Props = { lignes: LigneCarte[]; libelle?: string };
 
 /** Carte bordée sans ombre (on la lit, on ne la touche pas en entier), découpée en lignes de 64 px. */
 export function CarteLignes({ lignes, libelle }: Props) {

@@ -5,6 +5,8 @@ import { BoutonCopier } from "@/components/bouton-copier";
 import { BoutonPartager } from "@/components/bouton-partager";
 import { BoutonRelayer } from "@/components/bouton-relayer";
 import { EcranSecondaire } from "@/components/cadre";
+import { EncartPastel } from "@/components/encart-pastel";
+import { EtiquettesActivite } from "@/components/etiquette";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
 import { Jauge } from "@/components/jauge";
@@ -18,6 +20,7 @@ import {
   origine,
   type FicheActivite,
 } from "@/lib/fiche-activite";
+import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong, messageWhatsApp } from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
@@ -72,7 +75,10 @@ export default async function Fiche({ params }: Props) {
       retour={{ href: "/", libelle: "Retour" }}
       partager={<BoutonPartager titre={fiche.titre} lien={lien} />}
       action={
-        <BlocInscription fiche={fiche} statut={statutVisiteur(session?.statut)} />
+        <BlocInscription
+          fiche={fiche}
+          statut={statutVisiteur(session?.statut)}
+        />
       }
     >
       <article className="flex flex-col gap-[14px]">
@@ -93,20 +99,52 @@ export default async function Fiche({ params }: Props) {
               titre: jourLong(fiche.date_activite),
               detail: creneau(fiche.heure_debut, fiche.heure_fin),
             },
-            { icone: "location_on", titre: fiche.lieu },
+            {
+              icone: "location_on",
+              titre: fiche.lieu,
+              detail: fiche.precision_acces ?? undefined,
+            },
           ]}
         />
-        <Jauge capaciteMax={fiche.capacite_max} placesPrises={fiche.places_prises} />
+        <Jauge
+          capaciteMax={fiche.capacite_max}
+          placesPrises={fiche.places_prises}
+        />
+        {fiche.capacite_min !== null && (
+          <p className="text-body-md text-on-surface-variant">
+            {libelleMinimum(fiche.capacite_min)} pour que l&apos;activité ait
+            lieu.
+          </p>
+        )}
+        <EtiquettesActivite etiquettes={fiche.etiquettes} />
         {fiche.organisateur_nom_affiche && (
           <ProposePar
             initiale={fiche.organisateur_nom_affiche.charAt(0).toUpperCase()}
             nom={fiche.organisateur_nom_affiche}
           />
         )}
+        {fiche.mot_accueil && <EncartPastel>{fiche.mot_accueil}</EncartPastel>}
         {fiche.description && (
           <BlocTexte titre="Description">{fiche.description}</BlocTexte>
         )}
-        {session?.statut === "valide" && <Participants identifiant={identifiant} />}
+        {fiche.conseils_pratiques && (
+          <BlocTexte titre="Conseils pratiques">
+            {fiche.conseils_pratiques}
+          </BlocTexte>
+        )}
+        {fiche.materiel_prevoir && (
+          <BlocTexte titre="Matériel à prévoir">
+            {fiche.materiel_prevoir}
+          </BlocTexte>
+        )}
+        {fiche.a_apporter && (
+          <BlocTexte titre="Ce que vous pouvez apporter">
+            {fiche.a_apporter}
+          </BlocTexte>
+        )}
+        {session?.statut === "valide" && (
+          <Participants identifiant={identifiant} />
+        )}
         <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
         <BoutonCopier
           texte={lien}
