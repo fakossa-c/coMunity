@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Bouton } from "@/components/bouton";
+import { CarteLignes } from "@/components/carte-lignes";
 import { Champ } from "@/components/champ";
 import { Annonce, BoutonEnvoi } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
@@ -64,19 +65,21 @@ export function GestionMembres({ membres, idMoi }: Props) {
         >
           {membres.length === 1 ? "1 membre" : `${membres.length} membres`}
         </h2>
-        <ul
-          aria-label="Membres du syndic"
-          className="flex flex-col gap-space-sm"
-        >
-          {membres.map((membre) => (
-            <LigneMembre
-              key={membre.id}
-              membre={membre}
-              estMoi={membre.id === idMoi}
-              onResultat={setResultat}
-            />
-          ))}
-        </ul>
+        <CarteLignes
+          libelle="Membres du syndic"
+          lignes={membres.map((membre) => ({
+            cle: membre.id,
+            icone: "shield_person",
+            titre: membre.email + (membre.id === idMoi ? " (vous)" : ""),
+            fin: (
+              <LigneMembre
+                membre={membre}
+                estMoi={membre.id === idMoi}
+                onResultat={setResultat}
+              />
+            ),
+          }))}
+        />
       </section>
     </div>
   );
@@ -102,42 +105,34 @@ function LigneMembre({
     });
   }
 
+  if (estMoi) return null;
+
   return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:flex-row desktop:items-center">
-      <span className="flex min-w-0 flex-1 items-center gap-space-sm">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
-          <Icone nom="shield_person" className="size-6" />
-        </span>
-        <span className="min-w-0 text-body-lg break-words">
-          {membre.email}
-          {estMoi && <span className="text-on-surface-variant"> (vous)</span>}
-        </span>
-      </span>
-      {!estMoi &&
-        (confirmation ? (
-          <span className="flex flex-wrap gap-space-sm">
-            <Bouton
-              variante="danger"
-              onClick={retirer}
-              disabled={enCours}
-              autoFocus
-            >
-              {enCours ? "Retrait…" : "Confirmer le retrait"}
-            </Bouton>
-            <Bouton
-              variante="contour"
-              onClick={() => setConfirmation(false)}
-              disabled={enCours}
-            >
-              Annuler
-            </Bouton>
-          </span>
-        ) : (
-          <Bouton variante="contour" onClick={() => setConfirmation(true)}>
-            <Icone nom="person_remove" className="size-6" />
-            Retirer l&apos;accès
+    <span aria-busy={enCours} className="flex flex-wrap gap-space-sm">
+      {confirmation ? (
+        <>
+          <Bouton
+            variante="danger"
+            onClick={retirer}
+            disabled={enCours}
+            autoFocus
+          >
+            {enCours ? "Retrait…" : "Confirmer le retrait"}
           </Bouton>
-        ))}
-    </li>
+          <Bouton
+            variante="contour"
+            onClick={() => setConfirmation(false)}
+            disabled={enCours}
+          >
+            Annuler
+          </Bouton>
+        </>
+      ) : (
+        <Bouton variante="contour" onClick={() => setConfirmation(true)}>
+          <Icone nom="person_remove" className="size-6" />
+          Retirer l&apos;accès
+        </Bouton>
+      )}
+    </span>
   );
 }

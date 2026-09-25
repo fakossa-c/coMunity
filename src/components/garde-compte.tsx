@@ -5,8 +5,7 @@ import {
   lireSession,
   statutResident,
 } from "@/lib/session";
-import { Bientot } from "./bientot";
-import { Icone } from "./icone";
+import { EncartPastel } from "./encart-pastel";
 import { TitrePage } from "./titre-page";
 
 const etatsBloques = {
@@ -63,7 +62,7 @@ export async function GardeCompte({
     return (
       <>
         <TitrePage titre={titre} sousTitre={sousTitre} />
-        <Bientot icone="block" message={message} />
+        <EncartPastel titre={titre}>{message}</EncartPastel>
       </>
     );
   }
@@ -71,19 +70,13 @@ export async function GardeCompte({
   return (
     <>
       {statut === "en_attente" && (
-        <section
-          aria-label="État de votre compte"
-          className="mb-space-lg flex items-start gap-space-sm rounded-lg bg-secondary-container p-space-md text-on-secondary-container"
-        >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-surface-container-lowest">
-            <Icone nom="hourglass_top" className="size-7" />
-          </span>
-          <p className="max-w-[65ch] text-body-lg">
-            <strong>Votre compte attend la validation du syndic.</strong> En
-            attendant, découvrez les activités et les annonces de la résidence :
-            vous pourrez participer dès que votre compte sera validé.
-          </p>
-        </section>
+        <div className="mb-space-lg">
+          <EncartPastel titre="Votre compte attend la validation du syndic">
+            En attendant, découvrez les activités et les annonces de la
+            résidence : vous pourrez participer dès que votre compte sera
+            validé.
+          </EncartPastel>
+        </div>
       )}
       {children}
     </>
