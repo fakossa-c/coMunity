@@ -14,6 +14,7 @@
 ## Commandes
 
 - Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx.
+- Worktree de ticket : les worktrees partagent sinon le même conteneur Docker et les mêmes ports 544xx, ce qui casse les tests d'un ticket pendant qu'un autre tourne. Juste après la création du worktree, dans son dossier : `node scripts/isoler-supabase-worktree.mjs` (attribue un `project_id` et des ports dédiés au ticket) puis `git update-index --skip-worktree supabase/config.toml` (ne jamais commiter ces ports isolés), puis `npx supabase start` et `npm run env:local`.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
 - `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
