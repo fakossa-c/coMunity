@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { cache } from "react";
 import type { CategorieActivite } from "./categories-activite";
+import { origineDe } from "./origine";
 import { clientSession } from "./supabase/serveur";
 
 /** Ce que la fonction `fiche_activite` livre d'une activité, visiteurs compris. */
@@ -33,14 +34,19 @@ export const lireFiche = cache(
   },
 );
 
-/** L'origine sous laquelle la personne voit l'app : les liens partagés la reprennent. */
+/** L'origine des liens partagés, pour la requête en cours. */
 export async function origine() {
   const entetes = await headers();
-  const hote = entetes.get("x-forwarded-host") ?? entetes.get("host");
-  const local = /^(localhost|127\.0\.0\.1)(:|$)/.test(hote ?? "");
-  const protocole =
-    entetes.get("x-forwarded-proto") ?? (local ? "http" : "https");
-  return `${protocole}://${hote}`;
+  return origineDe(
+    {
+      hote: entetes.get("x-forwarded-host") ?? entetes.get("host"),
+      protocole: entetes.get("x-forwarded-proto"),
+    },
+    {
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    },
+  );
 }
 
 /** Le lien public de la fiche, celui qu'on colle dans le groupe WhatsApp. */
