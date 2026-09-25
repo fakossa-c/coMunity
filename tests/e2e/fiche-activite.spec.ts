@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  IDENTITE_SYNDIC,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -131,6 +132,20 @@ test("une activité du syndic dit son origine", async ({ page }) => {
   await expect(page.getByRole("main")).toContainText(
     "Jardin & Nature · Proposée par le syndic",
   );
+});
+
+test("un résident voit le membre du syndic qui organise, comme un voisin", async ({
+  page,
+}) => {
+  const [syndic, resident] = [await nouveauSyndic(), await nouveauResident()];
+  emails.push(syndic.email, resident.email);
+  const identifiant = await nouvelleActivite(syndic.id);
+
+  await seConnecter(page, resident.email);
+  await page.goto(`/activites/${identifiant}`);
+
+  await expect(page.getByRole("main")).toContainText("Proposé par");
+  await expect(page.getByRole("main")).toContainText(IDENTITE_SYNDIC.prenom);
 });
 
 test("une adresse d'activité inconnue affiche une page claire", async ({

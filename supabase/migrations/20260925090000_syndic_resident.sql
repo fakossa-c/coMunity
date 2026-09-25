@@ -6,6 +6,7 @@
 -- invité, dont le profil naît de l'email d'invitation, les saisit en choisissant son mot de
 -- passe ; le script d'amorçage les exige ; un compte plus ancien les complète à sa connexion.
 comment on column public.profil.prenom is 'Obligatoire. Vide seulement pour un membre du syndic qui ne l''a pas encore saisi.';
+comment on column public.profil.nom is 'Obligatoire. Vide seulement pour un membre du syndic qui ne l''a pas encore saisi.';
 
 /**
  * Enregistre le prénom et le nom de la personne connectée, s'il lui en manque un : membre du
