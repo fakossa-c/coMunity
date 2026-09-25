@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
   nouveauResident,
+  nouveauSyndic,
   nouvelleActivite,
   supprimerComptes,
 } from "./outils";
@@ -102,4 +103,39 @@ test("un résident en attente voit le bouton désactivé avec une explication", 
   await expect(
     page.getByText("Votre compte doit être validé par le syndic"),
   ).toBeVisible();
+});
+
+test("une activité où je suis déjà inscrit affiche « J'y vais » sur sa carte à l'Accueil", async ({
+  page,
+}) => {
+  const organisateur = await nouveauResident("valide");
+  const resident = await nouveauResident("valide");
+  emails.push(organisateur.email, resident.email);
+  const titre = `Pétanque ${Date.now()}`;
+  const identifiant = await nouvelleActivite(organisateur.id, { titre });
+
+  await page.goto(`/activites/${identifiant}`);
+  await page.getByRole("button", { name: "Je participe" }).click();
+  await seConnecter(page, resident.email);
+  await page.getByRole("button", { name: "Je participe" }).click();
+  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+
+  await page.goto("/");
+  const carte = page.getByRole("listitem").filter({ hasText: titre });
+  await expect(carte.getByText("J'y vais", { exact: true })).toBeVisible();
+  await expect(carte.getByRole("button")).toHaveCount(0);
+});
+
+test("une activité du syndic s'inscrit comme les autres", async ({ page }) => {
+  const syndic = await nouveauSyndic();
+  const resident = await nouveauResident("valide");
+  emails.push(syndic.email, resident.email);
+  const identifiant = await nouvelleActivite(syndic.id);
+
+  await page.goto(`/activites/${identifiant}`);
+  await page.getByRole("button", { name: "Je participe" }).click();
+  await seConnecter(page, resident.email);
+  await page.getByRole("button", { name: "Je participe" }).click();
+
+  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
 });

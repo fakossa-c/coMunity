@@ -14,13 +14,13 @@ export function Onglets({
     <div className="flex flex-col gap-space-sm">
       <div role="tablist" aria-label="Mes activités" className="flex gap-2">
         <Onglet actif={onglet === "j_y_vais"} href="/activites?onglet=j_y_vais">
-          J&rsquo;y vais
+          J&apos;y vais
         </Onglet>
         <Onglet
           actif={onglet === "j_organise"}
           href="/activites?onglet=j_organise"
         >
-          J&rsquo;organise
+          J&apos;organise
         </Onglet>
       </div>
       <div className="flex gap-2">

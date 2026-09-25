@@ -69,7 +69,7 @@ export function CarteActivite({ activite }: { activite: Activite }) {
       {inscrit && (
         <p className="flex items-center gap-space-xs font-headline text-body-bold text-primary">
           <Icone nom="check_circle" plein taille={20} />
-          J&rsquo;y vais
+          J&apos;y vais
         </p>
       )}
     </article>
