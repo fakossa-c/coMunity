@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
@@ -65,6 +66,15 @@ test("un visiteur non connecté lit la fiche, sans aucun nom", async ({
     path: test.info().outputPath("fiche-visiteur.png"),
     fullPage: true,
   });
+
+  // Retour, Partager et Se connecter tiennent sur le plus petit téléphone courant.
+  // Le bord droit du dernier bouton, et non la largeur de page : un téléphone élargit sa zone
+  // d'affichage au lieu de défiler.
+  await page.setViewportSize({ width: 360, height: 780 });
+  const connexion = await page
+    .getByRole("link", { name: "Se connecter" })
+    .boundingBox();
+  expect(connexion!.x + connexion!.width).toBeLessThanOrEqual(360);
 });
 
 test("la fiche expose un aperçu riche pour WhatsApp", async ({
@@ -88,6 +98,10 @@ test("la fiche expose un aperçu riche pour WhatsApp", async ({
   const reponse = await request.get(new URL(image!).pathname);
   expect(reponse.status()).toBe(200);
   expect(reponse.headers()["content-type"]).toBe("image/png");
+  await writeFile(
+    test.info().outputPath("apercu-whatsapp.png"),
+    await reponse.body(),
+  );
 });
 
 test("un résident voit qui propose l'activité", async ({ page }) => {
@@ -186,6 +200,8 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
     adresse,
   );
 
+  // En haut de page : la barre collante masquerait le titre dans la capture.
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: test.info().outputPath("publication-reussie.png"),
     fullPage: true,
