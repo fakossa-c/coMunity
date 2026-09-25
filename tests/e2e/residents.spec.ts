@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
+  arriveeDuSyndic,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -29,6 +30,10 @@ async function syndicSurLesResidents(browser: Browser) {
   });
   const page = await appareil.newPage();
   await seConnecter(page, syndic.email);
+  // Sur mobile, le syndic arrive sur l'accueil : attendre l'arrivée avant d'ouvrir l'espace syndic.
+  const mobile = !!test.info().project.use.isMobile;
+  await expect(arriveeDuSyndic(page, { mobile })).toBeVisible();
+  await page.goto("/syndic");
   await page.getByRole("link", { name: /Résidents/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Résidents" }),
@@ -172,11 +177,14 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
 
 test("l'espace syndic ne propose plus de code de résidence", async ({
   page,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
 
   await seConnecter(page, syndic.email);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+  await page.goto("/syndic");
   await expect(
     page.getByRole("heading", { level: 1, name: "Espace syndic" }),
   ).toBeVisible();

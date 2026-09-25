@@ -17,9 +17,10 @@ export type FicheActivite = {
   heure_debut: string;
   heure_fin: string;
   lieu: string;
+  /** Su de la base, pas affiché : une activité du syndic se présente comme celle d'un voisin. */
   proposee_par_syndic: boolean;
-  /** `null` pour un visiteur : il ne lit aucun nom. */
-  organisateur_prenom: string | null;
+  /** « Danielle M. » ; `null` pour un visiteur, qui ne lit aucun nom. */
+  organisateur_nom_affiche: string | null;
   est_organisateur: boolean;
 };
 

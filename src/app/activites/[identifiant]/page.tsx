@@ -82,10 +82,7 @@ export default async function Fiche({ params }: Props) {
           <span className="text-primary">
             <Icone nom={categorie.pictogramme} taille={22} />
           </span>
-          {categorie.libelle} ·{" "}
-          {fiche.proposee_par_syndic
-            ? "Proposée par le syndic"
-            : "Initiative de résident"}
+          {categorie.libelle} · Initiative de résident
         </p>
         <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
           {fiche.titre}
@@ -100,10 +97,10 @@ export default async function Fiche({ params }: Props) {
             { icone: "location_on", titre: fiche.lieu },
           ]}
         />
-        {fiche.organisateur_prenom && (
+        {fiche.organisateur_nom_affiche && (
           <ProposePar
-            initiale={fiche.organisateur_prenom.charAt(0).toUpperCase()}
-            nom={fiche.organisateur_prenom}
+            initiale={fiche.organisateur_nom_affiche.charAt(0).toUpperCase()}
+            nom={fiche.organisateur_nom_affiche}
           />
         )}
         {fiche.description && (

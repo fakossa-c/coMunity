@@ -14,7 +14,7 @@ Une app par résidence. Les voisins proposent des activités, s'y inscrivent en 
 - Français, vouvoiement, mots de voisin : « Je participe », « 4 places restantes », « Ce que vous pouvez apporter », « Venez comme vous êtes ».
 - Accueil personnel : « Bonjour Danielle ! », suivi de l'adresse (« Bât. B, 2e étage. »).
 - Dates longues et lisibles : « Samedi 24 oct. à 16h00 », « De 16h00 à 18h30 ». Dans l'Accueil, le jour devient intertitre (« Aujourd’hui », « Mardi 27 octobre ») et la carte ne garde que l'horaire.
-- Statuts explicites et accordés : « Inscrite, avec 2 personnes ». L'origine se dit : « Proposée par le syndic », « Initiative de résident », « Publiée le 20 oct. par le syndic ».
+- Statuts explicites et accordés : « Inscrite, avec 2 personnes ». L'origine se dit : « Initiative de résident », « Publiée le 20 oct. par le syndic ». Une activité du syndic se présente comme celle d'un voisin (décision du 25/09/2026).
 - Confidentialité dite en clair : « Les voisins voient votre pseudo, prénom et bâtiment. » Actions irréversibles expliquées avant confirmation (« Cette action est définitive. »), avec une sortie évidente (« Garder mon compte »).
 - Libellé du retour = destination ou effet : « Retour », « Profil », « Annuler ».
 - Casse phrase partout, pas de majuscules décoratives, pas d'emoji. Espace insécable avant « ! ».

@@ -1,5 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
+import { userAgent } from "next/server";
 import { cache } from "react";
 import { clientSession, configurationSupabase } from "./supabase/serveur";
 
@@ -12,7 +14,7 @@ export type Session = {
   /** `null` : compte sans profil, qui n'a accès à rien. */
   role: Role | null;
   statut: StatutCompte | null;
-  /** `null` pour un membre du syndic amorcé, qui ne les a pas saisis. */
+  /** `null` pour un membre du syndic qui ne les a pas encore saisis. */
   prenom: string | null;
   nom: string | null;
 };
@@ -38,12 +40,13 @@ export const lireSession = cache(async (): Promise<Session | null> => {
 });
 
 type Profil = Pick<Session, "role" | "statut">;
+type ProfilNomme = Pick<Session, "role" | "statut" | "prenom" | "nom">;
 
 /** Rôle, statut et nom d'un compte, tels que la personne connectée a le droit de les lire. */
 export async function lireProfil(
   supabase: SupabaseClient,
   id: string,
-): Promise<Pick<Session, "role" | "statut" | "prenom" | "nom"> | null> {
+): Promise<ProfilNomme | null> {
   const { data } = await supabase
     .from("profil")
     .select("role, statut, prenom, nom")
@@ -65,7 +68,31 @@ export function statutResident(profil: Profil | null) {
   return profil?.role === "resident" ? profil.statut : null;
 }
 
-/** Où envoyer une personne qui vient de se connecter ou de choisir son mot de passe. */
-export function accueilDe(profil: Profil | null) {
-  return estSyndicActif(profil) ? "/syndic" : "/";
+/** Vrai pour un membre du syndic qui n'a pas encore saisi son prénom et son nom. */
+export function doitCompleterProfil(profil: ProfilNomme | null) {
+  return estSyndicActif(profil) && !(profil?.prenom && profil.nom);
+}
+
+/**
+ * Où envoyer une personne qui vient de se connecter ou de choisir son mot de passe : la page
+ * qu'elle demandait, sinon l'espace syndic pour un membre du syndic sur ordinateur, l'accueil
+ * pour les autres. Un membre du syndic sans prénom ni nom passe d'abord par l'écran qui les demande.
+ */
+export async function accueilDe(
+  profil: ProfilNomme | null,
+  suivant?: string | null,
+) {
+  const destination =
+    suivant ??
+    (estSyndicActif(profil) && !(await surMobile()) ? "/syndic" : "/");
+  return doitCompleterProfil(profil)
+    ? `${CHEMIN_COMPLETION}?suivant=${encodeURIComponent(destination)}`
+    : destination;
+}
+
+/** L'écran où un membre du syndic saisit son prénom et son nom avant d'aller plus loin. */
+export const CHEMIN_COMPLETION = "/completer-profil";
+
+async function surMobile() {
+  return userAgent({ headers: await headers() }).device.type === "mobile";
 }

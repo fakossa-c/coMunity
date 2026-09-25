@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
@@ -17,6 +18,9 @@ function clientAdmin() {
   });
 }
 
+/** Prénom et nom d'un membre du syndic de test. */
+export const IDENTITE_SYNDIC = { prenom: "Colette", nom: "Durand" };
+
 /** Un membre du syndic créé par le script d'amorçage. */
 export async function nouveauSyndic() {
   const email = nouvelEmail("syndic");
@@ -25,8 +29,38 @@ export async function nouveauSyndic() {
     cleSecrete: local.cleSecrete,
     email,
     motDePasse: MOT_DE_PASSE,
+    ...IDENTITE_SYNDIC,
   });
   return { id: utilisateur.id, email };
+}
+
+/** Un membre du syndic amorcé avant que son prénom et son nom soient demandés. */
+export async function nouveauSyndicSansNom() {
+  const admin = clientAdmin();
+  const email = nouvelEmail("syndic");
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: MOT_DE_PASSE,
+    email_confirm: true,
+  });
+  if (error) throw error;
+  const profil = await admin
+    .from("profil")
+    .insert({ id: data.user.id, email, role: "syndic", statut: "valide" });
+  if (profil.error) throw profil.error;
+  return { id: data.user.id, email };
+}
+
+/**
+ * Le titre de la page où arrive un membre du syndic qui se connecte depuis `page` : l'espace
+ * syndic sur ordinateur, l'accueil sur mobile. `mobile` vient de la fixture `isMobile` : un
+ * contexte ouvert par `browser.newContext()` émule le même appareil que le projet.
+ */
+export function arriveeDuSyndic(page: Page, { mobile }: { mobile: boolean }) {
+  return page.getByRole("heading", {
+    level: 1,
+    name: mobile ? "Activités" : "Espace syndic",
+  });
 }
 
 /** Un résident, validé sauf mention contraire. */

@@ -124,6 +124,8 @@ type PropsSecondaire = {
    * d'envoi suive l'envoi en cours : l'écran lui réserve alors la place en bas.
    */
   actionDansLeFormulaire?: boolean;
+  /** Faux sur les écrans où un membre du syndic saisit son prénom et son nom. */
+  completionExigee?: boolean;
   children: ReactNode;
 };
 
@@ -134,6 +136,7 @@ export function EcranSecondaire({
   partager,
   action,
   actionDansLeFormulaire = false,
+  completionExigee,
   children,
 }: PropsSecondaire) {
   return (
@@ -149,7 +152,7 @@ export function EcranSecondaire({
       barreBas={action && <SiCompteOuvert>{action}</SiCompteOuvert>}
       paddingBas={action || actionDansLeFormulaire ? 170 : 40}
     >
-      <GardeCompte>{children}</GardeCompte>
+      <GardeCompte completionExigee={completionExigee}>{children}</GardeCompte>
     </Ecran>
   );
 }
