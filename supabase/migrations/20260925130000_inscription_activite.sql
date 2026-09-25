@@ -223,6 +223,8 @@ returns table (
   date_activite date,
   heure_debut time,
   lieu text,
+  capacite_max integer,
+  places_prises integer,
   mes_accompagnants smallint
 )
 language sql
@@ -239,6 +241,8 @@ as $$
     a.date_activite,
     a.heure_debut,
     a.lieu,
+    a.capacite_max,
+    public.places_prises(a.id),
     (
       select i.accompagnants from public.inscription_activite i
       where i.activite_id = a.id and i.resident_id = auth.uid()

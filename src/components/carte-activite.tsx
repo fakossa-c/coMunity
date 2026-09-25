@@ -6,6 +6,7 @@ import {
 import { cheminFiche } from "@/lib/partage-activite";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
+import { Jauge } from "./jauge";
 
 export type Activite = {
   id: string;
@@ -16,6 +17,9 @@ export type Activite = {
   date_activite: string;
   heure_debut: string;
   lieu: string;
+  /** `null` : pas de limite de participants. Absente : la jauge ne s'affiche pas sur la carte. */
+  capacite_max?: number | null;
+  places_prises?: number;
   /** Accompagnants de la personne connectée ; `null` ou absent si elle n'est pas inscrite. */
   mes_accompagnants?: number | null;
 };
@@ -66,6 +70,12 @@ export function CarteActivite({ activite }: { activite: Activite }) {
         <Icone nom="location_on" className="size-5 shrink-0" />
         {activite.lieu}
       </p>
+      {activite.places_prises != null && (
+        <Jauge
+          capaciteMax={activite.capacite_max ?? null}
+          placesPrises={activite.places_prises}
+        />
+      )}
       {inscrit && (
         <p className="flex items-center gap-space-xs font-headline text-body-bold text-primary">
           <Icone nom="check_circle" plein taille={20} />
