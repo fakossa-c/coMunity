@@ -108,8 +108,9 @@ test.describe("onglets et puces de l'écran Activités", () => {
 
     const ongletInactif = page.getByRole("tab", { name: "J'organise" });
     await expect(ongletInactif).toHaveAttribute("aria-selected", "false");
-    expect(await styleCalcule(ongletInactif, "border-bottom-width")).toBe(
-      "0px",
+    // La bordure basse reste transparente : garde l'alignement vertical sans souligner.
+    expect(await styleCalcule(ongletInactif, "border-bottom-color")).toBe(
+      "rgba(0, 0, 0, 0)",
     );
   });
 
