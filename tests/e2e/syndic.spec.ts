@@ -75,7 +75,7 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   await choisirMotDePasse(pageDuCollegue, NOUVEAU_MOT_DE_PASSE);
 
   await expect(
-    arriveeDuSyndic(pageDuCollegue, { mobile: false }),
+    arriveeDuSyndic(pageDuCollegue, { mobile: isMobile }),
   ).toBeVisible();
   await pageDuCollegue.getByRole("button", { name: "Mon profil" }).click();
   await expect(

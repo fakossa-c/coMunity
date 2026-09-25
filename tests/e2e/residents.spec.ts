@@ -30,6 +30,10 @@ async function syndicSurLesResidents(browser: Browser) {
   });
   const page = await appareil.newPage();
   await seConnecter(page, syndic.email);
+  // Sur mobile, le syndic arrive sur l'accueil : attendre l'arrivée avant d'ouvrir l'espace syndic.
+  const mobile = !!test.info().project.use.isMobile;
+  await expect(arriveeDuSyndic(page, { mobile })).toBeVisible();
+  await page.goto("/syndic");
   await page.getByRole("link", { name: /Résidents/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Résidents" }),

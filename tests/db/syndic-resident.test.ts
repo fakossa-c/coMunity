@@ -69,8 +69,11 @@ async function droitsDe(compte: Compte) {
 
 describe("droits d'un membre du syndic", () => {
   it("un membre du syndic a les droits d'un résident validé, plus ceux du syndic", async () => {
-    const resident = await droitsDe(await nouveauResident("valide"));
-    const syndic = await droitsDe(await nouveauSyndic());
+    // Quatre comptes à créer : les deux mesures, indépendantes, tournent en parallèle.
+    const [resident, syndic] = await Promise.all([
+      nouveauResident("valide").then(droitsDe),
+      nouveauSyndic().then(droitsDe),
+    ]);
 
     expect(resident).toEqual({
       resident: {
