@@ -64,13 +64,12 @@ export async function inscrire(
 
   const formatEmailRefuse = refusFormatEmail(saisie.email);
   if (formatEmailRefuse) return refus(formatEmailRefuse.erreur, "email");
-  if (
-    saisie.prenom.length > LONGUEUR_MAXIMALE_NOM ||
-    saisie.nom.length > LONGUEUR_MAXIMALE_NOM
-  ) {
+  const prenomTropLong = saisie.prenom.length > LONGUEUR_MAXIMALE_NOM;
+  const nomTropLong = saisie.nom.length > LONGUEUR_MAXIMALE_NOM;
+  if (prenomTropLong || nomTropLong) {
     return refus(
       `Le prénom et le nom tiennent en ${LONGUEUR_MAXIMALE_NOM} caractères au plus.`,
-      saisie.prenom.length > LONGUEUR_MAXIMALE_NOM ? "prenom" : "nom",
+      prenomTropLong ? "prenom" : "nom",
     );
   }
   const motDePasseRefuse = refusNouveauMotDePasse(motDePasse, confirmation);

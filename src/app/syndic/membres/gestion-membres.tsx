@@ -70,7 +70,8 @@ export function GestionMembres({ membres, idMoi }: Props) {
           lignes={membres.map((membre) => ({
             cle: membre.id,
             icone: "shield_person",
-            titre: membre.email + (membre.id === idMoi ? " (vous)" : ""),
+            titre: membre.id === idMoi ? "Vous" : "Membre du syndic",
+            detail: membre.email,
             fin: (
               <LigneMembre
                 membre={membre}

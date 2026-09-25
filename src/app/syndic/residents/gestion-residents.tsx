@@ -113,8 +113,8 @@ function Section({
         lignes={residents.map((resident) => ({
           cle: resident.id,
           icone,
-          titre: resident.email,
-          detail: nomComplet(resident),
+          titre: nomComplet(resident),
+          detail: resident.email,
           fin: (
             <LigneActions
               resident={resident}
