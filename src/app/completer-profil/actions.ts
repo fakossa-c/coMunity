@@ -2,7 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { cheminInterne } from "@/lib/chemin-interne";
-import { identiteSaisie, refusIdentite, type Identite } from "@/lib/nom-complet";
+import {
+  identiteSaisie,
+  refusIdentite,
+  type Identite,
+} from "@/lib/nom-complet";
 import type { ErreurFormulaire } from "@/lib/resultat";
 import { accueilDe, lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";

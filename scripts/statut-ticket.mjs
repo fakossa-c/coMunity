@@ -8,16 +8,28 @@
 import { execFileSync } from "node:child_process";
 
 const [numero, statut] = process.argv.slice(2);
-if (!/^\d+$/.test(numero ?? "") || !["Todo", "In Progress", "Done"].includes(statut ?? "")) {
-  console.error('Usage : node scripts/statut-ticket.mjs <numéro> <Todo|"In Progress"|Done>');
+if (
+  !/^\d+$/.test(numero ?? "") ||
+  !["Todo", "In Progress", "Done"].includes(statut ?? "")
+) {
+  console.error(
+    'Usage : node scripts/statut-ticket.mjs <numéro> <Todo|"In Progress"|Done>',
+  );
   process.exit(1);
 }
 
 const env = { ...process.env };
-if (!env.GH_TOKEN) env.GH_TOKEN = execFileSync("gh", ["auth", "token", "-u", "fakossa-c"]).toString().trim();
+if (!env.GH_TOKEN)
+  env.GH_TOKEN = execFileSync("gh", ["auth", "token", "-u", "fakossa-c"])
+    .toString()
+    .trim();
 
 const graphql = (query) =>
-  JSON.parse(execFileSync("gh", ["api", "graphql", "-f", `query=${query}`], { env }).toString()).data;
+  JSON.parse(
+    execFileSync("gh", ["api", "graphql", "-f", `query=${query}`], {
+      env,
+    }).toString(),
+  ).data;
 
 const projet = graphql(
   '{ user(login:"fakossa-c"){ projectV2(number:2){ id field(name:"Status"){ ... on ProjectV2SingleSelectField { id options{ id name } } } } } }',
@@ -28,7 +40,9 @@ const item = graphql(
   `{ repository(owner:"fakossa-c", name:"coMunity"){ issue(number:${numero}){ projectItems(first:10){ nodes{ id project{ number } } } } } }`,
 ).repository.issue.projectItems.nodes.find((n) => n.project.number === 2);
 if (!item) {
-  console.error(`Le ticket #${numero} n'est pas sur le tableau coMunity : l'y ajouter d'abord.`);
+  console.error(
+    `Le ticket #${numero} n'est pas sur le tableau coMunity : l'y ajouter d'abord.`,
+  );
   process.exit(1);
 }
 

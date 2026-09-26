@@ -24,7 +24,11 @@ export function Onglets({
           libelleGroupe="Mes activités"
           actif={onglet}
           onglets={[
-            { id: "j_y_vais", libelle: "J'y vais", href: "/activites?onglet=j_y_vais" },
+            {
+              id: "j_y_vais",
+              libelle: "J'y vais",
+              href: "/activites?onglet=j_y_vais",
+            },
             {
               id: "j_organise",
               libelle: "J'organise",

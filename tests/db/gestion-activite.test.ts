@@ -118,7 +118,9 @@ describe("modification par le créateur", () => {
   it("une activité annulée ne se modifie plus", async () => {
     const createur = await nouveauResident("valide");
     const identifiant = await publier(createur);
-    await createur.client.rpc("annuler_activite", { p_identifiant: identifiant });
+    await createur.client.rpc("annuler_activite", {
+      p_identifiant: identifiant,
+    });
 
     const { data } = await createur.client
       .from("activite")
@@ -169,19 +171,26 @@ describe("annulation", () => {
     const createur = await nouveauResident("valide");
     const passant = await nouveauResident("valide");
     const identifiant = await publier(createur);
-    await createur.client.rpc("annuler_activite", { p_identifiant: identifiant });
+    await createur.client.rpc("annuler_activite", {
+      p_identifiant: identifiant,
+    });
 
     const { data: catalogue } = await passant.client.rpc("catalogue_activites");
 
-    expect(catalogue?.map((a: { identifiant_public: string }) => a.identifiant_public))
-      .not.toContain(identifiant);
+    expect(
+      catalogue?.map(
+        (a: { identifiant_public: string }) => a.identifiant_public,
+      ),
+    ).not.toContain(identifiant);
   });
 
   it("on ne s'inscrit plus à une activité annulée", async () => {
     const createur = await nouveauResident("valide");
     const voisin = await nouveauResident("valide");
     const identifiant = await publier(createur);
-    await createur.client.rpc("annuler_activite", { p_identifiant: identifiant });
+    await createur.client.rpc("annuler_activite", {
+      p_identifiant: identifiant,
+    });
 
     const { error } = await voisin.client.rpc("s_inscrire", {
       p_identifiant: identifiant,

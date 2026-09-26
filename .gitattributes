@@ -1,0 +1,4 @@
+# Fins de ligne LF dans toutes les copies de travail, Windows compris : Prettier attend LF, et un
+# checkout en CRLF (core.autocrlf=true) faisait apparaître des dizaines de fichiers modifiés après
+# chaque `npm run format`.
+* text=auto eol=lf

@@ -40,14 +40,15 @@ test("un visiteur ouvre le lien déconnecté, se connecte, s'inscrit puis annule
   await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
 
   await page.getByRole("button", { name: "Je participe" }).click();
-  await expect(
-    page.getByText("J'y vais", { exact: false }),
-  ).toBeVisible();
+  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
   await expect(page.getByText("1 inscrit sur 12 places")).toBeVisible();
 
   // Le premier clic ouvre la feuille de confirmation, le second (dans la feuille) confirme.
   await page.getByRole("button", { name: "Annuler" }).click();
-  await page.getByRole("button", { name: "Annuler", exact: true }).last().click();
+  await page
+    .getByRole("button", { name: "Annuler", exact: true })
+    .last()
+    .click();
   await expect(
     page.getByRole("button", { name: "Je participe" }),
   ).toBeVisible();
@@ -79,7 +80,9 @@ test("une activité complète refuse une nouvelle inscription", async ({
   await page.context().clearCookies();
   await page.goto(`/activites/${identifiant}`);
   await expect(page.getByRole("button", { name: "Complet" })).toBeDisabled();
-  await page.goto(`/connexion?suivant=${encodeURIComponent(`/activites/${identifiant}`)}`);
+  await page.goto(
+    `/connexion?suivant=${encodeURIComponent(`/activites/${identifiant}`)}`,
+  );
   await seConnecter(page, second.email);
 
   await expect(page.getByRole("button", { name: "Complet" })).toBeDisabled();

@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  clientAdmin,
-  IDENTITE,
-  nouveauResident,
-  type Compte,
-} from "./clients";
+import { clientAdmin, IDENTITE, nouveauResident, type Compte } from "./clients";
 
 const ACTIVITE = {
   titre: "Goûter crêpes",
@@ -18,7 +13,10 @@ const ACTIVITE = {
 };
 
 /** Publie une activité au nom de `organisateur`, avec une capacité si `capaciteMax` est donné. */
-async function publier(organisateur: Compte, capaciteMax: number | null = null) {
+async function publier(
+  organisateur: Compte,
+  capaciteMax: number | null = null,
+) {
   const { data, error } = await organisateur.client
     .from("activite")
     .insert({
@@ -103,8 +101,13 @@ describe("inscription à une activité", () => {
     const premier = await nouveauResident("valide");
     const second = await nouveauResident("valide");
 
-    await premier.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public, p_accompagnants: 1 });
-    const { error } = await second.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public });
+    await premier.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+      p_accompagnants: 1,
+    });
+    const { error } = await second.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+    });
 
     expect(error).not.toBeNull();
   });
@@ -129,8 +132,12 @@ describe("inscription à une activité", () => {
     const second = await nouveauResident("valide");
 
     const resultats = await Promise.all([
-      premier.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public }),
-      second.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public }),
+      premier.client.rpc("s_inscrire", {
+        p_identifiant: activite.identifiant_public,
+      }),
+      second.client.rpc("s_inscrire", {
+        p_identifiant: activite.identifiant_public,
+      }),
     ]);
 
     const reussies = resultats.filter((r) => r.error === null);
@@ -143,7 +150,9 @@ describe("inscription à une activité", () => {
     const organisateur = await nouveauResident("valide");
     const resident = await nouveauResident("valide");
     const activite = await publier(organisateur);
-    await resident.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public });
+    await resident.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+    });
 
     const { error } = await resident.client.rpc("se_desister", {
       p_identifiant: activite.identifiant_public,
@@ -172,7 +181,10 @@ describe("inscription à une activité", () => {
     const organisateur = await nouveauResident("valide");
     const resident = await nouveauResident("valide");
     const activite = await publier(organisateur, 12);
-    await resident.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public, p_accompagnants: 1 });
+    await resident.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+      p_accompagnants: 1,
+    });
 
     const { data } = await organisateur.client.rpc("participants_activite", {
       identifiant: activite.identifiant_public,
@@ -191,7 +203,9 @@ describe("inscription à une activité", () => {
     const resident = await nouveauResident("valide");
     const refuse = await nouveauResident("refuse");
     const activite = await publier(organisateur);
-    await resident.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public });
+    await resident.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+    });
 
     const { data } = await refuse.client.rpc("participants_activite", {
       identifiant: activite.identifiant_public,
@@ -204,7 +218,10 @@ describe("inscription à une activité", () => {
     const organisateur = await nouveauResident("valide");
     const resident = await nouveauResident("valide");
     const activite = await publier(organisateur, 12);
-    await resident.client.rpc("s_inscrire", { p_identifiant: activite.identifiant_public, p_accompagnants: 1 });
+    await resident.client.rpc("s_inscrire", {
+      p_identifiant: activite.identifiant_public,
+      p_accompagnants: 1,
+    });
 
     const { error } = await resident.client.rpc("s_inscrire", {
       p_identifiant: activite.identifiant_public,
@@ -232,8 +249,9 @@ describe("catalogue des activités à venir", () => {
 
     const { data } = await resident.client.rpc("catalogue_activites");
 
-    const ligne = (data as { id: string; mes_accompagnants: number | null }[])
-      ?.find((a) => a.id === activite.id);
+    const ligne = (
+      data as { id: string; mes_accompagnants: number | null }[]
+    )?.find((a) => a.id === activite.id);
     expect(ligne).toMatchObject({ mes_accompagnants: 1 });
   });
 
@@ -244,8 +262,9 @@ describe("catalogue des activités à venir", () => {
 
     const { data } = await resident.client.rpc("catalogue_activites");
 
-    const ligne = (data as { id: string; mes_accompagnants: number | null }[])
-      ?.find((a) => a.id === activite.id);
+    const ligne = (
+      data as { id: string; mes_accompagnants: number | null }[]
+    )?.find((a) => a.id === activite.id);
     expect(ligne).toMatchObject({ mes_accompagnants: null });
   });
 

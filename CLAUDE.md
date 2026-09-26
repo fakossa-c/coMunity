@@ -25,7 +25,7 @@
 - Worktree : juste après sa création, dans son dossier, `node scripts/isoler-supabase-worktree.mjs` (conteneur Docker et ports propres, Studio coupé, `config.toml` masqué pour git, lien Vercel recopié), puis `npx supabase start` et `npm run env:local`. Sans cette isolation, tous les checkouts pilotent le même conteneur, et un hook du projet bloque `supabase start`, `stop` et `db reset`.
 - Chaque Supabase local démarré occupe environ 300 Mo : `npx supabase stop` dans le worktree dès sa PR ouverte.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
-- `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucune CI ne rejoue les tests avant octobre 2026 (quota GitHub Actions du plan gratuit).
+- `npm test` : suite complète (format Prettier, unitaires, base de données, navigateur mobile et desktop ; un écart de format se corrige avec `npm run format`). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucune CI ne rejoue les tests avant octobre 2026 (quota GitHub Actions du plan gratuit).
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.

@@ -127,9 +127,9 @@ test.describe("onglets et puces de l'écran Activités", () => {
 
     const puceSelectionnee = page.getByRole("link", { name: /À venir/ });
     await expect(puceSelectionnee).toHaveAttribute("aria-current", "true");
-    expect(
-      await styleCalcule(puceSelectionnee, "background-color"),
-    ).toBe("rgb(255, 219, 208)");
+    expect(await styleCalcule(puceSelectionnee, "background-color")).toBe(
+      "rgb(255, 219, 208)",
+    );
     await expect(
       puceSelectionnee.locator('svg[aria-hidden="true"]'),
     ).toHaveCount(2); // pictogramme "event" + coche.
@@ -137,9 +137,9 @@ test.describe("onglets et puces de l'écran Activités", () => {
 
     const puceNonSelectionnee = page.getByRole("link", { name: /Passées/ });
     await expect(puceNonSelectionnee).toHaveAttribute("aria-current", "false");
-    expect(
-      await styleCalcule(puceNonSelectionnee, "background-color"),
-    ).toBe("rgb(255, 255, 255)");
+    expect(await styleCalcule(puceNonSelectionnee, "background-color")).toBe(
+      "rgb(255, 255, 255)",
+    );
     expect(await styleCalcule(puceNonSelectionnee, "border-color")).toBe(
       "rgb(255, 181, 156)",
     );
@@ -153,7 +153,9 @@ test.describe("onglets et puces de l'écran Activités", () => {
     await seConnecter(page, resident.email);
     await page.goto("/activites");
 
-    const bloc = page.getByRole("tablist", { name: "Mes activités" }).locator("..");
+    const bloc = page
+      .getByRole("tablist", { name: "Mes activités" })
+      .locator("..");
     expect(await styleCalcule(bloc, "position")).toBe("sticky");
     expect(await styleCalcule(bloc, "top")).toBe("0px");
   });

@@ -51,7 +51,9 @@ export function FeuilleConfirmation({
       className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile"
     >
       <div className="mx-auto flex max-w-xl flex-col gap-space-md rounded-t-feuille bg-fond-carte p-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
-        <p className="font-headline text-headline-sm text-on-surface">{titre}</p>
+        <p className="font-headline text-headline-sm text-on-surface">
+          {titre}
+        </p>
         <div className="text-body-md text-on-surface-variant">{children}</div>
         <div className="flex gap-space-sm">
           <Bouton variante="contour" pleineLargeur onClick={onFermer}>

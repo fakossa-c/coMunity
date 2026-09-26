@@ -20,7 +20,9 @@ export async function amorcerSyndic({
 }) {
   const identite = { prenom: prenom?.trim(), nom: nom?.trim() };
   if (!identite.prenom || !identite.nom) {
-    throw new Error("Le prénom et le nom du membre du syndic sont obligatoires.");
+    throw new Error(
+      "Le prénom et le nom du membre du syndic sont obligatoires.",
+    );
   }
 
   const admin = createClient(url, cleSecrete, {
