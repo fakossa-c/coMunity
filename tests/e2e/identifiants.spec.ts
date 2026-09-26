@@ -5,6 +5,7 @@ import {
   nouveauResident,
   nouvelEmail,
   supprimerComptes,
+  titreAccueil,
 } from "./outils";
 
 const emails: string[] = [];
@@ -24,9 +25,7 @@ async function residentConnecte(page: Page) {
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   await seConnecter(page, resident.email, MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
   return resident;
 }
 
@@ -143,9 +142,7 @@ test("après un changement de mot de passe, on se reconnecte avec le nouveau, pa
   );
 
   await seConnecter(page, resident.email, nouveau);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 });
 
 test("un lien de changement d'adresse périmé, ouvert sans être connecté, s'explique après la connexion", async ({
@@ -213,7 +210,5 @@ test("l'email ne change qu'une fois le lien ouvert, et jamais sans le bon mot de
     .getByRole("button", { name: "Se déconnecter" })
     .click();
   await seConnecter(page, nouvelle, MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 });

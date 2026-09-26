@@ -51,16 +51,20 @@ export async function nouveauSyndicSansNom() {
   return { id: data.user.id, email };
 }
 
+/** Le titre de l'Accueil : la salutation, « Bonjour Danielle ! » ou « Bonjour ! ». */
+export function titreAccueil(page: Page) {
+  return page.getByRole("heading", { level: 1, name: /^Bonjour/ });
+}
+
 /**
  * Le titre de la page où arrive un membre du syndic qui se connecte depuis `page` : l'espace
  * syndic sur ordinateur, l'accueil sur mobile. `mobile` vient de la fixture `isMobile` : un
  * contexte ouvert par `browser.newContext()` émule le même appareil que le projet.
  */
 export function arriveeDuSyndic(page: Page, { mobile }: { mobile: boolean }) {
-  return page.getByRole("heading", {
-    level: 1,
-    name: mobile ? "Activités" : "Espace syndic",
-  });
+  return mobile
+    ? titreAccueil(page)
+    : page.getByRole("heading", { level: 1, name: "Espace syndic" });
 }
 
 /** Un résident, validé sauf mention contraire. */
@@ -90,7 +94,7 @@ export async function nouveauResident(
 /** Une activité publiée au nom de `organisateur`, à venir ; renvoie son identifiant public. */
 export async function nouvelleActivite(
   organisateur: string,
-  activite: Partial<Record<string, string>> = {},
+  activite: Partial<Record<string, string | string[]>> = {},
 ) {
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()

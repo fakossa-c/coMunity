@@ -6,6 +6,7 @@ import {
   nouveauSyndic,
   nouvelEmail,
   supprimerComptes,
+  titreAccueil,
 } from "./outils";
 
 const emails: string[] = [];
@@ -85,9 +86,7 @@ test("un résident s'inscrit avec son prénom et son nom, puis le syndic le vali
   await page.getByLabel("Confirmez le mot de passe").fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Créer mon compte" }).click();
 
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
   await expect(page.getByRole("main")).toContainText(BANDEAU);
   await page.screenshot({
     path: test.info().outputPath("resident-en-attente.png"),
@@ -109,9 +108,7 @@ test("un résident s'inscrit avec son prénom et son nom, puis le syndic le vali
   await syndic.appareil.close();
 
   await page.reload();
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
   await expect(page.getByRole("main")).not.toContainText(BANDEAU);
 });
 
@@ -171,9 +168,7 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
   await expect(page.getByRole("main")).toContainText(
     "Votre accès à la résidence a été retiré",
   );
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toHaveCount(0);
+  await expect(titreAccueil(page)).toHaveCount(0);
   await expect(navigationPrincipale(page)).toHaveCount(0);
 });
 

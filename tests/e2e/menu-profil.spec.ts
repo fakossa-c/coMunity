@@ -5,6 +5,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   supprimerComptes,
+  titreAccueil,
 } from "./outils";
 
 const emails: string[] = [];
@@ -24,9 +25,7 @@ async function residentConnecte(page: Page) {
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   await seConnecter(page, resident.email);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 }
 
 function avatar(page: Page) {

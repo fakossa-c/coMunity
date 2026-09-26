@@ -1,5 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { MOT_DE_PASSE, nouveauResident, supprimerComptes } from "./outils";
+import {
+  MOT_DE_PASSE,
+  nouveauResident,
+  supprimerComptes,
+  titreAccueil,
+} from "./outils";
 
 const emails: string[] = [];
 
@@ -52,10 +57,8 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   ).toBeVisible();
   await page.getByRole("link", { name: "Accueil" }).click();
 
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
-  const catalogue = page.getByRole("list", { name: "Activités à venir" });
+  await expect(titreAccueil(page)).toBeVisible();
+  const catalogue = page.getByRole("region", { name: "Activités à venir" });
   await expect(catalogue).toContainText(titre);
   await expect(catalogue).toContainText("Cour intérieure");
   await page.screenshot({

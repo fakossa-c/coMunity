@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { titreAccueil } from "./outils";
 
 const onglets = [
   { libelle: "Accueil", chemin: "/" },
@@ -14,9 +15,7 @@ test("l'accueil affiche le logo, la résidence et la barre du bas", async ({
   const entete = page.getByRole("banner");
   await expect(entete).toContainText("Résidence Les Tilleuls");
   await expect(entete.getByRole("img", { name: "coMunity" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 
   const navigation = navigationPrincipale(page);
   await expect(navigation.getByRole("link")).toHaveCount(onglets.length);

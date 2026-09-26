@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { MOT_DE_PASSE, nouveauResident, supprimerComptes } from "./outils";
+import {
+  MOT_DE_PASSE,
+  nouveauResident,
+  supprimerComptes,
+  titreAccueil,
+} from "./outils";
 
 const emails: string[] = [];
 
@@ -12,9 +17,7 @@ async function seConnecter(page: Page, email: string) {
   await page.getByLabel("Adresse email").fill(email);
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 }
 
 async function resident() {

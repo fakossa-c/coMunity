@@ -126,7 +126,9 @@ test("une activité où je suis déjà inscrit affiche « J'y vais » sur sa car
   await page.goto("/");
   const carte = page.getByRole("listitem").filter({ hasText: titre });
   await expect(carte.getByText("J'y vais", { exact: true })).toBeVisible();
-  await expect(carte.getByRole("button")).toHaveCount(0);
+  await expect(carte.getByRole("link", { name: "Je participe" })).toHaveCount(
+    0,
+  );
 });
 
 test("une activité du syndic s'inscrit comme les autres", async ({ page }) => {

@@ -210,7 +210,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   // La carte du catalogue porte les étiquettes.
   await page.goto("/");
   const carte = page
-    .getByRole("list", { name: "Activités à venir" })
+    .getByRole("region", { name: "Activités à venir" })
     .getByRole("listitem")
     .filter({ hasText: titre });
   await expect(carte).toContainText("Accès plain-pied");
