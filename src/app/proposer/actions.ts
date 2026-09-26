@@ -7,7 +7,18 @@ import type { NouvelleActivite } from "@/lib/proposition-activite";
 import { clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
+/** Les règles bloquantes d'un espace commun, que la base vérifie aussi. */
+const reglesEspace: Record<string, string> = {
+  P0007:
+    "L'activité finit après l'heure de fermeture de l'espace commun. Revenez à l'étape 2.",
+  P0008:
+    "L'activité a plus de places que l'espace commun n'en accueille. Revenez à l'étape 3.",
+  "23503":
+    "Cet espace commun n'existe plus. Revenez à l'étape 2 pour choisir un autre lieu.",
+};
+
 const messages: Record<string, string> = {
+  ...reglesEspace,
   "42501": "Seuls les comptes validés peuvent publier une activité.",
   "23514":
     "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
@@ -17,7 +28,8 @@ const messages: Record<string, string> = {
 
 /**
  * Publie une activité, puis mène à l'écran qui donne son lien et son message WhatsApp.
- * La base vérifie les droits et les contraintes ; seul un échec revient au parcours.
+ * La base vérifie les droits, les contraintes et les règles bloquantes de l'espace commun ; seul
+ * un échec revient au parcours.
  */
 export async function publier(activite: NouvelleActivite): Promise<Resultat> {
   const supabase = await clientSession();
@@ -48,6 +60,7 @@ export async function publier(activite: NouvelleActivite): Promise<Resultat> {
 }
 
 const messagesModification: Record<string, string> = {
+  ...reglesEspace,
   "23514":
     "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
   "22P02":

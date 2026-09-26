@@ -2,11 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { analyserProposition, type ReglesResidence } from "@/assistant";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { Bouton } from "@/components/bouton";
 import { Champ, ChampListe, ChampTexte } from "@/components/champ";
+import { ChoixEspaceCommun } from "@/components/choix-espace-commun";
 import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
+import { EncartPastel } from "@/components/encart-pastel";
 import { Annonce } from "@/components/formulaire";
 import { TitreSection } from "@/components/titre-section";
 import {
@@ -14,11 +17,15 @@ import {
   categoriesActiviteListe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import type { EspaceCommun } from "@/lib/espaces-communs";
 import {
+  LIEU_LIBRE,
   LIMITES,
   NOMBRE_ETAPES,
   SAISIE_VIDE,
   TITRES_ETAPES,
+  blocageDeLEtape,
+  propositionDe,
   verifierEtape,
   versNouvelleActivite,
   type ChampSaisie,
@@ -38,6 +45,10 @@ import { Recapitulatif } from "./recapitulatif";
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
 type Props = {
+  /** Les espaces communs à proposer à l'étape 2, avant « Autre ». */
+  espaces: EspaceCommun[];
+  /** Les règles de la résidence que l'assistant applique. */
+  regles: ReglesResidence;
   /** La saisie de départ : vide pour une nouvelle activité, pré-remplie pour modifier ou dupliquer. */
   initial?: SaisieActivite;
   /**
@@ -52,6 +63,8 @@ type Props = {
  * aussi à modifier une activité (pré-rempli) et à en dupliquer une (pré-rempli sans la date).
  */
 export function ParcoursProposition({
+  espaces,
+  regles,
   initial = SAISIE_VIDE,
   modification,
 }: Props) {
@@ -59,7 +72,12 @@ export function ParcoursProposition({
   const [etape, setEtape] = useState<Etape>(1);
   // Vrai après « Modifier » depuis le récapitulatif : « Continuer » y ramène directement.
   const [retourRecapitulatif, setRetourRecapitulatif] = useState(false);
-  const [saisie, setSaisie] = useState<SaisieActivite>(initial);
+  // Sans espace commun dans la résidence, le lieu est d'emblée un lieu libre.
+  const [saisie, setSaisie] = useState<SaisieActivite>(
+    espaces.length === 0 && initial.espace_commun === ""
+      ? { ...initial, espace_commun: LIEU_LIBRE }
+      : initial,
+  );
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
@@ -96,20 +114,33 @@ export function ParcoursProposition({
     aller(cible);
   }
 
-  function continuer() {
-    const verdict = verifierEtape(etape, saisie, {
+  /** La saisie de l'étape, puis les règles bloquantes de l'assistant qui la concernent. */
+  async function verifier(cible: Etape) {
+    const verdict = verifierEtape(cible, saisie, {
       placesPrises: modification?.placesPrises,
     });
-    setErreur(verdict);
-    if (verdict.erreur) return;
-    aller(retourRecapitulatif ? NOMBRE_ETAPES : ((etape + 1) as Etape));
+    if (verdict.erreur) return verdict;
+    const avis = await analyserProposition(propositionDe(saisie), regles);
+    return blocageDeLEtape(cible, avis.avertissements, saisie);
+  }
+
+  function continuer() {
+    demarrer(async () => {
+      const verdict = await verifier(etape);
+      setErreur(verdict);
+      if (verdict.erreur) return;
+      aller(retourRecapitulatif ? NOMBRE_ETAPES : ((etape + 1) as Etape));
+    });
   }
 
   function publierMaintenant() {
     setResultat(null);
     // Publiée ou enregistrée, l'activité mène à son écran : seul un échec revient ici.
     demarrer(async () => {
-      const activite = versNouvelleActivite(saisie);
+      const verdict = await verifier(NOMBRE_ETAPES);
+      setErreur(verdict);
+      if (verdict.erreur) return;
+      const activite = versNouvelleActivite(saisie, espaces);
       setResultat(
         modification
           ? await enregistrer(modification.identifiant, activite)
@@ -119,6 +150,7 @@ export function ParcoursProposition({
   }
 
   const erreurDe = (champ: ChampSaisie) => erreurDuChamp(erreur, champ);
+  const espaceChoisi = espaces.find((e) => e.id === saisie.espace_commun);
   const messageGeneral =
     erreurGenerale(erreur) ?? (resultat?.ok === false && resultat.message);
 
@@ -227,16 +259,31 @@ export function ParcoursProposition({
               className="flex-1"
             />
           </div>
-          <Champ
-            libelle="Lieu"
-            name="lieu"
-            autoComplete="off"
-            value={saisie.lieu}
-            onChange={(e) => poser("lieu", e.target.value)}
-            erreur={erreurDe("lieu")}
-            aide="Par exemple : cour intérieure, salle commune, chez vous."
-            required
-          />
+          {espaces.length > 0 && (
+            <ChoixEspaceCommun
+              espaces={espaces}
+              valeur={saisie.espace_commun}
+              onChange={(valeur) => poser("espace_commun", valeur)}
+              erreur={erreurDe("espace_commun")}
+            />
+          )}
+          {espaceChoisi?.consignes && (
+            <EncartPastel titre="Consignes de l'espace">
+              {espaceChoisi.consignes}
+            </EncartPastel>
+          )}
+          {saisie.espace_commun === LIEU_LIBRE && (
+            <Champ
+              libelle="Lieu"
+              name="lieu"
+              autoComplete="off"
+              value={saisie.lieu}
+              onChange={(e) => poser("lieu", e.target.value)}
+              erreur={erreurDe("lieu")}
+              aide="Par exemple : chez vous, 2e étage."
+              required
+            />
+          )}
           <Champ
             libelle="Précision d'accès"
             name="precision_acces"
@@ -335,6 +382,8 @@ export function ParcoursProposition({
       {etape === 4 && (
         <Recapitulatif
           saisie={saisie}
+          espace={espaceChoisi}
+          regles={regles}
           onModifier={modifier}
           onAnnuler={() =>
             router.push(
