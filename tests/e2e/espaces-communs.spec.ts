@@ -74,7 +74,10 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   ).toBeVisible();
 
   await page.getByRole("link", { name: "Ajouter un espace commun" }).click();
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Ajouter un espace commun" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Donnez un nom à l'espace commun.",
   );
@@ -95,7 +98,7 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
     path: test.info().outputPath("formulaire-espace.png"),
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
 
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `« ${nom} » est ajouté aux espaces communs.`,
@@ -116,7 +119,7 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
     "Laissez la salle propre.",
   );
   await page.getByLabel("Capacité").fill("25");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `« ${nom} » est enregistré.`,
   );
@@ -132,7 +135,7 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `« ${nom} » est supprimé.`,
   );
-  await expect(page.getByRole("main")).not.toContainText("Jusqu'à 25");
+  await expect(listeDesEspaces(page)).not.toContainText(nom);
 });
 
 test("le conseil syndical règle l'heure de calme de la résidence", async ({
@@ -257,13 +260,13 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
   await commencerProposition(page, titre);
 
   await expect(page.getByRole("radio", { name: /^Autre/ })).toBeVisible();
+  await page.getByLabel("Heure de début").fill("21:00");
+  await page.getByLabel("Heure de fin").fill("22:30");
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Choisissez où se tient l'activité.",
   );
   await saisirLieuLibre(page, "Chez Danielle, 2e étage");
-  await page.getByLabel("Heure de début").fill("21:00");
-  await page.getByLabel("Heure de fin").fill("22:30");
   await continuer(page);
 
   await etape(page, 3);
