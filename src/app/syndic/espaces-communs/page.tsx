@@ -50,10 +50,7 @@ export default async function EspacesCommuns({ searchParams }: Props) {
       <div className="flex flex-col gap-space-lg">
         <Annonce message={confirmation} />
 
-        <section className="flex flex-col gap-space-sm">
-          <TitreSection>Heure de calme</TitreSection>
-          <HeureCalme actuelle={heureCalme?.slice(0, 5) ?? ""} />
-        </section>
+        <HeureCalme actuelle={heureCalme?.slice(0, 5) ?? ""} />
 
         <section className="flex flex-col gap-space-sm">
           <TitreSection>
