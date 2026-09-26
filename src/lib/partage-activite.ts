@@ -52,7 +52,7 @@ export function jourLong(date: string) {
 }
 
 /** « 16h00 », pour une heure `HH:MM` ou `HH:MM:SS`. */
-function heure(valeur: string) {
+export function heure(valeur: string) {
   const [heures, minutes] = valeur.split(":");
   return `${Number(heures)}h${minutes}`;
 }
