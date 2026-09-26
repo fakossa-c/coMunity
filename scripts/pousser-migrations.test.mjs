@@ -1,7 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { analyser, instructionsRisquees } from "./pousser-migrations.mjs";
+import {
+  analyser,
+  instructionsRisquees,
+  lireHistorique,
+} from "./pousser-migrations.mjs";
 
 const m = (local, remote) => ({ local, remote });
+
+describe("lireHistorique", () => {
+  it("lit le JSON que le CLI écrit hors terminal, après ses lignes de progression", () => {
+    const sortie =
+      'Connecting to remote database...\n{"migrations":[{"local":"1","remote":"1","time":"t"}],"message":"Migrations listed"}';
+    expect(lireHistorique(sortie)).toEqual([
+      { local: "1", remote: "1", time: "t" },
+    ]);
+  });
+
+  it("explique l'échec quand le CLI écrit un tableau au lieu du JSON", () => {
+    expect(() =>
+      lireHistorique("   Local | Remote | Time (UTC)\n  ---|---|---"),
+    ).toThrow(/JSON attendu/);
+  });
+});
 
 describe("analyser", () => {
   it("rien à pousser quand local et distant concordent", () => {
