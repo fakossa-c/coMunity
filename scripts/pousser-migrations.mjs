@@ -13,7 +13,21 @@ import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-/** Compare l'historique local et distant (`supabase migration list -o json`). */
+/**
+ * L'historique écrit par `supabase migration list --linked`. Hors terminal, le CLI écrit du JSON ;
+ * avec `--output json`, contre toute attente, il écrit un tableau.
+ */
+export function lireHistorique(sortie) {
+  const debut = sortie.indexOf("{");
+  if (debut === -1) {
+    throw new Error(
+      `JSON attendu de \`supabase migration list\`, reçu :\n${sortie.slice(0, 300)}`,
+    );
+  }
+  return JSON.parse(sortie.slice(debut)).migrations;
+}
+
+/** Compare l'historique local et distant, tel que le lit `lireHistorique`. */
 export function analyser(migrations) {
   const distantes = migrations.map((m) => m.remote).filter(Boolean);
   const derniereDistante = distantes.sort().at(-1) ?? "";
@@ -88,9 +102,8 @@ if (process.argv[1]?.endsWith("pousser-migrations.mjs")) {
     );
   }
 
-  const sortie = supabase("migration", "list", "--linked", "--output", "json");
   const { aPousser, absentesEnLocal, horsOrdre } = analyser(
-    JSON.parse(sortie.slice(sortie.indexOf("{"))).migrations,
+    lireHistorique(supabase("migration", "list", "--linked")),
   );
 
   if (absentesEnLocal.length) {
