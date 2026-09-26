@@ -52,7 +52,10 @@ describe("verdict", () => {
 
   it("laisse passer les lectures distantes", () => {
     expect(
-      verdict({ commande: "npx supabase migration list --linked", ...worktreeIsole }),
+      verdict({
+        commande: "npx supabase migration list --linked",
+        ...worktreeIsole,
+      }),
     ).toBeNull();
     expect(
       verdict({ commande: "npx supabase status", ...worktreeNonIsole }),
@@ -72,8 +75,8 @@ describe("dossierCible", () => {
         "C:/depot",
       ),
     ).toBe("C:/depot/.worktrees/comunity-ticket-9");
-    expect(
-      dossierCible("cd ../autre; npx supabase start", "C:/depot/a"),
-    ).toBe("C:/depot/autre");
+    expect(dossierCible("cd ../autre; npx supabase start", "C:/depot/a")).toBe(
+      "C:/depot/autre",
+    );
   });
 });

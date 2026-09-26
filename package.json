@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "env:local": "node scripts/supabase-local.mjs",
+    "db:pousser": "node scripts/pousser-migrations.mjs",
     "syndic:amorcer": "node --env-file-if-exists=.env.local scripts/amorcer-syndic.mjs",
     "test:unit": "vitest run --project unit",
     "test:db": "vitest run --project db",
