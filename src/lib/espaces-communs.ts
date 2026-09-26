@@ -1,5 +1,6 @@
 import type { ReglesResidence } from "@/assistant";
 import type { NomIcone } from "@/components/icones";
+import { heure } from "./partage-activite";
 import type { ErreurFormulaire } from "./resultat";
 
 /** Un équipement par valeur de l'énumération `equipement_espace` en base, dans l'ordre de la liste. */
@@ -142,6 +143,11 @@ export function saisieDepuisEspace(espace: EspaceCommun): SaisieEspace {
 export function libelleCapacite(capacite: number | null) {
   if (capacite === null) return "Sans limite de places";
   return `Jusqu'à ${capacite} ${capacite === 1 ? "personne" : "personnes"}`;
+}
+
+/** « Ferme à 21h00 », l'heure de fin maximale d'un espace commun. */
+export function libelleHeureFinMax(heureFinMax: string) {
+  return `Ferme à ${heure(heureFinMax)}`;
 }
 
 /** Une activité publiée dans un espace commun, telle que la table `activite` la livre. */

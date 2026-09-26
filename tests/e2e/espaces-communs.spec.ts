@@ -104,7 +104,7 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
     hasText: nom,
   });
   await expect(carte).toContainText("Jusqu'à 20 personnes");
-  await expect(carte).toContainText("Jusqu'à 21h00");
+  await expect(carte).toContainText("Ferme à 21h00");
   await expect(carte).toContainText("Coin cuisine");
   await page.screenshot({
     path: test.info().outputPath("espaces-communs.png"),
