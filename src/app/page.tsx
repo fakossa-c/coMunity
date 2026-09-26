@@ -1,51 +1,163 @@
 import { AideInstallation } from "@/components/aide-installation";
+import { BarreFiltres } from "@/components/barre-filtres";
 import { Bientot } from "@/components/bientot";
 import { EcranPrincipal } from "@/components/cadre";
 import { CarteActivite, type Activite } from "@/components/carte-activite";
-import { TitrePage } from "@/components/titre-page";
+import { PuceFiltre } from "@/components/puce-filtre";
+import { Salutation } from "@/components/salutation";
+import { TitreSection } from "@/components/titre-section";
+import {
+  activitesDeLaSemaine,
+  categorieFiltree,
+  grouperParJour,
+  resumeSemaine,
+} from "@/lib/accueil";
+import {
+  categoriesActivite,
+  categoriesActiviteListe,
+  pictogrammeDe,
+  type CategorieActivite,
+} from "@/lib/categories-activite";
+import { lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const MESSAGE_VIDE =
   "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du conseil syndical apparaîtront ici.";
 
-export default async function Activites() {
+type ActiviteDuJour = Activite & { heure_fin: string };
+
+type Props = { searchParams: Promise<{ categorie?: string }> };
+
+export default async function Accueil({ searchParams }: Props) {
+  const { categorie } = await searchParams;
+  const session = await lireSession();
   const supabase = await clientSession();
   const { data: peutConsulter } = await supabase.rpc("peut_consulter");
+  const activites = peutConsulter ? await lireCatalogue() : [];
+  // Les dates sont celles de la base (UTC) : le même « aujourd'hui » que le catalogue.
+  const aujourdhui = new Date().toISOString().slice(0, 10);
 
   return (
     <EcranPrincipal onglet="accueil">
-      <TitrePage
-        titre="Activités"
-        sousTitre="Découvrez et participez à la vie de la résidence"
+      <Salutation
+        prenom={session?.prenom}
+        resume={
+          peutConsulter
+            ? resumeSemaine(activitesDeLaSemaine(activites, aujourdhui))
+            : undefined
+        }
       />
       <AideInstallation />
-      {peutConsulter ? (
-        <Catalogue />
-      ) : (
+      {activites.length === 0 ? (
         <Bientot icone="diversity_3" message={MESSAGE_VIDE} />
+      ) : (
+        <Catalogue
+          activites={activites}
+          categorie={categorieFiltree(categorie)}
+          aujourdhui={aujourdhui}
+        />
       )}
     </EcranPrincipal>
   );
 }
 
-async function Catalogue() {
+/** Les activités à venir, avec leur heure de fin, que le catalogue ne donne pas. */
+async function lireCatalogue(): Promise<ActiviteDuJour[]> {
   const supabase = await clientSession();
   const { data, error } = await supabase.rpc("catalogue_activites");
   if (error)
     throw new Error(`Catalogue des activités illisible : ${error.message}`);
   const activites = data as Activite[];
+  if (activites.length === 0) return [];
 
-  if (activites.length === 0) {
-    return <Bientot icone="diversity_3" message={MESSAGE_VIDE} />;
-  }
+  const { data: fins, error: erreurFins } = await supabase
+    .from("activite")
+    .select("id, heure_fin")
+    .in(
+      "id",
+      activites.map((activite) => activite.id),
+    );
+  if (erreurFins)
+    throw new Error(
+      `Horaires des activités illisibles : ${erreurFins.message}`,
+    );
+  const finDe = new Map(fins.map((fin) => [fin.id, fin.heure_fin as string]));
+  return activites.map((activite) => ({
+    ...activite,
+    heure_fin: finDe.get(activite.id) ?? activite.heure_debut,
+  }));
+}
+
+function Catalogue({
+  activites,
+  categorie,
+  aujourdhui,
+}: {
+  activites: ActiviteDuJour[];
+  categorie: CategorieActivite | null;
+  aujourdhui: string;
+}) {
+  const jours = grouperParJour(
+    categorie
+      ? activites.filter((activite) => activite.categorie === categorie)
+      : activites,
+    aujourdhui,
+  );
 
   return (
-    <ul aria-label="Activités à venir" className="flex flex-col gap-space-sm">
-      {activites.map((activite) => (
-        <li key={activite.id}>
-          <CarteActivite activite={activite} />
-        </li>
-      ))}
-    </ul>
+    <>
+      <BarreFiltres libelle="Catégories">
+        <PuceFiltre
+          categorie
+          selectionnee={categorie === null}
+          href="/"
+          className="shrink-0 whitespace-nowrap"
+        >
+          Toutes
+        </PuceFiltre>
+        {categoriesActiviteListe.map((cle) => (
+          <PuceFiltre
+            key={cle}
+            categorie
+            icone={pictogrammeDe(cle)}
+            selectionnee={categorie === cle}
+            href={`/?categorie=${cle}`}
+            className="shrink-0 whitespace-nowrap"
+          >
+            {categoriesActivite[cle].libelle}
+          </PuceFiltre>
+        ))}
+      </BarreFiltres>
+      <section
+        aria-label="Activités à venir"
+        className="mt-space-sm flex flex-col gap-space-lg"
+      >
+        {jours.length === 0 ? (
+          <Bientot
+            icone="diversity_3"
+            message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
+          />
+        ) : (
+          jours.map((jour) => (
+            <section
+              key={jour.date}
+              aria-labelledby={`jour-${jour.date}`}
+              className="flex flex-col gap-3.5"
+            >
+              <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
+                {jour.titre}
+              </TitreSection>
+              <ul className="flex flex-col gap-bloc">
+                {jour.activites.map((activite) => (
+                  <li key={activite.id}>
+                    <CarteActivite activite={activite} detailsDepliables />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
+      </section>
+    </>
   );
 }

@@ -1,15 +1,27 @@
 import Link from "next/link";
+import { horaire } from "@/lib/accueil";
 import {
   categoriesActivite,
+  pictogrammeDe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
-import type { EtiquetteActivite } from "@/lib/etiquettes-activite";
+import {
+  etiquettesActivite,
+  type EtiquetteActivite,
+} from "@/lib/etiquettes-activite";
+import {
+  estComplete,
+  libelleStatutInscription,
+} from "@/lib/inscription-activite";
 import { cheminFiche, estPassee } from "@/lib/partage-activite";
+import { classesBouton } from "./bouton";
 import { EtatActivite, type StatutActivite } from "./etat-activite";
 import { EtiquettesActivite } from "./etiquette";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 import { Jauge } from "./jauge";
+import { TiroirDetails } from "./tiroir-details";
+import { VisuelActivite } from "./visuel-activite";
 
 export type Activite = {
   id: string;
@@ -48,7 +60,17 @@ function dateEtHeure(activite: Activite) {
   return `${date} à ${heure}`;
 }
 
-export function CarteActivite({ activite }: { activite: Activite }) {
+type Props =
+  | { activite: Activite; detailsDepliables?: false }
+  /**
+   * Accueil : sous l'intertitre de son jour, la carte ne garde que l'horaire ; horaire, lieu et
+   * étiquettes passent dans le tiroir « Détails », puis « Voir la fiche » et « Je participe ».
+   */
+  | { activite: Activite & { heure_fin: string }; detailsDepliables: true };
+
+export function CarteActivite(props: Props) {
+  if (props.detailsDepliables) return <CarteDuJour activite={props.activite} />;
+  const { activite } = props;
   const annulee = activite.statut === "annulee";
   const inscrit = activite.mes_accompagnants != null && !annulee;
   return (
@@ -104,5 +126,125 @@ export function CarteActivite({ activite }: { activite: Activite }) {
         </p>
       )}
     </article>
+  );
+}
+
+/** La carte d'une activité dans l'Accueil, où les activités sont groupées par jour. */
+function CarteDuJour({
+  activite,
+}: {
+  activite: Activite & { heure_fin: string };
+}) {
+  const annulee = activite.statut === "annulee";
+  const inscrit = activite.mes_accompagnants != null && !annulee;
+  const complete = estComplete({
+    capaciteMax: activite.capacite_max ?? null,
+    placesPrises: activite.places_prises ?? 0,
+  });
+  const creneau = horaire(activite.heure_debut, activite.heure_fin);
+  const etiquettes = activite.etiquettes ?? [];
+  const accessibilite = etiquettes.filter(
+    (cle) => etiquettesActivite[cle].groupe === "accessibilite",
+  );
+  const pourQui = etiquettes.filter(
+    (cle) => etiquettesActivite[cle].groupe === "pour_qui",
+  );
+  const fiche = cheminFiche(activite.identifiant_public);
+
+  return (
+    <article className="flex flex-col overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+      <VisuelActivite pictogramme={activite.pictogramme as NomIcone} enCarte />
+      <div className="flex flex-col gap-space-sm px-4 pt-4 pb-[18px]">
+        <p className="flex items-center gap-1.5 text-body-md text-on-surface-variant">
+          <Icone
+            nom={pictogrammeDe(activite.categorie)}
+            taille={22}
+            className="text-texte-date"
+          />
+          {categoriesActivite[activite.categorie].libelle}
+        </p>
+        <p className="font-headline text-label-lg text-texte-date">{creneau}</p>
+        <h3 className="font-headline text-headline-md text-on-surface">
+          <Link href={fiche} className="rounded-sm">
+            {activite.titre}
+          </Link>
+        </h3>
+        {activite.places_prises != null && (
+          <Jauge
+            capaciteMax={activite.capacite_max ?? null}
+            placesPrises={activite.places_prises}
+          />
+        )}
+        {activite.statut && (
+          <EtatActivite
+            statut={activite.statut}
+            capaciteMin={activite.capacite_min ?? null}
+            placesPrises={activite.places_prises ?? 0}
+            passee={false}
+          />
+        )}
+        <TiroirDetails>
+          <div className="flex flex-col gap-space-sm">
+            <p className="flex items-center gap-space-xs text-body-lg text-on-surface">
+              <Icone nom="schedule" className="size-5 shrink-0" />
+              {creneau}
+            </p>
+            <p className="flex items-center gap-space-xs text-body-lg text-on-surface">
+              <Icone nom="location_on" className="size-5 shrink-0" />
+              {activite.lieu}
+            </p>
+            {accessibilite.length > 0 && (
+              <GroupeEtiquettes
+                titre="Accessibilité"
+                etiquettes={accessibilite}
+              />
+            )}
+            {pourQui.length > 0 && (
+              <GroupeEtiquettes titre="Pour qui" etiquettes={pourQui} />
+            )}
+          </div>
+        </TiroirDetails>
+        {inscrit ? (
+          <p className="flex items-center gap-2 rounded-md bg-fond-confirme px-4 py-3 font-headline text-body-bold text-texte-confirme">
+            <Icone nom="check_circle" plein taille={24} />
+            {libelleStatutInscription(activite.mes_accompagnants ?? 0)}
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-space-sm">
+            <Link
+              href={fiche}
+              className={`${classesBouton("contour")} flex-auto`}
+            >
+              Voir la fiche
+            </Link>
+            {!annulee && !complete && (
+              <Link
+                href={fiche}
+                className={`${classesBouton("action")} flex-auto`}
+              >
+                Je participe
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function GroupeEtiquettes({
+  titre,
+  etiquettes,
+}: {
+  titre: string;
+  etiquettes: EtiquetteActivite[];
+}) {
+  return (
+    <div className="flex flex-col gap-space-xs">
+      <p className="font-headline text-label-md text-on-surface-variant">
+        {titre}
+      </p>
+      <EtiquettesActivite etiquettes={etiquettes} />
+    </div>
   );
 }

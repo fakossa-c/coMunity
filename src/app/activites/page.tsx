@@ -34,7 +34,7 @@ export default async function Activites({ searchParams }: Props) {
       ) : puce === "a_venir" ? (
         <MesInscriptionsAVenir />
       ) : (
-        <Bientot icone="diversity_3" />
+        <MesInscriptionsPassees />
       )}
     </EcranPrincipal>
   );
@@ -90,6 +90,57 @@ async function MesInscriptionsAVenir() {
 
   return (
     <ListeActivites libelle="Vos activités à venir" activites={inscriptions} />
+  );
+}
+
+/**
+ * Les activités passées où j'étais inscrit, la plus récente d'abord. Celles que leur créateur a
+ * annulées n'y figurent pas : on n'y est pas allé.
+ */
+async function MesInscriptionsPassees() {
+  const session = await lireSession();
+  if (!session) {
+    return (
+      <Bientot
+        icone="diversity_3"
+        message="Connectez-vous pour retrouver vos activités passées."
+      />
+    );
+  }
+
+  // Les dates sont celles de la base (UTC) : le même « aujourd'hui » que le catalogue de l'Accueil.
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("inscription_activite")
+    .select(
+      "activite!inner(id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu, etiquettes, statut)",
+    )
+    .eq("resident_id", session.id)
+    .lt("activite.date_activite", aujourdhui)
+    .neq("activite.statut", "annulee");
+  if (error)
+    throw new Error(`Vos activités passées sont illisibles : ${error.message}`);
+
+  const activites = (data as unknown as { activite: Activite }[])
+    .map(({ activite }) => activite)
+    .sort((a, b) =>
+      `${b.date_activite} ${b.heure_debut}`.localeCompare(
+        `${a.date_activite} ${a.heure_debut}`,
+      ),
+    );
+
+  if (activites.length === 0) {
+    return (
+      <Bientot
+        icone="diversity_3"
+        message="Les activités passées où vous aviez une place apparaîtront ici."
+      />
+    );
+  }
+
+  return (
+    <ListeActivites libelle="Vos activités passées" activites={activites} />
   );
 }
 

@@ -5,6 +5,8 @@ type Props = {
   avant?: ReactNode;
   /** accueil : défilement horizontal, 12/20 px. liste : 16 px (Activités). */
   variante?: "accueil" | "liste";
+  /** Nom de la barre, qui devient alors une navigation (« Catégories » sur l'Accueil). */
+  libelle?: string;
   children: ReactNode;
 };
 
@@ -12,9 +14,18 @@ type Props = {
  * Rangée de puces collante (sticky top 0, fond de page). Toute barre de filtres, actuelle ou
  * future, colle en haut de l'écran ; les onglets passés via `avant` collent avec elle.
  */
-export function BarreFiltres({ avant, variante = "accueil", children }: Props) {
+export function BarreFiltres({
+  avant,
+  variante = "accueil",
+  libelle,
+  children,
+}: Props) {
+  const Conteneur = libelle ? "nav" : "div";
   return (
-    <div className="sticky top-0 z-20 -mx-margin flex flex-col gap-space-sm bg-fond-page px-margin pt-[env(safe-area-inset-top)] pb-space-sm">
+    <Conteneur
+      aria-label={libelle}
+      className="sticky top-0 z-20 -mx-margin flex flex-col gap-space-sm bg-fond-page px-margin pt-[env(safe-area-inset-top)] pb-space-sm"
+    >
       {avant}
       <div
         className={
@@ -25,6 +36,6 @@ export function BarreFiltres({ avant, variante = "accueil", children }: Props) {
       >
         {children}
       </div>
-    </div>
+    </Conteneur>
   );
 }
