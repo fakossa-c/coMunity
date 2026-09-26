@@ -180,9 +180,9 @@ test("un inscrit voit l'annulation sur sa carte et sur la fiche, sans pouvoir s'
 
   await page.goto(`/activites/${identifiant}`);
   await expect(page.getByRole("main").getByText("Annulée")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Je participe" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Je participe" })).toHaveCount(
+    0,
+  );
 });
 
 test("la fiche dit « confirmée » ou combien de participants manquent", async ({

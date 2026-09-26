@@ -16,7 +16,9 @@ describe("places restantes d'une activité", () => {
   });
 
   it("sont infinies quand l'activité n'a pas de capacité", () => {
-    expect(placesRestantesDe({ capaciteMax: null, placesPrises: 8 })).toBeNull();
+    expect(
+      placesRestantesDe({ capaciteMax: null, placesPrises: 8 }),
+    ).toBeNull();
   });
 });
 
@@ -123,11 +125,15 @@ describe("état de confirmation selon le minimum", () => {
   it("« encore 3 participants pour confirmer » sous le minimum", () => {
     const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 1 });
     expect(etat).toEqual({ confirmee: false, manquants: 3 });
-    expect(libelleConfirmation(etat)).toBe("Encore 3 participants pour confirmer");
+    expect(libelleConfirmation(etat)).toBe(
+      "Encore 3 participants pour confirmer",
+    );
   });
 
   it("« encore 1 participant pour confirmer » au singulier", () => {
     const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 3 });
-    expect(libelleConfirmation(etat)).toBe("Encore 1 participant pour confirmer");
+    expect(libelleConfirmation(etat)).toBe(
+      "Encore 1 participant pour confirmer",
+    );
   });
 });

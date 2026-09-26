@@ -187,9 +187,7 @@ export default async function Fiche({ params }: Props) {
           (fiche.est_organisateur || estSyndicActif(session)) && (
             <Retours identifiant={identifiant} />
           )}
-        {!annulee && (
-          <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
-        )}
+        {!annulee && <BoutonRelayer message={messageWhatsApp(fiche, lien)} />}
         <BoutonCopier
           texte={lien}
           libelle="Copier le lien"

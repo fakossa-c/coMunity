@@ -9,13 +9,14 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "env:local": "node scripts/supabase-local.mjs",
     "db:pousser": "node scripts/pousser-migrations.mjs",
     "syndic:amorcer": "node --env-file-if-exists=.env.local scripts/amorcer-syndic.mjs",
     "test:unit": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "test:e2e": "playwright test",
-    "test": "vitest run && playwright test"
+    "test": "npm run format:check && vitest run && playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

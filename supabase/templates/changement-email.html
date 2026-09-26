@@ -1,15 +1,35 @@
-<div style="font-family: Arial, sans-serif; font-size: 18px; line-height: 1.6; color: #121c2a; max-width: 560px">
+<div
+  style="
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #121c2a;
+    max-width: 560px;
+  "
+>
   <h1 style="font-size: 24px">Confirmez votre nouvelle adresse</h1>
-  <p>Vous avez demandé à utiliser {{ .NewEmail }} pour vous connecter à votre résidence.</p>
+  <p>
+    Vous avez demandé à utiliser {{ .NewEmail }} pour vous connecter à votre
+    résidence.
+  </p>
   <p>
     <a
       href="{{ .SiteURL }}/auth/confirmer?token_hash={{ .TokenHash }}&type=email_change"
-      style="display: inline-block; padding: 16px 24px; border-radius: 16px; background: #273140; color: #ffffff; font-weight: bold; text-decoration: none"
+      style="
+        display: inline-block;
+        padding: 16px 24px;
+        border-radius: 16px;
+        background: #273140;
+        color: #ffffff;
+        font-weight: bold;
+        text-decoration: none;
+      "
       >Confirmer ma nouvelle adresse</a
     >
   </p>
   <p style="font-size: 16px; color: #594139">
-    Votre adresse ne change qu'une fois ce lien ouvert. Si vous n'avez rien demandé, ignorez cet email : vous
-    continuez à vous connecter avec {{ .Email }}.
+    Votre adresse ne change qu'une fois ce lien ouvert. Si vous n'avez rien
+    demandé, ignorez cet email : vous continuez à vous connecter avec {{ .Email
+    }}.
   </p>
 </div>

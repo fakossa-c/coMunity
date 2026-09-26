@@ -88,7 +88,8 @@ export function BlocInscription({ fiche, statut }: Props) {
         </Bouton>
         {statut === "en_attente" && (
           <p className="text-body-md text-on-surface-variant">
-            Votre compte doit être validé par le conseil syndical pour vous inscrire.
+            Votre compte doit être validé par le conseil syndical pour vous
+            inscrire.
           </p>
         )}
         {erreur && <p className="text-body-md text-error">{erreur}</p>}

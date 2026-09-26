@@ -234,13 +234,15 @@ describe("saisie pré-remplie depuis une activité existante", () => {
   });
 
   it("la saisie rechargée se republie telle quelle", () => {
-    expect(versNouvelleActivite(saisieDepuisActivite(EXISTANTE))).toMatchObject({
-      titre: "Goûter crêpes",
-      heure_debut: "16:00",
-      capacite_max: 12,
-      capacite_min: 4,
-      materiel_prevoir: null,
-    });
+    expect(versNouvelleActivite(saisieDepuisActivite(EXISTANTE))).toMatchObject(
+      {
+        titre: "Goûter crêpes",
+        heure_debut: "16:00",
+        capacite_max: 12,
+        capacite_min: 4,
+        materiel_prevoir: null,
+      },
+    );
   });
 });
 
@@ -269,7 +271,11 @@ describe("capacité et personnes déjà inscrites", () => {
 
   it("des places sans limite ne posent jamais problème", () => {
     expect(
-      verifierEtape(3, { ...COMPLETE, places: "sans_limite" }, { placesPrises: 50 }),
+      verifierEtape(
+        3,
+        { ...COMPLETE, places: "sans_limite" },
+        { placesPrises: 50 },
+      ),
     ).toEqual({});
   });
 });

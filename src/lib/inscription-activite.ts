@@ -61,9 +61,7 @@ export function libelleStatutInscription(accompagnants: number) {
 
 /** Où en est une activité par rapport à son minimum de participants ; `null` sans minimum. */
 export type EtatConfirmation =
-  | { confirmee: true }
-  | { confirmee: false; manquants: number }
-  | null;
+  { confirmee: true } | { confirmee: false; manquants: number } | null;
 
 /**
  * « Confirmée » quand les personnes inscrites, accompagnants compris, atteignent le minimum ;

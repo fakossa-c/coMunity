@@ -96,7 +96,9 @@ export async function annulerActivite(identifiant: string): Promise<Resultat> {
 }
 
 /** Supprime l'activité de la personne connectée, puis revient à la liste de ce qu'elle organise. */
-export async function supprimerActivite(identifiant: string): Promise<Resultat> {
+export async function supprimerActivite(
+  identifiant: string,
+): Promise<Resultat> {
   const supabase = await clientSession();
   const { error } = await supabase.rpc("supprimer_activite", {
     p_identifiant: identifiant,

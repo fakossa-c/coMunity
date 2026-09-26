@@ -89,10 +89,7 @@ async function MesInscriptionsAVenir() {
   }
 
   return (
-    <ListeActivites
-      libelle="Vos activités à venir"
-      activites={inscriptions}
-    />
+    <ListeActivites libelle="Vos activités à venir" activites={inscriptions} />
   );
 }
 
@@ -146,9 +143,7 @@ async function MesActivitesOrganisees({
   return (
     <ListeActivites
       libelle={
-        puce === "a_venir"
-          ? "Vos activités à venir"
-          : "Vos activités passées"
+        puce === "a_venir" ? "Vos activités à venir" : "Vos activités passées"
       }
       activites={activites}
     />

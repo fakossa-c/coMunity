@@ -14,7 +14,7 @@ type Props = {
  */
 export function BarreFiltres({ avant, variante = "accueil", children }: Props) {
   return (
-    <div className="sticky top-0 z-20 -mx-margin flex flex-col gap-space-sm bg-fond-page px-margin pb-space-sm pt-[env(safe-area-inset-top)]">
+    <div className="sticky top-0 z-20 -mx-margin flex flex-col gap-space-sm bg-fond-page px-margin pt-[env(safe-area-inset-top)] pb-space-sm">
       {avant}
       <div
         className={

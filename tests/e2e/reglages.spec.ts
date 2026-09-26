@@ -37,9 +37,7 @@ test("Mes réglages propose la taille des caractères et l'apparence", async ({
     page.getByRole("heading", { level: 1, name: "Mes réglages" }),
   ).toBeVisible();
   const taille = page.getByRole("group", { name: "Taille des caractères" });
-  await expect(
-    taille.getByRole("radio", { name: "Standard" }),
-  ).toBeChecked();
+  await expect(taille.getByRole("radio", { name: "Standard" })).toBeChecked();
   await expect(taille.getByRole("radio", { name: "Grands" })).not.toBeChecked();
 
   const apparence = page.getByRole("group", { name: "Apparence" });

@@ -10,7 +10,10 @@ export function Jauge(jauge: JaugeActivite) {
   const pourcentage =
     restantes === null
       ? null
-      : Math.min(100, Math.round((jauge.placesPrises / jauge.capaciteMax!) * 100));
+      : Math.min(
+          100,
+          Math.round((jauge.placesPrises / jauge.capaciteMax!) * 100),
+        );
 
   return (
     <div className="flex flex-col gap-1">
@@ -28,7 +31,9 @@ export function Jauge(jauge: JaugeActivite) {
           />
         </div>
       )}
-      <p className="text-body-md text-on-surface-variant">{libelleJauge(jauge)}</p>
+      <p className="text-body-md text-on-surface-variant">
+        {libelleJauge(jauge)}
+      </p>
     </div>
   );
 }
