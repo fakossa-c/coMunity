@@ -5,4 +5,4 @@
 - **Conséquence** : sans effet visible pour la production, la migration ne faisant qu'ajouter (une colonne avec valeur par défaut, deux fonctions). À régulariser avec `npx supabase migration repair --status applied 20260924200000`.
 - **Règle** : toute écriture sur le Supabase distant touche la production et attend l'accord de l'utilisateur ; une migration s'y applique avec `supabase db push`.
 - **Où elle est écrite** : `CLAUDE.md`, section « Supabase distant ».
-- **Reste ouvert** : la preview d'une PR avec migration est en erreur tant que la production n'a pas le nouveau schéma. Une base Supabase distincte pour les previews lèverait cette contrainte.
+- **Suite (26/09/2026)** : pas de base distincte pour les previews (plan gratuit). La migration part après la fusion dans `develop`, par `npm run db:pousser`, qui refuse un historique distant en avance ou une migration hors ordre ; un hook bloque tout `supabase db push` direct. La PR se vérifie en local avant la fusion, sur la preview de `develop` après le push.

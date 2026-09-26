@@ -6,9 +6,11 @@
 
 ## Supabase distant
 
-- Les previews Vercel et la production partagent un seul projet Supabase Cloud : toute écriture sur son schéma ou ses données touche la production. Chacune attend l'accord de l'utilisateur.
-- Une PR qui ajoute une migration a une preview en erreur sur les écrans concernés tant que la migration n'est pas sur ce projet : sa vérification de preview attend cet accord.
-- Une migration s'y applique avec `npx supabase db push` (procédure dans `docs/deploiement.md`, section 1), qui tient l'historique des migrations à jour. Une migration exécutée à la main dans l'éditeur SQL se déclare ensuite avec `npx supabase migration repair --status applied <version>`.
+- Les previews Vercel et la production partagent un seul projet Supabase Cloud, durablement (plan gratuit, pas de projet dédié aux previews) : toute écriture sur son schéma ou ses données touche la production. Chacune attend l'accord de l'utilisateur.
+- Une migration part en distant après la fusion de sa PR dans `develop`, depuis le checkout principal sur `develop` à jour : `npm run db:pousser` vérifie l'historique et liste ce qui partirait, puis `npm run db:pousser -- --appliquer` pousse. Un hook du projet bloque tout `supabase db push` direct.
+- Avant la fusion, une PR à migration se vérifie sur le Supabase local (`npm test`) ; sa preview reste en erreur sur les écrans concernés jusqu'au push, puis se vérifie sur la preview de `develop`.
+- Le code de `main` tourne sur cette base avant de recevoir `develop` : une migration ajoute sans retirer. Supprimer ou renommer une colonne, une table ou ce qu'une fonction renvoie, quand `main` s'en sert, attend la fusion `develop` → `main` ; `db:pousser` signale ces lignes.
+- Une migration exécutée à la main dans l'éditeur SQL se déclare ensuite, depuis le checkout principal, avec `npx supabase migration repair --status applied <version>`.
 
 ## Compte GitHub
 
@@ -19,10 +21,11 @@
 
 ## Commandes
 
-- Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx.
-- Worktree de ticket : les worktrees partagent sinon le même conteneur Docker et les mêmes ports 544xx, ce qui casse les tests d'un ticket pendant qu'un autre tourne. Juste après la création du worktree, dans son dossier : `node scripts/isoler-supabase-worktree.mjs` (attribue un `project_id` et des ports dédiés au ticket) puis `git update-index --skip-worktree supabase/config.toml` (ne jamais commiter ces ports isolés), puis `npx supabase start` et `npm run env:local`.
+- Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx. Realtime et Storage y sont coupés, faute d'usage : le ticket qui stocke des fichiers réactive Storage dans `supabase/config.toml`.
+- Worktree : juste après sa création, dans son dossier, `node scripts/isoler-supabase-worktree.mjs` (conteneur Docker et ports propres, Studio coupé, `config.toml` masqué pour git, lien Vercel recopié), puis `npx supabase start` et `npm run env:local`. Sans cette isolation, tous les checkouts pilotent le même conteneur, et un hook du projet bloque `supabase start`, `stop` et `db reset`.
+- Chaque Supabase local démarré occupe environ 300 Mo : `npx supabase stop` dans le worktree dès sa PR ouverte.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
-- `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR.
+- `npm test` : suite complète (unitaires, base de données, navigateur mobile et desktop). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucune CI ne rejoue les tests avant octobre 2026 (quota GitHub Actions du plan gratuit).
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
