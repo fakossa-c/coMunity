@@ -169,13 +169,15 @@ create trigger espace_commun_renomme
   when (new.nom is distinct from old.nom)
   execute function public.renommer_lieu_des_activites();
 
--- La fiche donne l'espace commun de l'activité et ses consignes.
+-- La fiche donne l'espace commun de l'activité et ses consignes, à qui peut lire les espaces
+-- communs : un visiteur n'en voit que le nom, dans `lieu`.
 drop function public.fiche_activite(text);
 
 /**
  * La fiche d'une activité, lisible par tous à partir de son identifiant public. La jauge
  * (places prises et capacité, `null` si l'activité n'en a pas) est toujours donnée ;
- * l'inscription et le retour de la personne connectée ne sont donnés qu'à elle-même.
+ * l'inscription et le retour de la personne connectée ne sont donnés qu'à elle-même ; l'espace
+ * commun et ses consignes, qu'à un compte qui peut consulter.
  */
 create function public.fiche_activite(identifiant text)
 returns table (
@@ -247,8 +249,8 @@ as $$
       select r.commentaire from public.retour r
       where r.activite_id = a.id and r.resident_id = auth.uid()
     ),
-    a.espace_commun_id,
-    e.consignes
+    case when public.peut_consulter() then a.espace_commun_id end,
+    case when public.peut_consulter() then e.consignes end
   from public.activite a
   join public.profil p on p.id = a.organisateur
   left join public.espace_commun e on e.id = a.espace_commun_id
