@@ -135,7 +135,10 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `« ${nom} » est supprimé.`,
   );
-  await expect(listeDesEspaces(page)).not.toContainText(nom);
+  // La liste disparaît quand plus aucun espace commun n'existe : on cherche la carte, pas la liste.
+  await expect(
+    page.getByRole("link", { name: `Modifier : ${nom}` }),
+  ).toHaveCount(0);
 });
 
 test("le conseil syndical règle l'heure de calme de la résidence", async ({
