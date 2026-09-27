@@ -198,7 +198,7 @@ describe("heure de calme de la résidence", () => {
 });
 
 describe("activité dans un espace commun", () => {
-  it("prend le nom de l'espace comme lieu, et la fiche donne ses consignes", async () => {
+  it("prend le nom de l'espace comme lieu, et la fiche donne ses consignes à un résident", async () => {
     const syndic = await nouveauSyndic();
     const espace = await nouvelEspace(syndic);
     const resident = await nouveauResident("valide");
@@ -210,13 +210,31 @@ describe("activité dans un espace commun", () => {
 
     expect(error).toBeNull();
     expect(data?.lieu).toBe(espace.nom);
-    const { data: fiche } = await clientVisiteur()
+    const lecteur = await nouveauResident("en_attente");
+    const { data: fiche } = await lecteur.client
       .rpc("fiche_activite", { identifiant: data!.identifiant_public })
       .single();
     expect(fiche).toMatchObject({
       lieu: espace.nom,
       espace_commun_id: espace.id,
       consignes_espace: SALLE.consignes,
+    });
+  });
+
+  it("un visiteur lit le nom de l'espace comme lieu, sans l'espace ni ses consignes", async () => {
+    const syndic = await nouveauSyndic();
+    const espace = await nouvelEspace(syndic);
+    const resident = await nouveauResident("valide");
+    const { data } = await publier(resident, { espace_commun_id: espace.id });
+
+    const { data: fiche } = await clientVisiteur()
+      .rpc("fiche_activite", { identifiant: data!.identifiant_public })
+      .single();
+
+    expect(fiche).toMatchObject({
+      lieu: espace.nom,
+      espace_commun_id: null,
+      consignes_espace: null,
     });
   });
 
