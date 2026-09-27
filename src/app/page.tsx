@@ -83,14 +83,11 @@ async function lireCatalogue(): Promise<ActiviteDuJour[]> {
     throw new Error(
       `Horaires des activités illisibles : ${erreurFins.message}`,
     );
+  // Une activité sans heure de fin a été supprimée entre les deux lectures : elle n'est plus à venir.
   const finDe = new Map(fins.map((fin) => [fin.id, fin.heure_fin as string]));
-  return activites.map((activite) => {
+  return activites.flatMap((activite) => {
     const fin = finDe.get(activite.id);
-    if (!fin)
-      throw new Error(
-        `Heure de fin introuvable pour l'activité ${activite.id}`,
-      );
-    return { ...activite, heure_fin: fin };
+    return fin ? [{ ...activite, heure_fin: fin }] : [];
   });
 }
 
