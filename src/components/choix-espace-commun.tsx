@@ -1,11 +1,7 @@
 "use client";
 
 import { useId, type ReactNode } from "react";
-import {
-  libelleCapacite,
-  libelleHeureFinMax,
-  type EspaceCommun,
-} from "@/lib/espaces-communs";
+import { resumeEspace, type EspaceCommun } from "@/lib/espaces-communs";
 import { LIEU_LIBRE } from "@/lib/proposition-activite";
 import { EquipementsEspace } from "./equipements-espace";
 import { Icone } from "./icone";
@@ -50,13 +46,7 @@ export function ChoixEspaceCommun({
           onChange={onChange}
           icone="meeting_room"
           titre={espace.nom}
-          detail={[
-            espace.batiment,
-            libelleCapacite(espace.capacite),
-            espace.heure_fin_max && libelleHeureFinMax(espace.heure_fin_max),
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          detail={resumeEspace(espace)}
         >
           <EquipementsEspace equipements={espace.equipements} />
         </Option>
@@ -136,7 +126,12 @@ function Option({
           </span>
         </span>
       </label>
-      {children && <div className="pl-[34px]">{children}</div>}
+      {/* Aligné sous le libellé : la pastille radio (24 px) et son écart. */}
+      {children && (
+        <div className="pl-[calc(24px+var(--spacing-space-sm))]">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

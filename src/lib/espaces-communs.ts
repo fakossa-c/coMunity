@@ -145,9 +145,17 @@ export function libelleCapacite(capacite: number | null) {
   return `Jusqu'à ${capacite} ${capacite === 1 ? "personne" : "personnes"}`;
 }
 
-/** « Ferme à 21h00 », l'heure de fin maximale d'un espace commun. */
-export function libelleHeureFinMax(heureFinMax: string) {
-  return `Ferme à ${heure(heureFinMax)}`;
+/** « Bâtiment B · Jusqu'à 20 personnes · Ferme à 21h00 » : un espace commun en une ligne. */
+export function resumeEspace(
+  espace: Pick<EspaceCommun, "batiment" | "capacite" | "heure_fin_max">,
+) {
+  return [
+    espace.batiment,
+    libelleCapacite(espace.capacite),
+    espace.heure_fin_max && `Ferme à ${heure(espace.heure_fin_max)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** Une activité publiée dans un espace commun, telle que la table `activite` la livre. */

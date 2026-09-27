@@ -3,6 +3,7 @@ import {
   SAISIE_ESPACE_VIDE,
   libelleCapacite,
   reglesResidence,
+  resumeEspace,
   saisieDepuisEspace,
   verifierEspace,
   versEspaceCommun,
@@ -98,6 +99,15 @@ describe("affichage", () => {
     expect(libelleCapacite(20)).toBe("Jusqu'à 20 personnes");
     expect(libelleCapacite(1)).toBe("Jusqu'à 1 personne");
     expect(libelleCapacite(null)).toBe("Sans limite de places");
+  });
+
+  it("résume un espace en une ligne : bâtiment, capacité, heure limite", () => {
+    expect(resumeEspace(ESPACE)).toBe(
+      "Bâtiment B · Jusqu'à 20 personnes · Ferme à 21h00",
+    );
+    expect(
+      resumeEspace({ batiment: null, capacite: null, heure_fin_max: null }),
+    ).toBe("Sans limite de places");
   });
 });
 

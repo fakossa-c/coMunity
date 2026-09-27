@@ -109,9 +109,10 @@ export async function reglerHeureCalme(heureCalme: string): Promise<Resultat> {
     .update({ heure_calme: heureCalme })
     .eq("id", true)
     .select("heure_calme");
+  // Aucune ligne touchée : la RLS a écarté une personne hors du conseil syndical.
   if (error || data.length === 0)
     return echec(
-      error?.code ?? "42501",
+      error ? error.code : "42501",
       "L'heure de calme n'a pas pu être enregistrée. Réessayez dans un instant.",
     );
 

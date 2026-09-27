@@ -2,16 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { classesBouton } from "@/components/bouton";
 import { EcranSecondaire } from "@/components/cadre";
-import { EquipementsEspace } from "@/components/equipements-espace";
+import { CarteEspaceCommun } from "@/components/carte-espace-commun";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
-import {
-  libelleCapacite,
-  libelleHeureFinMax,
-  type EspaceCommun,
-} from "@/lib/espaces-communs";
 import { lireEspacesCommuns, lireHeureCalme } from "@/lib/regles-residence";
 import { accesSyndic } from "../acces";
 import { HeureCalme } from "./heure-calme";
@@ -71,7 +66,11 @@ export default async function EspacesCommuns({ searchParams }: Props) {
               className="flex flex-col gap-space-md"
             >
               {espaces.map((espace) => (
-                <CarteEspace key={espace.id} espace={espace} />
+                <CarteEspaceCommun
+                  key={espace.id}
+                  espace={espace}
+                  href={`/syndic/espaces-communs/${espace.id}`}
+                />
               ))}
             </ul>
           )}
@@ -85,41 +84,5 @@ export default async function EspacesCommuns({ searchParams }: Props) {
         </section>
       </div>
     </EcranSecondaire>
-  );
-}
-
-/** Un espace commun dans la liste : son nom, ses règles en une ligne, ses badges, « Modifier ». */
-function CarteEspace({ espace }: { espace: EspaceCommun }) {
-  const regles = [
-    espace.batiment,
-    libelleCapacite(espace.capacite),
-    espace.heure_fin_max && libelleHeureFinMax(espace.heure_fin_max),
-  ].filter(Boolean);
-
-  return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
-      <div className="flex items-start gap-space-sm">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-fond-action text-texte-action">
-          <Icone nom="meeting_room" taille={24} />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="font-headline text-label-lg [overflow-wrap:anywhere] text-on-surface">
-            {espace.nom}
-          </span>
-          <span className="text-body-md text-on-surface-variant">
-            {regles.join(" · ")}
-          </span>
-        </div>
-        <Link
-          href={`/syndic/espaces-communs/${espace.id}`}
-          className={classesBouton("fantome")}
-        >
-          <Icone nom="edit" taille={22} />
-          Modifier
-          <span className="sr-only"> : {espace.nom}</span>
-        </Link>
-      </div>
-      <EquipementsEspace equipements={espace.equipements} />
-    </li>
   );
 }

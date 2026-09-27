@@ -62,7 +62,7 @@ export type ReglesResidence = {
   occupations: Occupation[];
 };
 
-export const AUCUNE_REGLE: ReglesResidence = {
+const AUCUNE_REGLE: ReglesResidence = {
   heureCalme: null,
   espacesCommuns: [],
   occupations: [],
@@ -115,7 +115,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "heure_fin_max",
       bloquant: true,
-      message: `L'espace « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
+      message: `L'espace commun « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
     });
   }
 
@@ -127,7 +127,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "capacite_espace",
       bloquant: true,
-      message: `L'espace « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
+      message: `L'espace commun « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
     });
   }
 
@@ -143,7 +143,7 @@ function appliquerRegles(
         avertissements.push({
           regle: "chevauchement",
           bloquant: false,
-          message: `« ${autre.titre} » occupe déjà l'espace « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
+          message: `« ${autre.titre} » occupe déjà l'espace commun « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
         });
       }
     }
@@ -170,9 +170,4 @@ export async function analyserProposition(
     avertissements: appliquerRegles(proposition, regles),
     moderation: { avis: "pas_d_avis" },
   };
-}
-
-/** Vrai si l'un des avertissements empêche la publication. */
-export function estBloquant(avertissements: Avertissement[]) {
-  return avertissements.some((a) => a.bloquant);
 }

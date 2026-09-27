@@ -191,7 +191,7 @@ export function verifierEtape(
 }
 
 /** L'espace commun choisi, ou `null` pour un lieu libre. */
-function espaceChoisi(saisie: SaisieActivite) {
+function idEspaceChoisi(saisie: SaisieActivite) {
   return saisie.espace_commun === LIEU_LIBRE || saisie.espace_commun === ""
     ? null
     : saisie.espace_commun;
@@ -205,7 +205,7 @@ export function versNouvelleActivite(
   saisie: SaisieActivite,
   espaces: { id: string; nom: string }[] = [],
 ): NouvelleActivite {
-  const idEspace = espaceChoisi(saisie);
+  const idEspace = idEspaceChoisi(saisie);
   const espace = espaces.find((e) => e.id === idEspace);
   return {
     titre: saisie.titre.trim(),
@@ -284,7 +284,7 @@ export function saisieDeCopie(activite: ActiviteExistante): SaisieActivite {
 
 /** La proposition que l'assistant analyse, tirée de la saisie. */
 export function propositionDe(saisie: SaisieActivite): Proposition {
-  const idEspace = espaceChoisi(saisie);
+  const idEspace = idEspaceChoisi(saisie);
   return {
     titre: saisie.titre,
     description: saisie.mot_accueil,
@@ -324,4 +324,24 @@ export function blocageDeLEtape(
   if (etape === 4 && bloquants.length > 0)
     return { erreur: bloquants[0].message };
   return {};
+}
+
+/**
+ * Les avertissements qui s'appliquent à la saisie. En modification (`reference` : la saisie de
+ * départ), une règle d'espace commun ne bloque que si l'espace, l'heure de fin ou les places
+ * changent, comme en base : ses règles ont pu changer depuis la publication. Elle reste dite.
+ */
+export function avertissementsApplicables(
+  avertissements: Avertissement[],
+  saisie: SaisieActivite,
+  reference?: SaisieActivite,
+): Avertissement[] {
+  const inchangee =
+    reference !== undefined &&
+    saisie.espace_commun === reference.espace_commun &&
+    saisie.heure_fin === reference.heure_fin &&
+    capaciteMaxDe(saisie) === capaciteMaxDe(reference);
+  return inchangee
+    ? avertissements.map((a) => ({ ...a, bloquant: false }))
+    : avertissements;
 }

@@ -24,7 +24,7 @@ export function HeureCalme({ actuelle }: { actuelle: string }) {
     >
       <Annonce message={resultat?.ok && resultat.message} />
       <Annonce message={resultat?.ok === false && resultat.message} erreur />
-      <div className="flex flex-col gap-space-md desktop:flex-row desktop:items-end">
+      <div className="flex flex-col items-start gap-space-md">
         <Champ
           libelle="Heure de calme"
           name="heure_calme"
@@ -33,14 +33,13 @@ export function HeureCalme({ actuelle }: { actuelle: string }) {
           onChange={(e) => setValeur(e.target.value)}
           aide="Une activité qui finit plus tard reçoit un avertissement de l'assistant."
           required
-          className="flex-1"
+          className="w-full"
         />
         <Bouton
           type="submit"
           variante="contour"
           icone="bedtime"
           disabled={enCours}
-          className="desktop:mb-[34px]"
         >
           {enCours ? "Enregistrement…" : "Enregistrer l'heure"}
         </Bouton>

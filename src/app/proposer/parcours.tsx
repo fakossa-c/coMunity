@@ -24,6 +24,7 @@ import {
   NOMBRE_ETAPES,
   SAISIE_VIDE,
   TITRES_ETAPES,
+  avertissementsApplicables,
   blocageDeLEtape,
   propositionDe,
   verifierEtape,
@@ -115,13 +116,20 @@ export function ParcoursProposition({
   }
 
   /** La saisie de l'étape, puis les règles bloquantes de l'assistant qui la concernent. */
+  // En modification, la saisie de départ : ce qui n'y change pas n'est pas bloqué par l'espace.
+  const reference = modification ? initial : undefined;
+
   async function verifier(cible: Etape) {
     const verdict = verifierEtape(cible, saisie, {
       placesPrises: modification?.placesPrises,
     });
     if (verdict.erreur) return verdict;
     const avis = await analyserProposition(propositionDe(saisie), regles);
-    return blocageDeLEtape(cible, avis.avertissements, saisie);
+    return blocageDeLEtape(
+      cible,
+      avertissementsApplicables(avis.avertissements, saisie, reference),
+      saisie,
+    );
   }
 
   function continuer() {
@@ -268,7 +276,7 @@ export function ParcoursProposition({
             />
           )}
           {espaceChoisi?.consignes && (
-            <EncartPastel titre="Consignes de l'espace">
+            <EncartPastel titre="Consignes de l'espace commun">
               {espaceChoisi.consignes}
             </EncartPastel>
           )}
@@ -384,6 +392,7 @@ export function ParcoursProposition({
           saisie={saisie}
           espace={espaceChoisi}
           regles={regles}
+          reference={reference}
           onModifier={modifier}
           onAnnuler={() =>
             router.push(

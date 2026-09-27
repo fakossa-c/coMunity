@@ -21,6 +21,7 @@ import type { EspaceCommun } from "@/lib/espaces-communs";
 import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong } from "@/lib/partage-activite";
 import {
+  avertissementsApplicables,
   capaciteMaxDe,
   propositionDe,
   TITRES_ETAPES,
@@ -33,6 +34,8 @@ type Props = {
   /** L'espace commun choisi ; absent pour un lieu libre. */
   espace: EspaceCommun | undefined;
   regles: ReglesResidence;
+  /** En modification, la saisie de départ (voir `avertissementsApplicables`). */
+  reference?: SaisieActivite;
   onModifier: (etape: Etape) => void;
   onAnnuler: () => void;
 };
@@ -157,6 +160,7 @@ export function Recapitulatif({
   saisie,
   espace,
   regles,
+  reference,
   onModifier,
   onAnnuler,
 }: Props) {
@@ -165,12 +169,20 @@ export function Recapitulatif({
   useEffect(() => {
     let actif = true;
     analyserProposition(propositionDe(saisie), regles).then((resultat) => {
-      if (actif) setAvis(resultat);
+      if (actif)
+        setAvis({
+          ...resultat,
+          avertissements: avertissementsApplicables(
+            resultat.avertissements,
+            saisie,
+            reference,
+          ),
+        });
     });
     return () => {
       actif = false;
     };
-  }, [saisie, regles]);
+  }, [saisie, regles, reference]);
 
   return (
     <>
