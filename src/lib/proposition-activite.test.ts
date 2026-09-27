@@ -4,6 +4,7 @@ import {
   LIEU_LIBRE,
   LIMITES,
   SAISIE_VIDE,
+  avertissementsApplicables,
   blocageDeLEtape,
   propositionDe,
   saisieDeCopie,
@@ -394,5 +395,46 @@ describe("règles bloquantes de l'assistant dans le parcours", () => {
   it("un simple avertissement ne bloque aucune étape", () => {
     expect(blocageDeLEtape(2, [calme], COMPLETE)).toEqual({});
     expect(blocageDeLEtape(4, [calme], COMPLETE)).toEqual({});
+  });
+});
+
+describe("règles d'un espace commun en modification", () => {
+  const capacite: Avertissement = {
+    regle: "capacite_espace",
+    bloquant: true,
+    message: "L'espace commun accueille 10 personnes au plus.",
+  };
+  const reference: SaisieActivite = { ...COMPLETE, espace_commun: "salle" };
+
+  it("à la création, une règle bloquante bloque", () => {
+    expect(avertissementsApplicables([capacite], reference)).toEqual([
+      capacite,
+    ]);
+  });
+
+  it("une modification qui ne touche ni l'espace, ni l'heure de fin, ni les places n'est plus bloquée", () => {
+    expect(
+      avertissementsApplicables(
+        [capacite],
+        { ...reference, titre: "Nouveau titre" },
+        reference,
+      ),
+    ).toEqual([{ ...capacite, bloquant: false }]);
+  });
+
+  it("une modification de l'espace, de l'heure de fin ou des places reste bloquée", () => {
+    for (const changement of [
+      { espace_commun: "cour" },
+      { heure_fin: "19:00" },
+      { capacite_max: "15" },
+    ]) {
+      expect(
+        avertissementsApplicables(
+          [capacite],
+          { ...reference, ...changement },
+          reference,
+        ),
+      ).toEqual([capacite]);
+    }
   });
 });

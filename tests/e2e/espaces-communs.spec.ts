@@ -229,7 +229,7 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   await etape(page, 4);
   const conseils = page.getByText("Conseils de l'assistant").locator("..");
   await expect(conseils).toContainText(
-    `« Atelier tricot » occupe déjà l'espace « ${espace.nom} » ce jour-là`,
+    `« Atelier tricot » occupe déjà l'espace commun « ${espace.nom} » ce jour-là`,
   );
   await expect(page.getByRole("main")).toContainText(espace.nom);
   await page.getByRole("button", { name: "Publier" }).click();

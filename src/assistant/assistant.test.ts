@@ -64,7 +64,7 @@ describe("assistant de création", () => {
           regle: "heure_fin_max",
           bloquant: true,
           message:
-            "L'espace « Salle commune » ferme à 21h00 : finissez au plus tard à 21h00.",
+            "L'espace commun « Salle commune » ferme à 21h00 : finissez au plus tard à 21h00.",
         },
       ]);
     });
@@ -90,7 +90,7 @@ describe("assistant de création", () => {
           regle: "capacite_espace",
           bloquant: true,
           message:
-            "L'espace « Salle commune » accueille 20 personnes au plus : limitez les places à 20.",
+            "L'espace commun « Salle commune » accueille 20 personnes au plus : limitez les places à 20.",
         },
       ]);
     });
@@ -171,7 +171,7 @@ describe("assistant de création", () => {
           regle: "chevauchement",
           bloquant: false,
           message:
-            "« Atelier tricot » occupe déjà l'espace « Salle commune » ce jour-là, de 17h30 à 19h00.",
+            "« Atelier tricot » occupe déjà l'espace commun « Salle commune » ce jour-là, de 17h30 à 19h00.",
         },
       ]);
     });
