@@ -3,6 +3,7 @@ import { categoriesActiviteListe, pictogrammeDe } from "./categories-activite";
 import {
   creneau,
   estPassee,
+  horaire,
   jourLong,
   lienWhatsApp,
   messageWhatsApp,
@@ -29,6 +30,7 @@ describe("dates d'une activité", () => {
   it("le créneau s'écrit à la française, sans les secondes", () => {
     expect(creneau("16:00:00", "18:30:00")).toBe("de 16h00 à 18h30");
     expect(creneau("09:05", "10:00")).toBe("de 9h05 à 10h00");
+    expect(horaire("16:00:00", "18:30:00")).toBe("De 16h00 à 18h30");
   });
 });
 

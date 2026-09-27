@@ -4,6 +4,7 @@ import {
   annulerActivite,
   inscrireResident,
   nouveauResident,
+  nouveauSyndic,
   nouvelleActivite,
   supprimerComptes,
   titreAccueil,
@@ -151,7 +152,10 @@ test("les puces filtrent par catégorie, au clavier, et restent collées en haut
   await expect(carte(page, jardin)).toBeVisible();
   await expect(carte(page, gouter)).toHaveCount(0);
 
+  // Fenêtre basse : la page défile même avec une seule carte.
+  await page.setViewportSize({ width: 360, height: 420 });
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
   const boite = await page
     .getByRole("navigation", { name: "Catégories" })
     .boundingBox();
@@ -263,6 +267,23 @@ test("une activité complète ne propose plus « Je participe »", async ({
   );
 });
 
+test("une activité du conseil syndical se présente et s'inscrit comme celle d'un voisin", async ({
+  page,
+}) => {
+  const syndic = await nouveauSyndic();
+  const resident = await nouveauResident("valide");
+  emails.push(syndic.email, resident.email);
+  const titre = `Réunion jardin ${Date.now()}`;
+  const identifiant = await nouvelleActivite(syndic.id, { titre });
+
+  await seConnecter(page, resident.email);
+
+  const laCarte = carte(page, titre);
+  await expect(laCarte).not.toContainText("syndic");
+  await laCarte.getByRole("link", { name: "Je participe" }).click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+});
+
 test("Activités › J'y vais › Passées montre les activités passées où j'étais inscrit", async ({
   page,
 }) => {
@@ -271,12 +292,14 @@ test("Activités › J'y vais › Passées montre les activités passées où j'
   emails.push(organisateur.email, resident.email);
   const suffixe = Date.now();
   const allee = `Loto de la rentrée ${suffixe}`;
+  const recente = `Pique-nique ${suffixe}`;
   const annulee = `Brocante annulée ${suffixe}`;
   const pasInscrit = `Yoga ${suffixe}`;
   const aVenir = `Concert ${suffixe}`;
   for (const [titre, jours] of [
     [allee, -3],
     [annulee, -2],
+    [recente, -1],
     [pasInscrit, -1],
     [aVenir, 5],
   ] as const) {
@@ -292,7 +315,12 @@ test("Activités › J'y vais › Passées montre les activités passées où j'
   await page.goto("/activites?onglet=j_y_vais&puce=passees");
 
   const liste = page.getByRole("list", { name: "Vos activités passées" });
-  await expect(liste).toContainText(allee);
+  // La plus récente d'abord.
+  const titres = await liste
+    .getByRole("heading")
+    .filter({ hasText: String(suffixe) })
+    .allTextContents();
+  expect(titres).toEqual([recente, allee]);
   await expect(liste).not.toContainText(annulee);
   await expect(liste).not.toContainText(pasInscrit);
   await expect(liste).not.toContainText(aVenir);

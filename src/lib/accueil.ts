@@ -2,7 +2,7 @@ import {
   categoriesActivite,
   type CategorieActivite,
 } from "./categories-activite";
-import { creneau, jourLong } from "./partage-activite";
+import { jourLong, ordreChronologique } from "./partage-activite";
 
 /** Les activités d'un même jour, sous leur intertitre (« Aujourd’hui », « Mardi 27 octobre »). */
 export type JourActivites<T> = {
@@ -19,11 +19,7 @@ export type JourActivites<T> = {
 export function grouperParJour<
   T extends { date_activite: string; heure_debut: string },
 >(activites: T[], aujourdhui: string): JourActivites<T>[] {
-  const triees = [...activites].sort((a, b) =>
-    `${a.date_activite} ${a.heure_debut}`.localeCompare(
-      `${b.date_activite} ${b.heure_debut}`,
-    ),
-  );
+  const triees = [...activites].sort(ordreChronologique);
   const jours: JourActivites<T>[] = [];
   for (const activite of triees) {
     const dernier = jours.at(-1);
@@ -73,12 +69,6 @@ export function resumeSemaine(nombre: number) {
   return nombre === 1
     ? "1 activité prévue cette semaine"
     : `${nombre} activités prévues cette semaine`;
-}
-
-/** « De 16h00 à 18h30 ». */
-export function horaire(debut: string, fin: string) {
-  const texte = creneau(debut, fin);
-  return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
 
 /** La catégorie choisie dans les puces de l'Accueil, ou `null` pour « Toutes ». */

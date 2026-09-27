@@ -3,7 +3,6 @@ import {
   activitesDeLaSemaine,
   categorieFiltree,
   grouperParJour,
-  horaire,
   resumeSemaine,
 } from "./accueil";
 
@@ -103,12 +102,6 @@ describe("activités de la semaine", () => {
     expect(resumeSemaine(0)).toBe("Aucune activité prévue cette semaine");
     expect(resumeSemaine(1)).toBe("1 activité prévue cette semaine");
     expect(resumeSemaine(4)).toBe("4 activités prévues cette semaine");
-  });
-});
-
-describe("horaire d'une activité", () => {
-  it("s'écrit « De 16h00 à 18h30 »", () => {
-    expect(horaire("16:00:00", "18:30:00")).toBe("De 16h00 à 18h30");
   });
 });
 

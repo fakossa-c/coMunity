@@ -2,7 +2,11 @@ import { AideInstallation } from "@/components/aide-installation";
 import { BarreFiltres } from "@/components/barre-filtres";
 import { Bientot } from "@/components/bientot";
 import { EcranPrincipal } from "@/components/cadre";
-import { CarteActivite, type Activite } from "@/components/carte-activite";
+import {
+  CarteActivite,
+  type Activite,
+  type ActiviteDuJour,
+} from "@/components/carte-activite";
 import { PuceFiltre } from "@/components/puce-filtre";
 import { Salutation } from "@/components/salutation";
 import { TitreSection } from "@/components/titre-section";
@@ -18,13 +22,12 @@ import {
   pictogrammeDe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import { aujourdhui as jourDeReference } from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const MESSAGE_VIDE =
   "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du conseil syndical apparaîtront ici.";
-
-type ActiviteDuJour = Activite & { heure_fin: string };
 
 type Props = { searchParams: Promise<{ categorie?: string }> };
 
@@ -34,8 +37,7 @@ export default async function Accueil({ searchParams }: Props) {
   const supabase = await clientSession();
   const { data: peutConsulter } = await supabase.rpc("peut_consulter");
   const activites = peutConsulter ? await lireCatalogue() : [];
-  // Les dates sont celles de la base (UTC) : le même « aujourd'hui » que le catalogue.
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = jourDeReference();
 
   return (
     <EcranPrincipal onglet="accueil">
@@ -82,10 +84,14 @@ async function lireCatalogue(): Promise<ActiviteDuJour[]> {
       `Horaires des activités illisibles : ${erreurFins.message}`,
     );
   const finDe = new Map(fins.map((fin) => [fin.id, fin.heure_fin as string]));
-  return activites.map((activite) => ({
-    ...activite,
-    heure_fin: finDe.get(activite.id) ?? activite.heure_debut,
-  }));
+  return activites.map((activite) => {
+    const fin = finDe.get(activite.id);
+    if (!fin)
+      throw new Error(
+        `Heure de fin introuvable pour l'activité ${activite.id}`,
+      );
+    return { ...activite, heure_fin: fin };
+  });
 }
 
 function Catalogue({
@@ -107,12 +113,7 @@ function Catalogue({
   return (
     <>
       <BarreFiltres libelle="Catégories">
-        <PuceFiltre
-          categorie
-          selectionnee={categorie === null}
-          href="/"
-          className="shrink-0 whitespace-nowrap"
-        >
+        <PuceFiltre categorie selectionnee={categorie === null} href="/">
           Toutes
         </PuceFiltre>
         {categoriesActiviteListe.map((cle) => (
@@ -122,7 +123,6 @@ function Catalogue({
             icone={pictogrammeDe(cle)}
             selectionnee={categorie === cle}
             href={`/?categorie=${cle}`}
-            className="shrink-0 whitespace-nowrap"
           >
             {categoriesActivite[cle].libelle}
           </PuceFiltre>

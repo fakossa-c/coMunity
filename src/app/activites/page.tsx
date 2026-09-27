@@ -4,6 +4,7 @@ import { BoutonFlottant } from "@/components/bouton-flottant";
 import { EcranPrincipal } from "@/components/cadre";
 import { CarteActivite, type Activite } from "@/components/carte-activite";
 import { TitrePage } from "@/components/titre-page";
+import { aujourdhui, ordreChronologique } from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 import { Onglets } from "./onglets";
@@ -108,8 +109,6 @@ async function MesInscriptionsPassees() {
     );
   }
 
-  // Les dates sont celles de la base (UTC) : le même « aujourd'hui » que le catalogue de l'Accueil.
-  const aujourdhui = new Date().toISOString().slice(0, 10);
   const supabase = await clientSession();
   const { data, error } = await supabase
     .from("inscription_activite")
@@ -117,18 +116,14 @@ async function MesInscriptionsPassees() {
       "activite!inner(id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu, etiquettes, statut)",
     )
     .eq("resident_id", session.id)
-    .lt("activite.date_activite", aujourdhui)
+    .lt("activite.date_activite", aujourdhui())
     .neq("activite.statut", "annulee");
   if (error)
     throw new Error(`Vos activités passées sont illisibles : ${error.message}`);
 
   const activites = (data as unknown as { activite: Activite }[])
     .map(({ activite }) => activite)
-    .sort((a, b) =>
-      `${b.date_activite} ${b.heure_debut}`.localeCompare(
-        `${a.date_activite} ${a.heure_debut}`,
-      ),
-    );
+    .sort((a, b) => ordreChronologique(b, a));
 
   if (activites.length === 0) {
     return (
@@ -168,15 +163,12 @@ async function MesActivitesOrganisees({
   if (error)
     throw new Error(`Vos activités sont illisibles : ${error.message}`);
 
-  // Les dates sont celles de la base (UTC) : le même « aujourd'hui » que le catalogue de l'Accueil.
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const jour = aujourdhui();
   const toutes = data as Activite[];
   const activites =
     puce === "a_venir"
-      ? toutes.filter((activite) => activite.date_activite >= aujourdhui)
-      : toutes
-          .filter((activite) => activite.date_activite < aujourdhui)
-          .reverse();
+      ? toutes.filter((activite) => activite.date_activite >= jour)
+      : toutes.filter((activite) => activite.date_activite < jour).reverse();
 
   if (activites.length === 0) {
     return (

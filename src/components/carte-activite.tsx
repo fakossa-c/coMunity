@@ -1,25 +1,25 @@
 import Link from "next/link";
-import { horaire } from "@/lib/accueil";
 import {
   categoriesActivite,
   pictogrammeDe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
 import {
-  etiquettesActivite,
+  etiquettesCocheesDuGroupe,
   type EtiquetteActivite,
 } from "@/lib/etiquettes-activite";
 import {
   estComplete,
   libelleStatutInscription,
 } from "@/lib/inscription-activite";
-import { cheminFiche, estPassee } from "@/lib/partage-activite";
+import { cheminFiche, estPassee, horaire } from "@/lib/partage-activite";
 import { classesBouton } from "./bouton";
 import { EtatActivite, type StatutActivite } from "./etat-activite";
 import { EtiquettesActivite } from "./etiquette";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 import { Jauge } from "./jauge";
+import { StatutInscription } from "./statut-inscription";
 import { TiroirDetails } from "./tiroir-details";
 import { VisuelActivite } from "./visuel-activite";
 
@@ -45,6 +45,15 @@ export type Activite = {
   capacite_min?: number | null;
 };
 
+/** Une activité de l'Accueil : sa carte donne son horaire, heure de fin comprise. */
+export type ActiviteDuJour = Activite & { heure_fin: string };
+
+/** Annulée, l'activité ne compte plus ses inscrits comme participants. */
+function etatInscription(activite: Activite) {
+  const annulee = activite.statut === "annulee";
+  return { annulee, inscrit: activite.mes_accompagnants != null && !annulee };
+}
+
 const FORMAT_DATE = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
   day: "numeric",
@@ -66,13 +75,12 @@ type Props =
    * Accueil : sous l'intertitre de son jour, la carte ne garde que l'horaire ; horaire, lieu et
    * étiquettes passent dans le tiroir « Détails », puis « Voir la fiche » et « Je participe ».
    */
-  | { activite: Activite & { heure_fin: string }; detailsDepliables: true };
+  | { activite: ActiviteDuJour; detailsDepliables: true };
 
 export function CarteActivite(props: Props) {
   if (props.detailsDepliables) return <CarteDuJour activite={props.activite} />;
   const { activite } = props;
-  const annulee = activite.statut === "annulee";
-  const inscrit = activite.mes_accompagnants != null && !annulee;
+  const { inscrit } = etatInscription(activite);
   return (
     <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <div className="flex items-start gap-space-sm">
@@ -130,25 +138,16 @@ export function CarteActivite(props: Props) {
 }
 
 /** La carte d'une activité dans l'Accueil, où les activités sont groupées par jour. */
-function CarteDuJour({
-  activite,
-}: {
-  activite: Activite & { heure_fin: string };
-}) {
-  const annulee = activite.statut === "annulee";
-  const inscrit = activite.mes_accompagnants != null && !annulee;
+function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
+  const { annulee, inscrit } = etatInscription(activite);
   const complete = estComplete({
     capaciteMax: activite.capacite_max ?? null,
     placesPrises: activite.places_prises ?? 0,
   });
   const creneau = horaire(activite.heure_debut, activite.heure_fin);
   const etiquettes = activite.etiquettes ?? [];
-  const accessibilite = etiquettes.filter(
-    (cle) => etiquettesActivite[cle].groupe === "accessibilite",
-  );
-  const pourQui = etiquettes.filter(
-    (cle) => etiquettesActivite[cle].groupe === "pour_qui",
-  );
+  const accessibilite = etiquettesCocheesDuGroupe(etiquettes, "accessibilite");
+  const pourQui = etiquettesCocheesDuGroupe(etiquettes, "pour_qui");
   const fiche = cheminFiche(activite.identifiant_public);
 
   return (
@@ -205,10 +204,9 @@ function CarteDuJour({
           </div>
         </TiroirDetails>
         {inscrit ? (
-          <p className="flex items-center gap-2 rounded-md bg-fond-confirme px-4 py-3 font-headline text-body-bold text-texte-confirme">
-            <Icone nom="check_circle" plein taille={24} />
+          <StatutInscription>
             {libelleStatutInscription(activite.mes_accompagnants ?? 0)}
-          </p>
+          </StatutInscription>
         ) : (
           <div className="flex flex-wrap gap-space-sm">
             <Link

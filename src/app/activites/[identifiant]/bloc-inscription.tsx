@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { Bouton } from "@/components/bouton";
 import { Compteur } from "@/components/compteur";
-import { StatutInscription } from "@/components/statut-inscription";
+import { StatutInscriptionAnnulable } from "@/components/statut-inscription";
 import {
   libelleBoutonInscription,
   placesRestantesDe,
@@ -55,7 +55,7 @@ export function BlocInscription({ fiche, statut }: Props) {
   if (inscrit) {
     return (
       <BarreActionFixe>
-        <StatutInscription
+        <StatutInscriptionAnnulable
           accompagnants={fiche.mes_accompagnants!}
           onAnnuler={annuler}
           desactive={enCours}
