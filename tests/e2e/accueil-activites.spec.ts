@@ -299,6 +299,9 @@ test("Activités › J'y vais › Passées montre les activités passées où j'
 });
 
 test.describe("captures de l'Accueil", () => {
+  // Mêmes titres d'une capture à l'autre : une à la fois, pour ne pas mêler leurs cartes.
+  test.describe.configure({ mode: "serial" });
+
   for (const { nom, attributs } of [
     { nom: "clair", attributs: {} },
     { nom: "sombre", attributs: { "data-theme": "sombre" } },
@@ -330,8 +333,11 @@ test.describe("captures de l'Accueil", () => {
           document.documentElement.setAttribute(cle, valeur);
       }, attributs);
       await carte(page, "Atelier bouturage")
+        .first()
         .getByRole("button", { name: "Détails" })
         .click();
+      // La barre de puces colle : capturée en haut de page, elle reste à sa place.
+      await page.evaluate(() => window.scrollTo(0, 0));
       await page.screenshot({
         path: test.info().outputPath(`accueil-${nom}.png`),
         fullPage: true,
