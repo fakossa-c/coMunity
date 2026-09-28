@@ -7,6 +7,7 @@ import {
   nouveauSyndic,
   nouvelEmail,
   supprimerComptes,
+  titreAccueil,
 } from "./outils";
 
 const NOUVEAU_MOT_DE_PASSE = "un-nouveau-mot-de-passe";
@@ -120,9 +121,7 @@ test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entre
   });
   const pageDuCollegue = await appareilDuCollegue.newPage();
   await seConnecter(pageDuCollegue, collegue.email, MOT_DE_PASSE);
-  await expect(
-    pageDuCollegue.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(pageDuCollegue)).toBeVisible();
   await pageDuCollegue.goto("/syndic");
   await expect(pageDuCollegue.getByRole("main")).toContainText(
     "Votre accès à l'espace syndic a été retiré",
@@ -175,9 +174,7 @@ test("un résident n'entre pas dans l'espace syndic", async ({ page }) => {
   emails.push(resident.email);
 
   await seConnecter(page, resident.email, MOT_DE_PASSE);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
   await page.goto("/syndic/membres");
 
   await expect(page.getByRole("main")).toContainText(

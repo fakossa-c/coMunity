@@ -1,10 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { libelleStatutInscription } from "@/lib/inscription-activite";
 import { Bouton } from "./bouton";
 import { FeuilleConfirmation } from "./feuille-confirmation";
 import { Icone } from "./icone";
+import type { NomIcone } from "./icones";
+
+/** Bandeau vert qui rassure sur une inscription : « J'y vais, avec 2 personnes ». */
+export function StatutInscription({
+  icone = "check_circle",
+  children,
+}: {
+  icone?: NomIcone;
+  children: ReactNode;
+}) {
+  return (
+    <p className="flex items-center gap-2 rounded-md bg-fond-confirme px-4 py-3 font-headline text-body-bold text-texte-confirme">
+      <Icone nom={icone} plein={icone === "check_circle"} taille={24} />
+      {children}
+    </p>
+  );
+}
 
 type Props = {
   accompagnants: number;
@@ -14,10 +31,11 @@ type Props = {
 };
 
 /**
- * « J'y vais » (ou « J'y vais, avec 2 personnes »), avec l'annulation derrière une confirmation :
- * la feuille demande « Annuler votre participation ? » avant d'appeler `onAnnuler`.
+ * Dans la barre de la fiche : « J'y vais » (ou « J'y vais, avec 2 personnes »), avec l'annulation
+ * derrière une confirmation : la feuille demande « Annuler votre participation ? » avant d'appeler
+ * `onAnnuler`.
  */
-export function StatutInscription({
+export function StatutInscriptionAnnulable({
   accompagnants,
   onAnnuler,
   desactive = false,

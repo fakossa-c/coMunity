@@ -68,6 +68,14 @@ export function etiquettesDuGroupe(groupe: GroupeEtiquettes) {
   );
 }
 
+/** Parmi les étiquettes cochées d'une activité, celles d'un groupe, dans l'ordre reçu. */
+export function etiquettesCocheesDuGroupe(
+  etiquettes: EtiquetteActivite[],
+  groupe: GroupeEtiquettes,
+) {
+  return etiquettes.filter((cle) => etiquettesActivite[cle].groupe === groupe);
+}
+
 /** Le ton de pastille d'une étiquette : celui de son groupe. */
 export function tonEtiquette(cle: EtiquetteActivite) {
   return groupesEtiquettes[etiquettesActivite[cle].groupe].ton;

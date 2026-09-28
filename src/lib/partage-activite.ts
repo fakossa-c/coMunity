@@ -11,14 +11,26 @@ export type ActivitePartagee = {
 };
 
 /**
- * Vrai quand le jour de l'activité est avant aujourd'hui. Les dates sont celles de la base (UTC),
- * comme le « à venir » du catalogue de l'Accueil : le jour même n'est pas passé.
+ * La date du jour, `AAAA-MM-JJ`. C'est celle de la base (UTC), comme le « à venir » du catalogue
+ * de l'Accueil : toutes les pages comparent les dates des activités à ce même jour.
  */
-export function estPassee(
-  date: string,
-  aujourdhui = new Date().toISOString().slice(0, 10),
+export function aujourdhui() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Vrai quand le jour de l'activité est avant aujourd'hui : le jour même n'est pas passé. */
+export function estPassee(date: string, jour = aujourdhui()) {
+  return date < jour;
+}
+
+/** Ordre chronologique de deux activités : jour, puis heure de début. */
+export function ordreChronologique(
+  a: { date_activite: string; heure_debut: string },
+  b: { date_activite: string; heure_debut: string },
 ) {
-  return date < aujourdhui;
+  return `${a.date_activite} ${a.heure_debut}`.localeCompare(
+    `${b.date_activite} ${b.heure_debut}`,
+  );
 }
 
 /** Chemin de la fiche d'une activité, celui du lien partagé. */
@@ -45,10 +57,13 @@ const FORMAT_JOUR = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "UTC",
 });
 
+function majusculeInitiale(texte: string) {
+  return texte.charAt(0).toUpperCase() + texte.slice(1);
+}
+
 /** « Samedi 24 octobre », pour une date `AAAA-MM-JJ`. */
 export function jourLong(date: string) {
-  const jour = FORMAT_JOUR.format(new Date(`${date}T00:00:00Z`));
-  return jour.charAt(0).toUpperCase() + jour.slice(1);
+  return majusculeInitiale(FORMAT_JOUR.format(new Date(`${date}T00:00:00Z`)));
 }
 
 /** « 16h00 », pour une heure `HH:MM` ou `HH:MM:SS`. */
@@ -60,6 +75,11 @@ export function heure(valeur: string) {
 /** « de 16h00 à 18h30 ». */
 export function creneau(debut: string, fin: string) {
   return `de ${heure(debut)} à ${heure(fin)}`;
+}
+
+/** « De 16h00 à 18h30 » : le créneau en début de ligne, sur une carte. */
+export function horaire(debut: string, fin: string) {
+  return majusculeInitiale(creneau(debut, fin));
 }
 
 /** « 4 places restantes », « 1 place restante » ou « Complet ». */

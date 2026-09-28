@@ -27,7 +27,7 @@ export function PuceFiltre({
   return (
     <a
       aria-current={selectionnee ? "true" : "false"}
-      className={`inline-flex h-[52px] items-center gap-1.5 rounded-full px-4 font-headline text-label-lg ${
+      className={`inline-flex h-[52px] shrink-0 items-center gap-1.5 rounded-full px-4 font-headline text-label-lg whitespace-nowrap ${
         selectionnee
           ? "bg-fond-action text-texte-action"
           : "border-2 border-contour-action bg-fond-carte text-on-surface"

@@ -5,6 +5,7 @@ import {
   type APIRequestContext,
   type Page,
 } from "@playwright/test";
+import { titreAccueil } from "./outils";
 
 const iPhone = devices["iPhone 15"];
 
@@ -224,9 +225,7 @@ declare global {
 /** Ouvre l'accueil et attend que la page soit interactive : une absence ne prouve rien avant. */
 async function ouvrirAccueil(page: Page) {
   await page.goto("/", { waitUntil: "networkidle" });
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Activités" }),
-  ).toBeVisible();
+  await expect(titreAccueil(page)).toBeVisible();
 }
 
 function aideInstallation(page: Page) {
