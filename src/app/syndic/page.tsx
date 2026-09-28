@@ -45,6 +45,12 @@ export default async function EspaceSyndic() {
           titre="Membres du syndic"
           description="Invitez un collègue ou retirez un accès."
         />
+        <Rubrique
+          href="/syndic/espaces-communs"
+          icone="meeting_room"
+          titre="Espaces communs"
+          description="Salle commune, cour, jardin : capacité, horaires, consignes, et l'heure de calme."
+        />
       </ul>
     </EcranSecondaire>
   );

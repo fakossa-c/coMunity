@@ -4,6 +4,7 @@ import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { lireFiche } from "@/lib/fiche-activite";
 import { saisieDeCopie } from "@/lib/proposition-activite";
+import { lireContexteParcours } from "@/lib/regles-residence";
 import { clientSession } from "@/lib/supabase/serveur";
 import { ParcoursProposition } from "./parcours";
 
@@ -20,6 +21,7 @@ export default async function Proposer({ searchParams }: Props) {
   // activité qui n'est pas la sienne, ou qui n'existe pas, ouvre un parcours vide.
   const modele = peutParticiper && copie ? await lireFiche(copie) : null;
   const copiee = modele?.est_organisateur ? modele : null;
+  const contexte = peutParticiper ? await lireContexteParcours() : null;
 
   return (
     <EcranSecondaire
@@ -34,9 +36,11 @@ export default async function Proposer({ searchParams }: Props) {
             : "Lancez une activité avec vos voisins"
         }
       />
-      {peutParticiper ? (
+      {contexte ? (
         <ParcoursProposition
           key={copiee?.identifiant_public ?? "nouvelle"}
+          espaces={contexte.espaces}
+          regles={contexte.regles}
           initial={copiee ? saisieDeCopie(copiee) : undefined}
         />
       ) : (

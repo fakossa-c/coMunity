@@ -6,14 +6,15 @@ type Props = { avis: AvisAssistant | null };
 
 /**
  * L'encart « Conseils de l'assistant » du récapitulatif : ce que renvoie le module assistant.
- * Tant qu'aucun moteur n'y est branché, il le dit en clair plutôt que de rester vide.
+ * Un point bloquant se dit comme tel, avant la publication ; sans rien à signaler, l'encart le
+ * dit en clair plutôt que de rester vide.
  */
 export function EncartAssistant({ avis }: Props) {
   const conseils = avis
     ? [
-        ...avis.avertissements.map((a) => a.message),
+        ...avis.avertissements,
         ...(avis.moderation.avis === "a_relire"
-          ? [avis.moderation.raison]
+          ? [{ message: avis.moderation.raison, bloquant: false }]
           : []),
       ]
     : [];
@@ -22,10 +23,15 @@ export function EncartAssistant({ avis }: Props) {
     <EncartPastel titre="Conseils de l'assistant">
       {conseils.length > 0 ? (
         <ul className="flex flex-col gap-space-xs">
-          {conseils.map((conseil) => (
-            <li key={conseil} className="flex items-start gap-space-xs">
-              <Icone nom="lightbulb" taille={22} />
-              {conseil}
+          {conseils.map(({ message, bloquant }) => (
+            <li key={message} className="flex items-start gap-space-xs">
+              <Icone nom={bloquant ? "block" : "lightbulb"} taille={22} />
+              <span>
+                {bloquant && (
+                  <strong className="font-headline">À corriger : </strong>
+                )}
+                {message}
+              </span>
             </li>
           ))}
         </ul>

@@ -161,6 +161,11 @@ export default async function Fiche({ params }: Props) {
         {fiche.description && (
           <BlocTexte titre="Description">{fiche.description}</BlocTexte>
         )}
+        {fiche.consignes_espace && (
+          <BlocTexte titre="Consignes de l'espace commun">
+            {fiche.consignes_espace}
+          </BlocTexte>
+        )}
         {fiche.conseils_pratiques && (
           <BlocTexte titre="Conseils pratiques">
             {fiche.conseils_pratiques}

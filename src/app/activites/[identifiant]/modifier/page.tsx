@@ -5,6 +5,7 @@ import { TitrePage } from "@/components/titre-page";
 import { lireFiche } from "@/lib/fiche-activite";
 import { cheminFiche } from "@/lib/partage-activite";
 import { saisieDepuisActivite } from "@/lib/proposition-activite";
+import { lireContexteParcours } from "@/lib/regles-residence";
 import { ParcoursProposition } from "@/app/proposer/parcours";
 
 export const metadata: Metadata = { title: "Modifier" };
@@ -18,6 +19,7 @@ export default async function Modifier({ params }: Props) {
   if (!fiche || !fiche.est_organisateur || fiche.statut === "annulee") {
     notFound();
   }
+  const { espaces, regles } = await lireContexteParcours(identifiant);
 
   return (
     <EcranSecondaire
@@ -26,6 +28,8 @@ export default async function Modifier({ params }: Props) {
     >
       <TitrePage titre="Modifier" sousTitre={fiche.titre} />
       <ParcoursProposition
+        espaces={espaces}
+        regles={regles}
         initial={saisieDepuisActivite(fiche)}
         modification={{ identifiant, placesPrises: fiche.places_prises }}
       />

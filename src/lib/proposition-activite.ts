@@ -1,3 +1,4 @@
+import type { Avertissement, Proposition } from "@/assistant";
 import { pictogrammeDe, type CategorieActivite } from "./categories-activite";
 import type { EtiquetteActivite } from "./etiquettes-activite";
 import type { ErreurFormulaire } from "./resultat";
@@ -21,6 +22,9 @@ export const TITRES_ETAPES: Record<Etape, string> = {
   4: "Récapitulatif",
 };
 
+/** Le choix « Autre » de l'étape 2 : un lieu libre, hors des espaces communs. */
+export const LIEU_LIBRE = "autre";
+
 /**
  * Ce que la personne saisit au fil des étapes, tel quel : des chaînes, pour que revenir en
  * arrière rende exactement ce qu'elle avait tapé.
@@ -32,6 +36,9 @@ export type SaisieActivite = {
   date_activite: string;
   heure_debut: string;
   heure_fin: string;
+  /** L'identifiant de l'espace commun choisi, `LIEU_LIBRE` pour « Autre », `""` avant tout choix. */
+  espace_commun: string;
+  /** Le lieu libre, saisi avec « Autre ». */
   lieu: string;
   precision_acces: string;
   /** `sans_limite` : pas de capacité maximale, quoi que contienne `capacite_max`. */
@@ -56,6 +63,7 @@ export const SAISIE_VIDE: SaisieActivite = {
   date_activite: "",
   heure_debut: "",
   heure_fin: "",
+  espace_commun: "",
   lieu: "",
   precision_acces: "",
   places: "sans_limite",
@@ -76,6 +84,9 @@ export type NouvelleActivite = {
   date_activite: string;
   heure_debut: string;
   heure_fin: string;
+  /** `null` : lieu libre. */
+  espace_commun_id: string | null;
+  /** Le lieu libre, ou le nom de l'espace commun. */
   lieu: string;
   precision_acces: string | null;
   capacite_max: number | null;
@@ -143,7 +154,9 @@ export function verifierEtape(
         "heure_fin",
         "L'heure de fin doit être après l'heure de début.",
       );
-    if (saisie.lieu.trim().length === 0)
+    if (saisie.espace_commun === "")
+      return erreur("espace_commun", "Choisissez où se tient l'activité.");
+    if (saisie.espace_commun === LIEU_LIBRE && saisie.lieu.trim().length === 0)
       return erreur("lieu", "Indiquez où se tient l'activité.");
     const acces = tropLong(saisie.precision_acces, "precision_acces");
     if (acces) return erreur("precision_acces", acces);
@@ -177,8 +190,23 @@ export function verifierEtape(
   return {};
 }
 
-/** Convertit la saisie vérifiée en activité à publier. */
-export function versNouvelleActivite(saisie: SaisieActivite): NouvelleActivite {
+/** L'espace commun choisi, ou `null` pour un lieu libre. */
+function idEspaceChoisi(saisie: SaisieActivite) {
+  return saisie.espace_commun === LIEU_LIBRE || saisie.espace_commun === ""
+    ? null
+    : saisie.espace_commun;
+}
+
+/**
+ * Convertit la saisie vérifiée en activité à publier. `espaces` donne le nom de l'espace commun
+ * choisi (la base le reprend de toute façon).
+ */
+export function versNouvelleActivite(
+  saisie: SaisieActivite,
+  espaces: { id: string; nom: string }[] = [],
+): NouvelleActivite {
+  const idEspace = idEspaceChoisi(saisie);
+  const espace = espaces.find((e) => e.id === idEspace);
   return {
     titre: saisie.titre.trim(),
     categorie: saisie.categorie,
@@ -187,7 +215,8 @@ export function versNouvelleActivite(saisie: SaisieActivite): NouvelleActivite {
     date_activite: saisie.date_activite,
     heure_debut: saisie.heure_debut,
     heure_fin: saisie.heure_fin,
-    lieu: saisie.lieu.trim(),
+    espace_commun_id: idEspace,
+    lieu: idEspace ? (espace?.nom ?? idEspace) : saisie.lieu.trim(),
     precision_acces: texte(saisie.precision_acces),
     capacite_max: capaciteMaxDe(saisie),
     capacite_min: nombre(saisie.capacite_min),
@@ -206,6 +235,7 @@ export type ActiviteExistante = {
   date_activite: string;
   heure_debut: string;
   heure_fin: string;
+  espace_commun_id: string | null;
   lieu: string;
   precision_acces: string | null;
   capacite_max: number | null;
@@ -232,7 +262,8 @@ export function saisieDepuisActivite(
     date_activite: activite.date_activite,
     heure_debut: heure(activite.heure_debut),
     heure_fin: heure(activite.heure_fin),
-    lieu: activite.lieu,
+    espace_commun: activite.espace_commun_id ?? LIEU_LIBRE,
+    lieu: activite.espace_commun_id ? "" : activite.lieu,
     precision_acces: activite.precision_acces ?? "",
     places: activite.capacite_max === null ? "sans_limite" : "limitees",
     capacite_max:
@@ -249,4 +280,68 @@ export function saisieDepuisActivite(
 /** La saisie qui pré-remplit « Dupliquer » : tout sauf la date, à choisir de nouveau. */
 export function saisieDeCopie(activite: ActiviteExistante): SaisieActivite {
   return { ...saisieDepuisActivite(activite), date_activite: "" };
+}
+
+/** La proposition que l'assistant analyse, tirée de la saisie. */
+export function propositionDe(saisie: SaisieActivite): Proposition {
+  const idEspace = idEspaceChoisi(saisie);
+  return {
+    titre: saisie.titre,
+    description: saisie.mot_accueil,
+    categorie: saisie.categorie,
+    date: saisie.date_activite,
+    heureDebut: saisie.heure_debut,
+    heureFin: saisie.heure_fin,
+    lieu: idEspace
+      ? { type: "espace_commun", idEspace }
+      : { type: "libre", libelle: saisie.lieu },
+    capaciteMax: capaciteMaxDe(saisie),
+  };
+}
+
+/**
+ * La règle bloquante de l'assistant qui arrête l'étape, sous le champ à corriger : l'heure de fin
+ * à l'étape 2, le nombre de places à l'étape 3. Au récapitulatif, toute règle bloquante empêche
+ * de publier. `{}` quand rien ne bloque.
+ */
+export function blocageDeLEtape(
+  etape: Etape,
+  avertissements: Avertissement[],
+  saisie: SaisieActivite,
+): ErreurFormulaire<ChampSaisie> {
+  const bloquants = avertissements.filter((a) => a.bloquant);
+  if (etape === 2) {
+    const limite = bloquants.find((a) => a.regle === "heure_fin_max");
+    if (limite) return { champ: "heure_fin", erreur: limite.message };
+  }
+  if (etape === 3) {
+    const capacite = bloquants.find((a) => a.regle === "capacite_espace");
+    if (capacite)
+      return saisie.places === "limitees"
+        ? { champ: "capacite_max", erreur: capacite.message }
+        : { erreur: capacite.message };
+  }
+  if (etape === 4 && bloquants.length > 0)
+    return { erreur: bloquants[0].message };
+  return {};
+}
+
+/**
+ * Les avertissements qui s'appliquent à la saisie. En modification (`reference` : la saisie de
+ * départ), une règle d'espace commun ne bloque que si l'espace, l'heure de fin ou les places
+ * changent, comme en base : ses règles ont pu changer depuis la publication. Elle reste dite.
+ */
+export function avertissementsApplicables(
+  avertissements: Avertissement[],
+  saisie: SaisieActivite,
+  reference?: SaisieActivite,
+): Avertissement[] {
+  const inchangee =
+    reference !== undefined &&
+    saisie.espace_commun === reference.espace_commun &&
+    saisie.heure_fin === reference.heure_fin &&
+    capaciteMaxDe(saisie) === capaciteMaxDe(reference);
+  return inchangee
+    ? avertissements.map((a) => ({ ...a, bloquant: false }))
+    : avertissements;
 }
