@@ -6,6 +6,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   nouvelleActivite,
+  saisirLieuLibre,
   supprimerComptes,
 } from "./outils";
 
@@ -208,7 +209,7 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await page.getByLabel("Date").fill(dansUnMois);
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("11:30");
-  await page.getByLabel("Lieu").fill("Cour intérieure");
+  await saisirLieuLibre(page, "Cour intérieure");
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Publier" }).click();

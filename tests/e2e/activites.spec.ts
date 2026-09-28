@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
   nouveauResident,
+  saisirLieuLibre,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -48,7 +49,7 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByLabel("Date").fill(dansUnMois);
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("11:30");
-  await page.getByLabel("Lieu").fill("Cour intérieure");
+  await saisirLieuLibre(page, "Cour intérieure");
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Publier" }).click();

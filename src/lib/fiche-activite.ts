@@ -43,6 +43,10 @@ export type FicheActivite = {
   /** Note du retour déjà laissé par la personne connectée ; `null` si elle n'en a pas laissé. */
   mon_retour_note: number | null;
   mon_retour_commentaire: string | null;
+  /** `null` : lieu libre, ou espace commun supprimé depuis. */
+  espace_commun_id: string | null;
+  /** Les consignes de l'espace commun où se tient l'activité ; `null` sans espace ou sans consigne. */
+  consignes_espace: string | null;
 };
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */

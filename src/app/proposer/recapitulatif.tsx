@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { analyserProposition, type AvisAssistant } from "@/assistant";
+import {
+  analyserProposition,
+  type AvisAssistant,
+  type ReglesResidence,
+} from "@/assistant";
 import { Bouton } from "@/components/bouton";
 import { CarteLignes, type LigneCarte } from "@/components/carte-lignes";
 import { EncartAssistant } from "@/components/encart-assistant";
@@ -13,10 +17,13 @@ import {
   type EtiquetteActivite,
   type GroupeEtiquettes,
 } from "@/lib/etiquettes-activite";
+import type { EspaceCommun } from "@/lib/espaces-communs";
 import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong } from "@/lib/partage-activite";
 import {
+  avertissementsApplicables,
   capaciteMaxDe,
+  propositionDe,
   TITRES_ETAPES,
   type Etape,
   type SaisieActivite,
@@ -24,6 +31,11 @@ import {
 
 type Props = {
   saisie: SaisieActivite;
+  /** L'espace commun choisi ; absent pour un lieu libre. */
+  espace: EspaceCommun | undefined;
+  regles: ReglesResidence;
+  /** En modification, la saisie de départ (voir `avertissementsApplicables`). */
+  reference?: SaisieActivite;
   onModifier: (etape: Etape) => void;
   onAnnuler: () => void;
 };
@@ -55,6 +67,7 @@ function libellesEtiquettes(
 /** Une carte par étape de saisie, dans l'ordre du parcours. */
 function sectionsDe(
   saisie: SaisieActivite,
+  espace: EspaceCommun | undefined,
 ): { etape: Etape; lignes: LigneCarte[] }[] {
   const categorie = categoriesActivite[saisie.categorie];
   return [
@@ -87,7 +100,11 @@ function sectionsDe(
           titre: "Horaire",
           detail: creneau(saisie.heure_debut, saisie.heure_fin),
         },
-        { icone: "location_on", titre: "Lieu", detail: saisie.lieu },
+        {
+          icone: "location_on",
+          titre: "Lieu",
+          detail: espace?.nom ?? saisie.lieu,
+        },
         {
           icone: "description",
           titre: "Précision d'accès",
@@ -139,31 +156,37 @@ function sectionsDe(
 }
 
 /** Tout ce qui a été saisi, étape par étape, avec un retour vers chacune ; puis l'avis de l'assistant. */
-export function Recapitulatif({ saisie, onModifier, onAnnuler }: Props) {
+export function Recapitulatif({
+  saisie,
+  espace,
+  regles,
+  reference,
+  onModifier,
+  onAnnuler,
+}: Props) {
   const [avis, setAvis] = useState<AvisAssistant | null>(null);
 
   useEffect(() => {
     let actif = true;
-    analyserProposition({
-      titre: saisie.titre,
-      description: saisie.mot_accueil,
-      categorie: saisie.categorie,
-      date: saisie.date_activite,
-      heureDebut: saisie.heure_debut,
-      heureFin: saisie.heure_fin,
-      lieu: { type: "libre", libelle: saisie.lieu },
-      capaciteMax: capaciteMaxDe(saisie),
-    }).then((resultat) => {
-      if (actif) setAvis(resultat);
+    analyserProposition(propositionDe(saisie), regles).then((resultat) => {
+      if (actif)
+        setAvis({
+          ...resultat,
+          avertissements: avertissementsApplicables(
+            resultat.avertissements,
+            saisie,
+            reference,
+          ),
+        });
     });
     return () => {
       actif = false;
     };
-  }, [saisie]);
+  }, [saisie, regles, reference]);
 
   return (
     <>
-      {sectionsDe(saisie).map(({ etape, lignes }) => (
+      {sectionsDe(saisie, espace).map(({ etape, lignes }) => (
         <section key={etape} className="flex flex-col gap-space-sm">
           <div className="flex items-center justify-between gap-space-sm">
             <TitreSection>{TITRES_ETAPES[etape]}</TitreSection>

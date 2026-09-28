@@ -94,7 +94,7 @@ export async function nouveauResident(
 /** Une activité publiée au nom de `organisateur`, à venir ; renvoie son identifiant public. */
 export async function nouvelleActivite(
   organisateur: string,
-  activite: Partial<Record<string, string | string[]>> = {},
+  activite: Partial<Record<string, string | string[] | number | null>> = {},
 ) {
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -177,4 +177,40 @@ export async function lienRecu(destinataire: string) {
     await new Promise((resoudre) => setTimeout(resoudre, 250));
   }
   throw new Error(`Aucun email reçu par ${destinataire}`);
+}
+
+/** Un espace commun créé comme par le conseil syndical, sous un nom jamais utilisé. */
+export async function nouvelEspaceCommun(
+  champs: Partial<Record<string, string | number | string[] | null>> = {},
+) {
+  const { data, error } = await clientAdmin()
+    .from("espace_commun")
+    .insert({
+      nom: `Salle commune ${randomUUID().slice(0, 6)}`,
+      batiment: "Bâtiment B",
+      capacite: 10,
+      equipements: ["acces_plain_pied", "cuisine"],
+      heure_fin_max: "21:00",
+      consignes: "Laissez la salle propre et fermez les fenêtres.",
+      ...champs,
+    })
+    .select("id, nom")
+    .single();
+  if (error) throw error;
+  return data as { id: string; nom: string };
+}
+
+/** Supprime des espaces communs, par leur nom : ceux qu'un test a créés, par l'écran ou non. */
+export async function supprimerEspacesCommuns(noms: string[]) {
+  await clientAdmin().from("espace_commun").delete().in("nom", noms);
+}
+
+/**
+ * À l'étape « Date et lieu », saisit un lieu libre : choisit « Autre » quand la résidence a des
+ * espaces communs (un autre test peut en créer à tout moment), puis remplit le champ.
+ */
+export async function saisirLieuLibre(page: Page, lieu: string) {
+  const autre = page.getByRole("radio", { name: /^Autre/ });
+  if ((await autre.count()) > 0) await autre.check();
+  await page.getByLabel("Lieu", { exact: true }).fill(lieu);
 }

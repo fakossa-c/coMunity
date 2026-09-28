@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { MOT_DE_PASSE, nouveauResident, supprimerComptes } from "./outils";
+import {
+  MOT_DE_PASSE,
+  nouveauResident,
+  saisirLieuLibre,
+  supprimerComptes,
+} from "./outils";
 
 // Ticket #9 : le parcours de création en 4 étapes, du bouton « Proposer » à la fiche publiée.
 
@@ -45,7 +50,7 @@ async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await page.getByLabel("Date").fill(dansUnMois());
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("11:30");
-  await page.getByLabel("Lieu").fill("Cour intérieure");
+  await saisirLieuLibre(page, "Cour intérieure");
   await page
     .getByLabel("Précision d'accès")
     .fill("Par le portail vert, au fond de la cour.");
@@ -103,7 +108,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await page.getByLabel("Date").fill(dansUnMois());
   await page.getByLabel("Heure de début").fill("10:00");
   await page.getByLabel("Heure de fin").fill("09:00");
-  await page.getByLabel("Lieu").fill("Cour intérieure");
+  await saisirLieuLibre(page, "Cour intérieure");
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "L'heure de fin doit être après l'heure de début.",

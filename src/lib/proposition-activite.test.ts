@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type { Avertissement } from "@/assistant";
 import {
+  LIEU_LIBRE,
   LIMITES,
   SAISIE_VIDE,
+  avertissementsApplicables,
+  blocageDeLEtape,
+  propositionDe,
   saisieDeCopie,
   saisieDepuisActivite,
   verifierEtape,
@@ -17,6 +22,7 @@ const COMPLETE: SaisieActivite = {
   date_activite: "2026-10-24",
   heure_debut: "16:00",
   heure_fin: "18:30",
+  espace_commun: LIEU_LIBRE,
   lieu: "Jardin partagé",
   precision_acces: "Portail vert",
   places: "limitees",
@@ -131,6 +137,7 @@ describe("conversion vers l'activité à publier", () => {
       date_activite: "2026-10-24",
       heure_debut: "16:00",
       heure_fin: "18:30",
+      espace_commun_id: null,
       lieu: "Jardin partagé",
       precision_acces: "Portail vert",
       capacite_max: 12,
@@ -177,6 +184,7 @@ const EXISTANTE = {
   date_activite: "2026-10-24",
   heure_debut: "16:00:00",
   heure_fin: "18:30:00",
+  espace_commun_id: null,
   lieu: "Jardin partagé",
   precision_acces: "Portail vert",
   capacite_max: 12,
@@ -196,6 +204,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
       date_activite: "2026-10-24",
       heure_debut: "16:00",
       heure_fin: "18:30",
+      espace_commun: LIEU_LIBRE,
       lieu: "Jardin partagé",
       precision_acces: "Portail vert",
       places: "limitees",
@@ -277,5 +286,155 @@ describe("capacité et personnes déjà inscrites", () => {
         { placesPrises: 50 },
       ),
     ).toEqual({});
+  });
+});
+
+describe("lieu : espace commun ou lieu libre", () => {
+  const SALLE = { id: "salle", nom: "Salle commune" };
+  const dansLaSalle: SaisieActivite = {
+    ...COMPLETE,
+    espace_commun: "salle",
+    lieu: "",
+  };
+
+  it("étape 2 : il faut choisir un espace commun ou « Autre »", () => {
+    expect(verifierEtape(2, { ...COMPLETE, espace_commun: "" })).toEqual({
+      champ: "espace_commun",
+      erreur: "Choisissez où se tient l'activité.",
+    });
+  });
+
+  it("étape 2 : un espace commun choisi n'a pas besoin de lieu libre", () => {
+    expect(verifierEtape(2, dansLaSalle)).toEqual({});
+  });
+
+  it("publie l'espace commun choisi, avec son nom comme lieu", () => {
+    expect(versNouvelleActivite(dansLaSalle, [SALLE])).toMatchObject({
+      espace_commun_id: "salle",
+      lieu: "Salle commune",
+    });
+  });
+
+  it("« Autre » publie le lieu libre, sans espace commun", () => {
+    expect(versNouvelleActivite(COMPLETE, [SALLE])).toMatchObject({
+      espace_commun_id: null,
+      lieu: "Jardin partagé",
+    });
+  });
+
+  it("modifier une activité d'un espace commun le reprend, sans lieu libre", () => {
+    expect(
+      saisieDepuisActivite({
+        ...EXISTANTE,
+        espace_commun_id: "salle",
+        lieu: "Salle commune",
+      }),
+    ).toMatchObject({ espace_commun: "salle", lieu: "" });
+  });
+
+  it("l'assistant reçoit l'espace commun, ou le lieu libre, et les places", () => {
+    expect(propositionDe(dansLaSalle)).toEqual({
+      titre: "Goûter crêpes",
+      description: "Venez comme vous êtes.",
+      categorie: "moments_partages",
+      date: "2026-10-24",
+      heureDebut: "16:00",
+      heureFin: "18:30",
+      lieu: { type: "espace_commun", idEspace: "salle" },
+      capaciteMax: 12,
+    });
+    expect(propositionDe(COMPLETE).lieu).toEqual({
+      type: "libre",
+      libelle: "Jardin partagé",
+    });
+  });
+});
+
+describe("règles bloquantes de l'assistant dans le parcours", () => {
+  const heureLimite: Avertissement = {
+    regle: "heure_fin_max",
+    bloquant: true,
+    message: "L'espace ferme à 21h00.",
+  };
+  const capacite: Avertissement = {
+    regle: "capacite_espace",
+    bloquant: true,
+    message: "L'espace accueille 20 personnes au plus.",
+  };
+  const calme: Avertissement = {
+    regle: "heure_calme",
+    bloquant: false,
+    message: "Pensez aux voisins.",
+  };
+
+  it("étape 2 : l'heure limite de l'espace s'affiche sous l'heure de fin", () => {
+    expect(
+      blocageDeLEtape(2, [calme, heureLimite, capacite], COMPLETE),
+    ).toEqual({ champ: "heure_fin", erreur: "L'espace ferme à 21h00." });
+  });
+
+  it("étape 3 : la capacité de l'espace s'affiche sous le nombre de places", () => {
+    expect(blocageDeLEtape(3, [heureLimite, capacite], COMPLETE)).toEqual({
+      champ: "capacite_max",
+      erreur: "L'espace accueille 20 personnes au plus.",
+    });
+  });
+
+  it("étape 3 : sans limite de places, elle s'affiche en tête de l'étape", () => {
+    expect(
+      blocageDeLEtape(3, [capacite], { ...COMPLETE, places: "sans_limite" }),
+    ).toEqual({ erreur: "L'espace accueille 20 personnes au plus." });
+  });
+
+  it("récapitulatif : toute règle bloquante empêche de publier", () => {
+    expect(blocageDeLEtape(4, [calme, capacite], COMPLETE)).toEqual({
+      erreur: "L'espace accueille 20 personnes au plus.",
+    });
+  });
+
+  it("un simple avertissement ne bloque aucune étape", () => {
+    expect(blocageDeLEtape(2, [calme], COMPLETE)).toEqual({});
+    expect(blocageDeLEtape(4, [calme], COMPLETE)).toEqual({});
+  });
+});
+
+describe("règles d'un espace commun en modification", () => {
+  const capacite: Avertissement = {
+    regle: "capacite_espace",
+    bloquant: true,
+    message: "L'espace commun accueille 10 personnes au plus.",
+  };
+  const reference: SaisieActivite = { ...COMPLETE, espace_commun: "salle" };
+
+  it("à la création, une règle bloquante bloque", () => {
+    expect(avertissementsApplicables([capacite], reference)).toEqual([
+      capacite,
+    ]);
+  });
+
+  it("une modification qui ne touche ni l'espace, ni l'heure de fin, ni les places n'est plus bloquée", () => {
+    expect(
+      avertissementsApplicables(
+        [capacite],
+        { ...reference, titre: "Nouveau titre" },
+        reference,
+      ),
+    ).toEqual([{ ...capacite, bloquant: false }]);
+  });
+
+  it("une modification de l'espace, de l'heure de fin ou des places reste bloquée", () => {
+    for (const changement of [
+      { espace_commun: "cour" },
+      { heure_fin: "19:00" },
+      { capacite_max: "15" },
+    ]) {
+      expect(
+        avertissementsApplicables(
+          [capacite],
+          { ...reference, ...changement },
+          reference,
+        ),
+      ).toEqual([capacite]);
+    }
   });
 });
