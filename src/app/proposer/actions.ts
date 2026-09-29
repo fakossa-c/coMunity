@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import {
   analyserProposition,
   type AvisAssistant,
-  type Proposition,
+  type EntreeJev,
 } from "@/assistant";
 import { moteurJev } from "@/assistant/jev-serveur";
 import { cheminFiche } from "@/lib/partage-activite";
@@ -17,7 +17,11 @@ import {
   TAILLE_MAX_PHOTO,
   cheminPhoto,
 } from "@/lib/photos-activite";
-import { LIMITES, type NouvelleActivite } from "@/lib/proposition-activite";
+import {
+  LIMITES,
+  propositionDeNouvelleActivite,
+  type NouvelleActivite,
+} from "@/lib/proposition-activite";
 import { clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
@@ -51,12 +55,7 @@ const SANS_AVIS: AvisAssistant = {
  * compte validé, ou si Jev est lent ou en erreur : aucun avis. Seuls le titre, la description et
  * le créneau partent vers Jev ; le texte est borné comme en base.
  */
-export async function avisJev(
-  proposition: Pick<
-    Proposition,
-    "titre" | "description" | "date" | "heureDebut" | "heureFin"
-  >,
-): Promise<AvisAssistant> {
+export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
   const jev = moteurJev();
   if (!jev) return SANS_AVIS;
 
@@ -70,12 +69,12 @@ export async function avisJev(
     typeof valeur === "string" ? valeur.slice(0, max) : "";
   return analyserProposition(
     {
-      titre: texte(proposition?.titre, LIMITES.titre),
-      description: texte(proposition?.description, LIMITES.mot_accueil),
+      titre: texte(entree?.titre, LIMITES.titre),
+      description: texte(entree?.description, LIMITES.mot_accueil),
       categorie: null,
-      date: texte(proposition?.date, 10),
-      heureDebut: texte(proposition?.heureDebut, 8),
-      heureFin: texte(proposition?.heureFin, 8),
+      date: texte(entree?.date, 10),
+      heureDebut: texte(entree?.heureDebut, 8),
+      heureFin: texte(entree?.heureFin, 8),
       lieu: { type: "libre", libelle: "" },
       capaciteMax: null,
     },
@@ -98,16 +97,7 @@ async function preModerer(
   if (!jev) return false;
 
   const avis = await analyserProposition(
-    {
-      titre: activite.titre,
-      description: activite.mot_accueil ?? "",
-      categorie: activite.categorie,
-      date: activite.date_activite,
-      heureDebut: activite.heure_debut,
-      heureFin: activite.heure_fin,
-      lieu: { type: "libre", libelle: activite.lieu },
-      capaciteMax: activite.capacite_max,
-    },
+    propositionDeNouvelleActivite(activite),
     undefined,
     { jev },
   );
@@ -117,7 +107,12 @@ async function preModerer(
     p_identifiant: identifiant,
     p_raison: avis.moderation.raison,
   });
-  return !error;
+  if (error) {
+    // L'activité reste publiée : Jev ne bloque jamais. Mais on garde la trace de l'échec.
+    console.error("Mise en relecture par Jev impossible :", error.message);
+    return false;
+  }
+  return true;
 }
 
 const messagesPhotos: Record<string, string> = {

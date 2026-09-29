@@ -128,9 +128,9 @@ export function ParcoursProposition({
   const premiereEtape = useRef(true);
   // Ce que le créateur a choisi lui-même : l'assistant ne le remplace jamais. Une activité
   // dupliquée ou modifiée a déjà sa catégorie.
-  const choisi = useRef({
+  const choixDuCreateur = useRef({
     categorie: initial !== SAISIE_VIDE,
-    pictogramme: false,
+    pictogramme: initial !== SAISIE_VIDE,
   });
   // Vrai quand la catégorie présélectionnée vient de l'assistant.
   const [categorieSuggeree, setCategorieSuggeree] = useState(false);
@@ -190,10 +190,14 @@ export function ParcoursProposition({
   async function suggerer() {
     try {
       const avis = await avisJev(entreeJevDe(saisie));
-      const suivante = appliquerSuggestions(saisie, avis, choisi.current);
+      const suivante = appliquerSuggestions(
+        saisie,
+        avis,
+        choixDuCreateur.current,
+      );
       if (suivante.categorie !== saisie.categorie) setCategorieSuggeree(true);
       setSaisie((actuelle) =>
-        appliquerSuggestions(actuelle, avis, choisi.current),
+        appliquerSuggestions(actuelle, avis, choixDuCreateur.current),
       );
     } catch {
       // Jev ne bloque jamais le parcours.
@@ -372,7 +376,7 @@ export function ParcoursProposition({
             name="categorie"
             value={saisie.categorie}
             onChange={(e) => {
-              choisi.current.categorie = true;
+              choixDuCreateur.current.categorie = true;
               setCategorieSuggeree(false);
               setSaisie((s) =>
                 changerCategorie(s, e.target.value as CategorieActivite),
@@ -400,8 +404,14 @@ export function ParcoursProposition({
                 type="button"
                 variante="fantome"
                 onClick={() => {
-                  choisi.current.pictogramme = true;
+                  choixDuCreateur.current.pictogramme = true;
                   poser("pictogramme", "");
+                  // La ligne disparaît : le focus revient au champ voisin, pas au corps de la page.
+                  document
+                    .querySelector<HTMLSelectElement>(
+                      'select[name="categorie"]',
+                    )
+                    ?.focus();
                 }}
               >
                 Garder celui de la catégorie

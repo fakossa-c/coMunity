@@ -1,4 +1,9 @@
-import type { Avertissement, AvisAssistant, Proposition } from "@/assistant";
+import type {
+  Avertissement,
+  AvisAssistant,
+  EntreeJev,
+  Proposition,
+} from "@/assistant";
 import type { NomIcone } from "@/components/icones";
 import {
   categoriesActiviteListe,
@@ -358,15 +363,26 @@ export function propositionDe(saisie: SaisieActivite): Proposition {
  * Ce que le navigateur confie au serveur pour interroger Jev : le titre, la description et le
  * créneau, rien du lieu ni des places.
  */
-export function entreeJevDe(
-  saisie: SaisieActivite,
-): Pick<
-  Proposition,
-  "titre" | "description" | "date" | "heureDebut" | "heureFin"
-> {
+export function entreeJevDe(saisie: SaisieActivite): EntreeJev {
   const { titre, description, date, heureDebut, heureFin } =
     propositionDe(saisie);
   return { titre, description, date, heureDebut, heureFin };
+}
+
+/** La proposition que l'assistant relit d'une activité qui vient d'être publiée. */
+export function propositionDeNouvelleActivite(
+  activite: NouvelleActivite,
+): Proposition {
+  return {
+    titre: activite.titre,
+    description: activite.mot_accueil ?? "",
+    categorie: activite.categorie,
+    date: activite.date_activite,
+    heureDebut: activite.heure_debut,
+    heureFin: activite.heure_fin,
+    lieu: { type: "libre", libelle: activite.lieu },
+    capaciteMax: activite.capacite_max,
+  };
 }
 
 /**

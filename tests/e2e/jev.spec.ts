@@ -248,7 +248,7 @@ test("une proposition jugée non conforme est mise en relecture, avec la raison 
   await continuer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText(
-    "Votre proposition sera relue par le conseil syndical avant d'être visible de vos voisins.",
+    "Votre activité sera relue par le conseil syndical avant d'être visible de vos voisins.",
   );
   await page.getByRole("button", { name: "Publier" }).click();
 

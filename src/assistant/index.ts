@@ -234,7 +234,14 @@ async function interrogerJev(
   });
   try {
     return await Promise.race([
-      jev(entree, coupure.signal).catch(() => null),
+      jev(entree, coupure.signal).catch((erreur: unknown) => {
+        // Sans effet pour le créateur, mais dit pourquoi Jev n'a pas donné d'avis.
+        console.warn(
+          "Jev sans avis :",
+          erreur instanceof Error ? erreur.message : erreur,
+        );
+        return null;
+      }),
       delai,
     ]);
   } finally {

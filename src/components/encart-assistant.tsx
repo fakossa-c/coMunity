@@ -17,7 +17,7 @@ export function EncartAssistant({ avis }: Props) {
           ? [
               {
                 message:
-                  "Votre proposition sera relue par le conseil syndical avant d'être visible de vos voisins.",
+                  "Votre activité sera relue par le conseil syndical avant d'être visible de vos voisins.",
                 bloquant: false,
               },
             ]
