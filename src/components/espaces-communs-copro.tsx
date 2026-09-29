@@ -30,7 +30,7 @@ function FicheEspace({ espace }: { espace: EspaceCommun }) {
   const emplacement = [espace.batiment, espace.localisation]
     .filter(Boolean)
     .join(" · ");
-  const lignes: (Ligne | false | null)[] = [
+  const lignes: (Ligne | false)[] = [
     !!espace.horaires_acces && {
       icone: "schedule",
       libelle: "Horaires d'accès",
