@@ -46,11 +46,13 @@ import {
 import { cheminFiche } from "@/lib/partage-activite";
 import {
   MAX_PHOTOS,
+  messagePhotosIncompletes,
   mettreEnPremier,
   retirerPhoto,
 } from "@/lib/photos-activite";
 import {
   definirPhotos,
+  type DepotPhoto,
   enregistrer,
   preparerDepotsPhotos,
   publier,
@@ -186,7 +188,7 @@ export function ParcoursProposition({
    * chemin (un nouvel essai ne les renvoie pas) ; rend la liste ordonnée des chemins envoyés et
    * le nombre de photos restées en plan.
    */
-  async function envoyer(depots: { chemin: string; token: string }[]) {
+  async function envoyer(depots: DepotPhoto[]) {
     const aEnvoyer = photos.filter((photo) => photo.fichier);
     const chemins = await envoyerPhotos(
       depots,
@@ -227,11 +229,7 @@ export function ParcoursProposition({
       return router.push(`${cheminFiche(publication.identifiant)}/publiee`);
     setApresEchec({
       identifiant: publication.identifiant,
-      message: `Votre activité est publiée, mais ${
-        echecs === 1
-          ? "une photo n'a pas pu être envoyée"
-          : "des photos n'ont pas pu être envoyées"
-      }. Ouvrez l'activité puis « Modifier » pour les ajouter.`,
+      message: messagePhotosIncompletes(echecs, suite.ok),
     });
   }
 

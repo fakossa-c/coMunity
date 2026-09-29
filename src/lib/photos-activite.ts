@@ -46,6 +46,31 @@ export function mettreEnPremier<T>(liste: T[], index: number) {
   return [liste[index], ...liste.filter((_, i) => i !== index)];
 }
 
+/** La liste sans l'élément d'indice `index`. */
 export function retirerPhoto<T>(liste: T[], index: number) {
   return liste.filter((_, i) => i !== index);
+}
+
+/** « Aucune photo », « 1 photo », « 4 photos ». */
+export function libellePhotos(nombre: number) {
+  if (nombre === 0) return "Aucune photo";
+  return nombre === 1 ? "1 photo" : `${nombre} photos`;
+}
+
+/**
+ * Ce que dit le parcours d'une activité publiée dont les photos ne sont pas toutes enregistrées :
+ * `echecs` photos n'ont pas pu être envoyées, ou bien (`enregistrees` faux) toutes sont parties
+ * mais la liste n'a pas pu être enregistrée.
+ */
+export function messagePhotosIncompletes(
+  echecs: number,
+  enregistrees: boolean,
+) {
+  const [cause, pluriel] =
+    !enregistrees && echecs === 0
+      ? ["ses photos n'ont pas pu être enregistrées", true]
+      : echecs === 1
+        ? ["une photo n'a pas pu être envoyée", false]
+        : [`${echecs} photos n'ont pas pu être envoyées`, true];
+  return `Votre activité est publiée, mais ${cause}. Ouvrez l'activité puis « Modifier » pour ${pluriel ? "les " : "l'"}ajouter.`;
 }

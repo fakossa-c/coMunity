@@ -9,6 +9,8 @@ type Props = {
   arrondi?: boolean;
   /** Pastille « 1 sur 4 » en bas à droite. */
   compteur?: string;
+  /** La photo de tête de fiche charge tout de suite ; celles d'une liste attendent d'être proches de l'écran. */
+  immediate?: boolean;
   className?: string;
 };
 
@@ -22,6 +24,7 @@ export function EmplacementPhoto({
   legende,
   arrondi = false,
   compteur,
+  immediate = false,
   className,
 }: Props) {
   return (
@@ -35,7 +38,7 @@ export function EmplacementPhoto({
         <img
           src={src}
           alt={alt}
-          loading="lazy"
+          loading={immediate ? "eager" : "lazy"}
           className="absolute inset-0 size-full object-cover"
         />
       ) : (

@@ -51,6 +51,7 @@ export function GaleriePhotos({ photos, titre }: Props) {
         alt={texteAlternatif(titre, rang + 1, total)}
         compteur={seule ? undefined : compteurPhoto(rang + 1, total)}
         arrondi
+        immediate
       />
       {!seule && (
         <>

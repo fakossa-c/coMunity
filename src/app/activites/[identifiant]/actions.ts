@@ -106,7 +106,7 @@ export async function supprimerActivite(
   const supabase = await clientSession();
   const { data: activite } = await supabase
     .from("activite")
-    .select("photos")
+    .select("id, photos")
     .eq("identifiant_public", identifiant)
     .maybeSingle();
   const { error } = await supabase.rpc("supprimer_activite", {
@@ -121,11 +121,17 @@ export async function supprimerActivite(
     };
   }
 
-  // L'activité supprimée, ses photos n'ont plus de gérant : la base laisse alors les retirer.
+  // L'activité supprimée, ses photos n'ont plus de gérant : la base laisse alors les retirer. Le
+  // dossier entier part, photos jamais enregistrées comprises (envoi resté en plan).
   // Au pire, un fichier orphelin reste dans le bucket : plus aucune activité ne le montre.
-  const photos: string[] = activite?.photos ?? [];
-  if (photos.length > 0)
-    await supabase.storage.from(BUCKET_PHOTOS_ACTIVITE).remove(photos);
+  if (activite) {
+    const dossier = supabase.storage.from(BUCKET_PHOTOS_ACTIVITE);
+    const { data: fichiers } = await dossier.list(activite.id);
+    const chemins = new Set<string>(activite.photos);
+    for (const fichier of fichiers ?? [])
+      chemins.add(`${activite.id}/${fichier.name}`);
+    if (chemins.size > 0) await dossier.remove([...chemins]);
+  }
 
   revalidatePath("/");
   revalidatePath("/activites");

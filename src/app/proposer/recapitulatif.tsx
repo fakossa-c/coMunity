@@ -20,6 +20,7 @@ import {
 import type { EspaceCommun } from "@/lib/espaces-communs";
 import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong } from "@/lib/partage-activite";
+import { libellePhotos } from "@/lib/photos-activite";
 import {
   avertissementsApplicables,
   capaciteMaxDe,
@@ -91,12 +92,7 @@ function sectionsDe(
         {
           icone: "visibility",
           titre: "Photos",
-          detail:
-            nombrePhotos === 0
-              ? "Aucune"
-              : nombrePhotos === 1
-                ? "1 photo"
-                : `${nombrePhotos} photos`,
+          detail: libellePhotos(nombrePhotos),
         },
       ],
     },

@@ -4,6 +4,8 @@ import {
   cheminPhoto,
   compteurPhoto,
   estCheminPhoto,
+  libellePhotos,
+  messagePhotosIncompletes,
   mettreEnPremier,
   retirerPhoto,
   texteAlternatif,
@@ -79,5 +81,26 @@ describe("liste de photos du parcours", () => {
     mettreEnPremier(liste, 2);
     retirerPhoto(liste, 0);
     expect(liste).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("libellés", () => {
+  it("le nombre de photos s'accorde", () => {
+    expect(libellePhotos(0)).toBe("Aucune photo");
+    expect(libellePhotos(1)).toBe("1 photo");
+    expect(libellePhotos(4)).toBe("4 photos");
+  });
+
+  it("le message d'une publication sans toutes ses photos dit ce qui a manqué", () => {
+    expect(messagePhotosIncompletes(1, true)).toBe(
+      "Votre activité est publiée, mais une photo n'a pas pu être envoyée. Ouvrez l'activité puis « Modifier » pour l'ajouter.",
+    );
+    expect(messagePhotosIncompletes(3, true)).toBe(
+      "Votre activité est publiée, mais 3 photos n'ont pas pu être envoyées. Ouvrez l'activité puis « Modifier » pour les ajouter.",
+    );
+    // Toutes parties, mais la liste n'a pas pu être enregistrée : l'envoi n'est pas en cause.
+    expect(messagePhotosIncompletes(0, false)).toBe(
+      "Votre activité est publiée, mais ses photos n'ont pas pu être enregistrées. Ouvrez l'activité puis « Modifier » pour les ajouter.",
+    );
   });
 });

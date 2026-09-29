@@ -6,6 +6,7 @@ import {
   MOT_DE_PASSE,
   nouveauResident,
   nouvelleActivite,
+  deposerPhotoNonEnregistree,
   nouvelleActiviteAvecPhotos,
   saisirLieuLibre,
   supprimerComptes,
@@ -219,6 +220,8 @@ test("supprimer une activité supprime ses photos", async ({ page }) => {
     resident.id,
     ["#c4580a", "#236b3b"],
   );
+  // Une photo envoyée puis jamais enregistrée (onglet fermé entre les deux) : elle part aussi.
+  chemins.push(await deposerPhotoNonEnregistree(identifiant));
   await seConnecter(page, resident.email);
   await page.goto(`/activites/${identifiant}`);
   const src = (await page

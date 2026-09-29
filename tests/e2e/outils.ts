@@ -168,6 +168,22 @@ export async function nouvelleActiviteAvecPhotos(
   return { identifiant, chemins };
 }
 
+/** Dépose une photo dans le dossier de l'activité sans l'ajouter à sa liste, comme un envoi resté en plan ; renvoie son chemin. */
+export async function deposerPhotoNonEnregistree(identifiant: string) {
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("activite")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .single();
+  const chemin = `${data?.id}/${randomUUID()}.jpg`;
+  const { error } = await admin.storage
+    .from("activites")
+    .upload(chemin, await photoJpeg("#0d3b66"), { contentType: "image/jpeg" });
+  if (error) throw error;
+  return chemin;
+}
+
 /** Inscrit `residentId` à l'activité désignée par son identifiant public, avec `accompagnants` personnes en plus. */
 export async function inscrireResident(
   identifiant: string,

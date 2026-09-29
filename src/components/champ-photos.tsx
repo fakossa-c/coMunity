@@ -5,6 +5,7 @@ import { compresserImage } from "@/lib/compression-image";
 import {
   MAX_PHOTOS,
   compteurPhoto,
+  libellePhotos,
   texteAlternatif,
 } from "@/lib/photos-activite";
 import { Bouton } from "./bouton";
@@ -100,7 +101,7 @@ export function ChampPhotos({
           ? "Préparation des photos…"
           : photos.length === 0
             ? "Aucune photo pour l'instant."
-            : `${photos.length} ${photos.length === 1 ? "photo" : "photos"} sur ${MAX_PHOTOS}`}
+            : `${libellePhotos(photos.length)} sur ${MAX_PHOTOS}`}
       </p>
       {photos.length > 0 && (
         <ul className="flex flex-col gap-bloc">
