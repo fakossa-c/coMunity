@@ -142,7 +142,7 @@ function Vote({
           return (
             <label
               key={rang}
-              className={`${ligne} cursor-pointer transition-colors has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus desktop:duration-(--duree-courte) desktop:ease-journal ${
+              className={`${ligne} cursor-pointer has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus desktop:transition-colors desktop:duration-(--duree-courte) desktop:ease-journal ${
                 actif
                   ? "border-primary bg-fond-action text-texte-action"
                   : "border-outline bg-fond-carte"

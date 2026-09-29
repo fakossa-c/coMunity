@@ -35,7 +35,7 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
   const type = typesAnnonce[annonce.type];
   const infos = infosAnnonce(annonce);
   return (
-    <article className="relative flex survol-eleve flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-space-md shadow-carte desktop:gap-space-md desktop:p-8">
+    <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:survol-eleve desktop:gap-space-md desktop:border-transparent desktop:p-8 desktop:shadow-douce">
       <div className="flex flex-wrap items-center gap-space-sm">
         <Etiquette ton={type.ton} icone={type.icone}>
           {type.libelle}
