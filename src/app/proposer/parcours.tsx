@@ -13,6 +13,7 @@ import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
 import { EncartPastel } from "@/components/encart-pastel";
 import { Annonce } from "@/components/formulaire";
+import { Icone } from "@/components/icone";
 import { TitreSection } from "@/components/titre-section";
 import {
   categoriesActivite,
@@ -27,8 +28,12 @@ import {
   NOMBRE_ETAPES,
   SAISIE_VIDE,
   TITRES_ETAPES,
+  appliquerSuggestions,
   avertissementsApplicables,
   blocageDeLEtape,
+  changerCategorie,
+  entreeJevDe,
+  pictogrammeDeLaSaisie,
   propositionDe,
   verifierEtape,
   versNouvelleActivite,
@@ -51,6 +56,7 @@ import {
   retirerPhoto,
 } from "@/lib/photos-activite";
 import {
+  avisJev,
   definirPhotos,
   type DepotPhoto,
   enregistrer,
@@ -120,6 +126,14 @@ export function ParcoursProposition({
   const [enCours, demarrer] = useTransition();
   const titreEtape = useRef<HTMLHeadingElement>(null);
   const premiereEtape = useRef(true);
+  // Ce que le créateur a choisi lui-même : l'assistant ne le remplace jamais. Une activité
+  // dupliquée ou modifiée a déjà sa catégorie.
+  const choisi = useRef({
+    categorie: initial !== SAISIE_VIDE,
+    pictogramme: false,
+  });
+  // Vrai quand la catégorie présélectionnée vient de l'assistant.
+  const [categorieSuggeree, setCategorieSuggeree] = useState(false);
 
   // À chaque changement d'étape, le titre de l'étape prend le focus : le lecteur d'écran
   // annonce où l'on est, la page revient en haut.
@@ -168,11 +182,31 @@ export function ParcoursProposition({
     );
   }
 
+  /**
+   * Jev présélectionne la catégorie et le pictogramme d'après le titre et le mot d'accueil, à
+   * la première sortie de l'étape 1 d'une nouvelle activité. Sans clé, en erreur ou trop lent :
+   * rien ne change et le parcours continue.
+   */
+  async function suggerer() {
+    try {
+      const avis = await avisJev(entreeJevDe(saisie));
+      const suivante = appliquerSuggestions(saisie, avis, choisi.current);
+      if (suivante.categorie !== saisie.categorie) setCategorieSuggeree(true);
+      setSaisie((actuelle) =>
+        appliquerSuggestions(actuelle, avis, choisi.current),
+      );
+    } catch {
+      // Jev ne bloque jamais le parcours.
+    }
+  }
+
   function continuer() {
     demarrer(async () => {
       const verdict = await verifier(etape);
       setErreur(verdict);
       if (verdict.erreur) return;
+      if (etape === 1 && !modification && !retourRecapitulatif)
+        await suggerer();
       aller(retourRecapitulatif ? NOMBRE_ETAPES : ((etape + 1) as Etape));
     });
   }
@@ -226,7 +260,11 @@ export function ParcoursProposition({
         ? await definirPhotos(publication.identifiant, chemins)
         : { ok: true, message: "" };
     if (echecs === 0 && suite.ok)
-      return router.push(`${cheminFiche(publication.identifiant)}/publiee`);
+      return router.push(
+        publication.enRelecture
+          ? cheminFiche(publication.identifiant)
+          : `${cheminFiche(publication.identifiant)}/publiee`,
+      );
     setApresEchec({
       identifiant: publication.identifiant,
       message: messagePhotosIncompletes(echecs, suite.ok),
@@ -333,8 +371,17 @@ export function ParcoursProposition({
             libelle="Catégorie"
             name="categorie"
             value={saisie.categorie}
-            onChange={(e) =>
-              poser("categorie", e.target.value as CategorieActivite)
+            onChange={(e) => {
+              choisi.current.categorie = true;
+              setCategorieSuggeree(false);
+              setSaisie((s) =>
+                changerCategorie(s, e.target.value as CategorieActivite),
+              );
+            }}
+            aide={
+              categorieSuggeree
+                ? "Suggérée d'après votre titre. Changez-la si elle ne convient pas."
+                : undefined
             }
           >
             {categoriesActiviteListe.map((clef) => (
@@ -343,6 +390,24 @@ export function ParcoursProposition({
               </option>
             ))}
           </ChampListe>
+          {saisie.pictogramme !== "" && (
+            <div className="flex flex-wrap items-center gap-space-sm">
+              <Icone nom={pictogrammeDeLaSaisie(saisie)} taille={28} />
+              <span className="text-body-md text-on-surface-variant">
+                Pictogramme suggéré d&apos;après votre titre.
+              </span>
+              <Bouton
+                type="button"
+                variante="fantome"
+                onClick={() => {
+                  choisi.current.pictogramme = true;
+                  poser("pictogramme", "");
+                }}
+              >
+                Garder celui de la catégorie
+              </Bouton>
+            </div>
+          )}
           <ChampTexte
             libelle="Mot d'accueil"
             name="mot_accueil"
@@ -535,6 +600,7 @@ export function ParcoursProposition({
           espace={espaceChoisi}
           regles={regles}
           reference={reference}
+          avecJev={!modification}
           nombrePhotos={photos.length}
           onModifier={modifier}
           onAnnuler={() =>

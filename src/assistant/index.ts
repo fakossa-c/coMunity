@@ -210,7 +210,8 @@ export const SEUIL_SUGGESTION = 0.6;
 /** Confiance minimale pour mettre une proposition en relecture, ou la dire conforme. */
 export const SEUIL_MODERATION = 0.8;
 
-export const DELAI_JEV_MS = 4000;
+/** Au-delà de ce délai, l'assistant renonce à Jev plutôt que de faire attendre le créateur. */
+export const DELAI_JEV_MS = 3000;
 
 const MAX_INFORMATIONS_MANQUANTES = 3;
 

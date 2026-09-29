@@ -4,6 +4,12 @@ import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  analyserProposition,
+  type AvisAssistant,
+  type Proposition,
+} from "@/assistant";
+import { moteurJev } from "@/assistant/jev-serveur";
 import { cheminFiche } from "@/lib/partage-activite";
 import {
   BUCKET_PHOTOS_ACTIVITE,
@@ -11,17 +17,108 @@ import {
   TAILLE_MAX_PHOTO,
   cheminPhoto,
 } from "@/lib/photos-activite";
-import type { NouvelleActivite } from "@/lib/proposition-activite";
+import { LIMITES, type NouvelleActivite } from "@/lib/proposition-activite";
 import { clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
 /** Une photo à déposer : son chemin dans le bucket et le jeton à usage unique qui autorise le dépôt. */
 export type DepotPhoto = { chemin: string; token: string };
 
-/** Ce que rend la publication d'une activité qui a des photos : l'activité est créée, il reste à envoyer les photos. */
+/**
+ * Ce que rend la publication d'une activité qui a des photos : l'activité est créée, il reste à
+ * envoyer les photos. `enRelecture` : Jev l'a jugée non conforme, elle attend le conseil syndical
+ * et n'a pas de lien à partager.
+ */
 export type Publication =
   | { ok: false; message: string }
-  | { ok: true; identifiant: string; depots: DepotPhoto[] };
+  | {
+      ok: true;
+      identifiant: string;
+      depots: DepotPhoto[];
+      enRelecture: boolean;
+    };
+
+const SANS_AVIS: AvisAssistant = {
+  categorieSuggeree: null,
+  pictogrammeSuggere: null,
+  avertissements: [],
+  moderation: { avis: "pas_d_avis" },
+};
+
+/**
+ * L'avis de Jev sur une proposition en cours de saisie : suggestions de catégorie et de
+ * pictogramme, informations qui semblent manquer, et avis de modération. Sans clé Jev, sans
+ * compte validé, ou si Jev est lent ou en erreur : aucun avis. Seuls le titre, la description et
+ * le créneau partent vers Jev ; le texte est borné comme en base.
+ */
+export async function avisJev(
+  proposition: Pick<
+    Proposition,
+    "titre" | "description" | "date" | "heureDebut" | "heureFin"
+  >,
+): Promise<AvisAssistant> {
+  const jev = moteurJev();
+  if (!jev) return SANS_AVIS;
+
+  const supabase = await clientSession();
+  const { data: peutParticiper } = await supabase.rpc("peut_participer");
+  if (!peutParticiper) return SANS_AVIS;
+
+  // Le navigateur envoie ce qu'il veut : on ne retient que le titre, la description et le
+  // créneau, en texte borné, et rien du lieu ni des places.
+  const texte = (valeur: unknown, max: number) =>
+    typeof valeur === "string" ? valeur.slice(0, max) : "";
+  return analyserProposition(
+    {
+      titre: texte(proposition?.titre, LIMITES.titre),
+      description: texte(proposition?.description, LIMITES.mot_accueil),
+      categorie: null,
+      date: texte(proposition?.date, 10),
+      heureDebut: texte(proposition?.heureDebut, 8),
+      heureFin: texte(proposition?.heureFin, 8),
+      lieu: { type: "libre", libelle: "" },
+      capaciteMax: null,
+    },
+    undefined,
+    { jev },
+  );
+}
+
+/**
+ * Soumet l'activité qui vient d'être publiée à Jev, et la met en relecture s'il la juge non
+ * conforme, avec la raison que lira le conseil syndical. Jev ne bloque jamais : sans clé, sans
+ * avis, ou si la mise en relecture échoue, l'activité reste publiée. Vrai si elle est en relecture.
+ */
+async function preModerer(
+  supabase: SupabaseClient,
+  identifiant: string,
+  activite: NouvelleActivite,
+): Promise<boolean> {
+  const jev = moteurJev();
+  if (!jev) return false;
+
+  const avis = await analyserProposition(
+    {
+      titre: activite.titre,
+      description: activite.mot_accueil ?? "",
+      categorie: activite.categorie,
+      date: activite.date_activite,
+      heureDebut: activite.heure_debut,
+      heureFin: activite.heure_fin,
+      lieu: { type: "libre", libelle: activite.lieu },
+      capaciteMax: activite.capacite_max,
+    },
+    undefined,
+    { jev },
+  );
+  if (avis.moderation.avis !== "a_relire") return false;
+
+  const { error } = await supabase.rpc("mettre_en_relecture", {
+    p_identifiant: identifiant,
+    p_raison: avis.moderation.raison,
+  });
+  return !error;
+}
 
 const messagesPhotos: Record<string, string> = {
   "42501": "Seuls le créateur et le conseil syndical gèrent les photos.",
@@ -91,7 +188,8 @@ const messages: Record<string, string> = {
  * WhatsApp ; avec des photos (`poidsPhotos`, en octets, une par photo à envoyer), l'activité est
  * créée puis les dépôts sont rendus : le navigateur envoie les photos, puis appelle
  * `definirPhotos`. La base vérifie les droits, les contraintes et les règles bloquantes de
- * l'espace commun ; seul un échec revient au parcours.
+ * l'espace commun ; seul un échec revient au parcours. Si Jev juge l'activité non conforme, elle
+ * passe en relecture et l'écran de partage laisse place à sa fiche.
  */
 export async function publier(
   activite: NouvelleActivite,
@@ -123,12 +221,22 @@ export async function publier(
     };
   }
 
+  const enRelecture = await preModerer(
+    supabase,
+    data.identifiant_public,
+    activite,
+  );
   revalidatePath("/");
   if (poidsPhotos.length === 0)
-    redirect(`${cheminFiche(data.identifiant_public)}/publiee`);
+    redirect(
+      enRelecture
+        ? cheminFiche(data.identifiant_public)
+        : `${cheminFiche(data.identifiant_public)}/publiee`,
+    );
   return {
     ok: true,
     identifiant: data.identifiant_public,
+    enRelecture,
     // Sans dépôt (Storage indisponible), le navigateur le constate : l'activité est publiée sans ses photos.
     depots: (await preparerDepots(supabase, data.id, poidsPhotos.length)) ?? [],
   };

@@ -355,6 +355,21 @@ export function propositionDe(saisie: SaisieActivite): Proposition {
 }
 
 /**
+ * Ce que le navigateur confie au serveur pour interroger Jev : le titre, la description et le
+ * créneau, rien du lieu ni des places.
+ */
+export function entreeJevDe(
+  saisie: SaisieActivite,
+): Pick<
+  Proposition,
+  "titre" | "description" | "date" | "heureDebut" | "heureFin"
+> {
+  const { titre, description, date, heureDebut, heureFin } =
+    propositionDe(saisie);
+  return { titre, description, date, heureDebut, heureFin };
+}
+
+/**
  * La règle bloquante de l'assistant qui arrête l'étape, sous le champ à corriger : l'heure de fin
  * à l'étape 2, le nombre de places à l'étape 3. Au récapitulatif, toute règle bloquante empêche
  * de publier. `{}` quand rien ne bloque.
