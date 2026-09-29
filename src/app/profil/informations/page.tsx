@@ -35,7 +35,6 @@ export default async function MesInformations({
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
-          journal
           titre="Mes informations"
           sousTitre="Contrôlez les informations partagées"
         />

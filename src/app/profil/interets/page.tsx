@@ -23,7 +23,6 @@ export default async function PageMesInterets() {
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
-          journal
           titre="Mes intérêts"
           sousTitre="Ce qui vous plaît, en quelques mots : jardinage, jeux de société, cuisine…"
         />
