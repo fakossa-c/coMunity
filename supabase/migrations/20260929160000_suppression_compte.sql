@@ -6,25 +6,19 @@
 -- restent, sans auteur. Une activité en relecture ou masquée est supprimée même avec des inscrits :
 -- annulée, elle deviendrait publique, alors que ses inscrits ne la voient déjà plus.
 --
--- Migration additive : deux colonnes deviennent facultatives et leur clé étrangère met à `null`
--- au lieu d'effacer ; une fonction est nouvelle ; la fiche, les retours d'une activité et la synthèse
+-- Migration additive : deux colonnes deviennent facultatives ; une fonction est nouvelle ; la fiche, les retours d'une activité et la synthèse
 -- du tableau de bord se relisent sans organisateur, avec les mêmes colonnes qu'avant.
 
-alter table public.activite
-  alter column organisateur drop not null,
-  drop constraint activite_organisateur_fkey,
-  add constraint activite_organisateur_fkey
-    foreign key (organisateur) references public.profil (id) on delete set null;
+-- Les clés étrangères gardent `on delete cascade` : effacer un compte autrement (tableau de bord
+-- Supabase, script) emporte toujours ses activités et ses retours. Seule `supprimer_mon_compte`
+-- met ces colonnes à `null` avant d'effacer le compte.
+alter table public.activite alter column organisateur drop not null;
 
-comment on column public.activite.organisateur is '`null` quand le compte de l''organisateur est supprimé : l''activité passée reste, sans nom.';
+comment on column public.activite.organisateur is '`null` quand le résident a supprimé son compte (`supprimer_mon_compte`) : l''activité passée reste, sans nom.';
 
-alter table public.retour
-  alter column resident_id drop not null,
-  drop constraint retour_resident_id_fkey,
-  add constraint retour_resident_id_fkey
-    foreign key (resident_id) references public.profil (id) on delete set null;
+alter table public.retour alter column resident_id drop not null;
 
-comment on column public.retour.resident_id is '`null` quand le compte de l''auteur est supprimé : le retour reste, anonyme.';
+comment on column public.retour.resident_id is '`null` quand le résident a supprimé son compte (`supprimer_mon_compte`) : le retour reste, anonyme.';
 
 /**
  * Supprime le compte de la personne connectée, si c'est un résident (un membre du syndic passe par
@@ -49,7 +43,10 @@ begin
     raise exception 'Seul un résident supprime son compte ici' using errcode = '42501';
   end if;
 
-  -- Le verrou de `s_inscrire` : personne ne s'inscrit pendant qu'on décide du sort de l'activité.
+  -- Le profil verrouillé, plus aucune activité ne se crée pour ce compte pendant la suppression
+  -- (la clé étrangère de l'activité attend ce verrou) ; les siennes, verrouillées comme le fait
+  -- `s_inscrire`, ne reçoivent plus d'inscription.
+  perform 1 from public.profil where id = moi for update;
   perform 1 from public.activite where organisateur = moi for update;
 
   with maj as (
@@ -58,7 +55,10 @@ begin
     where a.organisateur = moi
       and (a.date_activite + a.heure_fin) >= now()
       and a.statut in ('publiee', 'annulee')
-      and exists (select 1 from public.inscription_activite i where i.activite_id = a.id)
+      and exists (
+        select 1 from public.inscription_activite i
+        where i.activite_id = a.id and i.resident_id <> moi
+      )
     returning a.id
   )
   select coalesce(array_agg(id), '{}') into annulees from maj;
@@ -69,14 +69,19 @@ begin
       and (a.date_activite + a.heure_fin) >= now()
       and (
         a.statut in ('en_relecture', 'masquee')
-        or not exists (select 1 from public.inscription_activite i where i.activite_id = a.id)
+        or not exists (
+          select 1 from public.inscription_activite i
+          where i.activite_id = a.id and i.resident_id <> moi
+        )
       )
     returning a.id
   )
   select coalesce(array_agg(id), '{}') into supprimees from sup;
 
-  -- Le profil, les inscriptions et les réponses aux sondages suivent en cascade ; les activités
-  -- passées et les retours passent à `null`.
+  -- Ce qui reste (activités passées, retours) perd son auteur ; le profil, les inscriptions et les
+  -- réponses aux sondages partent avec le compte, en cascade.
+  update public.activite set organisateur = null where organisateur = moi;
+  update public.retour set resident_id = null where resident_id = moi;
   delete from auth.users where id = moi;
 
   return annulees || supprimees;
@@ -176,6 +181,55 @@ $$;
 
 revoke execute on function public.tableau_bord_synthese(date, date) from public, anon;
 grant execute on function public.tableau_bord_synthese(date, date) to authenticated;
+
+-- La file de modération garde une activité passée dont le résident a supprimé son compte : sans nom.
+/**
+ * Les activités à modérer, pour le conseil syndical : d'abord celles en relecture (les plus
+ * anciennes en tête) avec la raison de leur mise en relecture, puis les masquées avec le message
+ * de leur masquage. Rien pour qui n'est pas du conseil syndical.
+ */
+create or replace function public.activites_a_moderer()
+returns table (
+  identifiant_public text,
+  titre text,
+  categorie public.categorie_activite,
+  pictogramme text,
+  date_activite date,
+  heure_debut time,
+  lieu text,
+  statut public.statut_activite,
+  raison_relecture text,
+  message_moderation text,
+  organisateur_nom_affiche text,
+  publiee_le timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    a.identifiant_public,
+    a.titre,
+    a.categorie,
+    a.pictogramme,
+    a.date_activite,
+    a.heure_debut,
+    a.lieu,
+    a.statut,
+    m.raison_relecture,
+    m.message,
+    public.nom_affiche(p.prenom, p.nom),
+    a.publiee_le
+  from public.activite a
+  left join public.profil p on p.id = a.organisateur
+  left join public.moderation_activite m on m.activite_id = a.id
+  where a.statut in ('en_relecture', 'masquee') and public.est_syndic()
+  order by (a.statut = 'masquee'), a.publiee_le;
+$$;
+
+revoke execute on function public.activites_a_moderer() from public, anon;
+grant execute on function public.activites_a_moderer() to authenticated;
 
 -- La fiche d'une activité sans organisateur : pas de nom, pas « proposée par le syndic », et
 -- personne n'en est l'organisateur (`null = null` ne l'aurait pas dit à un visiteur).

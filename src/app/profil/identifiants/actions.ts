@@ -155,7 +155,7 @@ export async function supprimerMonCompte(): Promise<Resultat> {
   };
 
   // Le client des photos se prépare avant la suppression : sans clé secrète, rien n'est effacé.
-  let admin;
+  let admin: ReturnType<typeof clientAdmin>;
   try {
     admin = clientAdmin();
   } catch {

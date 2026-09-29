@@ -106,8 +106,8 @@ function CarteModeration({ activite }: { activite: ActiviteAModerer }) {
         {activite.titre}
       </h3>
       <p className="text-body-md text-on-surface-variant">
-        Proposée par {activite.organisateur_nom_affiche} ·{" "}
-        {jourLong(activite.date_activite)} à {heure(activite.heure_debut)} ·{" "}
+        Proposée par {activite.organisateur_nom_affiche ?? "un ancien résident"}{" "}
+        · {jourLong(activite.date_activite)} à {heure(activite.heure_debut)} ·{" "}
         {activite.lieu}
       </p>
       {enRelecture ? (

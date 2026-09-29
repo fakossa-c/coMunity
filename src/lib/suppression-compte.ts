@@ -13,7 +13,9 @@ export async function retirerPhotosDesActivites(
 ) {
   const dossier = client.storage.from(BUCKET_PHOTOS_ACTIVITE);
   for (const activite of activites) {
-    const { data: fichiers } = await dossier.list(activite);
+    const { data: fichiers } = await dossier.list(activite, {
+      limit: 1000,
+    });
     if (fichiers && fichiers.length > 0) {
       await dossier.remove(fichiers.map((f) => `${activite}/${f.name}`));
     }

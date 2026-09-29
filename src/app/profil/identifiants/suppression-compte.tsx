@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Bouton } from "@/components/bouton";
 import { supprimerMonCompte } from "./actions";
 
@@ -12,6 +12,20 @@ export function SuppressionCompte() {
   const [confirmation, setConfirmation] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, demarrer] = useTransition();
+  const explication = useRef<HTMLParagraphElement>(null);
+  const supprimerLeCompte = useRef<HTMLButtonElement>(null);
+  const dejaOuverte = useRef(false);
+
+  // Le bouton cliqué disparaît : le focus passe à l'explication, puis revient au bouton si on garde
+  // le compte, pour qu'un lecteur d'écran ou le clavier ne perde pas sa place.
+  useEffect(() => {
+    if (confirmation) {
+      dejaOuverte.current = true;
+      explication.current?.focus();
+    } else if (dejaOuverte.current) {
+      supprimerLeCompte.current?.focus();
+    }
+  }, [confirmation]);
 
   function supprimer() {
     setErreur(null);
@@ -26,7 +40,11 @@ export function SuppressionCompte() {
     <div className="mt-space-sm flex flex-col gap-space-sm border-t-[1.5px] border-bordure-carte pt-space-lg">
       {confirmation ? (
         <>
-          <p className="text-body-lg text-on-surface">
+          <p
+            ref={explication}
+            tabIndex={-1}
+            className="text-body-lg text-on-surface outline-none"
+          >
             Supprimer votre compte efface vos informations, vos inscriptions et
             vos propositions d&apos;activités. Cette action est définitive.
           </p>
@@ -53,6 +71,7 @@ export function SuppressionCompte() {
         </>
       ) : (
         <Bouton
+          ref={supprimerLeCompte}
           variante="fantome"
           icone="delete"
           pleineLargeur

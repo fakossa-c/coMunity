@@ -17,8 +17,8 @@ export type ActiviteAModerer = {
   raison_relecture: string | null;
   /** Le message de la dernière décision, celui que son créateur lit ; `null` sans message. */
   message_moderation: string | null;
-  /** « Danielle M. » */
-  organisateur_nom_affiche: string;
+  /** « Danielle M. » ; `null` quand son créateur a supprimé son compte. */
+  organisateur_nom_affiche: string | null;
   publiee_le: string;
 };
 
