@@ -214,6 +214,38 @@ export async function annulerActivite(identifiant: string) {
   if (error) throw error;
 }
 
+/** Met l'activité en relecture avec la raison donnée, comme le fera Jev (ticket #20). */
+export async function mettreEnRelecture(identifiant: string, raison: string) {
+  const admin = clientAdmin();
+  const { data, error } = await admin
+    .from("activite")
+    .update({ statut: "en_relecture" })
+    .eq("identifiant_public", identifiant)
+    .select("id")
+    .single();
+  if (error) throw error;
+  const moderation = await admin
+    .from("moderation_activite")
+    .upsert({ activite_id: data.id, raison_relecture: raison });
+  if (moderation.error) throw moderation.error;
+}
+
+/** Masque l'activité avec le message du conseil syndical à son créateur. */
+export async function masquerActivite(identifiant: string, message: string) {
+  const admin = clientAdmin();
+  const { data, error } = await admin
+    .from("activite")
+    .update({ statut: "masquee" })
+    .eq("identifiant_public", identifiant)
+    .select("id")
+    .single();
+  if (error) throw error;
+  const moderation = await admin
+    .from("moderation_activite")
+    .upsert({ activite_id: data.id, message, decidee_le: new Date() });
+  if (moderation.error) throw moderation.error;
+}
+
 /** Supprime les comptes créés pendant un test, invités compris. */
 export async function supprimerComptes(emails: string[]) {
   const admin = clientAdmin();

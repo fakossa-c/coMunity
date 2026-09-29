@@ -4,8 +4,11 @@ import {
 } from "@/lib/inscription-activite";
 import { Etiquette } from "./etiquette";
 
-/** Ce que la base dit de l'état d'une activité : publiée, ou annulée par son créateur. */
-export type StatutActivite = "publiee" | "annulee";
+/**
+ * Ce que la base dit de l'état d'une activité : publiée, annulée par son créateur, ou mise à part
+ * par la modération (en relecture, masquée : seuls son créateur et le conseil syndical la voient).
+ */
+export type StatutActivite = "publiee" | "annulee" | "en_relecture" | "masquee";
 
 type Props = {
   statut: StatutActivite;
@@ -18,7 +21,8 @@ type Props = {
 };
 
 /**
- * L'état d'une activité, en pastille : « Annulée » (rouge pâle), sinon « Confirmée » (vert) ou
+ * L'état d'une activité, en pastille : « Annulée » ou « Masquée » (rouge pâle), « En relecture »
+ * (abricot), sinon « Confirmée » (vert) ou
  * « Encore N participants pour confirmer » (abricot) selon le minimum. Rien sans minimum, ni une
  * fois l'activité passée. La pastille ne s'étire pas dans une colonne.
  */
@@ -28,6 +32,26 @@ export function EtatActivite({
   placesPrises,
   passee,
 }: Props) {
+  if (statut === "en_relecture") {
+    return (
+      <div>
+        <Etiquette ton="abricot" icone="hourglass_top">
+          En relecture
+        </Etiquette>
+      </div>
+    );
+  }
+
+  if (statut === "masquee") {
+    return (
+      <div>
+        <Etiquette ton="erreur" icone="visibility_off">
+          Masquée
+        </Etiquette>
+      </div>
+    );
+  }
+
   if (statut === "annulee") {
     return (
       <div>

@@ -27,6 +27,11 @@ export default async function EspaceSyndic() {
     .eq("role", "resident")
     .eq("statut", "en_attente");
 
+  const { count: aRelire } = await supabase
+    .from("activite")
+    .select("id", { count: "exact", head: true })
+    .eq("statut", "en_relecture");
+
   return (
     <EcranSecondaire retour={RETOUR} pleineLargeur>
       <TitrePage
@@ -61,6 +66,16 @@ export default async function EspaceSyndic() {
           icone="menu_book"
           titre="Règlement intérieur"
           description="Rédigez les règles de vie de la résidence, section par section."
+        />
+        <Rubrique
+          href="/syndic/moderation"
+          icone="visibility_off"
+          titre="Modération des activités"
+          description={
+            aRelire
+              ? `${aRelire} ${aRelire === 1 ? "activité à relire" : "activités à relire"} : publiez-${aRelire === 1 ? "la" : "les"} ou refusez-${aRelire === 1 ? "la" : "les"} avec un message.`
+              : "Relisez les activités mises de côté, masquez ou rétablissez une activité."
+          }
         />
         <Rubrique
           href="/syndic/annonces"

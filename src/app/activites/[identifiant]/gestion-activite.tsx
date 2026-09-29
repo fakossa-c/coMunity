@@ -12,6 +12,10 @@ import { annulerActivite, supprimerActivite } from "./actions";
 type Props = {
   identifiant: string;
   annulee: boolean;
+  /** Seule une activité publiée se modifie : en relecture ou masquée, elle attend le conseil syndical. */
+  modifiable: boolean;
+  /** Une activité en relecture ou masquée ne s'annule pas : annulée, elle deviendrait publique. */
+  annulable: boolean;
   /** Les personnes inscrites, accompagnants compris : avec elles, on annule au lieu de supprimer. */
   placesPrises: number;
 };
@@ -34,18 +38,24 @@ const RETRAIT = {
 } as const;
 
 /**
- * Ce que son créateur peut faire d'une activité, sous la fiche : la modifier (tant qu'elle n'est
- * pas annulée), la dupliquer, puis la supprimer (personne d'inscrit) ou l'annuler (des inscrits,
+ * Ce que son créateur peut faire d'une activité, sous la fiche : la modifier (tant qu'elle est
+ * publiée), la dupliquer, puis la supprimer (personne d'inscrit) ou l'annuler (des inscrits,
  * qui le voient), derrière une confirmation.
  */
-export function GestionActivite({ identifiant, annulee, placesPrises }: Props) {
+export function GestionActivite({
+  identifiant,
+  annulee,
+  modifiable,
+  annulable,
+  placesPrises,
+}: Props) {
   const [ouverte, setOuverte] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, demarrer] = useTransition();
   const supprimable = placesPrises === 0;
   const retrait = supprimable ? RETRAIT.supprimer : RETRAIT.annuler;
   // Annulée avec des inscrits : il ne reste rien à retirer, ils gardent la trace de l'annulation.
-  const retirable = supprimable || !annulee;
+  const retirable = supprimable || (!annulee && annulable);
 
   function confirmer() {
     setErreur(null);
@@ -61,7 +71,7 @@ export function GestionActivite({ identifiant, annulee, placesPrises }: Props) {
   return (
     <section className="flex flex-col gap-space-sm">
       <TitreSection>Gérer mon activité</TitreSection>
-      {!annulee && (
+      {modifiable && (
         <Link
           href={`${cheminFiche(identifiant)}/modifier`}
           className={classesBouton("action", true)}

@@ -39,7 +39,10 @@ export type FicheActivite = {
   materiel_prevoir: string | null;
   a_apporter: string | null;
   precision_acces: string | null;
-  /** `annulee` : annulée par son créateur, elle reste visible de ses inscrits. */
+  /**
+   * `annulee` : annulée, elle reste visible de ses inscrits. `en_relecture` ou `masquee` : la
+   * fiche n'est livrée qu'à son créateur et au conseil syndical.
+   */
   statut: StatutActivite;
   /** Note du retour déjà laissé par la personne connectée ; `null` si elle n'en a pas laissé. */
   mon_retour_note: number | null;
@@ -50,6 +53,10 @@ export type FicheActivite = {
   consignes_espace: string | null;
   /** Chemins des photos dans le bucket `activites`, dans l'ordre ; vide sans photo. */
   photos: string[];
+  /** Le message de la dernière décision du conseil syndical, lu par le créateur et le conseil syndical ; `null` sans message. */
+  message_moderation: string | null;
+  /** Pourquoi l'activité a été mise en relecture, lu par le conseil syndical seul. */
+  raison_relecture: string | null;
 };
 
 /** L'adresse publique d'une photo du bucket `activites`. */
