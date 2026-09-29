@@ -6,9 +6,14 @@ import {
   refusMotDePasseAuth,
   refusNouveauMotDePasse,
 } from "@/lib/mot-de-passe";
-import type { ErreurFormulaire } from "@/lib/resultat";
+import type { ErreurFormulaire, Resultat } from "@/lib/resultat";
 import { lireSession } from "@/lib/session";
-import { clientSession, verifierMotDePasse } from "@/lib/supabase/serveur";
+import {
+  clientAdmin,
+  clientSession,
+  verifierMotDePasse,
+} from "@/lib/supabase/serveur";
+import { retirerPhotosDesActivites } from "@/lib/suppression-compte";
 
 const IDENTIFIANTS = "/profil/identifiants";
 
@@ -129,4 +134,47 @@ export async function modifierMotDePasse(
   }
 
   redirect(`${IDENTIFIANTS}?fait=mot-de-passe`);
+}
+
+const messagesSuppression: Record<string, string> = {
+  "42501":
+    "Un membre du conseil syndical ne supprime pas son compte ici : son accès se retire depuis l'espace syndic.",
+};
+
+/**
+ * Supprime le compte de la personne connectée : la base efface ses informations et règle le sort
+ * de ses activités, puis le serveur retire les photos des activités supprimées ou annulées (le
+ * compte n'existant plus, seule la clé secrète le peut) et referme la session.
+ */
+export async function supprimerMonCompte(): Promise<Resultat> {
+  await sessionExigee();
+  const echec = {
+    ok: false,
+    message:
+      "Votre compte n'a pas pu être supprimé. Réessayez dans un instant.",
+  };
+
+  // Le client des photos se prépare avant la suppression : sans clé secrète, rien n'est effacé.
+  let admin;
+  try {
+    admin = clientAdmin();
+  } catch {
+    return echec;
+  }
+
+  const supabase = await clientSession();
+  const { data, error } = await supabase.rpc("supprimer_mon_compte");
+  if (error) {
+    return {
+      ...echec,
+      message: messagesSuppression[error.code] ?? echec.message,
+    };
+  }
+
+  // Au pire, un fichier orphelin reste dans le bucket : plus aucune activité ne le montre.
+  try {
+    await retirerPhotosDesActivites(admin, (data as string[] | null) ?? []);
+  } catch {}
+  await supabase.auth.signOut();
+  redirect("/");
 }
