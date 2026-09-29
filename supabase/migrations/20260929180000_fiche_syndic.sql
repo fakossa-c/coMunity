@@ -79,7 +79,10 @@ create trigger fiche_syndic_place
   for each row
   execute function public.placer_fiche_syndic();
 
-/** Une fiche ne se relie qu'à un compte syndic actif. */
+/**
+ * Une fiche ne se relie qu'à un compte syndic actif. Le contrôle ne vaut qu'au moment de relier :
+ * une fiche dont le compte a perdu son accès depuis reste modifiable (sans mention « Sur coMunity »).
+ */
 create function public.verifier_compte_fiche_syndic()
 returns trigger
 language plpgsql
@@ -87,7 +90,10 @@ security definer
 set search_path = ''
 as $$
 begin
-  if new.compte_id is not null and not exists (
+  if tg_op = 'UPDATE' and new.compte_id is not distinct from old.compte_id then
+    return new;
+  end if;
+  if not exists (
     select 1 from public.profil
     where id = new.compte_id and role = 'syndic' and statut = 'valide'
   ) then

@@ -7,15 +7,13 @@ import { Bouton, classesBouton } from "@/components/bouton";
 import { Etiquette } from "@/components/etiquette";
 import { Annonce } from "@/components/formulaire";
 import { initialeFiche, nomFiche } from "@/lib/fiche-syndic";
+import type { FicheAvecPhoto } from "@/lib/lecture-fiches-syndic";
 import { deplacerFiche } from "./actions";
 
-type Fiche = {
-  id: string;
-  prenom: string;
-  nom: string;
-  photo_url: string | null;
-  sur_comunity: boolean;
-};
+type Fiche = Pick<
+  FicheAvecPhoto,
+  "id" | "prenom" | "nom" | "photo_url" | "sur_comunity"
+>;
 
 /** Les fiches de Mon syndic dans l'ordre, chacune avec ses boutons Monter, Descendre et Modifier. */
 export function ListeFiches({ fiches }: { fiches: Fiche[] }) {

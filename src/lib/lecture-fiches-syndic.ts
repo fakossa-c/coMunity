@@ -43,7 +43,8 @@ export async function lireFichesSyndic(): Promise<FicheAvecPhoto[]> {
 
 /**
  * Les comptes de l'espace syndic encore actifs qui n'ont pas de fiche, plus `dejaRelie` (celui de
- * la fiche qu'on modifie). Lue par le conseil syndical.
+ * la fiche qu'on modifie), même si son accès a été retiré depuis : le choix reste ainsi fidèle à la
+ * fiche, et l'enregistrer ne change pas le lien. Lue par le conseil syndical.
  */
 export async function lireComptesReliables(
   dejaRelie: string | null = null,
@@ -52,9 +53,8 @@ export async function lireComptesReliables(
   const [comptes, fiches] = await Promise.all([
     supabase
       .from("profil")
-      .select("id, email, prenom, nom")
+      .select("id, email, prenom, nom, statut")
       .eq("role", "syndic")
-      .eq("statut", "valide")
       .order("email"),
     supabase
       .from("fiche_syndic")
@@ -67,12 +67,17 @@ export async function lireComptesReliables(
     throw new Error(`Fiches illisibles : ${fiches.error.message}`);
   const pris = new Set(fiches.data.map((f) => f.compte_id));
   return comptes.data
-    .filter((c) => c.id === dejaRelie || !pris.has(c.id))
-    .map((c) => ({
-      id: c.id,
-      libelle:
+    .filter(
+      (c) => c.id === dejaRelie || (c.statut === "valide" && !pris.has(c.id)),
+    )
+    .map((c) => {
+      const libelle =
         c.prenom && c.nom
           ? `${nomComplet({ prenom: c.prenom, nom: c.nom })} (${c.email})`
-          : c.email,
-    }));
+          : c.email;
+      return {
+        id: c.id,
+        libelle: c.statut === "valide" ? libelle : `${libelle}, accès retiré`,
+      };
+    });
 }

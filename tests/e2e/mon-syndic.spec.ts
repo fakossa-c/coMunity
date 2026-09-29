@@ -206,6 +206,10 @@ test("le conseil syndical ajoute deux fiches et les ordonne, un résident les li
     await expect
       .poll(() => photo.evaluate((i) => (i as HTMLImageElement).naturalWidth))
       .toBeGreaterThan(0);
+    // Envoyée en 1600 px de large, la photo a été réduite dans le navigateur avant son dépôt.
+    expect(
+      await photo.evaluate((i) => (i as HTMLImageElement).naturalWidth),
+    ).toBeLessThanOrEqual(1280);
 
     // Paul n'a ni photo, ni coordonnées : son initiale, et la mention Sur coMunity.
     const cartePaul = carte(lecteur, `${paul} Moreau`);
