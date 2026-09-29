@@ -2,4 +2,5 @@ Qui organise, sur la fiche d'activité, juste sous le panneau d'infos. Avec `pho
 
 ```jsx
 <ProposePar initiale="M" nom="Martine, Bât. A, 1er étage" />
+<ProposePar initiale="M" nom="Martine" photo="/photo.jpg" />
 ```

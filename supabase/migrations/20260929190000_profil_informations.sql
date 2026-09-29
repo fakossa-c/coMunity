@@ -4,7 +4,8 @@
 -- voisin ne les lit, il n'y a donc pas de réglage de visibilité pour eux.
 --
 -- Migration additive pour le code de `main` : des colonnes et des tables nouvelles, un bucket, une
--- fonction de lecture. `nom_affiche(text, text)` disparaît, mais elle n'est appelée que par les
+-- fonction de lecture ; `participants_activite` et `fiche_activite` gagnent une colonne de retour (la
+-- photo), ce que le code de `main`, qui lit par nom de colonne, ignore. `nom_affiche(text, text)` disparaît, mais elle n'est appelée que par les
 -- trois fonctions recréées ici.
 
 alter table public.profil
