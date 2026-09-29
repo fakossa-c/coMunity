@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   cheminAnnonce,
@@ -20,14 +21,16 @@ type Props = {
   lien: string;
   /** L'adresse du PDF joint, quand l'annonce en a un. */
   urlDocument?: string;
+  /** Le `Sondage` d'une annonce de type sondage, entre les infos et les boutons. */
+  children?: ReactNode;
 };
 
 /**
  * Carte d'une annonce de la liste : une information à lire, jamais une activité, donc ni photo,
  * ni jauge, ni inscription. Ordre : pastille de type, « Nouveau », date de publication, titre,
- * texte, infos, boutons.
+ * texte, infos, sondage, boutons.
  */
-export function CarteAnnonce({ annonce, lien, urlDocument }: Props) {
+export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
   const type = typesAnnonce[annonce.type];
   const infos = infosAnnonce(annonce);
   return (
@@ -70,6 +73,8 @@ export function CarteAnnonce({ annonce, lien, urlDocument }: Props) {
           ))}
         </ul>
       )}
+      {/* Le sondage se répond dans la carte : il reste au-dessus du lien qui l'étend. */}
+      {children && <div className="relative z-10">{children}</div>}
       <div className="relative z-10 flex flex-col gap-space-sm">
         {urlDocument && (
           <a

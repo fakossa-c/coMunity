@@ -20,6 +20,13 @@ import {
   type SaisieAnnonce,
 } from "@/lib/annonces";
 import {
+  SAISIE_SONDAGE_VIDE,
+  verifierSondage,
+  type ChampSondage,
+  type SaisieSondage,
+  type Sondage,
+} from "@/lib/sondages";
+import {
   erreurDuChamp,
   erreurGenerale,
   type ErreurFormulaire,
@@ -27,10 +34,18 @@ import {
 } from "@/lib/resultat";
 import { clientNavigateur } from "@/lib/supabase/navigateur";
 import { enregistrerAnnonce, preparerDepot } from "./actions";
+import { FormulaireSondage, SondagePublie } from "./formulaire-sondage";
 
 type Props = {
   /** Absent pour une nouvelle annonce ; `id` absent aussi pour une copie, qui préremplit la saisie. */
-  annonce?: { id?: string; saisie: SaisieAnnonce };
+  annonce?: {
+    id?: string;
+    saisie: SaisieAnnonce;
+    /** Une copie préremplit le sondage de l'original, sans sa date limite. */
+    sondage?: SaisieSondage;
+    /** Le sondage déjà publié de l'annonce à modifier : il ne se modifie plus. */
+    sondagePublie?: Sondage;
+  };
 };
 
 const OPTIONS_EPINGLE = [
@@ -63,10 +78,19 @@ export function FormulaireAnnonce({ annonce }: Props) {
   const [erreurFichier, setErreurFichier] = useState<
     Partial<Record<GenreFichier, string>>
   >({});
+  const [sondage, setSondage] = useState<SaisieSondage>(
+    annonce?.sondage ?? SAISIE_SONDAGE_VIDE,
+  );
+  const [erreurSondage, setErreurSondage] = useState<
+    ErreurFormulaire<ChampSondage>
+  >({});
   const [erreur, setErreur] = useState<ErreurFormulaire<ChampAnnonce>>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
   const id = annonce?.id ?? null;
+  const sondagePublie = annonce?.sondagePublie;
+  // Une annonce de type sondage sans sondage publié en porte un dans ce formulaire.
+  const saisieSondage = saisie.type === "sondage" && !sondagePublie;
   // La modification d'une annonce expirée garde son expiration : seule une nouvelle date doit être à venir.
   const expirationEnregistree = id ? annonce?.saisie.expire_le || null : null;
 
@@ -93,9 +117,11 @@ export function FormulaireAnnonce({ annonce }: Props) {
   /** Envoie les fichiers choisis, puis enregistre l'annonce avec leurs chemins. */
   function enregistrer() {
     const verdict = verifierAnnonce(saisie, undefined, expirationEnregistree);
+    const verdictSondage = saisieSondage ? verifierSondage(sondage) : {};
     setErreur(verdict);
+    setErreurSondage(verdict.erreur ? {} : verdictSondage);
     setResultat(null);
-    if (verdict.erreur) return;
+    if (verdict.erreur || verdictSondage.erreur) return;
 
     // Enregistrée, l'annonce mène à la liste : seul un échec revient ici.
     demarrer(async () => {
@@ -124,7 +150,13 @@ export function FormulaireAnnonce({ annonce }: Props) {
         setSaisie(aEnregistrer);
         setFichiers((f) => ({ ...f, [genre]: null }));
       }
-      setResultat(await enregistrerAnnonce(id, aEnregistrer));
+      setResultat(
+        await enregistrerAnnonce(
+          id,
+          aEnregistrer,
+          saisieSondage ? sondage : null,
+        ),
+      );
     });
   }
 
@@ -164,7 +196,12 @@ export function FormulaireAnnonce({ annonce }: Props) {
         name="type"
         value={saisie.type}
         onChange={(e) => poser("type", e.target.value as SaisieAnnonce["type"])}
-        aide="Le type fixe la pastille, la couleur et le pictogramme de l'annonce."
+        disabled={Boolean(sondagePublie)}
+        aide={
+          sondagePublie
+            ? "Le type d'une annonce qui porte un sondage ne change pas."
+            : "Le type fixe la pastille, la couleur et le pictogramme de l'annonce."
+        }
       >
         {typesAnnonceListe.map((cle) => (
           <option key={cle} value={cle}>
@@ -173,6 +210,14 @@ export function FormulaireAnnonce({ annonce }: Props) {
         ))}
       </ChampListe>
       <Champ {...texte("titre", "Titre")} required />
+      {saisieSondage && (
+        <FormulaireSondage
+          saisie={sondage}
+          onChange={setSondage}
+          erreur={erreurSondage}
+        />
+      )}
+      {sondagePublie && <SondagePublie sondage={sondagePublie} />}
       <ChampTexte {...texte("texte", "Texte")} rows={5} />
       <Champ
         {...texte("quand", "Date ou période")}

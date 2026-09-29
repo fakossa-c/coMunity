@@ -56,6 +56,10 @@ _Avoid_ : événement, atelier (qui n'est qu'un genre d'activité)
 Une information publiée pour les résidents par le conseil syndical ou l'équipe coMunity, sans inscription, qui dit « il y a du nouveau » et vieillit.
 _Avoid_ : actualité, post, message
 
+**Sondage** :
+Une question à choix unique jointe à une annonce par le conseil syndical, avec ses options et une date limite. Un résident validé y répond une seule fois, sans pouvoir changer sa réponse ; il lit les résultats après avoir répondu, et tout le monde les lit après la date limite.
+_Avoid_ : enquête, scrutin
+
 **Règlement intérieur** :
 Les règles de vie communes de la résidence, présentées dans Ma copro en sections qu'on déplie.
 _Avoid_ : règlement de copropriété (le texte juridique qui fixe les droits des copropriétaires), document

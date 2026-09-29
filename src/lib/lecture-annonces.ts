@@ -10,6 +10,7 @@ import {
   type FiltreAnnonce,
 } from "./annonces";
 import { origine } from "./fiche-activite";
+import { COLONNES_SONDAGE, type Sondage } from "./sondages";
 import { clientSession, configurationSupabase } from "./supabase/serveur";
 
 /**
@@ -78,4 +79,97 @@ export function urlFichierAnnonce(chemin: string) {
   const configuration = configurationSupabase();
   if (!configuration) throw new Error("Supabase n'est pas configuré.");
   return `${configuration.url}/storage/v1/object/public/${BUCKET_ANNONCES}/${chemin}`;
+}
+
+/** Un sondage tel que la personne connectée peut le lire : son choix et, si la base les livre, les votes. */
+export type SondageLu = {
+  sondage: Sondage;
+  /** Rang de l'option choisie, à partir de 1 ; `null` sans réponse. */
+  choix: number | null;
+  /** Les votes de chaque option, dans l'ordre ; `null` tant que la personne ne peut pas les lire. */
+  votes: number[] | null;
+};
+
+/** Les sondages des annonces demandées, par identifiant d'annonce. Vide sans annonce à lire. */
+export async function lireSondages(
+  idsAnnonces: string[],
+): Promise<Map<string, SondageLu>> {
+  const lus = new Map<string, SondageLu>();
+  if (idsAnnonces.length === 0) return lus;
+
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("sondage")
+    .select(COLONNES_SONDAGE)
+    .in("annonce_id", idsAnnonces);
+  if (error) throw new Error(`Sondages illisibles : ${error.message}`);
+  const sondages = data as (Sondage & { annonce_id: string })[];
+  if (sondages.length === 0) return lus;
+
+  const ids = sondages.map((s) => s.id);
+  const [reponses, resultats] = await Promise.all([
+    supabase
+      .from("reponse_sondage")
+      .select("sondage_id, choix")
+      .in("sondage_id", ids),
+    supabase.rpc("resultats_sondages", { p_sondages: ids }),
+  ]);
+  if (reponses.error)
+    throw new Error(`Réponses illisibles : ${reponses.error.message}`);
+  if (resultats.error)
+    throw new Error(`Résultats illisibles : ${resultats.error.message}`);
+
+  const choixParSondage = new Map(
+    (reponses.data as { sondage_id: string; choix: number }[]).map((r) => [
+      r.sondage_id,
+      r.choix,
+    ]),
+  );
+  const votesParSondage = new Map<string, number[]>();
+  for (const ligne of resultats.data as {
+    sondage_id: string;
+    choix: number;
+    votes: number;
+  }[]) {
+    const votes = votesParSondage.get(ligne.sondage_id) ?? [];
+    votes[ligne.choix - 1] = ligne.votes;
+    votesParSondage.set(ligne.sondage_id, votes);
+  }
+
+  for (const { annonce_id, ...sondage } of sondages)
+    lus.set(annonce_id, {
+      sondage,
+      choix: choixParSondage.get(sondage.id) ?? null,
+      votes: votesParSondage.get(sondage.id) ?? null,
+    });
+  return lus;
+}
+
+/** Le sondage d'une annonce, pour la modifier ou la dupliquer. `null` si elle n'en a pas. */
+export async function lireSondageDeLAnnonce(
+  idAnnonce: string,
+): Promise<Sondage | null> {
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("sondage")
+    .select(COLONNES_SONDAGE)
+    .eq("annonce_id", idAnnonce)
+    .maybeSingle<Sondage>();
+  if (error) throw new Error(`Sondage illisible : ${error.message}`);
+  return data;
+}
+
+/** Le sondage de l'annonce d'un lien public, tel que la personne connectée le lit. `null` sans sondage. */
+export async function lireSondageDeLIdentifiant(
+  identifiant: string,
+): Promise<SondageLu | null> {
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("annonce")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .maybeSingle<{ id: string }>();
+  if (error) throw new Error(`Annonce illisible : ${error.message}`);
+  if (!data) return null;
+  return (await lireSondages([data.id])).get(data.id) ?? null;
 }

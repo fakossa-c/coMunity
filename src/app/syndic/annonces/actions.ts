@@ -12,9 +12,15 @@ import {
   verifierFichier,
   versLigneAnnonce,
   type GenreFichier,
+  type LigneAnnonce,
   type SaisieAnnonce,
 } from "@/lib/annonces";
 import type { Resultat } from "@/lib/resultat";
+import {
+  verifierSondage,
+  versLigneSondage,
+  type SaisieSondage,
+} from "@/lib/sondages";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const LISTE = "/syndic/annonces";
@@ -100,27 +106,39 @@ export async function preparerDepot(
 
 /**
  * Publie une annonce (`id` absent) ou enregistre sa modification. La base ne laisse écrire que
- * le conseil syndical.
+ * le conseil syndical. `sondage` est le sondage à joindre à une annonce de type sondage qui n'en
+ * a pas encore ; `null` quand il n'y en a pas à joindre.
  */
 export async function enregistrerAnnonce(
   id: string | null,
   saisie: SaisieAnnonce,
+  sondage: SaisieSondage | null = null,
 ): Promise<Resultat> {
   const supabase = await clientSession();
   let anciens: (string | null)[] = [];
   let expirationEnregistree: string | null = null;
+  let avant: LigneAnnonce | null = null;
   if (id) {
     const { data } = await supabase
       .from("annonce")
-      .select("photo_chemin, document_chemin, expire_le")
+      .select(
+        "type, titre, texte, quand, lieu, photo_chemin, document_chemin, epinglee, expire_le",
+      )
       .eq("id", id)
-      .maybeSingle();
+      .maybeSingle<LigneAnnonce>();
+    avant = data;
     anciens = [data?.photo_chemin ?? null, data?.document_chemin ?? null];
     expirationEnregistree = data?.expire_le ?? null;
   }
 
   const verdict = verifierAnnonce(saisie, undefined, expirationEnregistree);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };
+  const sondageAJoindre = saisie.type === "sondage" ? sondage : null;
+  if (sondageAJoindre) {
+    const verdictSondage = verifierSondage(sondageAJoindre);
+    if (verdictSondage.erreur)
+      return { ok: false, message: verdictSondage.erreur };
+  }
   for (const chemin of [saisie.photo_chemin, saisie.document_chemin]) {
     if (chemin !== null && !estCheminDeFichier(chemin))
       return { ok: false, message: "Un fichier joint n'est pas valide." };
@@ -141,6 +159,25 @@ export async function enregistrerAnnonce(
       message:
         "Cette annonce n'existe plus, ou vous n'avez plus le droit de la modifier.",
     };
+
+  if (sondageAJoindre) {
+    const { error: erreurSondage } = await supabase.from("sondage").insert({
+      annonce_id: data[0].id,
+      ...versLigneSondage(sondageAJoindre),
+    });
+    if (erreurSondage) {
+      // Une annonce de sondage sans sondage ne dirait rien : l'enregistrement échoue en entier.
+      const { error: annulation } = id
+        ? await supabase.from("annonce").update(avant!).eq("id", id)
+        : await supabase.from("annonce").delete().eq("id", data[0].id);
+      return echec(
+        erreurSondage.code,
+        annulation
+          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée à moitié faite : ouvrez-la pour la corriger."
+          : "Le sondage n'a pas pu être enregistré. Réessayez dans un instant.",
+      );
+    }
+  }
 
   await retirerFichiersOrphelins(supabase, anciens);
   return retourALaListe(id ? "enregistree" : "publiee", annonce.titre);
