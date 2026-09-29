@@ -114,7 +114,7 @@ export function Calendrier({
   }
 
   return (
-    <div className={`flex flex-col gap-space-xs ${className ?? ""}`}>
+    <div className={`flex max-w-md flex-col gap-space-xs ${className ?? ""}`}>
       <span id={`${id}-libelle`} className="font-headline text-label-lg">
         {libelle}
       </span>
