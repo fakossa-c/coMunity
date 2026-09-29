@@ -35,7 +35,7 @@ export default async function MonSyndic() {
       ) : (
         <ul
           aria-label="Personnes du syndic"
-          className="flex flex-col gap-space-md"
+          className="flex flex-col gap-space-md desktop:grid desktop:grid-cols-3 desktop:items-start desktop:gap-x-8 desktop:gap-y-7"
         >
           {fiches.map((fiche) => (
             <CarteFicheSyndic key={fiche.id} fiche={fiche} />
