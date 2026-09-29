@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { Bouton } from "@/components/bouton";
 import { Champ, ChampTexte } from "@/components/champ";
+import {
+  ChampPhotoEspace,
+  type PhotoEspaceSaisie,
+} from "@/components/champ-photo-espace";
 import { ChoixPastilles } from "@/components/choix-pastilles";
 import { FeuilleConfirmation } from "@/components/feuille-confirmation";
 import { Annonce } from "@/components/formulaire";
@@ -16,17 +20,30 @@ import {
   type ChampEspace,
   type SaisieEspace,
 } from "@/lib/espaces-communs";
+import { envoyerPhotos } from "@/lib/envoi-photos";
+import { BUCKET_PHOTOS_ESPACES } from "@/lib/photo-espace-commun";
 import {
   erreurDuChamp,
   erreurGenerale,
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { enregistrerEspace, supprimerEspace } from "./actions";
+import {
+  enregistrerEspace,
+  preparerDepotPhoto,
+  supprimerEspace,
+} from "./actions";
 
 type Props = {
-  /** Absent pour un nouvel espace commun. */
-  espace?: { id: string; saisie: SaisieEspace };
+  /**
+   * Absent pour un nouvel espace commun. `photo` : sa photo enregistrée, avec l'adresse signée
+   * qui l'affiche (vide quand elle n'a pas pu être signée).
+   */
+  espace?: {
+    id: string;
+    saisie: SaisieEspace;
+    photo: { chemin: string; url: string } | null;
+  };
 };
 
 const OPTIONS_EQUIPEMENTS = equipementsEspaceListe.map((cle) => ({
@@ -38,6 +55,11 @@ const OPTIONS_EQUIPEMENTS = equipementsEspaceListe.map((cle) => ({
 export function FormulaireEspace({ espace }: Props) {
   const [saisie, setSaisie] = useState<SaisieEspace>(
     espace?.saisie ?? SAISIE_ESPACE_VIDE,
+  );
+  const [photo, setPhoto] = useState<PhotoEspaceSaisie | null>(
+    espace?.photo
+      ? { chemin: espace.photo.chemin, apercu: espace.photo.url }
+      : null,
   );
   const [erreur, setErreur] = useState<ErreurFormulaire<ChampEspace>>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
@@ -57,9 +79,28 @@ export function FormulaireEspace({ espace }: Props) {
     setResultat(null);
     if (verdict.erreur) return;
     // Enregistré, l'espace mène à la liste : seul un échec revient ici.
-    demarrer(async () =>
-      setResultat(await enregistrerEspace(espace?.id ?? null, saisie)),
-    );
+    demarrer(async () => {
+      let chemin = photo?.chemin ?? null;
+      if (photo?.fichier) {
+        const depot = await preparerDepotPhoto(photo.fichier.size);
+        if (!depot.ok) return setResultat(depot);
+        const [envoye] = await envoyerPhotos(
+          [depot],
+          [photo.fichier],
+          BUCKET_PHOTOS_ESPACES,
+        );
+        if (!envoye)
+          return setResultat({
+            ok: false,
+            message:
+              "La photo n'a pas pu être envoyée. Réessayez dans un instant.",
+          });
+        chemin = envoye;
+        // Une photo déposée n'est pas renvoyée à l'essai suivant : elle garde son chemin.
+        setPhoto({ apercu: photo.apercu, chemin: envoye });
+      }
+      setResultat(await enregistrerEspace(espace?.id ?? null, saisie, chemin));
+    });
   }
 
   function supprimer() {
@@ -123,6 +164,12 @@ export function FormulaireEspace({ espace }: Props) {
         )}
       />
       <ChampTexte {...texte("description", "Description")} rows={3} />
+      <ChampPhotoEspace
+        photo={photo}
+        nom={saisie.nom}
+        onChoisir={setPhoto}
+        onRetirer={() => setPhoto(null)}
+      />
       <Champ
         libelle="Capacité"
         name="capacite"

@@ -16,6 +16,7 @@ const SALLE: EspaceCommun = {
   consignes: "Laissez la salle propre.",
   horaires_acces: "Tous les jours de 9h à 21h",
   contact: "Colette, gardienne : 06 12 34 56 78",
+  photo_chemin: "0b9d5a52-8c1e-4f3a-9d1b-2f6c7a8e9b10.jpg",
 };
 
 const COUR: EspaceCommun = {
@@ -30,10 +31,13 @@ const COUR: EspaceCommun = {
   consignes: null,
   horaires_acces: null,
   contact: null,
+  photo_chemin: null,
 };
 
-function rendre(espaces: EspaceCommun[]) {
-  return renderToStaticMarkup(createElement(EspacesCommunsCopro, { espaces }));
+function rendre(espaces: EspaceCommun[], photos: Record<string, string> = {}) {
+  return renderToStaticMarkup(
+    createElement(EspacesCommunsCopro, { espaces, photos }),
+  );
 }
 
 describe("EspacesCommunsCopro", () => {
@@ -107,5 +111,28 @@ describe("EspacesCommunsCopro", () => {
     const html = rendre([{ ...SALLE, nom: "N".repeat(60) }]);
 
     expect(html).toContain("[overflow-wrap:anywhere]");
+  });
+
+  it("montre la photo de l'espace, au-dessus de son nom, avec un texte alternatif", () => {
+    const html = rendre([SALLE], { salle: "https://exemple.test/salle.jpg" });
+
+    expect(html).toContain('src="https://exemple.test/salle.jpg"');
+    expect(html).toContain(
+      'alt="Salle commune, photo de l&#x27;espace commun"',
+    );
+    expect(html.indexOf("<img")).toBeLessThan(html.indexOf("<h3"));
+  });
+
+  it("n'affiche aucune image pour un espace sans photo, comme avant", () => {
+    const html = rendre([COUR], { salle: "https://exemple.test/salle.jpg" });
+
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("bg-rayures-photo");
+  });
+
+  it("ne montre pas la photo d'un espace dont l'adresse n'a pas pu être signée", () => {
+    const html = rendre([SALLE]);
+
+    expect(html).not.toContain("<img");
   });
 });

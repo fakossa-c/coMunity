@@ -34,7 +34,7 @@ export function EmplacementPhoto({
       } ${className ?? ""}`}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element -- photo du bucket public, déjà compressée dans le navigateur
+        // eslint-disable-next-line @next/next/no-img-element -- photo d'un bucket (public ou signée), déjà compressée dans le navigateur
         <img
           src={src}
           alt={alt}

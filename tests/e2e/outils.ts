@@ -320,6 +320,25 @@ export async function nouvelEspaceCommun(
   return data as { id: string; nom: string };
 }
 
+/** Le chemin de la photo d'un espace commun dans le bucket `espaces-communs`, `null` sans photo. */
+export async function cheminPhotoEspace(id: string) {
+  const { data, error } = await clientAdmin()
+    .from("espace_commun")
+    .select("photo_chemin")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data.photo_chemin as string | null;
+}
+
+/** Vrai quand le fichier est encore dans le bucket `espaces-communs`. */
+export async function photoEspaceDeposee(chemin: string) {
+  const { data } = await clientAdmin()
+    .storage.from("espaces-communs")
+    .download(chemin);
+  return data !== null;
+}
+
 /** Supprime des espaces communs, par leur nom : ceux qu'un test a créés, par l'écran ou non. */
 export async function supprimerEspacesCommuns(noms: string[]) {
   await clientAdmin().from("espace_commun").delete().in("nom", noms);

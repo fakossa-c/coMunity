@@ -1,4 +1,6 @@
 import { libelleCapacite, type EspaceCommun } from "@/lib/espaces-communs";
+import { texteAlternatifEspace } from "@/lib/photo-espace-commun";
+import { EmplacementPhoto } from "./emplacement-photo";
 import { EquipementsEspace } from "./equipements-espace";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
@@ -6,8 +8,16 @@ import type { NomIcone } from "./icones";
 /**
  * Les espaces communs dans Ma copro, tels que le conseil syndical les a définis : une carte par
  * espace (bordure de carte, sans ombre), sous son nom. Un champ non renseigné n'apparaît pas.
+ * `photos` donne l'adresse de la photo de chaque espace qui en a une, par identifiant d'espace ;
+ * sans adresse, la carte n'a pas d'image.
  */
-export function EspacesCommunsCopro({ espaces }: { espaces: EspaceCommun[] }) {
+export function EspacesCommunsCopro({
+  espaces,
+  photos = {},
+}: {
+  espaces: EspaceCommun[];
+  photos?: Record<string, string>;
+}) {
   if (espaces.length === 0)
     return (
       <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
@@ -18,7 +28,11 @@ export function EspacesCommunsCopro({ espaces }: { espaces: EspaceCommun[] }) {
   return (
     <ul aria-label="Espaces communs" className="flex flex-col gap-space-sm">
       {espaces.map((espace) => (
-        <FicheEspace key={espace.id} espace={espace} />
+        <FicheEspace
+          key={espace.id}
+          espace={espace}
+          photo={photos[espace.id]}
+        />
       ))}
     </ul>
   );
@@ -26,7 +40,13 @@ export function EspacesCommunsCopro({ espaces }: { espaces: EspaceCommun[] }) {
 
 type Ligne = { icone: NomIcone; libelle: string; valeur: string };
 
-function FicheEspace({ espace }: { espace: EspaceCommun }) {
+function FicheEspace({
+  espace,
+  photo,
+}: {
+  espace: EspaceCommun;
+  photo?: string;
+}) {
   const emplacement = [espace.batiment, espace.localisation]
     .filter(Boolean)
     .join(" · ");
@@ -56,6 +76,13 @@ function FicheEspace({ espace }: { espace: EspaceCommun }) {
 
   return (
     <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
+      {photo && (
+        <EmplacementPhoto
+          src={photo}
+          alt={texteAlternatifEspace(espace.nom)}
+          arrondi
+        />
+      )}
       <div className="flex items-start gap-space-sm">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-fond-action text-texte-action">
           <Icone nom="meeting_room" taille={24} />

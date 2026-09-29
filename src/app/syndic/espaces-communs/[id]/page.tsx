@@ -7,6 +7,7 @@ import {
   saisieDepuisEspace,
   type EspaceCommun,
 } from "@/lib/espaces-communs";
+import { lireUrlsPhotosEspaces } from "@/lib/regles-residence";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
 import { FormulaireEspace } from "../formulaire-espace";
@@ -34,12 +35,19 @@ export default async function ModifierEspaceCommun({ params }: Props) {
     .eq("id", id)
     .maybeSingle<EspaceCommun>();
   if (!espace) notFound();
+  const urls = await lireUrlsPhotosEspaces([espace]);
 
   return (
     <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
       <TitrePage titre="Modifier un espace commun" sousTitre={espace.nom} />
       <FormulaireEspace
-        espace={{ id: espace.id, saisie: saisieDepuisEspace(espace) }}
+        espace={{
+          id: espace.id,
+          saisie: saisieDepuisEspace(espace),
+          photo: espace.photo_chemin
+            ? { chemin: espace.photo_chemin, url: urls[espace.id] ?? "" }
+            : null,
+        }}
       />
     </EcranSecondaire>
   );
