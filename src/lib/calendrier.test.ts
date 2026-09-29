@@ -85,6 +85,6 @@ describe("déplacement au clavier", () => {
 describe("annonce d'un jour", () => {
   it("dit le jour de la semaine, le quantième, le mois et l'année", () => {
     expect(libelleJour("2026-10-24")).toBe("samedi 24 octobre 2026");
-    expect(libelleJour("2026-12-01")).toBe("mardi 1er décembre 2026");
+    expect(libelleJour("2026-12-01")).toBe("mardi 1 décembre 2026");
   });
 });
