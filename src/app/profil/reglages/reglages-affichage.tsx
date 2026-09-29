@@ -7,6 +7,7 @@ import type {
   TailleAffichage,
   ThemeAffichage,
 } from "@/lib/attributs-affichage";
+import { DeuxColonnes } from "../deux-colonnes";
 import { choisirTaille, choisirTheme } from "./actions";
 
 type Props = { taille: TailleAffichage; theme: ThemeAffichage };
@@ -50,7 +51,7 @@ export function ReglagesAffichage({
   }
 
   return (
-    <div className="flex flex-col gap-space-lg">
+    <DeuxColonnes>
       <div className="flex flex-col gap-2.5">
         <TitreSection>Taille des caractères</TitreSection>
         <ChoixSegmente
@@ -92,10 +93,10 @@ export function ReglagesAffichage({
         />
       </div>
       {erreur && (
-        <p role="alert" className="text-body-md text-error">
+        <p role="alert" className="text-body-md text-error desktop:col-span-2">
           {erreur}
         </p>
       )}
-    </div>
+    </DeuxColonnes>
   );
 }

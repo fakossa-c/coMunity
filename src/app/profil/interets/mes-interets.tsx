@@ -16,6 +16,7 @@ import {
   type CentreInteret,
 } from "@/lib/centres-interet";
 import type { Resultat } from "@/lib/resultat";
+import { DeuxColonnes } from "../deux-colonnes";
 import { ajouterInteret, modifierInteret, supprimerInteret } from "./actions";
 
 /** Mes intérêts : ajouter, modifier et supprimer ses centres d'intérêt. */
@@ -76,7 +77,7 @@ export function MesInterets({ interets }: { interets: CentreInteret[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-bloc">
+    <DeuxColonnes>
       <form
         onSubmit={ajouter}
         noValidate
@@ -187,6 +188,6 @@ export function MesInterets({ interets }: { interets: CentreInteret[] }) {
           ))}
         </ul>
       )}
-    </div>
+    </DeuxColonnes>
   );
 }
