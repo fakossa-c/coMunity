@@ -53,6 +53,17 @@
   --color-tertiary-fixed-dim: #ffb77d;
   --color-on-tertiary-fixed: #2f1500;
   --color-on-tertiary-fixed-variant: #6e3900;
+  /* Catégories d'activité : un pastel et son encre par catégorie (README, « Catégories d'activité ») */
+  --color-categorie-moments-partages: #ffd8ec;
+  --color-on-categorie-moments-partages: #3c0a28;
+  --color-categorie-creation-bricolage: #f7e7a3;
+  --color-on-categorie-creation-bricolage: #2e2500;
+  --color-categorie-culture-loisirs: #e2dcff;
+  --color-on-categorie-culture-loisirs: #1d0f4d;
+  --color-categorie-entraide-partage: #cfe5ff;
+  --color-on-categorie-entraide-partage: #00203b;
+  --color-categorie-jardin-nature: #c0ece3;
+  --color-on-categorie-jardin-nature: #00201b;
   /* Couleurs du logo : réservées au logo et aux supports de marque, jamais à l'interface */
   --color-marque-terre: #c4580a;
   --color-marque-menthe: #9fecb5;
