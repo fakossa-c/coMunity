@@ -1,5 +1,10 @@
-import type { Avertissement, Proposition } from "@/assistant";
-import { pictogrammeDe, type CategorieActivite } from "./categories-activite";
+import type { Avertissement, AvisAssistant, Proposition } from "@/assistant";
+import type { NomIcone } from "@/components/icones";
+import {
+  categoriesActiviteListe,
+  pictogrammeDe,
+  type CategorieActivite,
+} from "./categories-activite";
 import type { EtiquetteActivite } from "./etiquettes-activite";
 import type { ErreurFormulaire } from "./resultat";
 
@@ -32,6 +37,8 @@ export const LIEU_LIBRE = "autre";
 export type SaisieActivite = {
   titre: string;
   categorie: CategorieActivite;
+  /** Un pictogramme propre à l'activité ; `""` : celui de sa catégorie. */
+  pictogramme: string;
   mot_accueil: string;
   date_activite: string;
   heure_debut: string;
@@ -59,6 +66,7 @@ export type ChampSaisie = Exclude<
 export const SAISIE_VIDE: SaisieActivite = {
   titre: "",
   categorie: "moments_partages",
+  pictogramme: "",
   mot_accueil: "",
   date_activite: "",
   heure_debut: "",
@@ -190,6 +198,48 @@ export function verifierEtape(
   return {};
 }
 
+/** Le pictogramme de l'activité : celui qu'on lui a donné, à défaut celui de sa catégorie. */
+export function pictogrammeDeLaSaisie(saisie: SaisieActivite): NomIcone {
+  return (saisie.pictogramme || pictogrammeDe(saisie.categorie)) as NomIcone;
+}
+
+/** Change la catégorie : le pictogramme repart de celui de la nouvelle catégorie. */
+export function changerCategorie(
+  saisie: SaisieActivite,
+  categorie: CategorieActivite,
+): SaisieActivite {
+  return { ...saisie, categorie, pictogramme: "" };
+}
+
+/**
+ * La saisie une fois appliquées les suggestions de l'assistant, quand elles existent. Ce que le
+ * créateur a choisi lui-même (`choisi`) n'est jamais remplacé : il peut toujours changer d'avis.
+ */
+export function appliquerSuggestions(
+  saisie: SaisieActivite,
+  {
+    categorieSuggeree,
+    pictogrammeSuggere,
+  }: Pick<AvisAssistant, "categorieSuggeree" | "pictogrammeSuggere">,
+  choisi: { categorie: boolean; pictogramme: boolean },
+): SaisieActivite {
+  let suivante = saisie;
+  const categorie = categoriesActiviteListe.find(
+    (clef) => clef === categorieSuggeree,
+  );
+  if (categorie && !choisi.categorie)
+    suivante = changerCategorie(suivante, categorie);
+  if (pictogrammeSuggere && !choisi.pictogramme)
+    suivante = {
+      ...suivante,
+      pictogramme:
+        pictogrammeSuggere === pictogrammeDe(suivante.categorie)
+          ? ""
+          : pictogrammeSuggere,
+    };
+  return suivante;
+}
+
 /** L'espace commun choisi, ou `null` pour un lieu libre. */
 function idEspaceChoisi(saisie: SaisieActivite) {
   return saisie.espace_commun === LIEU_LIBRE || saisie.espace_commun === ""
@@ -210,7 +260,7 @@ export function versNouvelleActivite(
   return {
     titre: saisie.titre.trim(),
     categorie: saisie.categorie,
-    pictogramme: pictogrammeDe(saisie.categorie),
+    pictogramme: pictogrammeDeLaSaisie(saisie),
     mot_accueil: texte(saisie.mot_accueil),
     date_activite: saisie.date_activite,
     heure_debut: saisie.heure_debut,
@@ -231,6 +281,7 @@ export function versNouvelleActivite(
 export type ActiviteExistante = {
   titre: string;
   categorie: CategorieActivite;
+  pictogramme: string;
   mot_accueil: string | null;
   date_activite: string;
   heure_debut: string;
@@ -258,6 +309,10 @@ export function saisieDepuisActivite(
   return {
     titre: activite.titre,
     categorie: activite.categorie,
+    pictogramme:
+      activite.pictogramme === pictogrammeDe(activite.categorie)
+        ? ""
+        : activite.pictogramme,
     mot_accueil: activite.mot_accueil ?? "",
     date_activite: activite.date_activite,
     heure_debut: heure(activite.heure_debut),
