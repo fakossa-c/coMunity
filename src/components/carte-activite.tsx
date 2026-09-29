@@ -15,7 +15,12 @@ import {
 } from "@/lib/inscription-activite";
 import { estMiseDeCote } from "@/lib/decision-moderation";
 import { adressePhoto } from "@/lib/fiche-activite";
-import { cheminFiche, estPassee, horaire } from "@/lib/partage-activite";
+import {
+  cheminFiche,
+  estPassee,
+  horaire,
+  jourLong,
+} from "@/lib/partage-activite";
 import { classesBouton } from "./bouton";
 import { EtatActivite, type StatutActivite } from "./etat-activite";
 import { EtiquettesActivite } from "./etiquette";
@@ -82,14 +87,20 @@ function dateEtHeure(activite: Activite) {
 }
 
 type Props =
-  | { activite: Activite; detailsDepliables?: false }
+  | { activite: Activite; detailsDepliables?: false; aLaUne?: false }
   /**
    * Accueil : sous l'intertitre de son jour, la carte ne garde que l'horaire ; horaire, lieu et
    * étiquettes passent dans le tiroir « Détails », puis « Voir la fiche » et « Je participe ».
    */
-  | { activite: ActiviteDuJour; detailsDepliables: true };
+  | { activite: ActiviteDuJour; detailsDepliables: true; aLaUne?: false }
+  /**
+   * Bloc « À la une » en tête de l'Accueil : visuel à gauche et texte à droite sur ordinateur,
+   * empilés sur mobile.
+   */
+  | { activite: ActiviteDuJour; aLaUne: true; detailsDepliables?: false };
 
 export function CarteActivite(props: Props) {
+  if (props.aLaUne) return <CarteALaUne activite={props.activite} />;
   if (props.detailsDepliables) return <CarteDuJour activite={props.activite} />;
   const { activite } = props;
   const { inscrit } = etatInscription(activite);
@@ -167,7 +178,7 @@ function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
   const couleur = couleurDe(activite.categorie);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+    <article className="flex survol-eleve flex-col overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <VisuelActivite
         pictogramme={activite.pictogramme as NomIcone}
         categorie={activite.categorie}
@@ -246,6 +257,81 @@ function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
             )}
           </div>
         )}
+      </div>
+    </article>
+  );
+}
+
+/**
+ * Le bloc « À la une » : la prochaine activité où l'on peut s'inscrire. Sa carte porte la pastille
+ * « À la une », le jour et l'horaire, le lieu, la jauge, puis « Je participe » et « Voir la
+ * fiche », ou « Vous participez » pour un résident déjà inscrit.
+ */
+function CarteALaUne({ activite }: { activite: ActiviteDuJour }) {
+  const { inscrit } = etatInscription(activite);
+  const fiche = cheminFiche(activite.identifiant_public);
+
+  return (
+    <article className="grid survol-eleve overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:grid-cols-[55fr_45fr]">
+      <VisuelActivite
+        pictogramme={activite.pictogramme as NomIcone}
+        categorie={activite.categorie}
+        photo={activite.photo ? adressePhoto(activite.photo) : null}
+        enCarte
+        grand
+      />
+      <div className="flex flex-col justify-center gap-space-sm px-4 pt-4 pb-[18px] desktop:px-11 desktop:py-9">
+        <p className="self-start rounded-full bg-fond-action px-3.5 py-1 font-headline text-label-lg font-extrabold text-texte-action">
+          À la une
+        </p>
+        <p className="font-headline text-label-lg text-texte-date">
+          {jourLong(activite.date_activite)} ·{" "}
+          {horaire(activite.heure_debut, activite.heure_fin)}
+        </p>
+        <h2 className="font-headline text-headline-md text-on-surface desktop:text-headline-xl">
+          <Link href={fiche} className="rounded-sm">
+            {activite.titre}
+          </Link>
+        </h2>
+        <p className="flex items-center gap-space-xs text-body-lg text-on-surface-variant">
+          <Icone nom="location_on" className="size-5 shrink-0" />
+          {activite.lieu}
+        </p>
+        {activite.places_prises != null && (
+          <Jauge
+            capaciteMax={activite.capacite_max ?? null}
+            placesPrises={activite.places_prises}
+          />
+        )}
+        {activite.statut && (
+          <EtatActivite
+            statut={activite.statut}
+            capaciteMin={activite.capacite_min ?? null}
+            placesPrises={activite.places_prises ?? 0}
+            passee={false}
+          />
+        )}
+        <div className="flex flex-wrap items-center gap-space-sm">
+          {inscrit ? (
+            <>
+              <StatutInscription>
+                {libelleStatutInscription(activite.mes_accompagnants ?? 0)}
+              </StatutInscription>
+              <Link href={fiche} className={classesBouton("contour")}>
+                Voir la fiche
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href={fiche} className={classesBouton("action")}>
+                Je participe
+              </Link>
+              <Link href={fiche} className={classesBouton("contour")}>
+                Voir la fiche
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </article>
   );
