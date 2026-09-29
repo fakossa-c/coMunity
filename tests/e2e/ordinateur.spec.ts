@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
+  nouvelleActivite,
   nouveauResident,
   nouveauSyndic,
   supprimerComptes,
@@ -248,4 +249,36 @@ test("l'espace syndic occupe toute la largeur, avec les mêmes cartes", async ({
   expect((await boite(rubriques.nth(1))).x).toBeGreaterThan(
     (await boite(rubriques.first())).x,
   );
+});
+
+test("les cartes d'activité s'alignent en deux colonnes au lieu de s'étirer sur toute la colonne", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const demain = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  await nouvelleActivite(resident.id, {
+    titre: "Grille : première",
+    date_activite: demain,
+  });
+  await nouvelleActivite(resident.id, {
+    titre: "Grille : seconde",
+    date_activite: demain,
+  });
+  await seConnecter(page, resident.email);
+  await expect(titreAccueil(page)).toBeVisible();
+
+  const cartes = page
+    .getByRole("region", { name: "Activités à venir" })
+    .getByRole("article")
+    .filter({ hasText: "Grille :" });
+  await expect(cartes).toHaveCount(2);
+  const premiere = await boite(cartes.first());
+  const seconde = await boite(cartes.last());
+  const colonne = await boite(page.locator("main"));
+  expect(premiere.width).toBeLessThan(colonne.width * 0.6);
+  expect(seconde.x).toBeGreaterThan(premiere.x + premiere.width - 1);
+  expect(Math.abs(seconde.y - premiere.y)).toBeLessThan(2);
 });
