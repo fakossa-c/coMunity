@@ -4,7 +4,6 @@ import { Bientot } from "@/components/bientot";
 import { EcranSecondaire } from "@/components/cadre";
 import { EspacesCommunsCopro } from "@/components/espaces-communs-copro";
 import { ReglementInterieur } from "@/components/reglement-interieur";
-import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
 import { lireReglement } from "@/lib/lecture-reglement";
 import {
@@ -30,12 +29,25 @@ export default async function MaCopro() {
 
   return (
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
-      <TitrePage
-        titre="Ma copro"
-        sousTitre="Le règlement intérieur et les espaces communs de la résidence"
-      />
+      <div className="mb-space-lg desktop:mb-9 desktop:flex desktop:items-end desktop:justify-between desktop:gap-8">
+        <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-titre-journal">
+          Ma copro
+        </h1>
+        <p className="mt-1 max-w-[65ch] text-body-lg text-on-surface-variant desktop:mt-0 desktop:pb-3">
+          Les espaces et biens communs, puis le règlement de la résidence
+        </p>
+      </div>
       {reglement && espaces ? (
-        <div className="flex flex-col gap-space-lg">
+        <div className="flex flex-col gap-space-lg desktop:gap-16">
+          <section
+            aria-labelledby="titre-espaces-communs"
+            className="flex flex-col gap-space-md"
+          >
+            <TitreSection id="titre-espaces-communs">
+              Espaces et biens communs
+            </TitreSection>
+            <EspacesCommunsCopro espaces={espaces} photos={photos} />
+          </section>
           <section
             aria-labelledby="titre-reglement"
             className="flex flex-col gap-space-md"
@@ -43,16 +55,10 @@ export default async function MaCopro() {
             <TitreSection id="titre-reglement">
               Règlement intérieur
             </TitreSection>
-            <ReglementInterieur {...reglement} />
-          </section>
-          <section
-            aria-labelledby="titre-espaces-communs"
-            className="flex flex-col gap-space-md"
-          >
-            <TitreSection id="titre-espaces-communs">
-              Espaces communs
-            </TitreSection>
-            <EspacesCommunsCopro espaces={espaces} photos={photos} />
+            <ReglementInterieur
+              {...reglement}
+              ancreEspaces="#titre-espaces-communs"
+            />
           </section>
         </div>
       ) : (

@@ -1,5 +1,11 @@
-import { libelleCapacite, type EspaceCommun } from "@/lib/espaces-communs";
+import Link from "next/link";
+import {
+  libelleCapacite,
+  lienFicheEspace,
+  type EspaceCommun,
+} from "@/lib/espaces-communs";
 import { texteAlternatifEspace } from "@/lib/photo-espace-commun";
+import { classesBouton } from "./bouton";
 import { EmplacementPhoto } from "./emplacement-photo";
 import { EquipementsEspace } from "./equipements-espace";
 import { Icone } from "./icone";
@@ -7,8 +13,9 @@ import type { NomIcone } from "./icones";
 
 /**
  * Les espaces communs dans Ma copro, tels que le conseil syndical les a définis : une carte par
- * espace (bordure de carte, sans ombre), sous son nom. Un champ non renseigné n'apparaît pas.
- * `photos` donne l'adresse de la photo de chaque espace qui en a une, par identifiant d'espace ;
+ * espace (bordure de carte sur mobile, ombre douce sur ordinateur, où elles se rangent sur deux
+ * colonnes), sous son nom. Toute la carte mène à la fiche de l'espace. Un champ non renseigné
+ * n'apparaît pas. `photos` donne l'adresse de la photo de chaque espace qui en a une, par identifiant d'espace ;
  * sans adresse, la carte n'a pas d'image.
  */
 export function EspacesCommunsCopro({
@@ -26,7 +33,10 @@ export function EspacesCommunsCopro({
     );
 
   return (
-    <ul aria-label="Espaces communs" className="flex flex-col gap-space-sm">
+    <ul
+      aria-label="Espaces communs"
+      className="flex flex-col gap-space-sm desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-7"
+    >
       {espaces.map((espace) => (
         <FicheEspace
           key={espace.id}
@@ -75,7 +85,7 @@ function FicheEspace({
   const renseignees = lignes.filter((l): l is Ligne => !!l);
 
   return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
+    <li className="relative flex survol-eleve flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
       {photo && (
         <EmplacementPhoto
           src={photo}
@@ -124,6 +134,15 @@ function FicheEspace({
           ))}
         </dl>
       )}
+      {/* Toute la carte est cliquable : le lien s'étend sur elle, le focus la cerne. */}
+      <Link
+        href={lienFicheEspace(espace.id)}
+        className={`${classesBouton("contour")} gap-space-xs self-start after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:-outline-offset-3 focus-visible:after:outline-focus`}
+      >
+        Voir le détail
+        <span className="sr-only"> : {espace.nom}</span>
+        <Icone nom="chevron_right" taille={24} />
+      </Link>
     </li>
   );
 }

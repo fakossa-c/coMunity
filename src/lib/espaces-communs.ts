@@ -160,6 +160,34 @@ export function resumeEspace(
     .join(" · ");
 }
 
+/** La fiche d'un espace commun, sous Ma copro. */
+export function lienFicheEspace(id: string) {
+  return `/ma-copro/espaces/${id}`;
+}
+
+/** Proposer, avec le lieu déjà choisi (paramètre `espace`). */
+export function lienProposerIci(id: string) {
+  return `/proposer?espace=${id}`;
+}
+
+/** Nombre de consignes toujours visibles sur la fiche ; les suivantes se replient. */
+const CONSIGNES_VISIBLES = 2;
+
+/**
+ * Les consignes d'un espace, une par ligne non vide : les deux premières restent visibles, les
+ * suivantes se replient. Rien sans consigne.
+ */
+export function decouperConsignes(consignes: string | null) {
+  const lignes = (consignes ?? "")
+    .split("\n")
+    .map((ligne) => ligne.trim())
+    .filter((ligne) => ligne.length > 0);
+  return {
+    visibles: lignes.slice(0, CONSIGNES_VISIBLES),
+    suite: lignes.slice(CONSIGNES_VISIBLES),
+  };
+}
+
 /** Une activité publiée dans un espace commun, telle que la table `activite` la livre. */
 export type OccupationEspace = {
   titre: string;

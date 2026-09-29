@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import {
   MOT_DE_PASSE,
   nouvelEspaceCommun,
   nouveauResident,
   nouveauSyndic,
   nouvelleSectionReglement,
+  photoJpeg,
   reglerAffichage,
   supprimerComptes,
   supprimerEspacesCommuns,
@@ -277,6 +280,26 @@ for (const theme of ["clair", "sombre"] as const) {
   });
 }
 
+/** Dépose une photo pour l'espace, comme la saisie du conseil syndical le fait. */
+async function poserPhotoEspace(id: string) {
+  const local = lireSupabaseLocal();
+  const admin = createClient(local.url, local.cleSecrete, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const chemin = `${randomUUID()}.jpg`;
+  const depot = await admin.storage
+    .from("espaces-communs")
+    .upload(chemin, await photoJpeg("#8f2b00", 1280, 720), {
+      contentType: "image/jpeg",
+    });
+  if (depot.error) throw depot.error;
+  const { error } = await admin
+    .from("espace_commun")
+    .update({ photo_chemin: chemin })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 /** Un espace complet, dont les consignes tiennent sur quatre lignes. */
 async function espaceComplet(champs = {}) {
   const espace = await nouvelEspaceCommun({
@@ -427,6 +450,30 @@ test("une carte ouvre la fiche de l'espace : ce qui est renseigné, « Proposer 
   await expect(page).toHaveURL(/\/ma-copro$/);
 });
 
+test("la fiche montre la photo de l'espace en tête, avec son texte alternatif", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const espace = await espaceComplet();
+  await poserPhotoEspace(espace.id);
+
+  await seConnecter(page, resident.email);
+  await page.goto(`/ma-copro/espaces/${espace.id}`);
+
+  const photo = page
+    .getByRole("main")
+    .getByRole("img", { name: `${espace.nom}, photo de l'espace commun` });
+  await expect(photo).toBeVisible();
+  await expect
+    .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+  const titre = page.getByRole("heading", { level: 1, name: espace.nom });
+  expect((await photo.boundingBox())!.y).toBeLessThan(
+    (await titre.boundingBox())!.y,
+  );
+});
+
 test("les consignes de la fiche se déplient doucement, leurs lignes restent dans la page", async ({
   page,
 }) => {
@@ -441,17 +488,24 @@ test("les consignes de la fiche se déplient doucement, leurs lignes restent dan
   await expect(consignes).toContainText("Rangez les chaises avant de partir.");
   await expect(consignes).toContainText("Éteignez la cuisine et les lumières.");
   const suite = consignes.getByText("La musique s'arrête à 22h00.");
-  // Dans le DOM, mais ni visible ni atteignable tant que c'est replié.
+  const depliage = consignes.locator(".depliage");
+  const hauteur = async () => (await depliage.boundingBox())!.height;
+  // Dans le DOM, mais replié : sans hauteur, transparent et inerte (ni cliquable ni lu).
   await expect(suite).toHaveCount(1);
-  await expect(suite).toBeHidden();
-  const bouton = consignes.getByRole("button", {
-    name: "Lire toutes les consignes",
-  });
+  await expect(depliage).toHaveAttribute("inert", "");
+  await expect(depliage).toHaveCSS("opacity", "0");
+  expect(await hauteur()).toBe(0);
+  // Le bouton change de nom en dépliant : on le retrouve comme le seul de la carte.
+  const bouton = consignes.getByRole("button");
+  await expect(bouton).toHaveText("Lire toutes les consignes");
   await expect(bouton).toHaveAttribute("aria-expanded", "false");
 
   await bouton.click();
   await expect(bouton).toHaveAttribute("aria-expanded", "true");
   await expect(bouton).toHaveText("Réduire les consignes");
+  await expect(depliage).not.toHaveAttribute("inert", "");
+  await expect(depliage).toHaveCSS("opacity", "1");
+  await expect.poll(hauteur).toBeGreaterThan(40);
   await expect(suite).toBeVisible();
   await expect(
     consignes.getByText("Signalez toute casse au conseil syndical."),
@@ -459,7 +513,8 @@ test("les consignes de la fiche se déplient doucement, leurs lignes restent dan
 
   await bouton.click();
   await expect(bouton).toHaveAttribute("aria-expanded", "false");
-  await expect(suite).toBeHidden();
+  await expect(depliage).toHaveAttribute("inert", "");
+  await expect.poll(hauteur).toBe(0);
   await expect(suite).toHaveCount(1);
 });
 
