@@ -32,6 +32,19 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("Masqué");
   });
 
+  it("porte « Privé » pour l'affichage ordinateur, en plus de « Masqué » pour le mobile", () => {
+    const html = renderToStaticMarkup(
+      createElement(BoutonVisibilite, {
+        libelle: "Étage",
+        visible: false,
+        onClick: () => {},
+      }),
+    );
+
+    expect(html).toContain("Masqué");
+    expect(html).toContain("Privé");
+  });
+
   it("n'est pas un bouton quand l'information est verrouillée : cadenas, toujours visible", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {

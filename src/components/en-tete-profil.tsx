@@ -7,7 +7,7 @@ type Props = {
   adresse?: string;
   /** L'adresse de la photo de la personne ; absente, l'initiale de son pseudo. */
   photo?: string;
-  /** grand : page Profil (avatar 72, titre de page) · compact : haut du menu du profil (avatar 52) */
+  /** grand : page Profil (avatar 72, titre de page, très grand titre sur ordinateur) · compact : haut du menu du profil (avatar 52) */
   taille?: "grand" | "compact";
 };
 
@@ -23,7 +23,9 @@ export function EnTeteProfil({
   const Nom = grand ? "h1" : "p";
 
   return (
-    <div className="flex items-center gap-space-md">
+    <div
+      className={`flex items-center ${grand ? "gap-space-md desktop:gap-space-lg" : "gap-space-md"}`}
+    >
       <Avatar
         initiale={initiale}
         variante="marine"
@@ -32,7 +34,7 @@ export function EnTeteProfil({
       />
       <div className="flex min-w-0 flex-col">
         <Nom
-          className={`font-headline [overflow-wrap:anywhere] text-on-surface ${grand ? "text-headline-xl-mobile" : "text-headline-sm"}`}
+          className={`font-headline [overflow-wrap:anywhere] text-on-surface ${grand ? "text-headline-xl-mobile desktop:text-titre-journal" : "text-headline-sm"}`}
         >
           {nom}
         </Nom>
