@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
   clientAdmin,
   clientVisiteur,
@@ -78,14 +78,12 @@ describe("tableau de bord du conseil syndical", () => {
     note: number,
     commentaire: string,
   ) {
-    const { error } = await clientAdmin()
-      .from("retour")
-      .insert({
-        activite_id: a.id,
-        resident_id: resident.id,
-        note,
-        commentaire,
-      });
+    const { error } = await clientAdmin().from("retour").insert({
+      activite_id: a.id,
+      resident_id: resident.id,
+      note,
+      commentaire,
+    });
     if (error) throw error;
   }
 
@@ -187,10 +185,6 @@ describe("tableau de bord du conseil syndical", () => {
       a2: a2.identifiant_public,
       a3: a3.identifiant_public,
     };
-  });
-
-  afterAll(async () => {
-    // Les comptes supprimés par les helpers emportent leurs activités, inscriptions et retours.
   });
 
   describe("synthèse", () => {
