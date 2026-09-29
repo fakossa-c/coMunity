@@ -12,6 +12,7 @@ import {
   partActivitesResidents,
   texteValeurBarre,
   periodeDe,
+  resumeParMois,
   type LigneRemplissage,
 } from "./tableau-de-bord";
 

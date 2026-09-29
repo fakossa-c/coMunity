@@ -29,6 +29,7 @@ import {
   meilleureBarre,
   partActivitesResidents,
   periodeDe,
+  resumeParMois,
   texteValeurBarre,
   type Barre,
   type DimensionRemplissage,
@@ -98,7 +99,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
           className="flex flex-col gap-space-sm"
         >
           <TitreSection id="chiffres">En chiffres</TitreSection>
-          <dl className="grid gap-space-md sm:grid-cols-2 desktop:grid-cols-4">
+          <dl className="grid gap-space-md desktop:grid-cols-4">
             <ChiffreCle
               libelle="Activités"
               valeur={synthese.nombre_activites}
@@ -128,7 +129,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
                     : `${synthese.residents_en_attente} ${synthese.residents_en_attente === 1 ? "compte attend" : "comptes attendent"} une validation.`}{" "}
                   <Link
                     href="/syndic/residents"
-                    className="font-bold underline underline-offset-2"
+                    className="inline-flex min-h-cible items-center font-bold underline underline-offset-2"
                   >
                     Voir les résidents
                   </Link>
@@ -217,19 +218,6 @@ export default async function TableauDeBord({ searchParams }: Props) {
   );
 }
 
-/** La phrase qui donne l'essentiel du graphique mensuel, pour qui ne voit pas les barres. */
-function resumeParMois(
-  parMois: { mois: string; nombre_participants: number }[],
-) {
-  const meilleur = parMois.reduce<(typeof parMois)[number] | null>(
-    (acc, m) =>
-      m.nombre_participants > (acc?.nombre_participants ?? 0) ? m : acc,
-    null,
-  );
-  if (!meilleur) return "Aucun participant sur la période.";
-  return `Le plus de participants distincts : ${libelleMois(meilleur.mois)}, ${libelleNombreParticipants(meilleur.nombre_participants).toLowerCase()}.`;
-}
-
 function versBarreGraphique(barre: Barre): BarreGraphique {
   return {
     cle: barre.cle,
@@ -283,7 +271,7 @@ function ActiviteClassee({
             <span className="text-primary">{rang}.</span>{" "}
             <Link
               href={cheminFiche(ligne.identifiant_public)}
-              className="underline underline-offset-2"
+              className="inline-flex min-h-cible items-center underline underline-offset-2"
             >
               {ligne.titre}
             </Link>

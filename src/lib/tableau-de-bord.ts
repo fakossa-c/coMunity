@@ -99,7 +99,10 @@ const FORMAT_DATE_LONGUE = new Intl.DateTimeFormat("fr-FR", {
 /** « Du 1 juillet 2026 au 29 septembre 2026 ». */
 export function libellePeriode({ debut, fin }: Periode) {
   const ecrire = (date: string) =>
-    FORMAT_DATE_LONGUE.format(new Date(`${date}T00:00:00Z`));
+    FORMAT_DATE_LONGUE.format(new Date(`${date}T00:00:00Z`)).replace(
+      /^1 /,
+      "1er ",
+    );
   return `Du ${ecrire(debut)} au ${ecrire(fin)}`;
 }
 
@@ -166,9 +169,9 @@ export const JOURS_SEMAINE = [
 ] as const;
 
 export const CRENEAUX = [
-  ["matin", "Matin, avant 12h"],
-  ["apres_midi", "Après-midi, de 12h à 18h"],
-  ["soir", "Soir, à partir de 18h"],
+  ["matin", "Matin, avant 12h00"],
+  ["apres_midi", "Après-midi, de 12h00 à 18h00"],
+  ["soir", "Soir, à partir de 18h00"],
 ] as const;
 
 /**
@@ -224,4 +227,15 @@ export function meilleureBarre(barres: Barre[]): Barre | null {
 export function texteValeurBarre({ nombreActivites, taux }: Barre) {
   if (nombreActivites === 0) return "Aucune activité";
   return libelleTaux(taux);
+}
+
+/** La phrase qui donne l'essentiel du graphique mensuel, pour qui ne voit pas les barres. */
+export function resumeParMois(parMois: LigneMois[]) {
+  const meilleur = parMois.reduce<LigneMois | null>(
+    (acc, mois) =>
+      mois.nombre_participants > (acc?.nombre_participants ?? 0) ? mois : acc,
+    null,
+  );
+  if (!meilleur) return "Aucun participant sur la période.";
+  return `Le plus de participants distincts : ${libelleMois(meilleur.mois)}, ${libelleNombreParticipants(meilleur.nombre_participants).toLowerCase()}.`;
 }
