@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { analyserProposition, type ReglesResidence } from "@/assistant";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
-import { Bouton } from "@/components/bouton";
+import { Bouton, classesBouton } from "@/components/bouton";
 import { Champ, ChampListe, ChampTexte } from "@/components/champ";
+import { ChampPhotos, type PhotoSaisie } from "@/components/champ-photos";
 import { ChoixEspaceCommun } from "@/components/choix-espace-commun";
 import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
@@ -17,6 +19,7 @@ import {
   categoriesActiviteListe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import { envoyerPhotos } from "@/lib/envoi-photos";
 import type { EspaceCommun } from "@/lib/espaces-communs";
 import {
   LIEU_LIBRE,
@@ -31,6 +34,7 @@ import {
   versNouvelleActivite,
   type ChampSaisie,
   type Etape,
+  type NouvelleActivite,
   type SaisieActivite,
 } from "@/lib/proposition-activite";
 import {
@@ -40,7 +44,19 @@ import {
   type Resultat,
 } from "@/lib/resultat";
 import { cheminFiche } from "@/lib/partage-activite";
-import { enregistrer, publier } from "./actions";
+import {
+  MAX_PHOTOS,
+  messagePhotosIncompletes,
+  mettreEnPremier,
+  retirerPhoto,
+} from "@/lib/photos-activite";
+import {
+  definirPhotos,
+  type DepotPhoto,
+  enregistrer,
+  preparerDepotsPhotos,
+  publier,
+} from "./actions";
 import { Recapitulatif } from "./recapitulatif";
 
 type Erreur = ErreurFormulaire<ChampSaisie>;
@@ -57,7 +73,14 @@ type Props = {
    * publier, et la capacité ne peut pas descendre sous les `placesPrises` personnes inscrites.
    */
   modification?: { identifiant: string; placesPrises: number };
+  /** En modification, les photos déjà enregistrées, dans l'ordre : leur chemin et leur adresse publique. */
+  photosInitiales?: { chemin: string; url: string }[];
 };
+
+/** Les photos déjà envoyées gardent leur chemin ; les autres n'ont que leur fichier compressé. */
+function cheminsDe(photos: PhotoSaisie[]) {
+  return photos.flatMap((photo) => (photo.chemin ? [photo.chemin] : []));
+}
 
 /**
  * Le parcours de création en 4 étapes : la saisie reste en mémoire d'une étape à l'autre. Il sert
@@ -68,6 +91,7 @@ export function ParcoursProposition({
   regles,
   initial = SAISIE_VIDE,
   modification,
+  photosInitiales = [],
 }: Props) {
   const router = useRouter();
   const [etape, setEtape] = useState<Etape>(1);
@@ -79,6 +103,18 @@ export function ParcoursProposition({
       ? { ...initial, espace_commun: LIEU_LIBRE }
       : initial,
   );
+  const [photos, setPhotos] = useState<PhotoSaisie[]>(() =>
+    photosInitiales.map(({ chemin, url }) => ({
+      cle: chemin,
+      apercu: url,
+      chemin,
+    })),
+  );
+  // Une activité publiée dont des photos n'ont pas pu partir : le parcours ne republie pas.
+  const [apresEchec, setApresEchec] = useState<{
+    identifiant: string;
+    message: string;
+  } | null>(null);
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
@@ -141,6 +177,94 @@ export function ParcoursProposition({
     });
   }
 
+  function retirer(index: number) {
+    const photo = photos[index];
+    if (photo.fichier) URL.revokeObjectURL(photo.apercu);
+    setPhotos((actuelles) => retirerPhoto(actuelles, index));
+  }
+
+  /**
+   * Envoie les photos choisies vers leurs dépôts. Celles qui sont parties gardent alors leur
+   * chemin (un nouvel essai ne les renvoie pas) ; rend la liste ordonnée des chemins envoyés et
+   * le nombre de photos restées en plan.
+   */
+  async function envoyer(depots: DepotPhoto[]) {
+    const aEnvoyer = photos.filter((photo) => photo.fichier);
+    const chemins = await envoyerPhotos(
+      depots,
+      aEnvoyer.map((photo) => photo.fichier as Blob),
+    );
+    const parCle = new Map(
+      aEnvoyer.flatMap((photo, i) =>
+        chemins[i] ? [[photo.cle, chemins[i]] as const] : [],
+      ),
+    );
+    const envoyees = photos.map((photo) =>
+      parCle.has(photo.cle)
+        ? { ...photo, chemin: parCle.get(photo.cle), fichier: undefined }
+        : photo,
+    );
+    setPhotos(envoyees);
+    return {
+      chemins: cheminsDe(envoyees),
+      echecs: aEnvoyer.length - parCle.size,
+    };
+  }
+
+  /** Publie l'activité, puis envoie ses photos : elle existe dès la première étape, ses photos suivent. */
+  async function publierAvecPhotos(activite: NouvelleActivite) {
+    const aEnvoyer = photos.filter((photo) => photo.fichier);
+    const publication = await publier(
+      activite,
+      aEnvoyer.map((photo) => (photo.fichier as Blob).size),
+    );
+    if (!publication.ok) return setResultat(publication);
+
+    const { chemins, echecs } = await envoyer(publication.depots);
+    const suite =
+      chemins.length > 0
+        ? await definirPhotos(publication.identifiant, chemins)
+        : { ok: true, message: "" };
+    if (echecs === 0 && suite.ok)
+      return router.push(`${cheminFiche(publication.identifiant)}/publiee`);
+    setApresEchec({
+      identifiant: publication.identifiant,
+      message: messagePhotosIncompletes(echecs, suite.ok),
+    });
+  }
+
+  /** Enregistre la modification ; les photos nouvelles partent d'abord, dans le dossier de l'activité. */
+  async function enregistrerAvecPhotos(
+    identifiant: string,
+    activite: NouvelleActivite,
+  ) {
+    const initiales = photosInitiales.map((photo) => photo.chemin);
+    const inchangees =
+      photos.length === initiales.length &&
+      photos.every((photo, i) => photo.chemin === initiales[i]);
+    if (inchangees)
+      return setResultat(await enregistrer(identifiant, activite));
+
+    let chemins = cheminsDe(photos);
+    const aEnvoyer = photos.filter((photo) => photo.fichier);
+    if (aEnvoyer.length > 0) {
+      const depots = await preparerDepotsPhotos(
+        identifiant,
+        aEnvoyer.map((photo) => (photo.fichier as Blob).size),
+      );
+      if (!depots.ok) return setResultat(depots);
+      const envoi = await envoyer(depots.depots);
+      if (envoi.echecs > 0)
+        return setResultat({
+          ok: false,
+          message:
+            "Des photos n'ont pas pu être envoyées. Réessayez : celles qui sont parties ne sont pas renvoyées.",
+        });
+      chemins = envoi.chemins;
+    }
+    setResultat(await enregistrer(identifiant, activite, chemins));
+  }
+
   function publierMaintenant() {
     setResultat(null);
     // Publiée ou enregistrée, l'activité mène à son écran : seul un échec revient ici.
@@ -149,18 +273,23 @@ export function ParcoursProposition({
       setErreur(verdict);
       if (verdict.erreur) return;
       const activite = versNouvelleActivite(saisie, espaces);
-      setResultat(
-        modification
-          ? await enregistrer(modification.identifiant, activite)
-          : await publier(activite),
-      );
+      if (modification)
+        await enregistrerAvecPhotos(modification.identifiant, activite);
+      else if (photos.length > 0) await publierAvecPhotos(activite);
+      else {
+        // Sans photo, une publication réussie redirige : seul un échec revient ici.
+        const publication = await publier(activite);
+        if (!publication.ok) setResultat(publication);
+      }
     });
   }
 
   const erreurDe = (champ: ChampSaisie) => erreurDuChamp(erreur, champ);
   const espaceChoisi = espaces.find((e) => e.id === saisie.espace_commun);
   const messageGeneral =
-    erreurGenerale(erreur) ?? (resultat?.ok === false && resultat.message);
+    apresEchec?.message ??
+    erreurGenerale(erreur) ??
+    (resultat?.ok === false && resultat.message);
 
   return (
     <form
@@ -227,6 +356,19 @@ export function ParcoursProposition({
               max: LIMITES.mot_accueil,
             }}
             erreur={erreurDe("mot_accueil")}
+          />
+          <ChampPhotos
+            photos={photos}
+            titre={saisie.titre}
+            onAjouter={(nouvelles) =>
+              setPhotos((actuelles) =>
+                [...actuelles, ...nouvelles].slice(0, MAX_PHOTOS),
+              )
+            }
+            onRetirer={retirer}
+            onMettreEnPremiere={(index) =>
+              setPhotos((actuelles) => mettreEnPremier(actuelles, index))
+            }
           />
         </>
       )}
@@ -393,6 +535,7 @@ export function ParcoursProposition({
           espace={espaceChoisi}
           regles={regles}
           reference={reference}
+          nombrePhotos={photos.length}
           onModifier={modifier}
           onAnnuler={() =>
             router.push(
@@ -405,32 +548,43 @@ export function ParcoursProposition({
       )}
 
       <BarreActionFixe>
-        {etape > 1 && (
-          <Bouton
-            variante="contour"
-            icone="arrow_back"
-            onClick={() => aller((etape - 1) as Etape)}
-            disabled={enCours}
+        {apresEchec ? (
+          <Link
+            href={cheminFiche(apresEchec.identifiant)}
+            className={`${classesBouton("action", true)} flex-1 text-body-lg`}
           >
-            Précédent
-          </Bouton>
+            Voir l&apos;activité
+          </Link>
+        ) : (
+          <>
+            {etape > 1 && (
+              <Bouton
+                variante="contour"
+                icone="arrow_back"
+                onClick={() => aller((etape - 1) as Etape)}
+                disabled={enCours}
+              >
+                Précédent
+              </Bouton>
+            )}
+            <Bouton
+              type="submit"
+              pleineLargeur
+              disabled={enCours}
+              className="flex-1 text-body-lg"
+            >
+              {etape === NOMBRE_ETAPES
+                ? modification
+                  ? enCours
+                    ? "Enregistrement…"
+                    : "Enregistrer"
+                  : enCours
+                    ? "Publication…"
+                    : "Publier"
+                : "Continuer"}
+            </Bouton>
+          </>
         )}
-        <Bouton
-          type="submit"
-          pleineLargeur
-          disabled={enCours}
-          className="flex-1 text-body-lg"
-        >
-          {etape === NOMBRE_ETAPES
-            ? modification
-              ? enCours
-                ? "Enregistrement…"
-                : "Enregistrer"
-              : enCours
-                ? "Publication…"
-                : "Publier"
-            : "Continuer"}
-        </Bouton>
       </BarreActionFixe>
     </form>
   );

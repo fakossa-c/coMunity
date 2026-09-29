@@ -12,6 +12,7 @@ import {
   estComplete,
   libelleStatutInscription,
 } from "@/lib/inscription-activite";
+import { adressePhoto } from "@/lib/fiche-activite";
 import { cheminFiche, estPassee, horaire } from "@/lib/partage-activite";
 import { classesBouton } from "./bouton";
 import { EtatActivite, type StatutActivite } from "./etat-activite";
@@ -43,6 +44,8 @@ export type Activite = {
   statut?: StatutActivite;
   /** `null` ou absent : pas de minimum de participants, donc rien à confirmer. */
   capacite_min?: number | null;
+  /** Chemin de la première photo dans le bucket `activites` ; `null` ou absent : le pictogramme tient lieu de photo. */
+  photo?: string | null;
 };
 
 /** Une activité de l'Accueil : sa carte donne son horaire, heure de fin comprise. */
@@ -152,7 +155,11 @@ function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
 
   return (
     <article className="flex flex-col overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
-      <VisuelActivite pictogramme={activite.pictogramme as NomIcone} enCarte />
+      <VisuelActivite
+        pictogramme={activite.pictogramme as NomIcone}
+        photo={activite.photo ? adressePhoto(activite.photo) : null}
+        enCarte
+      />
       <div className="flex flex-col gap-space-sm px-4 pt-4 pb-[18px]">
         <p className="flex items-center gap-1.5 text-body-md text-on-surface-variant">
           <Icone

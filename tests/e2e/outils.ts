@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 
@@ -117,6 +118,70 @@ export async function nouvelleActivite(
     .single();
   if (error) throw error;
   return data.identifiant_public as string;
+}
+
+/** Une photo JPEG unie, de la couleur donnée : de quoi illustrer une activité créée sans passer par l'écran. */
+export async function photoJpeg(couleur: string, largeur = 640, hauteur = 480) {
+  return sharp({
+    create: {
+      width: largeur,
+      height: hauteur,
+      channels: 3,
+      background: couleur,
+    },
+  })
+    .jpeg()
+    .toBuffer();
+}
+
+/**
+ * Une activité à venir qui a déjà `couleurs.length` photos, dans cet ordre, déposées comme le
+ * fait le parcours (bucket `activites`, un dossier par activité) ; renvoie son identifiant
+ * public et les chemins des photos.
+ */
+export async function nouvelleActiviteAvecPhotos(
+  organisateur: string,
+  couleurs: string[],
+  champs: Parameters<typeof nouvelleActivite>[1] = {},
+) {
+  const identifiant = await nouvelleActivite(organisateur, champs);
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("activite")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .single();
+  const chemins: string[] = [];
+  for (const couleur of couleurs) {
+    const chemin = `${data?.id}/${randomUUID()}.jpg`;
+    const { error } = await admin.storage
+      .from("activites")
+      .upload(chemin, await photoJpeg(couleur), { contentType: "image/jpeg" });
+    if (error) throw error;
+    chemins.push(chemin);
+  }
+  const { error } = await admin
+    .from("activite")
+    .update({ photos: chemins })
+    .eq("identifiant_public", identifiant);
+  if (error) throw error;
+  return { identifiant, chemins };
+}
+
+/** Dépose une photo dans le dossier de l'activité sans l'ajouter à sa liste, comme un envoi resté en plan ; renvoie son chemin. */
+export async function deposerPhotoNonEnregistree(identifiant: string) {
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("activite")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .single();
+  const chemin = `${data?.id}/${randomUUID()}.jpg`;
+  const { error } = await admin.storage
+    .from("activites")
+    .upload(chemin, await photoJpeg("#0d3b66"), { contentType: "image/jpeg" });
+  if (error) throw error;
+  return chemin;
 }
 
 /** Inscrit `residentId` à l'activité désignée par son identifiant public, avec `accompagnants` personnes en plus. */

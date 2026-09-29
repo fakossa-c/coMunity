@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
-import { lireFiche } from "@/lib/fiche-activite";
+import { adressePhoto, lireFiche } from "@/lib/fiche-activite";
 import { cheminFiche } from "@/lib/partage-activite";
 import { saisieDepuisActivite } from "@/lib/proposition-activite";
 import { lireContexteParcours } from "@/lib/regles-residence";
@@ -32,6 +32,10 @@ export default async function Modifier({ params }: Props) {
         regles={regles}
         initial={saisieDepuisActivite(fiche)}
         modification={{ identifiant, placesPrises: fiche.places_prises }}
+        photosInitiales={fiche.photos.map((chemin) => ({
+          chemin,
+          url: adressePhoto(chemin),
+        }))}
       />
     </EcranSecondaire>
   );

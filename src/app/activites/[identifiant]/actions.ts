@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cheminFiche } from "@/lib/partage-activite";
+import { BUCKET_PHOTOS_ACTIVITE } from "@/lib/photos-activite";
 import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
@@ -95,11 +96,19 @@ export async function annulerActivite(identifiant: string): Promise<Resultat> {
   return { ok: true, message: "Activité annulée." };
 }
 
-/** Supprime l'activité de la personne connectée, puis revient à la liste de ce qu'elle organise. */
+/**
+ * Supprime l'activité de la personne connectée et ses photos, puis revient à la liste de ce
+ * qu'elle organise.
+ */
 export async function supprimerActivite(
   identifiant: string,
 ): Promise<Resultat> {
   const supabase = await clientSession();
+  const { data: activite } = await supabase
+    .from("activite")
+    .select("id, photos")
+    .eq("identifiant_public", identifiant)
+    .maybeSingle();
   const { error } = await supabase.rpc("supprimer_activite", {
     p_identifiant: identifiant,
   });
@@ -110,6 +119,18 @@ export async function supprimerActivite(
         messagesCreateur[error.code ?? ""] ??
         "La suppression n'a pas pu être enregistrée. Réessayez dans un instant.",
     };
+  }
+
+  // L'activité supprimée, ses photos n'ont plus de gérant : la base laisse alors les retirer. Le
+  // dossier entier part, photos jamais enregistrées comprises (envoi resté en plan).
+  // Au pire, un fichier orphelin reste dans le bucket : plus aucune activité ne le montre.
+  if (activite) {
+    const dossier = supabase.storage.from(BUCKET_PHOTOS_ACTIVITE);
+    const { data: fichiers } = await dossier.list(activite.id);
+    const chemins = new Set<string>(activite.photos);
+    for (const fichier of fichiers ?? [])
+      chemins.add(`${activite.id}/${fichier.name}`);
+    if (chemins.size > 0) await dossier.remove([...chemins]);
   }
 
   revalidatePath("/");

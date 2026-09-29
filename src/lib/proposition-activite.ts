@@ -10,13 +10,13 @@ export const LIMITES = {
   mot_accueil: 300,
 } as const;
 
-/** Les quatre écrans du parcours : 1 titre et catégorie, 2 date et lieu, 3 capacité et confort, 4 récapitulatif. */
+/** Les quatre écrans du parcours : 1 titre, catégorie et photos, 2 date et lieu, 3 capacité et confort, 4 récapitulatif. */
 export type Etape = 1 | 2 | 3 | 4;
 
 export const NOMBRE_ETAPES = 4;
 
 export const TITRES_ETAPES: Record<Etape, string> = {
-  1: "Titre et catégorie",
+  1: "Titre, catégorie et photos",
   2: "Date et lieu",
   3: "Capacité et confort",
   4: "Récapitulatif",
