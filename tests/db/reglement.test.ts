@@ -161,6 +161,44 @@ describe("règlement intérieur : qui lit, qui écrit", () => {
     expect(deplacement.error).not.toBeNull();
   });
 
+  it("un membre du conseil syndical dont l'accès est retiré ne lit ni n'écrit rien", async () => {
+    const syndic = await nouveauSyndic();
+    const retire = await nouveauSyndic();
+    const section = await nouvelleSection(syndic);
+    await clientAdmin()
+      .from("profil")
+      .update({ statut: "retire" })
+      .eq("id", retire.id);
+
+    const lecture = await retire.client
+      .from("section_reglement")
+      .select("id")
+      .eq("id", section.id);
+    const date = await retire.client.from("reglement").select("mis_a_jour_le");
+    const creation = await retire.client
+      .from("section_reglement")
+      .insert({ titre: "Ma règle", texte: "Texte" });
+    const deplacement = await retire.client.rpc("deplacer_section_reglement", {
+      section: section.id,
+      vers_le_haut: true,
+    });
+    await retire.client
+      .from("section_reglement")
+      .update({ titre: "Renommée" })
+      .eq("id", section.id);
+
+    expect(lecture.data).toEqual([]);
+    expect(date.data).toEqual([]);
+    expect(creation.error).not.toBeNull();
+    expect(deplacement.error).not.toBeNull();
+    const { data } = await clientAdmin()
+      .from("section_reglement")
+      .select("titre")
+      .eq("id", section.id)
+      .single();
+    expect(data?.titre).toBe(section.titre);
+  });
+
   it("le conseil syndical modifie puis supprime une section", async () => {
     const syndic = await nouveauSyndic();
     const section = await nouvelleSection(syndic);
@@ -346,6 +384,30 @@ describe("règlement intérieur : date de dernière mise à jour", () => {
       .from("reglement")
       .select("mis_a_jour_le");
     expect(data ?? []).toEqual([]);
+  });
+
+  it("ne bouge pas quand une écriture est refusée ou ne touche aucune ligne", async () => {
+    const syndic = await nouveauSyndic();
+    const section = await nouvelleSection(syndic);
+    const resident = await nouveauResident("valide");
+    const avant = await miseAJour();
+    await new Promise((fin) => setTimeout(fin, 20));
+
+    // Le droit de colonne laisse passer ces écritures jusqu'à la RLS, qui ne retient aucune ligne.
+    await resident.client
+      .from("section_reglement")
+      .update({ titre: "Piraté" })
+      .eq("id", section.id);
+    await resident.client
+      .from("section_reglement")
+      .delete()
+      .eq("id", section.id);
+    await syndic.client
+      .from("section_reglement")
+      .update({ titre: "Aucune ligne" })
+      .eq("id", "00000000-0000-0000-0000-000000000000");
+
+    expect(await miseAJour()).toBe(avant);
   });
 
   it("ne s'écrit pas à la main", async () => {
