@@ -7,7 +7,9 @@ import { EcranSecondaire } from "@/components/cadre";
 import { CarteLignes } from "@/components/carte-lignes";
 import { Annonce } from "@/components/formulaire";
 import { TitrePage } from "@/components/titre-page";
+import { lireSession } from "@/lib/session";
 import { configurationSupabase, clientSession } from "@/lib/supabase/serveur";
+import { SuppressionCompte } from "./suppression-compte";
 
 export const metadata: Metadata = { title: "Mes identifiants" };
 
@@ -47,6 +49,8 @@ export default async function MesIdentifiants({
     redirect(`/connexion?suivant=${encodeURIComponent(suivant)}`);
   }
 
+  // Un membre du syndic ne supprime pas son compte ici : son départ passe par le retrait d'accès.
+  const peutSupprimer = (await lireSession())?.role !== "syndic";
   const confirmation = typeof fait === "string" ? CONFIRMATIONS[fait] : null;
   const enAttente = utilisateur.new_email
     ? `Un lien de confirmation a été envoyé à ${utilisateur.new_email}. Votre adresse changera quand vous l'aurez ouvert.`
@@ -94,6 +98,7 @@ export default async function MesIdentifiants({
             Se déconnecter
           </Bouton>
         </form>
+        {peutSupprimer && <SuppressionCompte />}
       </div>
     </EcranSecondaire>
   );
