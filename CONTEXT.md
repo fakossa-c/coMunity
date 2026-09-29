@@ -58,7 +58,7 @@ _Avoid_ : actualité, post, message
 
 **Sondage** :
 Une question à choix unique jointe à une annonce par le conseil syndical, avec ses options et une date limite. Un résident validé y répond une seule fois, sans pouvoir changer sa réponse ; il lit les résultats après avoir répondu, et tout le monde les lit après la date limite.
-_Avoid_ : vote, enquête, scrutin
+_Avoid_ : enquête, scrutin
 
 **Règlement intérieur** :
 Les règles de vie communes de la résidence, présentées dans Ma copro en sections qu'on déplie.

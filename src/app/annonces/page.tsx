@@ -68,26 +68,29 @@ async function ListeAnnonces({
   );
   return (
     <ul aria-label="Annonces" className="flex flex-col gap-space-md">
-      {annonces.map((annonce) => (
-        <li key={annonce.id}>
-          <CarteAnnonce
-            annonce={annonce}
-            lien={`${racine}${cheminAnnonce(annonce.identifiant_public)}`}
-            urlDocument={
-              annonce.document_chemin
-                ? urlFichierAnnonce(annonce.document_chemin)
-                : undefined
-            }
-          >
-            {sondages.has(annonce.id) && (
-              <SondageAnnonce
-                lu={sondages.get(annonce.id)!}
-                peutRepondre={session.statut === "valide"}
-              />
-            )}
-          </CarteAnnonce>
-        </li>
-      ))}
+      {annonces.map((annonce) => {
+        const sondage = sondages.get(annonce.id);
+        return (
+          <li key={annonce.id}>
+            <CarteAnnonce
+              annonce={annonce}
+              lien={`${racine}${cheminAnnonce(annonce.identifiant_public)}`}
+              urlDocument={
+                annonce.document_chemin
+                  ? urlFichierAnnonce(annonce.document_chemin)
+                  : undefined
+              }
+            >
+              {sondage && (
+                <SondageAnnonce
+                  lu={sondage}
+                  peutRepondre={session.statut === "valide"}
+                />
+              )}
+            </CarteAnnonce>
+          </li>
+        );
+      })}
     </ul>
   );
 }

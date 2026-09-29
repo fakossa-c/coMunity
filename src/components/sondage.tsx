@@ -38,7 +38,7 @@ export function Sondage({
   onVoter,
 }: Props) {
   const [enVote, setEnVote] = useState(false);
-  const [merci, setMerci] = useState(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const clos = affichage.etat === "resultats" && affichage.clos;
 
@@ -46,14 +46,14 @@ export function Sondage({
     setErreur(null);
     return onVoter(choix).then((resultat) => {
       if (resultat.ok) {
-        setMerci(true);
+        setConfirmation(resultat.message);
         setEnVote(false);
       } else setErreur(resultat.message);
     });
   }
 
   return (
-    <div className="flex flex-col gap-space-sm rounded-md bg-surface-container-low p-space-md">
+    <div className="flex flex-col gap-space-sm rounded-lg bg-surface-container-low p-space-md">
       {affichage.etat === "vote" ||
       (affichage.etat === "resultats" && enVote) ? (
         <Vote
@@ -71,9 +71,9 @@ export function Sondage({
             <Resultats options={options} affichage={affichage} />
           ) : (
             <ul className="flex flex-col gap-space-xs">
-              {options.map((libelle) => (
+              {options.map((libelle, rang) => (
                 <li
-                  key={libelle}
+                  key={rang}
                   className={`${ligne} border-outline bg-fond-carte`}
                 >
                   {libelle}
@@ -98,7 +98,7 @@ export function Sondage({
           )}
         </>
       )}
-      <Message message={merci && "Merci, votre réponse est enregistrée"} />
+      <Message message={confirmation} />
       <p className="text-body-md text-on-surface-variant">
         {affichage.etat === "resultats" &&
           `${libelleReponses(affichage.reponses)} · `}
@@ -139,7 +139,7 @@ function Vote({
           const actif = choix === rang + 1;
           return (
             <label
-              key={libelle}
+              key={rang}
               className={`${ligne} cursor-pointer has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
                 actif
                   ? "border-primary bg-fond-action text-texte-action"
@@ -194,7 +194,7 @@ function Resultats({
         const part = affichage.pourcentages[rang];
         return (
           <li
-            key={libelle}
+            key={rang}
             className={`${ligne} justify-between ${
               choisi ? "border-primary" : "border-outline"
             } bg-fond-carte`}

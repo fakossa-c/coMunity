@@ -109,8 +109,8 @@ export function SondagePublie({ sondage }: { sondage: Sondage }) {
       <h2 className="font-headline text-headline-sm">Sondage</h2>
       <p className="font-headline text-body-bold">{sondage.question}</p>
       <ul className="list-disc pl-6 text-body-lg">
-        {sondage.options.map((libelle) => (
-          <li key={libelle}>{libelle}</li>
+        {sondage.options.map((libelle, rang) => (
+          <li key={rang}>{libelle}</li>
         ))}
       </ul>
       <p className="text-body-md text-on-surface-variant">

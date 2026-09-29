@@ -8,3 +8,5 @@ Sondage du syndic, à placer dans une CarteAnnonce : options à choix unique (56
 />
 <Sondage question="…" options={[…]} choix={1} />  {/* déjà voté : résultats */}
 ```
+
+Dans l'app (ticket #39), le composant reçoit le résultat de la logique plutôt que des votes bruts : `question`, `options` (les libellés), `echeance`, `affichage` (`vote`, `lecture` ou `resultats` avec les pourcentages, le nombre de réponses, le `choix` de la personne et `clos`) et `onVoter(rang)` (rang de l'option, à partir de 1). Un compte qui ne peut pas répondre lit les options (`lecture`) ; le conseil syndical, qui lit les résultats avant d'avoir répondu, garde « Répondre au sondage ».

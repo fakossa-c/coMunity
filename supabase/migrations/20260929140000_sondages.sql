@@ -32,6 +32,50 @@ comment on table public.sondage is 'Le sondage à choix unique joint à une anno
 comment on column public.sondage.options is 'Les options dans l''ordre d''affichage ; le choix d''une réponse est le rang de l''option, à partir de 1.';
 comment on column public.sondage.echeance is 'Dernier jour où l''on peut répondre, ce jour compris. Le lendemain, les résultats sont lisibles par tous les comptes qui peuvent consulter.';
 
+/**
+ * Un sondage ne se joint qu'à une annonce de type sondage, et cette annonce garde son type tant
+ * qu'elle porte un sondage : sans quoi la liste, qui montre les sondages des seules annonces de
+ * type sondage, ne le montrerait plus.
+ */
+create function public.exiger_annonce_de_sondage()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1 from public.annonce where id = new.annonce_id and type = 'sondage'
+  ) then
+    raise exception 'Un sondage se joint à une annonce de type sondage' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger sondage_sur_annonce_de_sondage
+  before insert on public.sondage
+  for each row execute function public.exiger_annonce_de_sondage();
+
+create function public.garder_type_annonce_de_sondage()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.type is distinct from old.type
+    and exists (select 1 from public.sondage where annonce_id = old.id) then
+    raise exception 'Une annonce qui porte un sondage garde son type' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger annonce_avec_sondage_garde_son_type
+  before update of type on public.annonce
+  for each row execute function public.garder_type_annonce_de_sondage();
+
 alter table public.sondage enable row level security;
 
 revoke all on public.sondage from anon, authenticated;

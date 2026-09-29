@@ -12,6 +12,7 @@ import {
   verifierFichier,
   versLigneAnnonce,
   type GenreFichier,
+  type LigneAnnonce,
   type SaisieAnnonce,
 } from "@/lib/annonces";
 import type { Resultat } from "@/lib/resultat";
@@ -116,12 +117,16 @@ export async function enregistrerAnnonce(
   const supabase = await clientSession();
   let anciens: (string | null)[] = [];
   let expirationEnregistree: string | null = null;
+  let avant: LigneAnnonce | null = null;
   if (id) {
     const { data } = await supabase
       .from("annonce")
-      .select("photo_chemin, document_chemin, expire_le")
+      .select(
+        "type, titre, texte, quand, lieu, photo_chemin, document_chemin, epinglee, expire_le",
+      )
       .eq("id", id)
-      .maybeSingle();
+      .maybeSingle<LigneAnnonce>();
+    avant = data;
     anciens = [data?.photo_chemin ?? null, data?.document_chemin ?? null];
     expirationEnregistree = data?.expire_le ?? null;
   }
@@ -161,11 +166,15 @@ export async function enregistrerAnnonce(
       ...versLigneSondage(sondageAJoindre),
     });
     if (erreurSondage) {
-      // Une annonce de sondage sans sondage ne dirait rien : la publication échoue en entier.
-      if (!id) await supabase.from("annonce").delete().eq("id", data[0].id);
+      // Une annonce de sondage sans sondage ne dirait rien : l'enregistrement échoue en entier.
+      const { error: annulation } = id
+        ? await supabase.from("annonce").update(avant!).eq("id", id)
+        : await supabase.from("annonce").delete().eq("id", data[0].id);
       return echec(
         erreurSondage.code,
-        "Le sondage n'a pas pu être enregistré. Réessayez dans un instant.",
+        annulation
+          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée à moitié faite : ouvrez-la pour la corriger."
+          : "Le sondage n'a pas pu être enregistré. Réessayez dans un instant.",
       );
     }
   }
