@@ -270,6 +270,16 @@ describe("ses activités", () => {
     expect(await activiteEnBase(activite)).toBeNull();
   });
 
+  it("une activité à venir dont le seul inscrit est son créateur est supprimée, pas annulée", async () => {
+    const createur = await nouveauResident("valide");
+    const activite = await publier(createur);
+    await inscrire(createur, activite);
+
+    await supprimerCompte(createur);
+
+    expect(await activiteEnBase(activite)).toBeNull();
+  });
+
   it("une activité à venir en relecture ou masquée est supprimée, même avec des inscrits", async () => {
     const createur = await nouveauResident("valide");
     const inscrit = await nouveauResident("valide");
@@ -329,6 +339,31 @@ describe("ses activités", () => {
       statut: "annulee",
       organisateur: null,
     });
+  });
+});
+
+describe("la file de modération du conseil syndical", () => {
+  it("garde une activité passée masquée dont le créateur a supprimé son compte, sans nom", async () => {
+    const syndic = await nouveauSyndic();
+    const createur = await nouveauResident("valide");
+    const passee = await publier(createur, { passee: true });
+    const masquage = await syndic.client.rpc("moderer_activite", {
+      p_identifiant: passee.identifiant,
+      p_decision: "masquer",
+      p_message: "Contenu à revoir",
+    });
+    if (masquage.error) throw masquage.error;
+
+    await supprimerCompte(createur);
+
+    const { data, error } = await syndic.client.rpc("activites_a_moderer");
+    expect(error).toBeNull();
+    expect(data).toContainEqual(
+      expect.objectContaining({
+        identifiant_public: passee.identifiant,
+        organisateur_nom_affiche: null,
+      }),
+    );
   });
 });
 
