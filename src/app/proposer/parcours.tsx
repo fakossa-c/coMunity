@@ -9,10 +9,9 @@ import { Bouton, classesBouton } from "@/components/bouton";
 import { Calendrier } from "@/components/calendrier";
 import { Champ, ChampListe, ChampTexte } from "@/components/champ";
 import { ChampPhotos, type PhotoSaisie } from "@/components/champ-photos";
-import { ChoixEspaceCommun } from "@/components/choix-espace-commun";
+import { ChoixLieu } from "@/components/choix-lieu";
 import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
-import { EncartPastel } from "@/components/encart-pastel";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitreSection } from "@/components/titre-section";
@@ -75,7 +74,7 @@ import { Recapitulatif } from "./recapitulatif";
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
 type Props = {
-  /** Les espaces communs à proposer à l'étape 2, avant « Autre ». */
+  /** Les espaces communs à proposer à l'étape 2, avant « Autre lieu… ». */
   espaces: EspaceCommun[];
   /** Les règles de la résidence que l'assistant applique. */
   regles: ReglesResidence;
@@ -521,31 +520,15 @@ export function ParcoursProposition({
               ))}
             </ChampListe>
           </div>
-          {espaces.length > 0 && (
-            <ChoixEspaceCommun
-              espaces={espaces}
-              valeur={saisie.espace_commun}
-              onChange={(valeur) => poser("espace_commun", valeur)}
-              erreur={erreurDe("espace_commun")}
-            />
-          )}
-          {espaceChoisi?.consignes && (
-            <EncartPastel titre="Consignes de l'espace commun">
-              {espaceChoisi.consignes}
-            </EncartPastel>
-          )}
-          {saisie.espace_commun === LIEU_LIBRE && (
-            <Champ
-              libelle="Lieu"
-              name="lieu"
-              autoComplete="off"
-              value={saisie.lieu}
-              onChange={(e) => poser("lieu", e.target.value)}
-              erreur={erreurDe("lieu")}
-              aide="Par exemple : chez vous, 2e étage."
-              required
-            />
-          )}
+          <ChoixLieu
+            espaces={espaces}
+            espaceCommun={saisie.espace_commun}
+            lieu={saisie.lieu}
+            onEspaceChange={(valeur) => poser("espace_commun", valeur)}
+            onLieuChange={(lieu) => poser("lieu", lieu)}
+            erreurEspace={erreurDe("espace_commun")}
+            erreurLieu={erreurDe("lieu")}
+          />
           <Champ
             libelle="Précision d'accès"
             name="precision_acces"

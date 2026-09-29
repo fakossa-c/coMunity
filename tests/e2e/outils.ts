@@ -389,13 +389,15 @@ export async function supprimerEspacesCommuns(noms: string[]) {
 }
 
 /**
- * À l'étape « Date et lieu », saisit un lieu libre : choisit « Autre » quand la résidence a des
- * espaces communs (un autre test peut en créer à tout moment), puis remplit le champ.
+ * À l'étape « Date et lieu », saisit un lieu libre : choisit « Autre lieu… » dans la liste quand
+ * la résidence a des espaces communs (un autre test peut en créer à tout moment), puis remplit le
+ * champ.
  */
 export async function saisirLieuLibre(page: Page, lieu: string) {
-  const autre = page.getByRole("radio", { name: /^Autre/ });
-  if ((await autre.count()) > 0) await autre.check();
-  await page.getByLabel("Lieu", { exact: true }).fill(lieu);
+  const liste = page.getByLabel("Lieu", { exact: true });
+  if ((await liste.count()) > 0)
+    await liste.selectOption({ label: "Autre lieu…" });
+  await page.getByLabel("Nom du lieu").fill(lieu);
 }
 
 /** Une section du règlement intérieur écrite comme par le conseil syndical, sous un titre jamais utilisé. */

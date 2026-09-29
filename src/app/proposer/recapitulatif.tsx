@@ -169,7 +169,7 @@ function sectionsDe(
   ];
 }
 
-/** Tout ce qui a été saisi, étape par étape, avec un retour vers chacune ; puis l'avis de l'assistant. */
+/** L'avis de l'assistant, puis tout ce qui a été saisi, étape par étape, avec un retour vers chacune. */
 export function Recapitulatif({
   saisie,
   espace,
@@ -208,6 +208,7 @@ export function Recapitulatif({
 
   return (
     <>
+      <EncartAssistant avis={avis} />
       {sectionsDe(saisie, espace, nombrePhotos).map(({ etape, lignes }) => (
         <section key={etape} className="flex flex-col gap-space-sm">
           <div className="flex items-center justify-between gap-space-sm">
@@ -225,7 +226,6 @@ export function Recapitulatif({
           <CarteLignes libelle={TITRES_ETAPES[etape]} lignes={lignes} />
         </section>
       ))}
-      <EncartAssistant avis={avis} />
       <Bouton variante="danger" icone="close" onClick={onAnnuler}>
         Annuler la proposition
       </Bouton>

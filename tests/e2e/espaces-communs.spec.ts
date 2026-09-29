@@ -193,17 +193,25 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   await seConnecter(page, resident.email);
   await commencerProposition(page, titre);
 
-  // L'espace se présente avec sa capacité et ses badges ; ses consignes s'affichent une fois choisi.
-  const option = page.getByRole("radio", { name: new RegExp(espace.nom) });
-  await expect(page.getByRole("radio", { name: /^Autre/ })).toBeVisible();
-  await option.check();
-  const choix = page.getByRole("group", { name: "Où se tient l'activité ?" });
-  await expect(choix).toContainText("Jusqu'à 10 personnes");
-  await expect(choix).toContainText("Coin cuisine");
-  await expect(page.getByRole("main")).toContainText(
+  // Le lieu se choisit dans une liste : espaces de la résidence puis « Autre lieu… ». Sous l'espace
+  // choisi : sa capacité, ses badges et ses consignes.
+  const lieu = page.getByLabel("Lieu", { exact: true });
+  await expect(lieu.locator("option").last()).toHaveText("Autre lieu…");
+  await expect(page.getByRole("main")).not.toContainText(
     "Laissez la salle propre et fermez les fenêtres.",
   );
-  await expect(page.getByLabel("Lieu", { exact: true })).toHaveCount(0);
+  await lieu.selectOption({ label: espace.nom });
+  const resume = page
+    .getByRole("main")
+    .locator("div")
+    .filter({ has: page.getByText(espace.nom, { exact: true }) })
+    .filter({ hasText: "Jusqu'à 10 personnes" })
+    .last();
+  await expect(resume).toContainText("Coin cuisine");
+  await expect(resume).toContainText(
+    "Laissez la salle propre et fermez les fenêtres.",
+  );
+  await expect(page.getByLabel("Nom du lieu")).toHaveCount(0);
 
   // Bloqué après l'heure de fin maximale, avec l'heure limite.
   await page.getByLabel("Heure de début").selectOption("19:30");
@@ -263,7 +271,7 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
   await seConnecter(page, resident.email);
   await commencerProposition(page, titre);
 
-  await expect(page.getByRole("radio", { name: /^Autre/ })).toBeVisible();
+  await expect(page.getByLabel("Lieu", { exact: true })).toHaveValue("");
   await page.getByLabel("Heure de début").selectOption("21:00");
   await page.getByLabel("Heure de fin").selectOption("22:30");
   await continuer(page);

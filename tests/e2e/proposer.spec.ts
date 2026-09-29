@@ -166,7 +166,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   // Précédent puis Continuer : rien n'est perdu, dans un sens comme dans l'autre.
   await page.getByRole("button", { name: "Précédent" }).click();
   await etape(page, 2);
-  await expect(page.getByLabel("Lieu")).toHaveValue("Cour intérieure");
+  await expect(page.getByLabel("Nom du lieu")).toHaveValue("Cour intérieure");
   await continuer(page);
   await etape(page, 3);
   await expect(page.getByLabel("Nombre de places")).toHaveValue("12");
@@ -248,6 +248,62 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
     .filter({ hasText: titre });
   await expect(carte).toContainText("Accès plain-pied");
   await expect(carte).toContainText("Enfants bienvenus");
+});
+
+test("le minimum de participants démarre à 1, et les conseils de l'assistant ouvrent le récapitulatif", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const titre = `Café des voisins ${Date.now()}`;
+
+  await seConnecter(page, resident.email);
+  await page.goto("/proposer");
+  await etape(page, 1);
+  await page.getByLabel("Titre de l'activité").fill(titre);
+  await continuer(page);
+  await etape(page, 2);
+  await choisirDate(page, dansUnMois());
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await saisirLieuLibre(page, "Cour intérieure");
+  await continuer(page);
+
+  // Un minimum de 1 est déjà là ; il se vide et se remplit comme avant.
+  await etape(page, 3);
+  const minimum = page.getByLabel("Minimum de participants");
+  await expect(minimum).toHaveValue("1");
+  await continuer(page);
+
+  // L'encart de l'assistant est sous le titre de l'étape, au-dessus des cartes, sans défiler.
+  await etape(page, 4);
+  const encart = page.getByText("Conseils de l'assistant");
+  const premiereCarte = page.getByRole("heading", {
+    name: "Titre, catégorie et photos",
+  });
+  await expect(encart).toBeVisible();
+  const [haut, carte, fenetre] = await Promise.all([
+    encart.boundingBox(),
+    premiereCarte.boundingBox(),
+    page.evaluate(() => window.innerHeight),
+  ]);
+  expect(haut!.y).toBeLessThan(carte!.y);
+  expect(haut!.y).toBeLessThan(fenetre);
+  await expect(page.getByRole("main")).toContainText("Au moins 1 participant");
+  await page.screenshot({
+    path: test.info().outputPath("recapitulatif-encart-en-haut.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Publier" }).click();
+
+  // Un minimum de 1 ne demande rien de plus : la fiche ne parle pas de participants manquants.
+  await page.getByRole("link", { name: "Voir la fiche" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: titre }),
+  ).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("Au moins 1 participant");
+  await expect(page.getByRole("main")).not.toContainText(
+    "Encore 1 participant pour confirmer",
+  );
 });
 
 test("« Annuler la proposition » ne publie rien", async ({ page }) => {
