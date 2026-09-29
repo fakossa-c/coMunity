@@ -140,7 +140,7 @@ describe("amorcerDemo : activités", () => {
     expect(data?.raison_relecture).toBeTruthy();
   });
 
-  it("montre le catalogue à un résident validé, et rien à un résident en attente", async () => {
+  it("montre le catalogue à un résident validé, et rien à un résident refusé", async () => {
     const validé = await connecter(
       adresseDemo("danielle", modele),
       adresseDemo("danielle", modele),
@@ -151,11 +151,11 @@ describe("amorcerDemo : activités", () => {
       .like("identifiant_public", "dmtt%");
     expect(vu.data?.length ?? 0).toBeGreaterThan(3);
 
-    const attente = await connecter(
-      adresseDemo("attente", modele),
-      adresseDemo("attente", modele),
+    const refuse = await connecter(
+      adresseDemo("refuse", modele),
+      adresseDemo("refuse", modele),
     );
-    const rien = await attente
+    const rien = await refuse
       .from("activite")
       .select("id")
       .like("identifiant_public", "dmtt%");
