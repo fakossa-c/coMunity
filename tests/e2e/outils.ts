@@ -92,6 +92,36 @@ export async function nouveauResident(
   return { id: data.user.id, email };
 }
 
+/** Modifie le profil de `id` comme le ferait la personne depuis Mes informations, sans passer par l'écran. */
+export async function modifierProfil(
+  id: string,
+  champs: Record<string, string | number | boolean | null>,
+) {
+  const { error } = await clientAdmin()
+    .from("profil")
+    .update(champs)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Les fichiers du dossier de photos de profil de `id` dans le bucket `profils`. */
+export async function photosDeProfil(id: string) {
+  const { data, error } = await clientAdmin().storage.from("profils").list(id);
+  if (error) throw error;
+  return data.map((fichier) => fichier.name);
+}
+
+/** Les centres d'intérêt de `id`, dans l'ordre où ils ont été déclarés. */
+export async function interetsDe(id: string) {
+  const { data, error } = await clientAdmin()
+    .from("centre_interet")
+    .select("libelle")
+    .eq("profil_id", id)
+    .order("cree_le");
+  if (error) throw error;
+  return data.map((interet) => interet.libelle as string);
+}
+
 /** Une activité publiée au nom de `organisateur`, à venir ; renvoie son identifiant public. */
 export async function nouvelleActivite(
   organisateur: string,

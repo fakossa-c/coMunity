@@ -48,7 +48,7 @@ test("l'avatar ouvre le menu du profil depuis un écran principal", async ({
 
   await expect(avatar(page)).toHaveText("D");
   await ouvrirMenu(page);
-  await expect(menu(page)).toContainText("Danielle Martin");
+  await expect(menu(page)).toContainText("Danielle M.");
   for (const entree of ["Profil", "Mon syndic", "Ma copro"]) {
     await expect(
       menu(page).getByRole("link", { name: new RegExp(`^${entree}`) }),
@@ -153,7 +153,7 @@ test("chaque entrée du menu mène à sa page, depuis un écran secondaire aussi
 
   for (const [entree, chemin, titre] of [
     // La page Profil s'ouvre sur l'identité de la personne, comme dans le kit.
-    ["Profil", "/profil", "Danielle Martin"],
+    ["Profil", "/profil", "Danielle M."],
     ["Mon syndic", "/mon-syndic", "Mon syndic"],
     ["Ma copro", "/ma-copro", "Ma copro"],
   ]) {
