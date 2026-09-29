@@ -159,18 +159,6 @@ test("le bouton « Proposer » n'apparaît que sur Activités et mène à /propo
   await expect(page).toHaveURL(/\/proposer$/);
 });
 
-test("les rubriques pas encore ouvertes ont leur titre et un message d'attente", async ({
-  page,
-}) => {
-  for (const [chemin, titre] of [["/mon-syndic", "Mon syndic"]]) {
-    await page.goto(chemin);
-    await expect(
-      page.getByRole("heading", { level: 1, name: titre }),
-    ).toBeVisible();
-    await expect(page.getByRole("main")).toContainText("ouvrira bientôt");
-  }
-});
-
 test("un visiteur sur Activités est invité à se connecter pour voir ses inscriptions", async ({
   page,
 }) => {

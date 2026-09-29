@@ -451,3 +451,36 @@ export async function nouvelleReponseSondage(
     .insert({ sondage_id: sondageId, profil_id: profilId, choix });
   if (error) throw error;
 }
+
+/** Une fiche de Mon syndic écrite comme par le conseil syndical, sous un prénom jamais utilisé. */
+export async function nouvelleFicheSyndic(
+  champs: Partial<
+    Record<"prenom" | "nom" | "telephone" | "email" | "compte_id", string>
+  > = {},
+) {
+  const { data, error } = await clientAdmin()
+    .from("fiche_syndic")
+    .insert({
+      prenom: `Marc ${randomUUID().slice(0, 6)}`,
+      nom: "Lefèvre",
+      ...champs,
+    })
+    .select("id, prenom, nom")
+    .single();
+  if (error) throw error;
+  return data as { id: string; prenom: string; nom: string };
+}
+
+/** Supprime des fiches de Mon syndic, par leur prénom, et leurs photos : celles qu'un test a créées, par l'écran ou non. */
+export async function supprimerFichesSyndic(prenoms: string[]) {
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("fiche_syndic")
+    .select("photo_chemin")
+    .in("prenom", prenoms);
+  const photos = (data ?? [])
+    .map((f) => f.photo_chemin)
+    .filter((chemin): chemin is string => Boolean(chemin));
+  if (photos.length > 0) await admin.storage.from("syndic").remove(photos);
+  await admin.from("fiche_syndic").delete().in("prenom", prenoms);
+}
