@@ -17,7 +17,7 @@ export default async function Profil() {
 
   return (
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
-      <div className="flex max-w-xl flex-col gap-space-lg pt-2 desktop:max-w-none desktop:gap-10">
+      <div className="flex max-w-xl flex-col gap-space-lg pt-2 desktop:max-w-none desktop:gap-space-xl">
         <EnTeteProfil
           {...identite({ ...session, pseudo: informations?.pseudo ?? null })}
           adresse={adresse(
@@ -28,7 +28,7 @@ export default async function Profil() {
         />
         <nav
           aria-label="Rubriques du profil"
-          className="flex flex-col gap-2.5 desktop:grid desktop:grid-cols-2 desktop:gap-5"
+          className="flex flex-col gap-2.5 desktop:grid desktop:grid-cols-2 desktop:gap-bloc"
         >
           <LigneMenu
             href="/profil/identifiants"

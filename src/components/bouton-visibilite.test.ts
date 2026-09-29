@@ -32,7 +32,7 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("Masqué");
   });
 
-  it("dit « Privé » à la place de « Masqué » sur ordinateur, où le bouton est compact", () => {
+  it("porte « Privé » pour l'affichage ordinateur, en plus de « Masqué » pour le mobile", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {
         libelle: "Étage",
@@ -41,6 +41,7 @@ describe("BoutonVisibilite", () => {
       }),
     );
 
+    expect(html).toContain("Masqué");
     expect(html).toContain("Privé");
   });
 

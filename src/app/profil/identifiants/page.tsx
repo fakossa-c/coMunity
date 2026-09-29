@@ -8,7 +8,8 @@ import { CarteLignes } from "@/components/carte-lignes";
 import { Annonce } from "@/components/formulaire";
 import { lireSession } from "@/lib/session";
 import { configurationSupabase, clientSession } from "@/lib/supabase/serveur";
-import { TitreProfil } from "../titre-profil";
+import { TitrePage } from "@/components/titre-page";
+import { DeuxColonnes } from "../deux-colonnes";
 import { SuppressionCompte } from "./suppression-compte";
 
 export const metadata: Metadata = { title: "Mes identifiants" };
@@ -59,7 +60,7 @@ export default async function MesIdentifiants({
   return (
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
-        <TitreProfil titre="Mes identifiants" />
+        <TitrePage titre="Mes identifiants" />
         <Annonce message={confirmation ?? enAttente} />
         <Annonce
           message={
@@ -69,7 +70,7 @@ export default async function MesIdentifiants({
           }
           erreur
         />
-        <div className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-8">
+        <DeuxColonnes>
           <CarteLignes
             libelle="Vos identifiants"
             lignes={[
@@ -108,7 +109,7 @@ export default async function MesIdentifiants({
             </form>
             {peutSupprimer && <SuppressionCompte />}
           </div>
-        </div>
+        </DeuxColonnes>
       </div>
     </EcranSecondaire>
   );

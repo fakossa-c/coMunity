@@ -24,7 +24,7 @@ export function EnTeteProfil({
 
   return (
     <div
-      className={`flex items-center gap-space-md ${grand ? "desktop:gap-7" : ""}`}
+      className={`flex items-center ${grand ? "gap-space-md desktop:gap-space-lg" : "gap-space-md"}`}
     >
       <Avatar
         initiale={initiale}

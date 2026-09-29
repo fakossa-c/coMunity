@@ -12,7 +12,8 @@ import { adresse } from "@/lib/informations-profil";
 import { identite } from "@/lib/identite";
 import { lireInformations } from "@/lib/lecture-informations";
 import { lireSession } from "@/lib/session";
-import { TitreProfil } from "../titre-profil";
+import { TitrePage } from "@/components/titre-page";
+import { DeuxColonnes } from "../deux-colonnes";
 import { InformationsVisibles } from "./informations-visibles";
 
 export const metadata: Metadata = { title: "Mes informations" };
@@ -33,7 +34,8 @@ export default async function MesInformations({
   return (
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
-        <TitreProfil
+        <TitrePage
+          journal
           titre="Mes informations"
           sousTitre="Contrôlez les informations partagées"
         />
@@ -53,7 +55,7 @@ export default async function MesInformations({
           photo={informations?.photo}
         />
         {/* Sur ordinateur, ce que voient les voisins à gauche ; ce que voit le conseil syndical à droite. */}
-        <div className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-8">
+        <DeuxColonnes>
           {informations?.pseudo ? (
             <div className="flex flex-col gap-bloc">
               <InformationsVisibles
@@ -106,7 +108,7 @@ export default async function MesInformations({
               Modifier mes informations
             </Link>
           </div>
-        </div>
+        </DeuxColonnes>
       </div>
     </EcranSecondaire>
   );

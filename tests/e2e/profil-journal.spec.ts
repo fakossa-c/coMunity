@@ -64,6 +64,9 @@ test.describe("sur ordinateur", () => {
     ["/profil/interets", "Mes intérêts"],
     ["/profil/identifiants", "Mes identifiants"],
     ["/profil/reglages", "Mes réglages"],
+    ["/profil/informations/modifier", "Modifier mes informations"],
+    ["/profil/identifiants/email", "Modifier l'email"],
+    ["/profil/identifiants/mot-de-passe", "Modifier le mot de passe"],
   ] as const;
 
   for (const [chemin, titre] of ECRANS) {
@@ -216,6 +219,9 @@ const CHEMINS = [
   "/profil/interets",
   "/profil/identifiants",
   "/profil/reglages",
+  "/profil/informations/modifier",
+  "/profil/identifiants/email",
+  "/profil/identifiants/mot-de-passe",
 ] as const;
 
 const REGLAGES = [
