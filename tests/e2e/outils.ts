@@ -214,3 +214,37 @@ export async function saisirLieuLibre(page: Page, lieu: string) {
   if ((await autre.count()) > 0) await autre.check();
   await page.getByLabel("Lieu", { exact: true }).fill(lieu);
 }
+
+/** Une section du règlement intérieur écrite comme par le conseil syndical, sous un titre jamais utilisé. */
+export async function nouvelleSectionReglement(
+  champs: Partial<Record<"titre" | "texte", string>> = {},
+) {
+  const { data, error } = await clientAdmin()
+    .from("section_reglement")
+    .insert({
+      titre: `Bruit ${randomUUID().slice(0, 6)}`,
+      texte: "Pas de bruit après 22h.\n\n- Musique douce\n- **Pas de fête**",
+      ...champs,
+    })
+    .select("id, titre")
+    .single();
+  if (error) throw error;
+  return data as { id: string; titre: string };
+}
+
+/** Supprime des sections du règlement intérieur, par leur titre : celles qu'un test a créées, par l'écran ou non. */
+export async function supprimerSectionsReglement(titres: string[]) {
+  await clientAdmin().from("section_reglement").delete().in("titre", titres);
+}
+
+/** Le thème et la taille de texte choisis par un compte, comme depuis Mes réglages. */
+export async function reglerAffichage(
+  compteId: string,
+  reglages: { theme?: "clair" | "sombre"; taille?: "standard" | "grands" },
+) {
+  const { error } = await clientAdmin()
+    .from("profil")
+    .update(reglages)
+    .eq("id", compteId);
+  if (error) throw error;
+}

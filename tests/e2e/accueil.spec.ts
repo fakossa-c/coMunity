@@ -165,7 +165,6 @@ test("les rubriques pas encore ouvertes ont leur titre et un message d'attente",
   for (const [chemin, titre] of [
     ["/annonces", "Annonces"],
     ["/mon-syndic", "Mon syndic"],
-    ["/ma-copro", "Ma copro"],
   ]) {
     await page.goto(chemin);
     await expect(

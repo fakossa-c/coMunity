@@ -56,6 +56,12 @@ export default async function EspaceSyndic() {
           titre="Espaces communs"
           description="Salle commune, cour, jardin : capacité, horaires, consignes, et l'heure de calme."
         />
+        <Rubrique
+          href="/syndic/reglement"
+          icone="menu_book"
+          titre="Règlement intérieur"
+          description="Rédigez les règles de vie de la résidence, section par section."
+        />
       </ul>
     </EcranSecondaire>
   );
