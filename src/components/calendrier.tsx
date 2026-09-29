@@ -79,7 +79,7 @@ export function Calendrier({
       ?.querySelector<HTMLButtonElement>(`[data-jour="${focusAPoser.current}"]`)
       ?.focus();
     focusAPoser.current = null;
-  });
+  }, [mois, jourFocalise]);
 
   function choisir(jour: string) {
     setJourFocalise(jour);
@@ -180,7 +180,7 @@ export function Calendrier({
                       <Jour
                         jour={jour}
                         choisi={jour === valeur}
-                        aujourdhui={jour === aujourdhui}
+                        estAujourdhui={jour === aujourdhui}
                         passe={jour < aujourdhui}
                         tabulable={jour === jourTabulable}
                         onChoisir={() => choisir(jour)}
@@ -192,10 +192,10 @@ export function Calendrier({
             ))}
           </tbody>
         </table>
+        <p role="status" className="sr-only">
+          {annonce}
+        </p>
       </div>
-      <p role="status" className="sr-only">
-        {annonce}
-      </p>
       {aide && <AideChamp id={id}>{aide}</AideChamp>}
       {erreur && <ErreurChamp id={id}>{erreur}</ErreurChamp>}
     </div>
@@ -205,14 +205,14 @@ export function Calendrier({
 function Jour({
   jour,
   choisi,
-  aujourdhui,
+  estAujourdhui,
   passe,
   tabulable,
   onChoisir,
 }: {
   jour: string;
   choisi: boolean;
-  aujourdhui: boolean;
+  estAujourdhui: boolean;
   passe: boolean;
   tabulable: boolean;
   onChoisir: () => void;
@@ -221,7 +221,7 @@ function Jour({
   // contour terre cuite.
   const apparence = choisi
     ? "border-2 border-contour-action bg-fond-action font-extrabold text-texte-action"
-    : aujourdhui
+    : estAujourdhui
       ? "border-2 border-texte-date font-bold text-texte-date hover:bg-surface-container-low"
       : "border-2 border-transparent hover:bg-surface-container-low";
   return (
@@ -231,8 +231,8 @@ function Jour({
       disabled={passe}
       tabIndex={tabulable ? 0 : -1}
       aria-pressed={choisi}
-      aria-current={aujourdhui ? "date" : undefined}
-      aria-label={`${libelleJour(jour)}${aujourdhui ? ", aujourd'hui" : ""}`}
+      aria-current={estAujourdhui ? "date" : undefined}
+      aria-label={`${libelleJour(jour)}${estAujourdhui ? ", aujourd'hui" : ""}`}
       onClick={onChoisir}
       className={`mx-auto flex min-h-11 min-w-11 items-center justify-center rounded-full font-headline text-body-lg disabled:cursor-not-allowed disabled:opacity-40 ${apparence}`}
     >

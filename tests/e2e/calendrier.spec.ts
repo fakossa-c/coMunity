@@ -1,11 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  debutDeSemaine,
+  finDeSemaine,
   jourDecale,
   libelleJour,
   libelleMois,
   moisDe,
 } from "../../src/lib/calendrier";
+import { aujourdhui } from "../../src/lib/partage-activite";
 import {
   choisirDate,
   MOT_DE_PASSE,
@@ -22,7 +25,7 @@ test.afterEach(async () => {
 });
 
 function il(jours: number) {
-  return jourDecale(new Date().toISOString().slice(0, 10), jours);
+  return jourDecale(aujourdhui(), jours);
 }
 
 /** Un résident connecté, sur l'étape « Date et lieu » de Proposer. */
@@ -55,7 +58,7 @@ test("le calendrier se parcourt au clavier et annonce le jour choisi", async ({
     "aria-pressed",
     "true",
   );
-  await expect(page.getByRole("status")).toHaveText(
+  await expect(calendrier.getByRole("status")).toHaveText(
     `${libelleJour(depart)} sélectionné`,
   );
 
@@ -74,20 +77,21 @@ test("le calendrier se parcourt au clavier et annonce le jour choisi", async ({
   await expect(jour(calendrier, depart)).toBeFocused();
 
   // Début et Fin : lundi et dimanche de la semaine.
-  const rang = (new Date(`${depart}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const lundi = debutDeSemaine(depart);
+  const dimanche = finDeSemaine(depart);
   await page.keyboard.press("Home");
-  await expect(jour(calendrier, il(30 - rang))).toBeFocused();
+  await expect(jour(calendrier, lundi)).toBeFocused();
   await page.keyboard.press("End");
-  await expect(jour(calendrier, il(30 - rang + 6))).toBeFocused();
+  await expect(jour(calendrier, dimanche)).toBeFocused();
 
   // Entrée choisit, et l'annonce le dit.
   await page.keyboard.press("Enter");
-  await expect(jour(calendrier, il(30 - rang + 6))).toHaveAttribute(
+  await expect(jour(calendrier, dimanche)).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(page.getByRole("status")).toHaveText(
-    `${libelleJour(il(30 - rang + 6))} sélectionné`,
+  await expect(calendrier.getByRole("status")).toHaveText(
+    `${libelleJour(dimanche)} sélectionné`,
   );
 });
 

@@ -131,7 +131,7 @@ export function ParcoursProposition({
   // Vrai quand la fin vient du créateur (ou d'une activité existante) : le début ne la déplace plus.
   const [finChoisie, setFinChoisie] = useState(initial.heure_fin !== "");
   // Le jour de référence, comme partout dans l'app : les jours d'avant sont grisés au calendrier.
-  const [jourDeReference] = useState(aujourdhui);
+  const [jourDeReference] = useState(() => aujourdhui());
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
@@ -164,13 +164,14 @@ export function ParcoursProposition({
     setSaisie((s) => ({ ...s, [champ]: valeur }));
   }
 
-  /** Choisir le début rapproche la fin si besoin : elle suit tant que le créateur ne l'a pas choisie. */
+  /**
+   * Choisir le début rapproche la fin si besoin : elle suit tant que le créateur ne l'a pas
+   * choisie, et une fin recalculée n'est pas un choix du créateur.
+   */
   function changerDebut(debut: string) {
-    setSaisie((s) => ({
-      ...s,
-      heure_debut: debut,
-      heure_fin: finApresDebut(debut, s.heure_fin, finChoisie),
-    }));
+    const fin = finApresDebut(debut, saisie.heure_fin, finChoisie);
+    if (fin !== saisie.heure_fin) setFinChoisie(false);
+    setSaisie((s) => ({ ...s, heure_debut: debut, heure_fin: fin }));
   }
 
   function changerFin(fin: string) {

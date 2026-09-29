@@ -1,3 +1,5 @@
+import { majusculeInitiale } from "./partage-activite";
+
 // Le calendrier de Proposer raisonne en dates `AAAA-MM-JJ` et en mois `AAAA-MM`, toujours en UTC :
 // aucun fuseau ne décale un jour.
 
@@ -37,10 +39,6 @@ export function moisDecale(mois: string, decalage: number) {
     0,
     7,
   );
-}
-
-function majusculeInitiale(texte: string) {
-  return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
 
 /** « Octobre 2026 ». */

@@ -137,6 +137,9 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await expect(fin).toHaveValue("12:00");
   await debut.selectOption("12:00");
   await expect(fin).toHaveValue("13:30");
+  // La fin recalculée n'est pas un choix : elle suit de nouveau le début.
+  await debut.selectOption("14:00");
+  await expect(fin).toHaveValue("15:30");
   await debut.selectOption("10:00");
   await fin.selectOption("11:30");
   await page.getByLabel("Précision d'accès").fill("Par le portail vert.");
