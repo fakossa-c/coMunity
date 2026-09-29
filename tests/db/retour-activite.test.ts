@@ -4,6 +4,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 const ACTIVITE_PASSEE = {
@@ -33,6 +34,7 @@ async function publier(
     .select("id, identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data as { id: string; identifiant_public: string };
 }
 

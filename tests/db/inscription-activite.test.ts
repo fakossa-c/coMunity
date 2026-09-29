@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { clientAdmin, IDENTITE, nouveauResident, type Compte } from "./clients";
+import {
+  clientAdmin,
+  IDENTITE,
+  nouveauResident,
+  type Compte,
+  publierApresJev,
+} from "./clients";
 
 const ACTIVITE = {
   titre: "Goûter crêpes",
@@ -27,6 +33,7 @@ async function publier(
     .select("id, identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data as { id: string; identifiant_public: string };
 }
 

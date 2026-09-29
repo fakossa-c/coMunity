@@ -3,6 +3,7 @@ import {
   clientVisiteur,
   nouveauResident,
   nouveauSyndic,
+  publierApresJev,
   type Compte,
 } from "./clients";
 
@@ -32,6 +33,7 @@ async function publier(organisateur: Compte, complements: object = {}) {
     .select("identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data.identifiant_public as string;
 }
 
@@ -82,7 +84,7 @@ async function statutDe(syndic: Compte, identifiant: string) {
   return (data as { statut?: string } | null)?.statut;
 }
 
-describe("sans Jev, la publication est directe", () => {
+describe("quand Jev n'a pas d'objection", () => {
   it("une nouvelle activité est publiée, sans relecture ni message", async () => {
     const createur = await nouveauResident("valide");
     const identifiant = await publier(createur);

@@ -9,6 +9,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 // Ticket #41 : un résident supprime son compte. Ses informations, ses inscriptions et ses
@@ -62,6 +63,7 @@ async function publier(
     .select("id, identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   activitesCreees.push(data.id);
   return { id: data.id, identifiant: data.identifiant_public };
 }

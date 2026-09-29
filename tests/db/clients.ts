@@ -19,6 +19,18 @@ export function clientAdmin() {
   return createClient(url, cleSecrete, sansSession);
 }
 
+/**
+ * Ce que fait le serveur quand Jev n'a pas d'objection (ticket #101) : publie l'activité qu'un
+ * compte vient de créer avec sa session, car la base la met d'abord en relecture.
+ */
+export async function publierApresJev(identifiant: string) {
+  const { error } = await clientAdmin().rpc("conclure_pre_moderation", {
+    p_identifiant: identifiant,
+    p_raison: null,
+  });
+  if (error) throw error;
+}
+
 export type Compte = { id: string; email: string; client: SupabaseClient };
 
 const MOT_DE_PASSE = "mot-de-passe-de-test";
