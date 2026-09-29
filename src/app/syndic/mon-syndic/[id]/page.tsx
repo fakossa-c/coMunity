@@ -19,18 +19,13 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ModifierFiche({ params }: Props) {
   const { id } = await params;
   const { refus } = await accesSyndic(`/syndic/mon-syndic/${id}`);
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const fiche = (await lireFichesSyndic()).find((f) => f.id === id);
   if (!fiche) notFound();
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage titre="Modifier une fiche" sousTitre={nomFiche(fiche)} />
       <FormulaireFiche
         comptes={await lireComptesReliables(fiche.compte_id)}

@@ -3,9 +3,9 @@
 import {
   useRef,
   useState,
-  type KeyboardEvent,
   type MouseEvent,
   type PointerEvent,
+  type SyntheticEvent,
 } from "react";
 import { seDeconnecter } from "@/app/connexion/actions";
 import { Bouton } from "./bouton";
@@ -13,6 +13,7 @@ import { BoutonRond } from "./bouton-rond";
 import { EnTeteProfil } from "./en-tete-profil";
 import type { NomIcone } from "./icones";
 import { LigneMenu } from "./ligne-menu";
+import { retenirLeFocus } from "./retenir-le-focus";
 
 export type Rubrique = {
   href: string;
@@ -31,11 +32,23 @@ type Props = {
 /** Glissement vers le bas, en px, au-delà duquel la feuille se ferme. */
 const SEUIL_FERMETURE = 90;
 
+/** Durée de la sortie du menu déroulant, en ms : celle de `--animate-menu-sortie`. */
+const DUREE_SORTIE = 300;
+
+/** Écart, en px, entre l'avatar et le menu déroulant. */
+const ECART_MENU = 12;
+
+/** Le point de rupture ordinateur de l'application (`--breakpoint-desktop`). */
+function surOrdinateur() {
+  return window.matchMedia("(min-width: 64rem)").matches;
+}
+
 /**
- * Avatar marine et menu du profil qu'il ouvre : feuille du bas modale, qui se ferme par
- * « Fermer », par le voile, par Échap ou en la faisant glisser vers le bas. Sur ordinateur, la
- * même boîte de dialogue est un panneau latéral droit, sans poignée à glisser.
- * Le focus reste dans la feuille, puis revient à l'avatar.
+ * Avatar marine et menu du profil qu'il ouvre. Sur mobile, une feuille du bas modale, qui se
+ * ferme par « Fermer », par le voile, par Échap ou en la faisant glisser vers le bas. Sur
+ * ordinateur, la même boîte de dialogue est un menu déroulant sous l'avatar, animé à l'ouverture
+ * et à la fermeture, sans « Fermer » ni poignée : Échap ou un clic à côté le referme.
+ * Le focus reste dans le menu, puis revient à l'avatar.
  */
 export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
   const [ouvert, setOuvert] = useState(false);
@@ -44,15 +57,48 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
   const glissement = useRef<{ depart: number; ecart: number } | null>(null);
 
   function ouvrir() {
-    feuille.current?.showModal();
+    const dialogue = feuille.current;
+    if (!dialogue || !avatar.current) return;
+    if (surOrdinateur()) {
+      const cadre = avatar.current.getBoundingClientRect();
+      dialogue.style.setProperty(
+        "--menu-haut",
+        `${cadre.bottom + ECART_MENU}px`,
+      );
+      dialogue.style.setProperty(
+        "--menu-droite",
+        `${document.documentElement.clientWidth - cadre.right}px`,
+      );
+    }
+    dialogue.showModal();
     setOuvert(true);
   }
 
   function fermer() {
-    feuille.current?.close();
+    const dialogue = feuille.current;
+    if (!dialogue?.open || dialogue.dataset.sortie !== undefined) return;
+    const animer =
+      surOrdinateur() &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!animer) {
+      dialogue.close();
+      return;
+    }
+    dialogue.dataset.sortie = "";
+    setTimeout(() => {
+      delete dialogue.dataset.sortie;
+      dialogue.close();
+    }, DUREE_SORTIE);
   }
 
-  /** Échap passe aussi par ici : le navigateur ferme la feuille lui-même. */
+  /** Sur ordinateur, Échap laisse le menu jouer sa sortie avant de se fermer. */
+  function surEchap(e: SyntheticEvent<HTMLDialogElement>) {
+    if (!surOrdinateur()) return;
+    e.preventDefault();
+    fermer();
+  }
+
+  /** La fermeture, quelle qu'en soit la cause, rend le focus à l'avatar. */
   function quandFermee() {
     setOuvert(false);
     avatar.current?.focus();
@@ -61,24 +107,6 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
   /** Le voile appartient à la feuille : un clic dessus a la feuille elle-même pour cible. */
   function fermerSurLeVoile(e: MouseEvent<HTMLDialogElement>) {
     if (e.target === e.currentTarget) fermer();
-  }
-
-  function retenirLeFocus(e: KeyboardEvent<HTMLDialogElement>) {
-    if (e.key !== "Tab") return;
-    const cibles = [
-      ...e.currentTarget.querySelectorAll<HTMLElement>(
-        "a[href], button:not([disabled])",
-      ),
-    ];
-    const premiere = cibles[0];
-    const derniere = cibles[cibles.length - 1];
-    if (e.shiftKey && document.activeElement === premiere) {
-      e.preventDefault();
-      derniere.focus();
-    } else if (!e.shiftKey && document.activeElement === derniere) {
-      e.preventDefault();
-      premiere.focus();
-    }
   }
 
   function commencerGlissement(e: PointerEvent<HTMLDivElement>) {
@@ -109,6 +137,7 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
         aria-haspopup="dialog"
         aria-expanded={ouvert}
         onClick={ouvrir}
+        className="transition-transform duration-(--duree-courte) ease-journal desktop:hover:scale-[1.07]"
       >
         {initiale}
       </BoutonRond>
@@ -116,11 +145,12 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
         ref={feuille}
         aria-label="Menu du profil"
         onClose={quandFermee}
+        onCancel={surEchap}
         onClick={fermerSurLeVoile}
         onKeyDown={retenirLeFocus}
-        className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-y-0 desktop:right-0 desktop:left-auto desktop:h-dvh desktop:w-panneau desktop:motion-safe:animate-panneau"
+        className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-auto desktop:top-(--menu-haut) desktop:right-(--menu-droite) desktop:w-85 desktop:origin-top-right desktop:overflow-visible desktop:backdrop:bg-transparent desktop:motion-safe:animate-menu desktop:motion-safe:backdrop:animate-none desktop:motion-safe:data-sortie:animate-menu-sortie"
       >
-        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:mx-0 desktop:h-full desktop:max-h-none desktop:max-w-none desktop:rounded-t-none desktop:rounded-l-feuille desktop:pt-space-lg">
+        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:mx-0 desktop:max-h-none desktop:max-w-none desktop:rounded-[1.75rem] desktop:p-3 desktop:shadow-flottante">
           <div
             aria-hidden="true"
             onPointerDown={commencerGlissement}
@@ -131,15 +161,17 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
           >
             <span className="h-1.5 w-10 rounded-full bg-outline-variant" />
           </div>
-          <EnTeteProfil
-            taille="compact"
-            initiale={initiale}
-            nom={nom}
-            adresse={adresse}
-          />
+          <div className="desktop:px-3 desktop:pt-3 desktop:pb-3.5">
+            <EnTeteProfil
+              taille="compact"
+              initiale={initiale}
+              nom={nom}
+              adresse={adresse}
+            />
+          </div>
           <nav
             aria-label="Rubriques du profil"
-            className="mt-space-md flex flex-col gap-2 desktop:mb-space-md"
+            className="mt-space-md flex flex-col gap-2 desktop:mt-0"
           >
             {rubriques.map((rubrique) => (
               <LigneMenu
@@ -162,7 +194,7 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
             variante="contour"
             icone="close"
             pleineLargeur
-            className="mt-space-md shrink-0 desktop:mt-auto"
+            className="mt-space-md shrink-0 desktop:hidden"
             onClick={fermer}
           >
             Fermer

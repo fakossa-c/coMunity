@@ -25,12 +25,7 @@ type Props = {
 
 export default async function ModerationDesActivites({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/moderation");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const activites = await lireActivitesAModerer();
@@ -40,7 +35,7 @@ export default async function ModerationDesActivites({ searchParams }: Props) {
     titre && estDecision(fait) ? CONFIRMATIONS[fait](titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Modération des activités"
         sousTitre="Relisez les activités mises de côté, puis publiez-les ou refusez-les avec un message pour leur créateur. Depuis la fiche d'une activité, vous pouvez aussi la masquer, la modifier ou l'annuler."

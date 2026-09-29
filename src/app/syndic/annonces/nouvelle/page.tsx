@@ -16,18 +16,13 @@ type Props = { searchParams: Promise<{ copie?: string }> };
 export default async function PublierUneAnnonce({ searchParams }: Props) {
   const { copie } = await searchParams;
   const { refus } = await accesSyndic("/syndic/annonces/nouvelle");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const original = copie ? await lireAnnonce(copie) : null;
   const sondage = original ? await lireSondageDeLAnnonce(original.id) : null;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Publier une annonce"
         sousTitre={

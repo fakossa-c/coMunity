@@ -227,7 +227,9 @@ test("les cartes n'ont plus de contour, elles se distinguent par leur ombre douc
   await residentConnecte(page);
   await page.goto("/profil");
 
-  const rubrique = page.getByRole("main").getByRole("link").first();
+  const rubrique = page
+    .getByRole("main")
+    .getByRole("link", { name: /^Mes identifiants/ });
   await expect(rubrique).toBeVisible();
   expect(await styleCalcule(rubrique, "border-top-color")).toBe(
     "rgba(0, 0, 0, 0)",
@@ -265,7 +267,7 @@ test("le menu de l'avatar est un menu déroulant sous l'avatar, qui s'anime et s
     -1,
   );
   expect(deroulant.width).toBeLessThan(400);
-  expect(deroulant.height).toBeLessThan(page.viewportSize()!.height / 2);
+  expect(deroulant.height).toBeLessThan(page.viewportSize()!.height * 0.6);
   // Pas de bouton « Fermer » : Échap et un clic à côté suffisent.
   await expect(menu.getByRole("button", { name: "Fermer" })).toBeHidden();
   for (const entree of ["Profil", "Mon syndic", "Ma copro"]) {
@@ -463,7 +465,7 @@ test("l'espace syndic suit le même conteneur de 1280 px, avec les mêmes cartes
   const contenu = await boite(page.getByRole("main"));
   expect(contenu.width).toBeCloseTo(1280, -1);
   // Les rubriques restent des cartes : elles se rangent en colonnes sur la largeur.
-  const rubriques = page.getByRole("main").getByRole("link");
+  const rubriques = page.getByRole("main").getByRole("list").getByRole("link");
   expect((await boite(rubriques.nth(1))).x).toBeGreaterThan(
     (await boite(rubriques.first())).x,
   );

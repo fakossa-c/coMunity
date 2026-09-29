@@ -81,6 +81,8 @@
   --color-bordure-carte: rgba(45, 49, 46, 0.18);
   /* Voile encre à 40 % sous la feuille du bas */
   --color-voile: rgba(18, 28, 42, 0.4);
+  /* Filet séparateur de la présentation Journal : rare, 1 px, 8 % d'opacité au plus (`border-filet`) */
+  --color-filet: rgba(18, 28, 42, 0.08);
 
   /* Alias sémantiques : `bg-fond-action`, `text-texte-date`… */
   --color-fond-page: var(--color-surface);
@@ -187,22 +189,54 @@
 
   --breakpoint-desktop: 64rem;
 
-  /* Panneau latéral du menu de l'avatar, sur ordinateur */
-  --spacing-panneau: 26rem;
+  /* Cadre « Journal » (ordinateur) : conteneur unique de 1280 px, marges intérieures de 64 px */
+  --container-conteneur: 80rem;
+  --spacing-marge-journal: 4rem;
 
-  /* Seul mouvement du design system : la feuille du bas monte, le voile apparaît. */
+  /* Mouvement du cadre Journal : une courbe et deux durées pour tout, coupés par la préférence de
+     réduction des animations (voir plus bas). Le dépliage passe par `.depliage`. */
+  --ease-journal: cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-feuille: feuille-monte 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-voile: voile-apparait 0.25s ease-out;
-  --animate-panneau: panneau-entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-menu: menu-entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-menu-sortie: menu-sort 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  --animate-popup: popup-entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Ombres très douces de la présentation Journal : carte au repos, carte survolée, menu et pop-up */
+  --shadow-douce:
+    0 1px 2px rgba(24, 34, 48, 0.04), 0 10px 28px -14px rgba(24, 34, 48, 0.16);
+  --shadow-douce-survol:
+    0 2px 4px rgba(24, 34, 48, 0.05), 0 22px 40px -16px rgba(24, 34, 48, 0.26);
+  --shadow-flottante:
+    0 4px 8px rgba(24, 34, 48, 0.05), 0 28px 56px -16px rgba(24, 34, 48, 0.3);
+
+  /* Très grands titres de la présentation Journal (ordinateur) */
+  --text-titre-journal: 72px;
+  --text-titre-journal--line-height: 76px;
+  --text-titre-journal--letter-spacing: -0.025em;
+  --text-titre-journal--font-weight: 800;
 
   @keyframes feuille-monte {
     from {
       transform: translateY(100%);
     }
   }
-  @keyframes panneau-entre {
+  @keyframes menu-entre {
     from {
-      transform: translateX(100%);
+      opacity: 0;
+      transform: translateY(-10px) scale(0.97);
+    }
+  }
+  @keyframes menu-sort {
+    to {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.97);
+    }
+  }
+  @keyframes popup-entre {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
     }
   }
   @keyframes voile-apparait {
@@ -277,6 +311,7 @@
   --color-border-distinct: #d9e3f6;
   --color-bordure-carte: rgba(235, 241, 255, 0.14);
   --color-voile: rgba(0, 0, 0, 0.6);
+  --color-filet: rgba(235, 241, 255, 0.08);
 
   --color-fond-page: var(--color-surface);
   --color-fond-carte: var(--color-surface-container-lowest);
@@ -290,6 +325,12 @@
   --color-texte-syndic: var(--color-inverse-on-surface);
 
   --shadow-carte: 0 3px 0 0 rgba(0, 0, 0, 0.35);
+  --shadow-douce:
+    0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-douce-survol:
+    0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 40px -16px rgba(0, 0, 0, 0.7);
+  --shadow-flottante:
+    0 4px 8px rgba(0, 0, 0, 0.35), 0 28px 56px -16px rgba(0, 0, 0, 0.75);
   --shadow-flottant: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
   --shadow-barre-action: 0 -8px 24px -4px rgba(0, 0, 0, 0.45);
   --background-image-rayures-photo: repeating-linear-gradient(
@@ -330,15 +371,78 @@
   --text-etiquette: 19px;
   --text-etiquette--line-height: 1.4;
   --text-legende-photo: 16px;
+  --text-titre-journal: 90px;
+  --text-titre-journal--line-height: 1.1;
 }
 
-/* Colonne des écrans sur ordinateur : l'en-tête, le contenu et la barre d'action la suivent.
-   L'espace syndic (`data-largeur="pleine"` sur son cadre) n'en a pas. */
 :root {
-  --largeur-colonne: 61.25rem;
+  /* Durées des transitions du cadre Journal, avec `ease-journal` : `duration-(--duree-courte)` */
+  --duree-courte: 0.35s;
+  --duree-longue: 0.45s;
 }
-[data-largeur="pleine"] {
-  --largeur-colonne: none;
+/* Présentation « Journal », à partir du point de rupture ordinateur : les cartes n'ont plus de
+   contour et se distinguent par la teinte de fond, l'espace et une ombre très douce ; arrondis
+   de 24 px. Les composants ne changent pas : ils lisent ces jetons. */
+@media (min-width: 64rem) {
+  :root,
+  [data-theme="sombre"] {
+    --color-bordure-carte: transparent;
+    --shadow-carte: var(--shadow-douce);
+    --radius-lg: 1.5rem;
+  }
+}
+
+@layer components {
+  /* Une carte qui n'avait qu'un contour (réglages, lignes de menu, panneaux) prend l'ombre douce. */
+  @media (min-width: 64rem) {
+    [class*="border-bordure-carte"]:not([class*="shadow-"]) {
+      box-shadow: var(--shadow-douce);
+    }
+  }
+}
+
+/* Dépliage : la rangée de la grille passe de 0fr à 1fr, le contenu reste dans le DOM
+   (`<div class="depliage" data-ouvert><div>…</div></div>`, voir le composant Depliage). */
+@utility depliage {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.45s var(--ease-journal),
+    opacity 0.35s var(--ease-journal);
+  &[data-ouvert] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  & > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* Survol en légère élévation, sur ordinateur seulement */
+@utility survol-eleve {
+  transition:
+    transform 0.4s var(--ease-journal),
+    box-shadow 0.4s var(--ease-journal);
+  @media (hover: hover) and (min-width: 64rem) {
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-douce-survol);
+    }
+  }
+}
+
+/* Préférence de réduction des animations : plus aucun mouvement, nulle part. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {

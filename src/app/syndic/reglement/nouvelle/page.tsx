@@ -10,15 +10,10 @@ export const metadata: Metadata = { title: "Ajouter une section" };
 
 export default async function NouvelleSection() {
   const { refus } = await accesSyndic("/syndic/reglement/nouvelle");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Ajouter une section"
         sousTitre="Elle prend la dernière place du règlement ; vous pourrez la remonter ensuite."

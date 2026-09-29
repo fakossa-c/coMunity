@@ -30,7 +30,7 @@ export function classesBouton(
   variante: VarianteBouton = "action",
   pleineLargeur = false,
 ) {
-  return `inline-flex items-center justify-center rounded-full text-center font-headline text-label-lg transition-transform active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${variantes[variante]} ${pleineLargeur ? "w-full" : ""}`;
+  return `inline-flex items-center justify-center rounded-full text-center font-headline text-label-lg transition-transform active:translate-y-0.5 desktop:duration-(--duree-courte) desktop:ease-journal desktop:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${variantes[variante]} ${pleineLargeur ? "w-full" : ""}`;
 }
 
 /** Bouton en pilule du design system : 56 px de haut, 52 px en variante fantôme. */

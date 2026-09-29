@@ -25,19 +25,14 @@ const CONFIRMATIONS: Record<string, (nom: string) => string> = {
 
 export default async function MonSyndicSyndic({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/mon-syndic");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const { fait, nom } = await searchParams;
   const fiches = await lireFichesSyndic();
   const confirmation = fait && nom ? CONFIRMATIONS[fait]?.(nom) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Mon syndic"
         sousTitre="Les personnes du syndic que les résidents voient dans Mon syndic, avec leur photo, leur téléphone et leur e-mail."

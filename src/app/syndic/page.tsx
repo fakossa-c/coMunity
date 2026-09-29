@@ -13,12 +13,7 @@ export const metadata: Metadata = { title: "Espace syndic" };
 
 export default async function EspaceSyndic() {
   const { refus } = await accesSyndic("/syndic");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const supabase = await clientSession();
   const { count: enAttente } = await supabase
@@ -33,7 +28,7 @@ export default async function EspaceSyndic() {
     .eq("statut", "en_relecture");
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Espace syndic"
         sousTitre="Gérez la vie de la résidence et les accès de l'équipe."

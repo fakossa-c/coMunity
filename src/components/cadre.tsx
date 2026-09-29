@@ -8,13 +8,15 @@ import {
   lireSession,
   statutResident,
 } from "@/lib/session";
+import { BarreHaute } from "./barre-haute";
 import { BarreNavigation, type IdOnglet } from "./barre-navigation";
-import { BarreRetour } from "./barre-retour";
+import { BarreRetour, LienRetour } from "./barre-retour";
 import { classesBouton } from "./bouton";
 import { Ecran } from "./ecran";
 import { EnTeteResidence } from "./en-tete-residence";
 import { GardeCompte, SiCompteOuvert } from "./garde-compte";
 import { Icone } from "./icone";
+import { LienProposer } from "./lien-proposer";
 import { MenuProfil, type Rubrique } from "./menu-profil";
 
 const RUBRIQUES: Rubrique[] = [
@@ -76,6 +78,40 @@ async function Compte({ compact = false }: { compact?: boolean }) {
   return <MenuProfil {...identite(session)} rubriques={rubriques} />;
 }
 
+/**
+ * Barre du haut du cadre Journal (ordinateur) : logo, onglets, « Proposer » et compte. Les
+ * écrans de connexion n'ont que le logo ; un compte refusé ou retiré n'a ni onglets ni « Proposer ».
+ */
+async function BarreDuHaut({
+  onglet,
+  avecCompte = true,
+}: {
+  onglet?: IdOnglet;
+  avecCompte?: boolean;
+}) {
+  if (!avecCompte) return <BarreHaute />;
+  const session = await lireSession();
+  return (
+    <BarreHaute
+      navigation={
+        <SiCompteOuvert>
+          <BarreNavigation actif={onglet} emplacement="haut" />
+        </SiCompteOuvert>
+      }
+      actions={
+        <>
+          {session && (
+            <SiCompteOuvert>
+              <LienProposer />
+            </SiCompteOuvert>
+          )}
+          <Compte />
+        </>
+      }
+    />
+  );
+}
+
 type PropsPrincipal = {
   onglet: IdOnglet;
   /** BoutonFlottant de l'écran, masqué comme la barre du bas pour un compte bloqué. */
@@ -84,8 +120,8 @@ type PropsPrincipal = {
 };
 
 /**
- * Écran principal (Accueil, Activités, Annonces) : en-tête de résidence, dont les onglets
- * forment la barre du bas sur mobile.
+ * Écran principal (Accueil, Activités, Annonces) : sur mobile, l'en-tête de résidence et la barre
+ * du bas ; sur ordinateur, la barre du haut du cadre Journal, qui porte les onglets.
  */
 export async function EcranPrincipal({
   onglet,
@@ -97,22 +133,20 @@ export async function EcranPrincipal({
   return (
     <Ecran
       haut={
-        <EnTeteResidence
-          residence={residence?.nom ?? "Notre résidence"}
-          navigation={
-            <SiCompteOuvert>
-              <BarreNavigation actif={onglet} emplacement="entete" />
-            </SiCompteOuvert>
-          }
-          compte={<Compte />}
-        />
+        <>
+          <BarreDuHaut onglet={onglet} />
+          <EnTeteResidence
+            residence={residence?.nom ?? "Notre résidence"}
+            compte={<Compte />}
+          />
+        </>
       }
       barreBas={
         <SiCompteOuvert>
           <BarreNavigation actif={onglet} emplacement="bas" />
         </SiCompteOuvert>
       }
-      // Sur ordinateur, les onglets sont dans l'en-tête : plus de barre du bas à dégager.
+      // Sur ordinateur, les onglets sont dans la barre du haut : plus de barre du bas à dégager.
       paddingBas={180}
       paddingBasBureau={40}
       flottant={flottant && <SiCompteOuvert>{flottant}</SiCompteOuvert>}
@@ -137,12 +171,13 @@ type PropsSecondaire = {
   actionDansLeFormulaire?: boolean;
   /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
   completionExigee?: boolean;
-  /** Espace syndic : sur ordinateur, toute la largeur au lieu de la colonne centrée. */
-  pleineLargeur?: boolean;
   children: ReactNode;
 };
 
-/** Écran secondaire : barre de retour collante, barre d'action fixe s'il y en a une. */
+/**
+ * Écran secondaire : sur mobile, barre de retour collante ; sur ordinateur, la barre du haut du
+ * cadre Journal et un lien de retour en tête du contenu. Barre d'action fixe s'il y en a une.
+ */
 export function EcranSecondaire({
   retour,
   avecCompte = true,
@@ -150,23 +185,30 @@ export function EcranSecondaire({
   action,
   actionDansLeFormulaire = false,
   completionExigee,
-  pleineLargeur,
   children,
 }: PropsSecondaire) {
+  const partageable = partager && <SiCompteOuvert>{partager}</SiCompteOuvert>;
   return (
     <Ecran
-      pleineLargeur={pleineLargeur}
       haut={
-        <BarreRetour
-          href={retour.href}
-          libelle={retour.libelle}
-          partager={partager && <SiCompteOuvert>{partager}</SiCompteOuvert>}
-          compte={avecCompte && <Compte compact={Boolean(partager)} />}
-        />
+        <>
+          <BarreRetour
+            href={retour.href}
+            libelle={retour.libelle}
+            partager={partageable}
+            compte={avecCompte && <Compte compact={Boolean(partager)} />}
+          />
+          <BarreDuHaut avecCompte={avecCompte} />
+        </>
       }
       barreBas={action && <SiCompteOuvert>{action}</SiCompteOuvert>}
       paddingBas={action || actionDansLeFormulaire ? 170 : 40}
     >
+      <LienRetour
+        href={retour.href}
+        libelle={retour.libelle}
+        partager={partageable}
+      />
       <GardeCompte completionExigee={completionExigee}>{children}</GardeCompte>
     </Ecran>
   );
