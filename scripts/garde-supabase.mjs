@@ -9,7 +9,7 @@
 // Entrée : le JSON du hook sur stdin. Sortie : code 2 et raison sur stderr pour bloquer, 0 sinon.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, posix, resolve, win32 } from "node:path";
 
 const SUPABASE = String.raw`\bsupabase(?:\.js)?\s+`;
 const LOCALE = new RegExp(
@@ -32,16 +32,22 @@ export function verdict({ commande, estWorktree, projectId }) {
   return null;
 }
 
-/** Le dossier où la commande s'exécute, en suivant le dernier `cd` qui la précède. */
+const CHEMIN_WINDOWS = /^[a-zA-Z]:[\\/]/;
+
+/** Le dossier où la commande s'exécute, en suivant le dernier `cd` qui la précède.
+ *
+ * Résout à la façon Windows dès que `cwd` ou la cible du `cd` a une forme `C:\...` ou `C:/...`,
+ * quel que soit l'OS qui exécute le hook : un test sur cette machine peut vérifier un chemin
+ * Windows, et inversement. `resolve` natif de node:path suit sinon l'OS courant et se trompe. */
 export function dossierCible(commande, cwd) {
   const cds = [
     ...commande.matchAll(/(?:^|&&|;|\|\|)\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|]+)/g),
   ];
   if (cds.length === 0) return cwd;
-  return resolve(cwd, cds.at(-1)[1].replace(/^["']|["']$/g, "")).replace(
-    /\\/g,
-    "/",
-  );
+  const cible = cds.at(-1)[1].replace(/^["']|["']$/g, "");
+  const chemin =
+    CHEMIN_WINDOWS.test(cwd) || CHEMIN_WINDOWS.test(cible) ? win32 : posix;
+  return chemin.resolve(cwd, cible).replace(/\\/g, "/");
 }
 
 function contexte(dossier) {
