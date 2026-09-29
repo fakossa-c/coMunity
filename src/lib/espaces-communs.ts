@@ -35,11 +35,13 @@ export type EspaceCommun = {
   consignes: string | null;
   horaires_acces: string | null;
   contact: string | null;
+  /** Chemin de la photo dans le bucket `espaces-communs` ; `null` sans photo. */
+  photo_chemin: string | null;
 };
 
 /** Les colonnes à lire pour un `EspaceCommun`. */
 export const COLONNES_ESPACE =
-  "id, nom, batiment, localisation, description, capacite, equipements, heure_fin_max, consignes, horaires_acces, contact";
+  "id, nom, batiment, localisation, description, capacite, equipements, heure_fin_max, consignes, horaires_acces, contact, photo_chemin";
 
 /** Longueurs maximales des textes, les mêmes que les contraintes en base. */
 export const LIMITES_ESPACE = {
@@ -76,8 +78,8 @@ export const SAISIE_ESPACE_VIDE: SaisieEspace = {
   contact: "",
 };
 
-/** Ce que la base enregistre, sans l'identifiant. */
-export type NouvelEspace = Omit<EspaceCommun, "id">;
+/** Ce que la saisie de texte enregistre, sans l'identifiant ni la photo, qui a son propre envoi. */
+export type NouvelEspace = Omit<EspaceCommun, "id" | "photo_chemin">;
 
 function texte(valeur: string) {
   const t = valeur.trim();

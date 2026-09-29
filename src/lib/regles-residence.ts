@@ -1,5 +1,6 @@
 import "server-only";
 import type { ReglesResidence } from "@/assistant";
+import { BUCKET_PHOTOS_ESPACES } from "./photo-espace-commun";
 import {
   COLONNES_ESPACE,
   reglesResidence,
@@ -17,6 +18,38 @@ export async function lireEspacesCommuns(): Promise<EspaceCommun[]> {
     .order("nom");
   if (error) throw new Error(`Espaces communs illisibles : ${error.message}`);
   return data as EspaceCommun[];
+}
+
+/** Durée de validité de l'adresse d'une photo : le temps de lire la page, une heure de marge. */
+const VALIDITE_PHOTO_SECONDES = 60 * 60;
+
+/**
+ * L'adresse signée de la photo de chaque espace commun qui en a une, par identifiant d'espace.
+ * Le bucket est privé : la base ne signe que pour un compte qui peut lire les espaces communs.
+ * Une photo dont l'adresse n'a pas pu être signée manque simplement : la carte s'affiche sans.
+ */
+export async function lireUrlsPhotosEspaces(
+  espaces: EspaceCommun[],
+): Promise<Record<string, string>> {
+  const avecPhoto = espaces.filter(
+    (e): e is EspaceCommun & { photo_chemin: string } =>
+      e.photo_chemin !== null,
+  );
+  if (avecPhoto.length === 0) return {};
+
+  const supabase = await clientSession();
+  const { data } = await supabase.storage
+    .from(BUCKET_PHOTOS_ESPACES)
+    .createSignedUrls(
+      avecPhoto.map((e) => e.photo_chemin),
+      VALIDITE_PHOTO_SECONDES,
+    );
+  const urls: Record<string, string> = {};
+  for (const [i, espace] of avecPhoto.entries()) {
+    const signee = data?.[i];
+    if (signee?.signedUrl) urls[espace.id] = signee.signedUrl;
+  }
+  return urls;
 }
 
 /** L'heure de calme de la résidence (« 22:00:00 »), ou `null` si la résidence n'en a pas. */

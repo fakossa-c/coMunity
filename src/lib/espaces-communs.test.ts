@@ -37,6 +37,7 @@ const ESPACE: EspaceCommun = {
   consignes: "Laissez la salle propre.",
   horaires_acces: null,
   contact: "Colette, gardienne",
+  photo_chemin: null,
 };
 
 describe("saisie d'un espace commun", () => {

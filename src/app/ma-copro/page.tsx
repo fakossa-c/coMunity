@@ -7,7 +7,10 @@ import { ReglementInterieur } from "@/components/reglement-interieur";
 import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
 import { lireReglement } from "@/lib/lecture-reglement";
-import { lireEspacesCommuns } from "@/lib/regles-residence";
+import {
+  lireEspacesCommuns,
+  lireUrlsPhotosEspaces,
+} from "@/lib/regles-residence";
 import { estSyndicActif, lireSession, statutResident } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Ma copro" };
@@ -23,6 +26,7 @@ export default async function MaCopro() {
   const [reglement, espaces] = peutLire
     ? await Promise.all([lireReglement(), lireEspacesCommuns()])
     : [null, null];
+  const photos = espaces ? await lireUrlsPhotosEspaces(espaces) : {};
 
   return (
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
@@ -48,7 +52,7 @@ export default async function MaCopro() {
             <TitreSection id="titre-espaces-communs">
               Espaces communs
             </TitreSection>
-            <EspacesCommunsCopro espaces={espaces} />
+            <EspacesCommunsCopro espaces={espaces} photos={photos} />
           </section>
         </div>
       ) : (
