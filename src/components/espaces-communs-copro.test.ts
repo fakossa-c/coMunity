@@ -97,9 +97,10 @@ describe("EspacesCommunsCopro", () => {
       "Sans limite",
       "Bâtiment",
       "<dl",
-      "<p",
     ])
       expect(html).not.toContain(absent);
+    // Ni description ni ligne vide : le seul paragraphe possible est celui de la description.
+    expect(html).not.toMatch(/<p[ >]/);
   });
 
   it("garde un texte trop long dans sa carte", () => {
