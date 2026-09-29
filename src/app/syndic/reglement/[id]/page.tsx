@@ -15,7 +15,12 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ModifierSection({ params }: Props) {
   const { id } = await params;
   const { refus } = await accesSyndic(`/syndic/reglement/${id}`);
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return (
+      <EcranSecondaire retour={RETOUR} pleineLargeur>
+        {refus}
+      </EcranSecondaire>
+    );
 
   const supabase = await clientSession();
   const { data: section } = await supabase
@@ -26,7 +31,7 @@ export default async function ModifierSection({ params }: Props) {
   if (!section) notFound();
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
       <TitrePage titre="Modifier une section" sousTitre={section.titre} />
       <FormulaireSection
         section={{
