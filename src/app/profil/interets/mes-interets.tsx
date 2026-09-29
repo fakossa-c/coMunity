@@ -157,28 +157,30 @@ export function MesInterets({ interets }: { interets: CentreInteret[] }) {
                   <span className="min-w-40 flex-1 font-headline text-label-lg [overflow-wrap:anywhere] text-on-surface">
                     {interet.libelle}
                   </span>
-                  <Bouton
-                    variante="fantome"
-                    id={`modifier-${interet.id}`}
-                    aria-label={`Modifier ${interet.libelle}`}
-                    disabled={enCours}
-                    onClick={() => {
-                      setEnModification(interet.id);
-                      setSaisie(interet.libelle);
-                      setErreurModification(undefined);
-                    }}
-                  >
-                    Modifier
-                  </Bouton>
-                  <Bouton
-                    variante="fantome"
-                    aria-label={`Supprimer ${interet.libelle}`}
-                    disabled={enCours}
-                    onClick={() => supprimer(interet.id)}
-                    className="text-error"
-                  >
-                    Supprimer
-                  </Bouton>
+                  <div className="ml-auto flex shrink-0 items-center">
+                    <Bouton
+                      variante="fantome"
+                      id={`modifier-${interet.id}`}
+                      aria-label={`Modifier ${interet.libelle}`}
+                      disabled={enCours}
+                      onClick={() => {
+                        setEnModification(interet.id);
+                        setSaisie(interet.libelle);
+                        setErreurModification(undefined);
+                      }}
+                    >
+                      Modifier
+                    </Bouton>
+                    <Bouton
+                      variante="fantome"
+                      aria-label={`Supprimer ${interet.libelle}`}
+                      disabled={enCours}
+                      onClick={() => supprimer(interet.id)}
+                      className="text-error"
+                    >
+                      Supprimer
+                    </Bouton>
+                  </div>
                 </>
               )}
             </li>
