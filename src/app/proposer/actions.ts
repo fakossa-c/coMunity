@@ -42,6 +42,9 @@ export type Publication =
       enRelecture: boolean;
     };
 
+/** Le budget d'appels à Jev sur lequel un appel se compte : celui de la création ou celui de la modification. */
+type ActionJev = "creation" | "modification";
+
 const SANS_AVIS: AvisAssistant = {
   categorieSuggeree: null,
   pictogrammeSuggere: null,
@@ -57,7 +60,7 @@ const SANS_AVIS: AvisAssistant = {
  */
 async function reserverAppelJev(
   compte: string,
-  action: "creation" | "modification",
+  action: ActionJev,
 ): Promise<boolean> {
   try {
     const { data, error } = await clientAdmin().rpc("reserver_appel_jev", {
@@ -123,7 +126,7 @@ async function conclurePreModeration(
   identifiant: string,
   activite: NouvelleActivite,
   compte: string,
-  action: "creation" | "modification",
+  action: ActionJev,
 ): Promise<boolean> {
   const jev = moteurJev();
   const avis =

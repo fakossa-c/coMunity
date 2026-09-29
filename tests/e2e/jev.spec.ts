@@ -526,3 +526,25 @@ test("le plafond de création ne prive pas de Jev une modification", async ({
   await expect(page.getByRole("main")).toContainText("En relecture");
   expect(await statutDe(titre)).toBe("en_relecture");
 });
+
+test("modifier la capacité seule consomme aussi un appel de modification", async ({
+  page,
+}) => {
+  const createur = await nouveauResident("valide");
+  emails.push(createur.email);
+  const identifiant = await nouvelleActivite(createur.id, {
+    capacite_max: "10",
+  });
+  await seConnecter(page, createur.email);
+
+  await page.goto(`/activites/${identifiant}`);
+  await page.getByRole("link", { name: "Modifier" }).click();
+  await continuer(page);
+  await continuer(page);
+  await page.getByLabel("Nombre de places").fill("12");
+  await continuer(page);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+
+  expect(await appelsReserves(createur.id)).toEqual(["modification"]);
+});

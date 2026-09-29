@@ -10,7 +10,7 @@
 --
 -- Le compteur est en base plutôt qu'en mémoire du serveur : Vercel lance autant d'instances qu'il
 -- veut, et chacune aurait son propre compte. Une ligne par appel réservé, purgée au-delà de 24
--- heures, donne les deux fenêtres glissantes avec le même mécanisme.
+-- heures à chaque réservation, donne les deux fenêtres glissantes avec le même mécanisme.
 --
 -- Migration additive : une table et une fonction nouvelles, que seul le code de `develop` appelle.
 -- Le code de `main`, qui tourne sur la même base, n'y touche pas et n'en est pas modifié.
@@ -22,7 +22,7 @@ create table public.appel_jev (
   appele_le timestamptz not null default now()
 );
 
-comment on table public.appel_jev is 'Un appel à Jev réservé par le serveur pour un compte (`reserver_appel_jev`) : de quoi tenir les plafonds par heure et par jour. Purgée au-delà de 24 heures.';
+comment on table public.appel_jev is 'Un appel à Jev réservé par le serveur pour un compte (`reserver_appel_jev`) : de quoi tenir les plafonds par heure et par jour. Les lignes de plus de 24 heures sont purgées à chaque réservation.';
 
 create index appel_jev_par_compte on public.appel_jev (compte_id, appele_le desc);
 create index appel_jev_par_date on public.appel_jev (appele_le);
