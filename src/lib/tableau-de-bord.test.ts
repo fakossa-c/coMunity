@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CRENEAUX,
   barresDeRemplissage,
   clePeriode,
   libelleMois,
@@ -68,8 +69,47 @@ describe("clePeriode", () => {
 describe("libellePeriode", () => {
   it("écrit les deux dates en toutes lettres", () => {
     expect(libellePeriode({ debut: "2026-07-01", fin: "2026-09-29" })).toBe(
-      "Du 1 juillet 2026 au 29 septembre 2026",
+      "Du 1er juillet 2026 au 29 septembre 2026",
     );
+  });
+});
+
+describe("resumeParMois", () => {
+  it("désigne le mois qui a le plus de participants distincts", () => {
+    expect(
+      resumeParMois([
+        { mois: "2020-02-01", nombre_activites: 1, nombre_participants: 2 },
+        { mois: "2020-03-01", nombre_activites: 4, nombre_participants: 4 },
+        { mois: "2020-04-01", nombre_activites: 1, nombre_participants: 1 },
+      ]),
+    ).toBe("Le plus de participants distincts : mars 2020, 4 participants.");
+  });
+
+  it("à égalité, garde le mois le plus ancien", () => {
+    expect(
+      resumeParMois([
+        { mois: "2020-02-01", nombre_activites: 1, nombre_participants: 3 },
+        { mois: "2020-03-01", nombre_activites: 1, nombre_participants: 3 },
+      ]),
+    ).toBe("Le plus de participants distincts : février 2020, 3 participants.");
+  });
+
+  it("dit l'absence de participant quand tous les mois sont vides", () => {
+    expect(
+      resumeParMois([
+        { mois: "2020-03-01", nombre_activites: 0, nombre_participants: 0 },
+      ]),
+    ).toBe("Aucun participant sur la période.");
+  });
+});
+
+describe("créneaux", () => {
+  it("écrit les heures comme le reste de l'app, avec les minutes", () => {
+    expect(CRENEAUX.map(([, libelle]) => libelle)).toEqual([
+      "Matin, avant 12h00",
+      "Après-midi, de 12h00 à 18h00",
+      "Soir, à partir de 18h00",
+    ]);
   });
 });
 
