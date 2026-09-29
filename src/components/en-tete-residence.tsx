@@ -3,7 +3,7 @@ import { Logo } from "./logo";
 
 type Props = {
   residence: string;
-  /** BarreNavigation : sur ordinateur, ses onglets prennent place dans l'en-tête. */
+  /** BarreNavigation `entete` : les onglets de l'en-tête, sur ordinateur. */
   navigation?: ReactNode;
   /** Avatar de la personne connectée, ou « Se connecter ». */
   compte: ReactNode;

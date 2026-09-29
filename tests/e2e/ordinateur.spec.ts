@@ -186,22 +186,48 @@ test("le menu de l'avatar s'ouvre en panneau latéral droit, avec le clavier hab
   await expect(avatar).toBeFocused();
 });
 
+test("un compte refusé n'a ni onglets ni « Proposer une activité », seulement la déconnexion", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("refuse");
+  emails.push(resident.email);
+  await seConnecter(page, resident.email);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Compte non accepté" }),
+  ).toBeVisible();
+  await expect(navigationPrincipale(page)).toHaveCount(0);
+
+  await page.goto("/activites");
+  await expect(page.getByRole("link", { name: /^Proposer/ })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Mon profil" }).click();
+  const menu = page.getByRole("dialog", { name: "Menu du profil" });
+  await expect(menu.getByRole("link")).toHaveCount(0);
+  await expect(
+    menu.getByRole("button", { name: "Se déconnecter" }),
+  ).toBeVisible();
+});
+
 test("la barre d'action est collée au bas de la colonne", async ({ page }) => {
   await residentConnecte(page);
   await page.goto("/profil/identifiants/email");
 
   const enregistrer = page.getByRole("button", { name: "Enregistrer" });
   await expect(enregistrer).toBeVisible();
-  const barre = enregistrer.locator(
-    "xpath=ancestor::div[contains(@class,'fixed')][1]",
-  );
+  // La barre est le plus proche ancêtre du bouton dont la position est fixe.
+  const barre = await enregistrer.evaluate((el) => {
+    let cible: HTMLElement | null = el.parentElement;
+    while (cible && getComputedStyle(cible).position !== "fixed") {
+      cible = cible.parentElement;
+    }
+    const { x, y, width, height } = cible!.getBoundingClientRect();
+    return { x, y, width, height };
+  });
   const viewport = page.viewportSize()!;
-  const boiteBarre = await boite(barre);
   const contenu = await boite(page.getByRole("main"));
-  expect(await styleCalcule(barre, "position")).toBe("fixed");
-  expect(boiteBarre.y + boiteBarre.height).toBeCloseTo(viewport.height, -1);
-  expect(boiteBarre.x).toBeCloseTo(contenu.x, -1);
-  expect(boiteBarre.width).toBeCloseTo(contenu.width, -1);
+  expect(barre.y + barre.height).toBeCloseTo(viewport.height, -1);
+  expect(barre.x).toBeCloseTo(contenu.x, -1);
+  expect(barre.width).toBeCloseTo(contenu.width, -1);
 });
 
 test("l'espace syndic occupe toute la largeur, avec les mêmes cartes", async ({

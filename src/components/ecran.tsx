@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 type Props = {
   /** EnTeteResidence, qui défile, ou BarreRetour, qui colle en haut. */
   haut: ReactNode;
-  /** BarreActionFixe, fixée en bas (la navigation vit dans l'en-tête de résidence). */
+  /** BarreNavigation `bas` ou BarreActionFixe, fixée en bas. */
   barreBas?: ReactNode;
   /** BoutonFlottant, au-dessus de la barre du bas ; mobile seulement. */
   flottant?: ReactNode;

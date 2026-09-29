@@ -101,13 +101,18 @@ export async function EcranPrincipal({
           residence={residence?.nom ?? "Notre résidence"}
           navigation={
             <SiCompteOuvert>
-              <BarreNavigation actif={onglet} />
+              <BarreNavigation actif={onglet} emplacement="entete" />
             </SiCompteOuvert>
           }
           compte={<Compte />}
         />
       }
-      // La barre du bas ne concerne que le mobile ; sur ordinateur, les onglets sont dans l'en-tête.
+      barreBas={
+        <SiCompteOuvert>
+          <BarreNavigation actif={onglet} emplacement="bas" />
+        </SiCompteOuvert>
+      }
+      // Sur ordinateur, les onglets sont dans l'en-tête : plus de barre du bas à dégager.
       paddingBas={180}
       paddingBasBureau={40}
       flottant={flottant && <SiCompteOuvert>{flottant}</SiCompteOuvert>}
