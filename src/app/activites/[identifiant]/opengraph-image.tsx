@@ -132,7 +132,6 @@ export default async function Image({
           {creneau(fiche.heure_debut, fiche.heure_fin)}
         </div>
         <div style={{ fontSize: 36, color: COULEURS.texte }}>{fiche.lieu}</div>
-        {/* eslint-disable-next-line @next/next/no-img-element -- rendu par ImageResponse, pas par le navigateur */}
         <img
           src={logoBase64}
           alt="coMunity"
