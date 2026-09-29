@@ -7,7 +7,7 @@ type Props = {
   adresse?: string;
   /** L'adresse de la photo de la personne ; absente, l'initiale de son pseudo. */
   photo?: string;
-  /** grand : page Profil (avatar 72, titre de page) · compact : haut du menu du profil (avatar 52) */
+  /** grand : page Profil (avatar 72, titre de page, très grand titre sur ordinateur) · compact : haut du menu du profil (avatar 52) */
   taille?: "grand" | "compact";
 };
 

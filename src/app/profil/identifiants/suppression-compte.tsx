@@ -37,7 +37,7 @@ export function SuppressionCompte() {
   }
 
   return (
-    <div className="mt-space-sm flex flex-col gap-space-sm border-t-[1.5px] border-bordure-carte pt-space-lg">
+    <div className="mt-space-sm flex flex-col gap-space-sm border-t-[1.5px] border-bordure-carte pt-space-lg desktop:mt-0 desktop:border-t-0 desktop:pt-0">
       {confirmation ? (
         <>
           <p

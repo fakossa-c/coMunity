@@ -6,7 +6,7 @@ type Props = { titre: string; sousTitre?: string };
  */
 export function TitreProfil({ titre, sousTitre }: Props) {
   return (
-    <div className="mb-space-lg desktop:mb-space-xl">
+    <div className="mb-space-lg desktop:mb-space-lg">
       <h1 className="font-headline text-headline-xl-mobile [overflow-wrap:anywhere] text-on-surface desktop:text-titre-journal">
         {titre}
       </h1>
