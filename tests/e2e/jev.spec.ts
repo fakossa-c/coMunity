@@ -231,7 +231,7 @@ test("Jev signale une information qui semble manquer, sans empêcher de publier"
   await continuer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText(
-    "Précisez ce qu'il faut apporter.",
+    "Précisez ce que chacun doit apporter, ou ce que vous fournissez.",
   );
   await page.getByRole("button", { name: "Publier" }).click();
   await expect(
@@ -268,7 +268,7 @@ test("une proposition jugée non conforme est mise en relecture, avec la raison 
   const ligne = pageSyndic.getByRole("listitem").filter({ hasText: titre });
   await expect(ligne).toContainText("En relecture");
   await expect(ligne).toContainText(
-    "Raison : Une soirée bruyante jusque tard dans la nuit.",
+    "Raison : Nuisances sonores : l'activité risque de gêner le voisinage.",
   );
   await pageSyndic.context().close();
 });

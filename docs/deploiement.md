@@ -93,11 +93,12 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 
 Sans `OPENROUTER_API_KEY`, l'assistant de création ne suggère rien et ne pré-modère rien : l'app se
 comporte comme sans Jev. Avec une clé OpenRouter (**Sensitive**, environnement **Production** seul
-tant que l'essai n'est pas fait), Jev (`typesafe/jev-1.13`) présélectionne la catégorie et le
+tant que l'essai n'est pas fait), Jev (`jev-1.13`, API System One de TypeSafe servie par OpenRouter) présélectionne la catégorie et le
 pictogramme au-delà de 0,6 de confiance, signale les informations qui semblent manquer, et met en
 relecture au-delà de 0,8 de confiance une proposition qu'il juge contraire aux règles de bon
 voisinage. Seuls le titre, la description et le créneau lui sont envoyés. Jev lent (plus de
-3 secondes) ou en erreur : le parcours continue sans avis.
+3 secondes) ou en erreur (clé refusée, crédit épuisé, limite de débit, panne) : le parcours continue
+sans avis.
 
 Avant de poser la clé en production, essayer Jev sur une dizaine de propositions en français (des
 conformes, des hors sujet, des nuisances, des ventes) avec la clé dans `.env.local`, et noter sur le

@@ -1,4 +1,4 @@
-// Faux OpenRouter pour les tests de bout en bout : répond à la place de Jev selon le titre de la
+// Faux OpenRouter (API systemone) pour les tests de bout en bout : répond à la place de Jev selon le titre de la
 // proposition, et garde ce qu'il a reçu (GET /requetes) pour vérifier ce qui part vers Jev.
 // Lancé par playwright.config.ts : `node tests/e2e/faux-jev.mjs <port>`.
 import { createServer } from "node:http";
@@ -6,44 +6,65 @@ import { createServer } from "node:http";
 const port = Number(process.argv[2]);
 const recues = [];
 
+const choix = (choice, probabilities) => ({
+  type: "choice",
+  choice,
+  probabilities,
+  confidence: Math.max(...Object.values(probabilities)),
+});
+const noul = (valeur) => ({ type: "noul", noul: valeur });
+
+/** Les réponses d'un Jev qui n'a rien à dire : aucune catégorie, conforme, rien ne manque. */
 const AUCUN_AVIS = {
-  categorie: null,
-  pictogramme: null,
-  informations_manquantes: [],
-  conformite: null,
+  categorie: choix("aucune", { aucune: 0.9, culture_loisirs: 0.1 }),
+  pictogramme: choix("aucun", { aucun: 0.9, menu_book: 0.1 }),
+  conformite: choix("conforme", { conforme: 0.9, nuisance_sonore: 0.1 }),
+  manque_materiel: noul(0.1),
+  manque_public: noul(0.1),
+  manque_deroulement: noul(0.1),
 };
 
-/** L'avis de Jev sur une proposition : le titre dit quel cas jouer. */
-function avisPour(proposition) {
+/** Les réponses de Jev à une proposition : le titre dit quel cas jouer. */
+function reponsesPour(proposition) {
   const titre = proposition.titre ?? "";
   if (titre.includes("Bricolage"))
     return {
       ...AUCUN_AVIS,
-      categorie: { valeur: "creation_bricolage", confiance: 0.9 },
-      pictogramme: { valeur: "kitchen", confiance: 0.85 },
-      conformite: { conforme: true, raison: "", confiance: 0.95 },
+      categorie: choix("creation_bricolage", {
+        creation_bricolage: 0.9,
+        aucune: 0.1,
+      }),
+      pictogramme: choix("kitchen", { kitchen: 0.85, aucun: 0.15 }),
+      conformite: choix("conforme", { conforme: 0.95, nuisance_sonore: 0.05 }),
     };
   if (titre.includes("Incertain"))
     return {
       ...AUCUN_AVIS,
-      categorie: { valeur: "culture_loisirs", confiance: 0.4 },
-      pictogramme: { valeur: "menu_book", confiance: 0.4 },
-      conformite: { conforme: false, raison: "Peut-être.", confiance: 0.5 },
+      categorie: choix("culture_loisirs", {
+        culture_loisirs: 0.4,
+        aucune: 0.3,
+        moments_partages: 0.3,
+      }),
+      pictogramme: choix("menu_book", {
+        menu_book: 0.4,
+        aucun: 0.3,
+        waving_hand: 0.3,
+      }),
+      conformite: choix("nuisance_sonore", {
+        conforme: 0.5,
+        nuisance_sonore: 0.5,
+      }),
     };
   if (titre.includes("Bruyante"))
     return {
       ...AUCUN_AVIS,
-      conformite: {
-        conforme: false,
-        raison: "Une soirée bruyante jusque tard dans la nuit.",
-        confiance: 0.95,
-      },
+      conformite: choix("nuisance_sonore", {
+        conforme: 0.05,
+        nuisance_sonore: 0.95,
+      }),
     };
   if (titre.includes("Sans détail"))
-    return {
-      ...AUCUN_AVIS,
-      informations_manquantes: ["Précisez ce qu'il faut apporter."],
-    };
+    return { ...AUCUN_AVIS, manque_materiel: noul(0.9) };
   return AUCUN_AVIS;
 }
 
@@ -57,12 +78,12 @@ const serveur = createServer((requete, reponse) => {
     reponse.end(JSON.stringify(recues));
     return;
   }
-  if (requete.method === "POST" && requete.url === "/chat/completions") {
+  if (requete.method === "POST" && requete.url === "/systemone") {
     let corps = "";
     requete.on("data", (morceau) => (corps += morceau));
     requete.on("end", () => {
-      const message = JSON.parse(corps).messages.find((m) => m.role === "user");
-      const proposition = JSON.parse(message.content);
+      // L'état de la requête : ce que l'assistant confie à Jev.
+      const proposition = JSON.parse(corps).state;
       recues.push(proposition);
       const titre = proposition.titre ?? "";
       if (titre.includes("Panne")) {
@@ -74,9 +95,9 @@ const serveur = createServer((requete, reponse) => {
         reponse.setHeader("Content-Type", "application/json");
         reponse.end(
           JSON.stringify({
-            choices: [
-              { message: { content: JSON.stringify(avisPour(proposition)) } },
-            ],
+            model: "jev-1.13.0",
+            answers: reponsesPour(proposition),
+            usage: { input_tokens: 0, output_tokens: 0 },
           }),
         );
       };
