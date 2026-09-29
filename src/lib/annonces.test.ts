@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   cheminAnnonce,
+  cheminDeDepot,
+  estCheminDeFichier,
   estExpiree,
   estNouvelle,
   filtreAnnonce,
@@ -252,5 +254,33 @@ describe("fichiers joints", () => {
     expect(
       verifierFichier({ type: "application/pdf", size: 6 * MO }, "document"),
     ).toBe("Ce fichier pèse plus de 5 Mo.");
+  });
+});
+
+describe("chemin d'un fichier déposé", () => {
+  const ID = "0b9a8c1e-5d2f-4a7b-9c3d-1e2f3a4b5c6d";
+
+  it("garde le nom du fichier, nettoyé, dans un dossier qui lui est propre", () => {
+    expect(
+      cheminDeDepot(ID, "Convocation AG 2026.pdf", "application/pdf"),
+    ).toBe(`${ID}/convocation-ag-2026.pdf`);
+    expect(cheminDeDepot(ID, "Été à la cour.JPG", "image/jpeg")).toBe(
+      `${ID}/ete-a-la-cour.jpg`,
+    );
+  });
+
+  it("l'extension suit le format réel, pas le nom donné", () => {
+    expect(cheminDeDepot(ID, "photo.exe", "image/png")).toBe(`${ID}/photo.png`);
+    expect(cheminDeDepot(ID, "!!!", "application/pdf")).toBe(
+      `${ID}/fichier.pdf`,
+    );
+  });
+
+  it("ne reconnaît que les chemins que l'app a produits", () => {
+    expect(estCheminDeFichier(`${ID}/convocation.pdf`)).toBe(true);
+    expect(estCheminDeFichier("../secret.pdf")).toBe(false);
+    expect(estCheminDeFichier(`${ID}/../autre/x.pdf`)).toBe(false);
+    expect(estCheminDeFichier(`${ID}/Convocation.pdf`)).toBe(false);
+    expect(estCheminDeFichier("https://exemple.fr/x.pdf")).toBe(false);
   });
 });
