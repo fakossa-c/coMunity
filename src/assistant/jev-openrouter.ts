@@ -1,7 +1,5 @@
 import type { ChoixJev, EntreeJev, MoteurJev, ReponseJev } from "@/assistant";
 import {
-  categoriesActiviteListe,
-  pictogrammesActivite,
   type CategorieActivite,
   type PictogrammeActivite,
 } from "@/lib/categories-activite";
