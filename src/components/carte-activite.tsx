@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   categoriesActivite,
+  couleurDe,
   pictogrammeDe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
@@ -92,10 +93,13 @@ export function CarteActivite(props: Props) {
   if (props.detailsDepliables) return <CarteDuJour activite={props.activite} />;
   const { activite } = props;
   const { inscrit } = etatInscription(activite);
+  const couleur = couleurDe(activite.categorie);
   return (
     <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <div className="flex items-start gap-space-sm">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
+        <span
+          className={`flex size-12 shrink-0 items-center justify-center rounded-full ${couleur.fond} ${couleur.encre}`}
+        >
           <Icone nom={activite.pictogramme as NomIcone} className="size-7" />
         </span>
         <div className="min-w-0">
@@ -160,21 +164,23 @@ function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
   const accessibilite = etiquettesCocheesDuGroupe(etiquettes, "accessibilite");
   const pourQui = etiquettesCocheesDuGroupe(etiquettes, "pour_qui");
   const fiche = cheminFiche(activite.identifiant_public);
+  const couleur = couleurDe(activite.categorie);
 
   return (
     <article className="flex flex-col overflow-hidden rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
       <VisuelActivite
         pictogramme={activite.pictogramme as NomIcone}
+        categorie={activite.categorie}
         photo={activite.photo ? adressePhoto(activite.photo) : null}
         enCarte
       />
       <div className="flex flex-col gap-space-sm px-4 pt-4 pb-[18px]">
         <p className="flex items-center gap-1.5 text-body-md text-on-surface-variant">
-          <Icone
-            nom={pictogrammeDe(activite.categorie)}
-            taille={22}
-            className="text-texte-date"
-          />
+          <span
+            className={`flex size-9 shrink-0 items-center justify-center rounded-full ${couleur.fond} ${couleur.encre}`}
+          >
+            <Icone nom={pictogrammeDe(activite.categorie)} taille={22} />
+          </span>
           {categoriesActivite[activite.categorie].libelle}
         </p>
         <p className="font-headline text-label-lg text-texte-date">{creneau}</p>

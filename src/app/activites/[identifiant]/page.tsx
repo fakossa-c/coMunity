@@ -179,7 +179,10 @@ export default async function Fiche({ params }: Props) {
             titre={fiche.titre}
           />
         ) : (
-          <VisuelActivite pictogramme={fiche.pictogramme as NomIcone} />
+          <VisuelActivite
+            pictogramme={fiche.pictogramme as NomIcone}
+            categorie={fiche.categorie}
+          />
         )}
         <p className="flex items-center gap-2 pt-1.5 font-headline text-label-md text-on-surface-variant">
           <span className="text-primary">

@@ -1,6 +1,14 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { LONGUEUR_MINIMALE_MOT_DE_PASSE } from "../../src/lib/mot-de-passe";
-import { lienRecu, nouveauResident, supprimerComptes } from "./outils";
+import {
+  MOT_DE_PASSE,
+  inscrireResident,
+  lienRecu,
+  nouveauResident,
+  nouvelleActivite,
+  supprimerComptes,
+  titreAccueil,
+} from "./outils";
 
 const AIDE_MOT_DE_PASSE = `Au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`;
 
@@ -204,3 +212,104 @@ async function attendreSansDefilementHorizontal(page: Page) {
   );
   expect(debordement).toBeLessThanOrEqual(0);
 }
+
+test.describe("couleur d'une catégorie d'activité", () => {
+  // Les pastels et leurs encres, écrits en dur : ce que l'utilisateur voit à l'écran.
+  const CULTURE = { fond: "rgb(226, 220, 255)", encre: "rgb(29, 15, 77)" };
+  const JARDIN = { fond: "rgb(192, 236, 227)", encre: "rgb(0, 32, 27)" };
+
+  async function seConnecter(page: Page, email: string) {
+    await page.goto("/connexion");
+    await page.getByLabel("Adresse email").fill(email);
+    await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await expect(titreAccueil(page)).toBeVisible();
+  }
+
+  async function preparer(page: Page) {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    const suffixe = Date.now();
+    const dans3Jours = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const culture = {
+      titre: `Ciné-club ${suffixe}`,
+      identifiant: await nouvelleActivite(resident.id, {
+        titre: `Ciné-club ${suffixe}`,
+        categorie: "culture_loisirs",
+        pictogramme: "menu_book",
+        date_activite: dans3Jours,
+      }),
+    };
+    const jardin = {
+      titre: `Bouturage ${suffixe}`,
+      identifiant: await nouvelleActivite(resident.id, {
+        titre: `Bouturage ${suffixe}`,
+        categorie: "jardin_nature",
+        pictogramme: "potted_plant",
+        date_activite: dans3Jours,
+      }),
+    };
+    await inscrireResident(culture.identifiant, resident.id);
+    await inscrireResident(jardin.identifiant, resident.id);
+    await seConnecter(page, resident.email);
+    return { culture, jardin };
+  }
+
+  async function verifierCouleurs(
+    cible: Locator,
+    couleur: { fond: string; encre: string },
+  ) {
+    expect(await styleCalcule(cible, "background-color")).toBe(couleur.fond);
+    expect(await styleCalcule(cible, "color")).toBe(couleur.encre);
+  }
+
+  test("l'Accueil colore le visuel et le pictogramme de chaque carte selon sa catégorie", async ({
+    page,
+  }) => {
+    const { culture, jardin } = await preparer(page);
+    const catalogue = page.getByRole("region", { name: "Activités à venir" });
+    for (const [activite, libelle, couleur] of [
+      [culture, "Culture & Loisirs", CULTURE],
+      [jardin, "Jardin & Nature", JARDIN],
+    ] as const) {
+      const carte = catalogue
+        .getByRole("article")
+        .filter({ hasText: activite.titre });
+      await verifierCouleurs(carte.locator("> div").first(), couleur);
+      await verifierCouleurs(
+        carte.locator("p", { hasText: libelle }).locator("span").first(),
+        couleur,
+      );
+    }
+  });
+
+  test("Activités › J'y vais colore la pastille de chaque carte selon sa catégorie", async ({
+    page,
+  }) => {
+    const { culture, jardin } = await preparer(page);
+    await page.goto("/activites");
+    for (const [activite, couleur] of [
+      [culture, CULTURE],
+      [jardin, JARDIN],
+    ] as const) {
+      const carte = page
+        .getByRole("article")
+        .filter({ hasText: activite.titre });
+      await verifierCouleurs(carte.locator("> div > span").first(), couleur);
+    }
+  });
+
+  test("la fiche d'une activité sans photo colore son visuel, en thème sombre aussi", async ({
+    page,
+  }) => {
+    const { culture } = await preparer(page);
+    await page.goto(`/activites/${culture.identifiant}`);
+    const visuel = page.getByRole("main").locator("article > div").first();
+    await verifierCouleurs(visuel, CULTURE);
+
+    await poserSurLaRacine(page, "data-theme", "sombre");
+    await verifierCouleurs(visuel, CULTURE);
+  });
+});

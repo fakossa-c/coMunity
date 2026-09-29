@@ -1,22 +1,69 @@
 import type { NomIcone } from "@/components/icones";
 
-/** Catégorie d'une activité, avec son libellé et son pictogramme par défaut. */
+/**
+ * Catégorie d'une activité, avec son libellé, son pictogramme par défaut et sa couleur.
+ * Les classes sont écrites en entier : Tailwind ne repère que les noms qu'il lit dans le code.
+ */
 export const categoriesActivite = {
-  moments_partages: { libelle: "Moments partagés", pictogramme: "waving_hand" },
+  moments_partages: {
+    libelle: "Moments partagés",
+    pictogramme: "waving_hand",
+    couleur: {
+      fond: "bg-categorie-moments-partages",
+      encre: "text-on-categorie-moments-partages",
+    },
+  },
   creation_bricolage: {
     libelle: "Création & Bricolage",
     pictogramme: "handyman",
+    couleur: {
+      fond: "bg-categorie-creation-bricolage",
+      encre: "text-on-categorie-creation-bricolage",
+    },
   },
-  culture_loisirs: { libelle: "Culture & Loisirs", pictogramme: "menu_book" },
-  entraide_partage: { libelle: "Entraide & Partage", pictogramme: "handshake" },
-  jardin_nature: { libelle: "Jardin & Nature", pictogramme: "potted_plant" },
-} as const satisfies Record<string, { libelle: string; pictogramme: NomIcone }>;
+  culture_loisirs: {
+    libelle: "Culture & Loisirs",
+    pictogramme: "menu_book",
+    couleur: {
+      fond: "bg-categorie-culture-loisirs",
+      encre: "text-on-categorie-culture-loisirs",
+    },
+  },
+  entraide_partage: {
+    libelle: "Entraide & Partage",
+    pictogramme: "handshake",
+    couleur: {
+      fond: "bg-categorie-entraide-partage",
+      encre: "text-on-categorie-entraide-partage",
+    },
+  },
+  jardin_nature: {
+    libelle: "Jardin & Nature",
+    pictogramme: "potted_plant",
+    couleur: {
+      fond: "bg-categorie-jardin-nature",
+      encre: "text-on-categorie-jardin-nature",
+    },
+  },
+} as const satisfies Record<
+  string,
+  {
+    libelle: string;
+    pictogramme: NomIcone;
+    couleur: { fond: string; encre: string };
+  }
+>;
 
 export type CategorieActivite = keyof typeof categoriesActivite;
 
 export const categoriesActiviteListe = Object.keys(
   categoriesActivite,
 ) as CategorieActivite[];
+
+/** La couleur d'une catégorie : classes du fond pastel et de l'encre. */
+export function couleurDe(categorie: CategorieActivite) {
+  return categoriesActivite[categorie].couleur;
+}
 
 /** Le pictogramme d'une catégorie. */
 export function pictogrammeDe(categorie: CategorieActivite): NomIcone {
