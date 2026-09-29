@@ -74,6 +74,12 @@ export default async function EspaceSyndic() {
           description="Rédigez les règles de vie de la résidence, section par section."
         />
         <Rubrique
+          href="/syndic/mon-syndic"
+          icone="support_agent"
+          titre="Mon syndic"
+          description="Présentez aux résidents les personnes du syndic : photo, téléphone, e-mail."
+        />
+        <Rubrique
           href="/syndic/moderation"
           icone="visibility_off"
           titre="Modération des activités"

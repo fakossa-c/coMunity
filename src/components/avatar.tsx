@@ -4,6 +4,8 @@ type Props = {
   variante?: "peche" | "marine";
   /** En px : 72 sur la page Profil, 52 dans le menu, 40 par défaut. */
   taille?: 40 | 52 | 72;
+  /** Adresse d'une photo : elle remplace l'initiale, qui reste la valeur par défaut. */
+  photo?: string;
 };
 
 const couleurs = {
@@ -17,15 +19,25 @@ const textes = {
   72: "text-headline-lg",
 };
 
-/** Pastille d'initiale. Décorative : le nom l'accompagne toujours. */
-export function Avatar({ initiale, variante = "peche", taille = 40 }: Props) {
+/** Pastille d'initiale, ou photo. Décorative : le nom l'accompagne toujours. */
+export function Avatar({
+  initiale,
+  variante = "peche",
+  taille = 40,
+  photo,
+}: Props) {
   return (
     <span
       aria-hidden="true"
       style={{ width: taille, height: taille }}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-headline font-extrabold ${couleurs[variante]} ${textes[taille]}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-headline font-extrabold ${couleurs[variante]} ${textes[taille]}`}
     >
-      {initiale}
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element -- photo du bucket privé, déjà compressée dans le navigateur
+        <img src={photo} alt="" className="size-full object-cover" />
+      ) : (
+        initiale
+      )}
     </span>
   );
 }

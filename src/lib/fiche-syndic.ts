@@ -28,6 +28,8 @@ export type SaisieFiche = {
   /** L'identifiant du compte syndic relié, ou vide. */
   compteId: string;
 };
+/** Un compte de l'espace syndic auquel une fiche peut être reliée, avec le libellé du choix. */
+export type CompteRelie = { id: string; libelle: string };
 export type ChampFiche = "prenom" | "nom" | "telephone" | "email";
 
 /** La ligne à écrire dans `fiche_syndic`, sans la photo (elle a son propre parcours). */
