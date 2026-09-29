@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { saisieCopie } from "@/lib/annonces";
-import { lireAnnonce } from "@/lib/lecture-annonces";
+import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
+import { saisieSondageCopie } from "@/lib/sondages";
 import { accesSyndic } from "../../acces";
 import { FormulaireAnnonce } from "../formulaire-annonce";
 
@@ -23,6 +24,7 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
     );
 
   const original = copie ? await lireAnnonce(copie) : null;
+  const sondage = original ? await lireSondageDeLAnnonce(original.id) : null;
 
   return (
     <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
@@ -35,7 +37,14 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
         }
       />
       <FormulaireAnnonce
-        annonce={original ? { saisie: saisieCopie(original) } : undefined}
+        annonce={
+          original
+            ? {
+                saisie: saisieCopie(original),
+                sondage: sondage ? saisieSondageCopie(sondage) : undefined,
+              }
+            : undefined
+        }
       />
     </EcranSecondaire>
   );

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { EcranSecondaire } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { saisieDepuisAnnonce } from "@/lib/annonces";
-import { lireAnnonce } from "@/lib/lecture-annonces";
+import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
 import { accesSyndic } from "../../acces";
 import { FormulaireAnnonce } from "../formulaire-annonce";
 
@@ -25,12 +25,17 @@ export default async function ModifierUneAnnonce({ params }: Props) {
 
   const annonce = await lireAnnonce(id);
   if (!annonce) notFound();
+  const sondage = await lireSondageDeLAnnonce(annonce.id);
 
   return (
     <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
       <TitrePage titre="Modifier une annonce" sousTitre={annonce.titre} />
       <FormulaireAnnonce
-        annonce={{ id: annonce.id, saisie: saisieDepuisAnnonce(annonce) }}
+        annonce={{
+          id: annonce.id,
+          saisie: saisieDepuisAnnonce(annonce),
+          sondagePublie: sondage ?? undefined,
+        }}
       />
     </EcranSecondaire>
   );

@@ -7,10 +7,12 @@ import { cheminAnnonce, filtreAnnonce } from "@/lib/annonces";
 import { origine } from "@/lib/fiche-activite";
 import {
   lireAnnoncesDuMoment,
+  lireSondages,
   urlFichierAnnonce,
 } from "@/lib/lecture-annonces";
 import { lireSession } from "@/lib/session";
 import { Filtres } from "./filtres";
+import { SondageAnnonce } from "./sondage-annonce";
 
 export const metadata: Metadata = { title: "Annonces" };
 
@@ -36,7 +38,8 @@ async function ListeAnnonces({
 }: {
   filtre: ReturnType<typeof filtreAnnonce>;
 }) {
-  if (!(await lireSession())) {
+  const session = await lireSession();
+  if (!session) {
     return (
       <Bientot
         icone="campaign"
@@ -60,6 +63,9 @@ async function ListeAnnonces({
   }
 
   const racine = await origine();
+  const sondages = await lireSondages(
+    annonces.filter((a) => a.type === "sondage").map((a) => a.id),
+  );
   return (
     <ul aria-label="Annonces" className="flex flex-col gap-space-md">
       {annonces.map((annonce) => (
@@ -72,7 +78,14 @@ async function ListeAnnonces({
                 ? urlFichierAnnonce(annonce.document_chemin)
                 : undefined
             }
-          />
+          >
+            {sondages.has(annonce.id) && (
+              <SondageAnnonce
+                lu={sondages.get(annonce.id)!}
+                peutRepondre={session.statut === "valide"}
+              />
+            )}
+          </CarteAnnonce>
         </li>
       ))}
     </ul>

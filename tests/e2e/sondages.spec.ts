@@ -123,8 +123,8 @@ test("le conseil syndical publie un sondage, un résident répond et lit les ré
   await option.check();
   await expect(envoyer).toBeEnabled();
   const hauteur = await annonce
-    .getByText("6h à 23h")
-    .locator("xpath=ancestor::label")
+    .locator("label")
+    .filter({ hasText: "6h à 23h" })
     .evaluate((noeud) => noeud.getBoundingClientRect().height);
   expect(hauteur).toBeGreaterThanOrEqual(56);
   await page.screenshot({
