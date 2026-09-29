@@ -40,6 +40,12 @@ export default async function EspaceSyndic() {
       />
       <ul className="grid gap-space-md desktop:grid-cols-2">
         <Rubrique
+          href="/syndic/tableau-de-bord"
+          icone="monitoring"
+          titre="Tableau de bord"
+          description="Activités, inscriptions, remplissage, retours des participants : ce qui fait vivre la résidence."
+        />
+        <Rubrique
           href="/syndic/residents"
           icone="group"
           titre="Résidents"

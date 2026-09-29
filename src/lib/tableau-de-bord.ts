@@ -131,6 +131,12 @@ export function libelleNombreActivites(nombre: number) {
   return nombre === 1 ? "1 activité" : `${nombre} activités`;
 }
 
+/** « 1 participant », « 4 participants », « Aucun participant ». */
+export function libelleNombreParticipants(nombre: number) {
+  if (nombre === 0) return "Aucun participant";
+  return nombre === 1 ? "1 participant" : `${nombre} participants`;
+}
+
 /** La part, en pourcentage entier, des activités créées par des résidents ; `null` sans activité. */
 export function partActivitesResidents({
   activites_par_residents,
@@ -177,7 +183,7 @@ export function barresDeRemplissage(
   const trouvees = new Map(
     lignes.filter((l) => l.dimension === dimension).map((l) => [l.cle, l]),
   );
-  const groupes: (readonly [string, string])[] =
+  const groupes: readonly (readonly [string, string])[] =
     dimension === "jour"
       ? JOURS_SEMAINE
       : dimension === "creneau"
@@ -212,4 +218,10 @@ export function meilleureBarre(barres: Barre[]): Barre | null {
       meilleure = barre;
   }
   return meilleure;
+}
+
+/** Ce que dit une barre de remplissage : son taux, l'absence de limite de places, ou l'absence d'activité. */
+export function texteValeurBarre({ nombreActivites, taux }: Barre) {
+  if (nombreActivites === 0) return "Aucune activité";
+  return libelleTaux(taux);
 }
