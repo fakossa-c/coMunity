@@ -49,14 +49,14 @@ type ActivitePubliee = { id: string; identifiant: string };
 /** Publie une activité au nom de `organisateur` : à venir par défaut, passée avec `passee`. */
 async function publier(
   organisateur: Compte,
-  { passee = false, titre = ACTIVITE.titre } = {},
+  { passee = false, titre = ACTIVITE.titre, date = "2020-01-04" } = {},
 ): Promise<ActivitePubliee> {
   const { data, error } = await organisateur.client
     .from("activite")
     .insert({
       ...ACTIVITE,
       titre,
-      ...(passee ? { date_activite: "2020-01-04" } : {}),
+      ...(passee ? { date_activite: date } : {}),
       organisateur: organisateur.id,
     })
     .select("id, identifiant_public")
@@ -446,5 +446,36 @@ describe("les photos des activités retirées", () => {
     expect(await servie(photoOrpheline)).toBe(false);
     expect(await servie(photoAnnulee)).toBe(false);
     expect(await servie(photoPassee)).toBe(true);
+  });
+});
+
+describe("le tableau de bord du conseil syndical", () => {
+  it("compte toujours l'activité passée d'un résident dont le compte est supprimé, parmi celles des résidents", async () => {
+    const syndic = await nouveauSyndic();
+    const createur = await nouveauResident("valide");
+    const jourPropre = "2018-06-09";
+    await publier(createur, { passee: true, date: jourPropre });
+    const synthese = async () => {
+      const { data, error } = await syndic.client
+        .rpc("tableau_bord_synthese", {
+          p_debut: jourPropre,
+          p_fin: jourPropre,
+        })
+        .single<Record<string, number>>();
+      if (error) throw error;
+      return data;
+    };
+    expect(await synthese()).toMatchObject({
+      nombre_activites: 1,
+      activites_par_residents: 1,
+    });
+
+    await supprimerCompte(createur);
+
+    expect(await synthese()).toMatchObject({
+      nombre_activites: 1,
+      activites_par_residents: 1,
+      activites_par_conseil: 0,
+    });
   });
 });
