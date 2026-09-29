@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { clientVisiteur, nouveauResident, type Compte } from "./clients";
+import {
+  clientVisiteur,
+  nouveauResident,
+  type Compte,
+  publierApresJev,
+} from "./clients";
 
 // Ticket #12 : le créateur modifie, annule ou supprime son activité ; une activité avec des
 // inscrits est annulée plutôt que supprimée, et les inscrits le voient.
@@ -29,6 +34,7 @@ async function publier(organisateur: Compte, complements: object = {}) {
     .select("identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data.identifiant_public as string;
 }
 

@@ -48,14 +48,15 @@ export async function clientSession() {
 
 /**
  * Client qui contourne les politiques RLS. Réservé à ce que Supabase n'ouvre qu'à la clé
- * secrète (envoyer un email d'invitation), toujours après une vérification des droits en base.
+ * secrète (envoyer un email d'invitation, conclure la pré-modération de Jev d'une activité),
+ * toujours après une vérification des droits en base.
  */
 export function clientAdmin() {
   const { url } = configurationExigee();
   const cleSecrete = process.env.SUPABASE_SECRET_KEY;
   if (!cleSecrete) {
     throw new Error(
-      "SUPABASE_SECRET_KEY manque : les invitations ne peuvent pas partir.",
+      "SUPABASE_SECRET_KEY manque : ni les invitations ni la publication des activités ne peuvent aboutir.",
     );
   }
   return createClient(url, cleSecrete, {

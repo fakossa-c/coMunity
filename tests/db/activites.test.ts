@@ -4,6 +4,8 @@ import {
   clientVisiteur,
   nouveauResident,
   nouveauSyndic,
+  publierApresJev,
+  type Compte,
   type StatutResident,
 } from "./clients";
 
@@ -31,6 +33,17 @@ function activiteDe(organisateur: string) {
     .select("id, titre, organisateur")
     .eq("organisateur", organisateur)
     .maybeSingle();
+}
+
+/** Crée l'activité avec la session de `organisateur`, puis la publie comme le fait le serveur sans objection de Jev. */
+async function creerEtPublier(organisateur: Compte) {
+  const { data, error } = await organisateur.client
+    .from("activite")
+    .insert({ ...ACTIVITE, organisateur: organisateur.id })
+    .select("identifiant_public")
+    .single();
+  if (error) throw error;
+  await publierApresJev(data.identifiant_public);
 }
 
 describe("création d'une activité", () => {
@@ -158,9 +171,7 @@ describe("droits selon le statut du compte", () => {
 describe("modification d'une activité", () => {
   it("l'organisateur modifie sa propre activité", async () => {
     const resident = await nouveauResident("valide");
-    await resident.client
-      .from("activite")
-      .insert({ ...ACTIVITE, organisateur: resident.id });
+    await creerEtPublier(resident);
     const { data: activite } = await activiteDe(resident.id);
 
     const { error } = await resident.client
@@ -176,9 +187,7 @@ describe("modification d'une activité", () => {
   it("un résident ne modifie pas l'activité d'un autre", async () => {
     const organisateur = await nouveauResident("valide");
     const autre = await nouveauResident("valide");
-    await organisateur.client
-      .from("activite")
-      .insert({ ...ACTIVITE, organisateur: organisateur.id });
+    await creerEtPublier(organisateur);
     const { data: activite } = await activiteDe(organisateur.id);
 
     const { error } = await autre.client

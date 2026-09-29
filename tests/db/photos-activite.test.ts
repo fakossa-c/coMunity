@@ -7,6 +7,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 // Ticket #10 : jusqu'à 5 photos par activité, dans le bucket public `activites`. Le créateur et
@@ -47,6 +48,7 @@ async function publier(organisateur: Compte): Promise<ActivitePubliee> {
     .select("id, identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return { id: data.id, identifiant: data.identifiant_public };
 }
 

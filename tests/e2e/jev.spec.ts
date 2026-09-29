@@ -7,6 +7,7 @@ import {
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
+  nouvelleActivite,
   saisirLieuLibre,
   supprimerComptes,
 } from "./outils";
@@ -92,11 +93,15 @@ async function recuParJev(titre: string) {
   return recues.filter((r) => r.titre === titre);
 }
 
-async function activitePubliee(titre: string) {
-  const admin = createClient(local.url, local.cleSecrete, {
+/** Le client de la clé secrète : il voit aussi l'activité en relecture. */
+function clientAdmin() {
+  return createClient(local.url, local.cleSecrete, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data, error } = await admin
+}
+
+async function activitePubliee(titre: string) {
+  const { data, error } = await clientAdmin()
     .from("activite")
     .select("identifiant_public, categorie, pictogramme, statut")
     .eq("titre", titre)
@@ -307,4 +312,107 @@ test("un Jev trop lent ne bloque ni le parcours ni la publication", async ({
   ).toBeVisible({ timeout: 15_000 });
 
   expect((await activitePubliee(titre)).statut).toBe("publiee");
+});
+
+/** L'état d'une activité en base, lu avec la clé secrète. */
+async function statutDe(titre: string) {
+  const { data } = await clientAdmin()
+    .from("activite")
+    .select("statut")
+    .eq("titre", titre)
+    .maybeSingle();
+  return data?.statut as string | undefined;
+}
+
+// Ticket #101 : rien n'est public avant l'avis de Jev, à la création comme à la modification.
+
+test("pendant l'appel à Jev, l'activité n'est publique pour personne", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  // « Lent » : le faux Jev met 8 s à répondre, l'assistant renonce au bout de 3 s.
+  const titre = titreDuCas("Lent");
+  await commencer(page, titre);
+  await continuer(page);
+  await jusquAuRecapitulatif(page);
+  await expect(page.getByRole("main")).toContainText("Rien à signaler", {
+    timeout: 15_000,
+  });
+
+  await page.getByRole("button", { name: "Publier" }).click();
+  // Dès l'insertion et tant que Jev est écouté, l'activité attend en relecture.
+  await expect
+    .poll(() => statutDe(titre), { intervals: [100], timeout: 10_000 })
+    .toBe("en_relecture");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
+  ).toBeVisible({ timeout: 15_000 });
+  expect(await statutDe(titre)).toBe("publiee");
+});
+
+async function modifierLeTitre(page: Page, identifiant: string, titre: string) {
+  await page.goto(`/activites/${identifiant}`);
+  await page.getByRole("link", { name: "Modifier" }).click();
+  await page.getByLabel("Titre de l'activité").fill(titre);
+  await continuer(page);
+  await continuer(page);
+  await continuer(page);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+}
+
+async function createurAvecActivitePubliee(page: Page) {
+  const createur = await nouveauResident("valide");
+  emails.push(createur.email);
+  const identifiant = await nouvelleActivite(createur.id);
+  await seConnecter(page, createur.email);
+  return identifiant;
+}
+
+test("une modification que Jev juge non conforme repasse en relecture, avec la raison pour le conseil syndical", async ({
+  page,
+  browser,
+}) => {
+  const identifiant = await createurAvecActivitePubliee(page);
+  const titre = titreDuCas("Bruyante");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  await expect(page.getByRole("main")).toContainText("En relecture");
+  expect(await statutDe(titre)).toBe("en_relecture");
+
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  const pageSyndic = await pageConnectee(browser, syndic.email);
+  await pageSyndic.goto("/syndic/moderation");
+  const ligne = pageSyndic.getByRole("listitem").filter({ hasText: titre });
+  await expect(ligne).toContainText(
+    "Raison : Nuisances sonores : l'activité risque de gêner le voisinage.",
+  );
+  await pageSyndic.context().close();
+});
+
+test("une modification conforme reste publiée, et Jev en a relu le nouveau texte", async ({
+  page,
+}) => {
+  const identifiant = await createurAvecActivitePubliee(page);
+  const titre = titreDuCas("Bricolage");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(titre);
+  expect(await statutDe(titre)).toBe("publiee");
+  expect((await recuParJev(titre)).length).toBeGreaterThan(0);
+});
+
+test("une modification quand Jev est en panne reste publiée : Jev ne bloque jamais", async ({
+  page,
+}) => {
+  const identifiant = await createurAvecActivitePubliee(page);
+  const titre = titreDuCas("Panne");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(titre);
+  expect(await statutDe(titre)).toBe("publiee");
 });

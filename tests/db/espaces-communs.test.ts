@@ -6,6 +6,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 // Ticket #11 : les espaces communs de la résidence, gérés par le conseil syndical, l'heure de
@@ -58,11 +59,13 @@ const ACTIVITE = {
 
 /** Publie une activité au nom de `organisateur`, et renvoie l'erreur ou la ligne créée. */
 async function publier(organisateur: Compte, champs: object) {
-  return organisateur.client
+  const creation = await organisateur.client
     .from("activite")
     .insert({ ...ACTIVITE, ...champs, organisateur: organisateur.id })
     .select("identifiant_public, lieu, espace_commun_id")
     .single();
+  if (creation.data) await publierApresJev(creation.data.identifiant_public);
+  return creation;
 }
 
 describe("espaces communs : qui lit, qui écrit", () => {
@@ -365,6 +368,8 @@ describe("activité dans un espace commun", () => {
       .from("activite")
       .update({ ...ACTIVITE, titre: "Goûter crêpes et jeux" })
       .eq("identifiant_public", data!.identifiant_public);
+    // Le titre modifié attend l'avis de Jev : le serveur la republie avant la modification suivante.
+    await publierApresJev(data!.identifiant_public);
     const creneau = await resident.client
       .from("activite")
       .update({ heure_fin: "18:30" })

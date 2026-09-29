@@ -6,6 +6,7 @@ import {
   nouveauResident,
   nouveauSyndic,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 const ACTIVITE = {
@@ -27,6 +28,7 @@ async function publier(organisateur: Compte) {
     .select("identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data.identifiant_public as string;
 }
 

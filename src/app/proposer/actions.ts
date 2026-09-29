@@ -22,7 +22,7 @@ import {
   propositionDeNouvelleActivite,
   type NouvelleActivite,
 } from "@/lib/proposition-activite";
-import { clientSession } from "@/lib/supabase/serveur";
+import { clientAdmin, clientSession } from "@/lib/supabase/serveur";
 import type { Resultat } from "@/lib/resultat";
 
 /** Une photo à déposer : son chemin dans le bucket et le jeton à usage unique qui autorise le dépôt. */
@@ -84,35 +84,41 @@ export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
 }
 
 /**
- * Soumet l'activité qui vient d'être publiée à Jev, et la met en relecture s'il la juge non
- * conforme, avec la raison que lira le conseil syndical. Jev ne bloque jamais : sans clé, sans
- * avis, ou si la mise en relecture échoue, l'activité reste publiée. Vrai si elle est en relecture.
+ * Conclut la pré-modération d'une activité que la base vient de mettre en relecture (création ou
+ * modification par son créateur) : Jev est écouté, puis le serveur, seul à tenir la clé secrète,
+ * la publie ou la laisse au conseil syndical avec la raison de Jev. Jev ne bloque jamais : sans
+ * clé, sans avis ou en panne, l'activité est publiée. L'inverse vaut si la conclusion elle-même
+ * échoue : l'activité reste en relecture, chez son créateur et le conseil syndical, jamais chez
+ * tous. Vrai si elle est en relecture.
  */
-async function preModerer(
-  supabase: SupabaseClient,
+async function conclurePreModeration(
   identifiant: string,
   activite: NouvelleActivite,
 ): Promise<boolean> {
   const jev = moteurJev();
-  if (!jev) return false;
+  const avis = jev
+    ? await analyserProposition(
+        propositionDeNouvelleActivite(activite),
+        undefined,
+        { jev },
+      )
+    : SANS_AVIS;
+  const raison =
+    avis.moderation.avis === "a_relire"
+      ? avis.moderation.raison.trim() || null
+      : null;
 
-  const avis = await analyserProposition(
-    propositionDeNouvelleActivite(activite),
-    undefined,
-    { jev },
-  );
-  if (avis.moderation.avis !== "a_relire") return false;
-
-  const { error } = await supabase.rpc("mettre_en_relecture", {
-    p_identifiant: identifiant,
-    p_raison: avis.moderation.raison,
-  });
-  if (error) {
-    // L'activité reste publiée : Jev ne bloque jamais. Mais on garde la trace de l'échec.
-    console.error("Mise en relecture par Jev impossible :", error.message);
-    return false;
+  try {
+    const { error } = await clientAdmin().rpc("conclure_pre_moderation", {
+      p_identifiant: identifiant,
+      p_raison: raison,
+    });
+    if (error) throw new Error(error.message);
+  } catch (erreur) {
+    console.error("Conclusion de la pré-modération impossible :", erreur);
+    return true;
   }
-  return true;
+  return raison !== null;
 }
 
 const messagesPhotos: Record<string, string> = {
@@ -183,8 +189,9 @@ const messages: Record<string, string> = {
  * WhatsApp ; avec des photos (`poidsPhotos`, en octets, une par photo à envoyer), l'activité est
  * créée puis les dépôts sont rendus : le navigateur envoie les photos, puis appelle
  * `definirPhotos`. La base vérifie les droits, les contraintes et les règles bloquantes de
- * l'espace commun ; seul un échec revient au parcours. Si Jev juge l'activité non conforme, elle
- * passe en relecture et l'écran de partage laisse place à sa fiche.
+ * l'espace commun ; seul un échec revient au parcours. L'activité naît en relecture (la base y
+ * veille, même pour une écriture directe avec la clé publiable) et n'est publiée qu'une fois Jev
+ * entendu ; si Jev la juge non conforme, elle y reste et l'écran de partage laisse place à sa fiche.
  */
 export async function publier(
   activite: NouvelleActivite,
@@ -216,8 +223,8 @@ export async function publier(
     };
   }
 
-  const enRelecture = await preModerer(
-    supabase,
+  // La base l'a mise en relecture : elle n'est publique qu'une fois Jev entendu.
+  const enRelecture = await conclurePreModeration(
     data.identifiant_public,
     activite,
   );
@@ -316,6 +323,8 @@ const messagesModification: Record<string, string> = {
  * Enregistre la modification d'une activité, puis revient à sa fiche. La base ne laisse passer
  * que le créateur, sur une activité non annulée : sinon aucune ligne n'est touchée. `photos` : la
  * nouvelle liste ordonnée, photos déjà envoyées comprises ; absente, les photos ne changent pas.
+ * Jev relit ce que change le créateur, comme à la création : la base met l'activité en relecture,
+ * puis elle est republiée sans objection de Jev, sinon elle reste au conseil syndical.
  */
 export async function enregistrer(
   identifiant: string,
@@ -327,7 +336,7 @@ export async function enregistrer(
     .from("activite")
     .update(activite)
     .eq("identifiant_public", identifiant)
-    .select("identifiant_public");
+    .select("identifiant_public, statut, organisateur");
 
   if (error) {
     return {
@@ -344,6 +353,15 @@ export async function enregistrer(
         "Cette activité n'existe plus, ou elle n'est plus modifiable (elle est annulée).",
     };
   }
+
+  // Une modification du créateur remet l'activité en relecture jusqu'à l'avis de Jev. Sans
+  // changement, ou par le conseil syndical, elle reste publiée (ou dans l'état où le conseil
+  // syndical l'a laissée) et Jev n'est pas appelé.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (data[0].statut === "en_relecture" && data[0].organisateur === user?.id)
+    await conclurePreModeration(identifiant, activite);
 
   if (photos) {
     const resultat = await fixerPhotos(supabase, identifiant, photos);

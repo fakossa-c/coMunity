@@ -10,6 +10,7 @@ import {
   nouveauSyndicSansNom,
   nouvelEmail,
   type Compte,
+  publierApresJev,
 } from "./clients";
 
 // Ticket #18 : Mes informations. Le pseudo est le seul nom que les voisins voient d'un résident,
@@ -193,6 +194,7 @@ describe("nom lu par les voisins", () => {
       .select("identifiant_public")
       .single();
     if (error) throw error;
+    await publierApresJev(data.identifiant_public);
     return data.identifiant_public as string;
   }
 

@@ -11,6 +11,7 @@ import {
   nouveauSyndic,
   nouveauSyndicSansNom,
   nouvelEmail,
+  publierApresJev,
   type Compte,
 } from "./clients";
 
@@ -78,9 +79,12 @@ describe("droits d'un membre du syndic", () => {
       nouveauSyndic(),
       nouveauResident("valide"),
     ]);
-    await voisin.client
+    const activiteDuVoisin = await voisin.client
       .from("activite")
-      .insert({ ...ACTIVITE, organisateur: voisin.id });
+      .insert({ ...ACTIVITE, organisateur: voisin.id })
+      .select("identifiant_public")
+      .single();
+    await publierApresJev(activiteDuVoisin.data!.identifiant_public);
     const [resident, syndic] = await Promise.all([
       droitsDe(compteResident, voisin),
       droitsDe(compteSyndic, voisin),

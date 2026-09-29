@@ -3,13 +3,15 @@ import {
   clientVisiteur,
   nouveauResident,
   nouveauSyndic,
+  publierApresJev,
   type Compte,
 } from "./clients";
 
 // Ticket #14 : le conseil syndical modère les activités. Une activité en relecture ou masquée
 // n'est visible que de son créateur et du conseil syndical, lien public compris ; le conseil
 // syndical publie, refuse, masque, rétablit, modifie ou annule ; le créateur voit l'état et le
-// message. Sans Jev, une nouvelle activité est publiée directement.
+// message. Une nouvelle activité naît en relecture et Jev la publie (ticket #101) : ici, un
+// `publier` sans objection de Jev.
 
 const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   .toISOString()
@@ -32,6 +34,7 @@ async function publier(organisateur: Compte, complements: object = {}) {
     .select("identifiant_public")
     .single();
   if (error) throw error;
+  await publierApresJev(data.identifiant_public);
   return data.identifiant_public as string;
 }
 
@@ -82,7 +85,7 @@ async function statutDe(syndic: Compte, identifiant: string) {
   return (data as { statut?: string } | null)?.statut;
 }
 
-describe("sans Jev, la publication est directe", () => {
+describe("quand Jev n'a pas d'objection", () => {
   it("une nouvelle activité est publiée, sans relecture ni message", async () => {
     const createur = await nouveauResident("valide");
     const identifiant = await publier(createur);
