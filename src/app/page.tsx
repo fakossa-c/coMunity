@@ -134,36 +134,39 @@ function Catalogue({
           <CarteActivite activite={aLaUne} aLaUne />
         </section>
       )}
-      <section
-        aria-label="Activités à venir"
-        className="mt-space-sm flex flex-col gap-space-lg desktop:mt-9"
-      >
-        {jours.length === 0 && aLaUne ? null : jours.length === 0 ? (
-          <Bientot
-            icone="diversity_3"
-            message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
-          />
-        ) : (
-          jours.map((jour) => (
-            <section
-              key={jour.date}
-              aria-labelledby={`jour-${jour.date}`}
-              className="flex flex-col gap-3.5"
-            >
-              <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
-                {jour.titre}
-              </TitreSection>
-              <ul className="grid items-start gap-bloc desktop:grid-cols-3 desktop:gap-x-8 desktop:gap-y-6">
-                {jour.activites.map((activite) => (
-                  <li key={activite.id}>
-                    <CarteActivite activite={activite} detailsDepliables />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        )}
-      </section>
+      {/* Seule « À la une » reste dans la catégorie : rien à ajouter dessous. */}
+      {(jours.length > 0 || !aLaUne) && (
+        <section
+          aria-label="Activités à venir"
+          className="mt-space-sm flex flex-col gap-space-lg desktop:mt-9"
+        >
+          {jours.length === 0 ? (
+            <Bientot
+              icone="diversity_3"
+              message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
+            />
+          ) : (
+            jours.map((jour) => (
+              <section
+                key={jour.date}
+                aria-labelledby={`jour-${jour.date}`}
+                className="flex flex-col gap-3.5"
+              >
+                <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
+                  {jour.titre}
+                </TitreSection>
+                <ul className="grid items-start gap-bloc desktop:grid-cols-3 desktop:gap-x-8 desktop:gap-y-6">
+                  {jour.activites.map((activite) => (
+                    <li key={activite.id}>
+                      <CarteActivite activite={activite} detailsDepliables />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </section>
+      )}
     </>
   );
 }

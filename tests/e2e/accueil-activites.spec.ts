@@ -636,3 +636,32 @@ for (const [reglage, valeurs] of [
     await verifierSansDefilementHorizontal(page);
   });
 }
+
+test("la préférence de réduction des animations coupe les transitions des cartes de l'Accueil", async ({
+  page,
+}) => {
+  // Une catégorie à part : ce test tourne en même temps que ceux de « À la une ».
+  const categorie = "culture_loisirs";
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  for (const heure of ["07:00", "08:00"]) {
+    await nouvelleActivite(resident.id, {
+      titre: `Sans mouvement ${heure} ${Date.now()}`,
+      categorie,
+      date_activite: dansJours(0),
+      heure_debut: heure,
+    });
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await seConnecter(page, resident.email);
+  await page.goto(`/?categorie=${categorie}`);
+
+  const durees = await page
+    .getByRole("main")
+    .getByRole("article")
+    .evaluateAll((cartes) =>
+      cartes.map((carte) => getComputedStyle(carte).transitionDuration),
+    );
+  expect(durees.length).toBeGreaterThanOrEqual(2);
+  expect(new Set(durees)).toEqual(new Set(["0s"]));
+});

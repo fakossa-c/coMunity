@@ -12,7 +12,7 @@ type Props = {
 export function Salutation({ prenom, resume }: Props) {
   return (
     <div className="mb-space-sm flex flex-col gap-1">
-      <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-titre-journal desktop:font-extrabold desktop:tracking-[-0.025em]">
+      <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-titre-journal">
         {prenom ? `Bonjour ${prenom} !` : "Bonjour !"}
       </h1>
       {resume && (
