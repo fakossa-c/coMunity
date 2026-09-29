@@ -3,10 +3,13 @@ import {
   barresDeRemplissage,
   clePeriode,
   libelleMois,
+  libelleNombreActivites,
+  libelleNombreParticipants,
   libellePeriode,
   libelleTaux,
   meilleureBarre,
   partActivitesResidents,
+  texteValeurBarre,
   periodeDe,
   type LigneRemplissage,
 } from "./tableau-de-bord";
@@ -207,5 +210,56 @@ describe("meilleureBarre", () => {
       "jour",
     );
     expect(meilleureBarre(barres)?.libelle).toBe("Mercredi");
+  });
+});
+
+describe("libelleNombreActivites", () => {
+  it("accorde le nombre d'activités", () => {
+    expect(libelleNombreActivites(0)).toBe("Aucune activité");
+    expect(libelleNombreActivites(1)).toBe("1 activité");
+    expect(libelleNombreActivites(4)).toBe("4 activités");
+  });
+});
+
+describe("libelleNombreParticipants", () => {
+  it("accorde le nombre de participants", () => {
+    expect(libelleNombreParticipants(0)).toBe("Aucun participant");
+    expect(libelleNombreParticipants(1)).toBe("1 participant");
+    expect(libelleNombreParticipants(4)).toBe("4 participants");
+  });
+});
+
+describe("texteValeurBarre", () => {
+  it("donne le taux quand il existe", () => {
+    expect(
+      texteValeurBarre({
+        cle: "1",
+        libelle: "Lundi",
+        nombreActivites: 2,
+        taux: 30,
+      }),
+    ).toBe("30\u00a0%");
+  });
+
+  it("dit que les places ne sont pas limitées quand aucune activité n'a de capacité", () => {
+    expect(
+      texteValeurBarre({
+        cle: "1",
+        libelle: "Lundi",
+        nombreActivites: 2,
+        taux: null,
+      }),
+    ).toBe("Places non limitées");
+  });
+
+  it("dit l'absence d'activité", () => {
+    expect(
+      texteValeurBarre({
+        cle: "1",
+        libelle: "Lundi",
+        nombreActivites: 0,
+        taux: null,
+      }),
+    ).toBe("Aucune activité");
   });
 });
