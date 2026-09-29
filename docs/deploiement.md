@@ -100,6 +100,14 @@ voisinage. Seuls le titre, la description et le créneau lui sont envoyés. Jev 
 3 secondes) ou en erreur (clé refusée, crédit épuisé, limite de débit, panne) : le parcours continue
 sans avis.
 
+Chaque appel à Jev coûte un appel OpenRouter : le serveur en réserve un en base avant de l'émettre,
+et se passe de Jev, comme d'un Jev en panne, quand le compte a atteint son plafond : 10 appels par
+heure pour créer une activité, 10 par heure pour en modifier une, 30 par jour toutes actions
+confondues. Une activité publiée alors n'a pas eu d'avis de Jev : le conseil syndical peut la relire
+et la mettre en relecture ensuite. Côté OpenRouter, poser une limite de crédit sur la clé de
+production (3 $ par mois, réinitialisée chaque mois) : au-delà, OpenRouter répond 402 et l'app se
+passe de Jev.
+
 Avant de poser la clé en production, essayer Jev sur une dizaine de propositions en français (des
 conformes, des hors sujet, des nuisances, des ventes) avec la clé dans `.env.local`, et noter sur le
 ticket #20 ce qu'il suggère et ce qu'il met en relecture. `OPENROUTER_BASE_URL` ne sert qu'aux tests
