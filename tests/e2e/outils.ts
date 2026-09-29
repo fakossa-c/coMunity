@@ -164,6 +164,18 @@ export async function nouvelleActivite(
   return data.identifiant_public as string;
 }
 
+/**
+ * Une activité à venir plus proche que toute autre (aujourd'hui, 00h05) : elle prend le bloc
+ * « À la une » de l'Accueil, et les activités d'un test restent dans la grille du jour.
+ */
+export async function nouvelleActiviteEnTete(organisateur: string) {
+  return nouvelleActivite(organisateur, {
+    titre: `En tête ${Date.now()}`,
+    date_activite: new Date().toISOString().slice(0, 10),
+    heure_debut: "00:05",
+  });
+}
+
 /** Une photo JPEG unie, de la couleur donnée : de quoi illustrer une activité créée sans passer par l'écran. */
 export async function photoJpeg(couleur: string, largeur = 640, hauteur = 480) {
   return sharp({

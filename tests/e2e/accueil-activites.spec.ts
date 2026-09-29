@@ -236,6 +236,12 @@ test("« Voir la fiche » et « Je participe » ouvrent la fiche ; inscrit, la c
     titre: inscrit,
   });
   await inscrireResident(identifiantInscrit, resident.id, 2);
+  // Une activité plus proche prend « À la une » : les deux du test restent dans la grille.
+  await nouvelleActivite(organisateur.id, {
+    titre: `Plus proche ${suffixe}`,
+    date_activite: dansJours(0),
+    heure_debut: "00:05",
+  });
 
   await seConnecter(page, resident.email);
 

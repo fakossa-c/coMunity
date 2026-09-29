@@ -130,7 +130,11 @@ test("une activité où je suis déjà inscrit affiche « Vous participez » sur
   ).toBeVisible();
 
   await page.goto("/");
-  const carte = page.getByRole("listitem").filter({ hasText: titre });
+  // Seule activité à venir, ou la première : sa carte est dans « À la une » ou dans la grille.
+  const carte = page
+    .getByRole("main")
+    .getByRole("article")
+    .filter({ hasText: titre });
   await expect(
     carte.getByText("Vous participez", { exact: true }),
   ).toBeVisible();

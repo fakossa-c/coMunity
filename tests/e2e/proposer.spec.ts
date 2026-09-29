@@ -3,6 +3,7 @@ import {
   choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
+  nouvelleActiviteEnTete,
   saisirLieuLibre,
   supprimerComptes,
 } from "./outils";
@@ -81,6 +82,8 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   const titre = `Atelier compost ${Date.now()}`;
+  // Une activité plus proche prend « À la une » : celle du test s'affiche dans la grille, avec ses étiquettes.
+  await nouvelleActiviteEnTete(resident.id);
 
   await seConnecter(page, resident.email);
   await page.goto("/activites");
