@@ -195,6 +195,7 @@ describe("ce que la personne voit d'un sondage", () => {
       reponses: 4,
       choix: 2,
       clos: false,
+      peutVoter: false,
     });
   });
 
@@ -214,6 +215,7 @@ describe("ce que la personne voit d'un sondage", () => {
       reponses: 3,
       choix: null,
       clos: true,
+      peutVoter: false,
     });
   });
 
@@ -226,6 +228,11 @@ describe("ce que la personne voit d'un sondage", () => {
         peutRepondre: true,
         jour: JOUR,
       }),
-    ).toMatchObject({ etat: "resultats", clos: false, reponses: 0 });
+    ).toMatchObject({
+      etat: "resultats",
+      clos: false,
+      reponses: 0,
+      peutVoter: true,
+    });
   });
 });

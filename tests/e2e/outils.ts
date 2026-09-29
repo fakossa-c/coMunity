@@ -378,3 +378,34 @@ export async function supprimerAnnonces(titres: string[]) {
     await admin.storage.from("annonces").remove(fichiers);
   await admin.from("annonce").delete().in("titre", titres);
 }
+
+/** Un sondage joint à une annonce, créé par le serveur : la date limite peut être déjà passée. */
+export async function nouveauSondage(
+  annonceId: string,
+  champs: { echeance: string; options?: string[]; question?: string },
+) {
+  const { data, error } = await clientAdmin()
+    .from("sondage")
+    .insert({
+      annonce_id: annonceId,
+      question: champs.question ?? "Quel créneau vous convient le mieux ?",
+      options: champs.options ?? ["7h à 21h", "6h à 23h", "Accès 24h/24"],
+      echeance: champs.echeance,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data as { id: string };
+}
+
+/** La réponse d'un compte à un sondage, enregistrée par le serveur. */
+export async function nouvelleReponseSondage(
+  sondageId: string,
+  profilId: string,
+  choix: number,
+) {
+  const { error } = await clientAdmin()
+    .from("reponse_sondage")
+    .insert({ sondage_id: sondageId, profil_id: profilId, choix });
+  if (error) throw error;
+}

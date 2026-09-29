@@ -156,6 +156,8 @@ export type AffichageSondage =
       choix: number | null;
       /** La date limite est passée. */
       clos: boolean;
+      /** Le conseil syndical lit les résultats avant d'avoir répondu : il peut encore le faire. */
+      peutVoter: boolean;
     };
 
 /**
@@ -176,6 +178,7 @@ export function affichageSondage({
   peutRepondre: boolean;
   jour?: string;
 }): AffichageSondage {
+  const clos = !estOuvert(sondage.echeance, jour);
   if (votes)
     return {
       etat: "resultats",
@@ -183,9 +186,8 @@ export function affichageSondage({
       pourcentages: pourcentages(votes),
       reponses: votes.reduce((somme, v) => somme + v, 0),
       choix,
-      clos: !estOuvert(sondage.echeance, jour),
+      clos,
+      peutVoter: peutRepondre && choix === null && !clos,
     };
-  return peutRepondre && estOuvert(sondage.echeance, jour)
-    ? { etat: "vote" }
-    : { etat: "lecture" };
+  return peutRepondre && !clos ? { etat: "vote" } : { etat: "lecture" };
 }
