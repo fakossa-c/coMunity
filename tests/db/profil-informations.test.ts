@@ -133,7 +133,7 @@ describe("pseudo", () => {
 
   it.each([
     ["vide", "   "],
-    ["de plus de 40 caractères", "x".repeat(41)],
+    ["de plus de 50 caractères", "x".repeat(51)],
   ])("un pseudo %s est refusé", async (_, pseudo) => {
     const resident = await nouveauResident();
 
