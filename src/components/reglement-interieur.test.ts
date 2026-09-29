@@ -39,7 +39,9 @@ describe("ReglementInterieur", () => {
 
     const controle = /aria-controls="([^"]+)"/.exec(html)![1];
     expect(html).toContain(`id="${controle}"`);
-    expect(html).toContain("<h2");
+    // Sous l'intertitre « Règlement intérieur » de Ma copro : les sections sont des titres de niveau 3.
+    expect(html).toContain("<h3");
+    expect(html).not.toContain("<h2");
   });
 
   it("propose « Tout déplier » et la date de dernière mise à jour", () => {

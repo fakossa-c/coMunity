@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Bientot } from "@/components/bientot";
 import { EcranSecondaire } from "@/components/cadre";
+import { EspacesCommunsCopro } from "@/components/espaces-communs-copro";
 import { ReglementInterieur } from "@/components/reglement-interieur";
 import { TitrePage } from "@/components/titre-page";
+import { TitreSection } from "@/components/titre-section";
 import { lireReglement } from "@/lib/lecture-reglement";
+import { lireEspacesCommuns } from "@/lib/regles-residence";
 import { estSyndicActif, lireSession, statutResident } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Ma copro" };
@@ -17,16 +20,37 @@ export default async function MaCopro() {
   const statut = statutResident(session);
   const peutLire =
     estSyndicActif(session) || statut === "valide" || statut === "en_attente";
-  const reglement = peutLire ? await lireReglement() : null;
+  const [reglement, espaces] = peutLire
+    ? await Promise.all([lireReglement(), lireEspacesCommuns()])
+    : [null, null];
 
   return (
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
       <TitrePage
         titre="Ma copro"
-        sousTitre="Le règlement intérieur de la résidence"
+        sousTitre="Le règlement intérieur et les espaces communs de la résidence"
       />
-      {reglement ? (
-        <ReglementInterieur {...reglement} />
+      {reglement && espaces ? (
+        <div className="flex flex-col gap-space-lg">
+          <section
+            aria-labelledby="titre-reglement"
+            className="flex flex-col gap-space-md"
+          >
+            <TitreSection id="titre-reglement">
+              Règlement intérieur
+            </TitreSection>
+            <ReglementInterieur {...reglement} />
+          </section>
+          <section
+            aria-labelledby="titre-espaces-communs"
+            className="flex flex-col gap-space-md"
+          >
+            <TitreSection id="titre-espaces-communs">
+              Espaces communs
+            </TitreSection>
+            <EspacesCommunsCopro espaces={espaces} />
+          </section>
+        </div>
       ) : (
         <Bientot
           icone="lock"
