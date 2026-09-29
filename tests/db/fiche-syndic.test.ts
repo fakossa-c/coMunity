@@ -231,6 +231,26 @@ describe("fiches de Mon syndic : la mention « Sur coMunity »", () => {
     expect(vues.map((f) => f.sur_comunity)).toEqual([false]);
   });
 
+  it("une fiche reliée à un compte dont l'accès a été retiré reste modifiable", async () => {
+    const syndic = await nouveauSyndic();
+    const collegue = await nouveauSyndic();
+    const fiche = await nouvelleFiche(syndic, { compte_id: collegue.id });
+    await syndic.client.rpc("retirer_membre_syndic", { membre: collegue.id });
+
+    const modification = await syndic.client
+      .from("fiche_syndic")
+      .update({ prenom: "Marcel", compte_id: collegue.id })
+      .eq("id", fiche.id)
+      .select("prenom, compte_id");
+
+    expect(modification.error).toBeNull();
+    expect(modification.data).toEqual([
+      { prenom: "Marcel", compte_id: collegue.id },
+    ]);
+    const vues = await fichesVues(syndic, [fiche.id]);
+    expect(vues.map((f) => f.sur_comunity)).toEqual([false]);
+  });
+
   it("une fiche ne se relie qu'à un compte syndic actif, et un compte n'a qu'une fiche", async () => {
     const syndic = await nouveauSyndic();
     const resident = await nouveauResident("valide");
