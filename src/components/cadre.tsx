@@ -34,7 +34,7 @@ const RUBRIQUES: Rubrique[] = [
     href: "/ma-copro",
     icone: "apartment",
     titre: "Ma copro",
-    detail: "Résidence, conseil syndical, documents",
+    detail: "Le règlement intérieur et les espaces communs",
   },
 ];
 
