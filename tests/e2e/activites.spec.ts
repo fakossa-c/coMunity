@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
   saisirLieuLibre,
@@ -46,9 +47,9 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
-  await page.getByLabel("Date").fill(dansUnMois);
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois);
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();

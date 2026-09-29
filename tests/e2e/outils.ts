@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
+import { libelleJour, libelleMois, moisDe } from "../../src/lib/calendrier";
 
 const local = lireSupabaseLocal();
 
@@ -526,4 +527,16 @@ export async function supprimerFichesSyndic(prenoms: string[]) {
     .filter((chemin): chemin is string => Boolean(chemin));
   if (photos.length > 0) await admin.storage.from("syndic").remove(photos);
   await admin.from("fiche_syndic").delete().in("prenom", prenoms);
+}
+
+/**
+ * Choisit un jour (`AAAA-MM-JJ`) au calendrier de l'étape « Date et lieu » : avance de mois en
+ * mois jusqu'à celui du jour, puis touche le jour.
+ */
+export async function choisirDate(page: Page, date: string) {
+  const calendrier = page.getByRole("group", { name: "Date", exact: true });
+  const mois = calendrier.getByText(libelleMois(moisDe(date)), { exact: true });
+  for (let i = 0; i < 24 && !(await mois.isVisible()); i++)
+    await calendrier.getByRole("button", { name: "Mois suivant" }).click();
+  await calendrier.getByRole("button", { name: libelleJour(date) }).click();
 }

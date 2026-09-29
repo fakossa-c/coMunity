@@ -3,6 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
   nouvelleActivite,
@@ -69,9 +70,9 @@ async function saisirJusquAuRecapitulatif(
   }
   await continuer(page, 2);
 
-  await page.getByLabel("Date").fill(dansUnMois());
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois());
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
   await continuer(page, 3);
   await continuer(page, 4);
