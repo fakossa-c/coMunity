@@ -22,3 +22,28 @@ export const categoriesActiviteListe = Object.keys(
 export function pictogrammeDe(categorie: CategorieActivite): NomIcone {
   return categoriesActivite[categorie].pictogramme;
 }
+
+/**
+ * Les pictogrammes qu'une activité peut porter en plus de celui de sa catégorie : ceux que Jev
+ * peut suggérer, tous dans la bibliothèque de l'app.
+ */
+export const pictogrammesActivite = [
+  "celebration",
+  "child_care",
+  "construction",
+  "diversity_3",
+  "forum",
+  "groups",
+  "handshake",
+  "handyman",
+  "interests",
+  "kitchen",
+  "menu_book",
+  "park",
+  "pets",
+  "potted_plant",
+  "table_restaurant",
+  "waving_hand",
+] as const satisfies readonly NomIcone[];
+
+export type PictogrammeActivite = (typeof pictogrammesActivite)[number];

@@ -11,6 +11,7 @@ import { CarteLignes, type LigneCarte } from "@/components/carte-lignes";
 import { EncartAssistant } from "@/components/encart-assistant";
 import { TitreSection } from "@/components/titre-section";
 import { categoriesActivite } from "@/lib/categories-activite";
+import { avisJev } from "./actions";
 import {
   etiquettesActivite,
   etiquettesDuGroupe,
@@ -24,6 +25,8 @@ import { libellePhotos } from "@/lib/photos-activite";
 import {
   avertissementsApplicables,
   capaciteMaxDe,
+  entreeJevDe,
+  pictogrammeDeLaSaisie,
   propositionDe,
   TITRES_ETAPES,
   type Etape,
@@ -37,6 +40,8 @@ type Props = {
   regles: ReglesResidence;
   /** En modification, la saisie de départ (voir `avertissementsApplicables`). */
   reference?: SaisieActivite;
+  /** Vrai pour une nouvelle activité : Jev en relit la proposition. */
+  avecJev: boolean;
   /** Les photos choisies, à l'étape 1. */
   nombrePhotos: number;
   onModifier: (etape: Etape) => void;
@@ -80,7 +85,7 @@ function sectionsDe(
       lignes: [
         { icone: "edit", titre: "Titre", detail: saisie.titre },
         {
-          icone: categorie.pictogramme,
+          icone: pictogrammeDeLaSaisie(saisie),
           titre: "Catégorie",
           detail: categorie.libelle,
         },
@@ -170,6 +175,7 @@ export function Recapitulatif({
   espace,
   regles,
   reference,
+  avecJev,
   nombrePhotos,
   onModifier,
   onAnnuler,
@@ -178,21 +184,27 @@ export function Recapitulatif({
 
   useEffect(() => {
     let actif = true;
-    analyserProposition(propositionDe(saisie), regles).then((resultat) => {
+    const proposition = propositionDe(saisie);
+    // Les règles de la résidence, puis Jev : un Jev absent, en erreur ou lent n'ajoute rien.
+    Promise.all([
+      analyserProposition(proposition, regles),
+      avecJev ? avisJev(entreeJevDe(saisie)).catch(() => null) : null,
+    ]).then(([resultat, jev]) => {
       if (actif)
         setAvis({
           ...resultat,
           avertissements: avertissementsApplicables(
-            resultat.avertissements,
+            [...resultat.avertissements, ...(jev?.avertissements ?? [])],
             saisie,
             reference,
           ),
+          moderation: jev?.moderation ?? resultat.moderation,
         });
     });
     return () => {
       actif = false;
     };
-  }, [saisie, regles, reference]);
+  }, [saisie, regles, reference, avecJev]);
 
   return (
     <>

@@ -14,7 +14,13 @@ export function EncartAssistant({ avis }: Props) {
     ? [
         ...avis.avertissements,
         ...(avis.moderation.avis === "a_relire"
-          ? [{ message: avis.moderation.raison, bloquant: false }]
+          ? [
+              {
+                message:
+                  "Votre activité sera relue par le conseil syndical avant d'être visible de vos voisins.",
+                bloquant: false,
+              },
+            ]
           : []),
       ]
     : [];

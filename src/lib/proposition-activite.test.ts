@@ -4,8 +4,11 @@ import {
   LIEU_LIBRE,
   LIMITES,
   SAISIE_VIDE,
+  appliquerSuggestions,
   avertissementsApplicables,
   blocageDeLEtape,
+  changerCategorie,
+  pictogrammeDeLaSaisie,
   propositionDe,
   saisieDeCopie,
   saisieDepuisActivite,
@@ -180,6 +183,7 @@ describe("conversion vers l'activité à publier", () => {
 const EXISTANTE = {
   titre: "Goûter crêpes",
   categorie: "moments_partages" as const,
+  pictogramme: "waving_hand",
   mot_accueil: "Venez comme vous êtes.",
   date_activite: "2026-10-24",
   heure_debut: "16:00:00",
@@ -200,6 +204,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
     expect(saisieDepuisActivite(EXISTANTE)).toEqual({
       titre: "Goûter crêpes",
       categorie: "moments_partages",
+      pictogramme: "",
       mot_accueil: "Venez comme vous êtes.",
       date_activite: "2026-10-24",
       heure_debut: "16:00",
@@ -436,5 +441,104 @@ describe("règles d'un espace commun en modification", () => {
         ),
       ).toEqual([capacite]);
     }
+  });
+});
+
+describe("pictogramme de l'activité", () => {
+  it("par défaut, celui de la catégorie", () => {
+    expect(pictogrammeDeLaSaisie(COMPLETE)).toBe("waving_hand");
+    expect(versNouvelleActivite(COMPLETE).pictogramme).toBe("waving_hand");
+  });
+
+  it("un pictogramme choisi prime sur celui de la catégorie", () => {
+    const saisie = { ...COMPLETE, pictogramme: "kitchen" };
+
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("kitchen");
+    expect(versNouvelleActivite(saisie).pictogramme).toBe("kitchen");
+  });
+
+  it("modifier reprend un pictogramme propre à l'activité, pas celui de sa catégorie", () => {
+    expect(
+      saisieDepuisActivite({ ...EXISTANTE, pictogramme: "kitchen" })
+        .pictogramme,
+    ).toBe("kitchen");
+    expect(saisieDepuisActivite(EXISTANTE).pictogramme).toBe("");
+  });
+
+  it("changer de catégorie rend le pictogramme de la nouvelle catégorie", () => {
+    const saisie = changerCategorie(
+      { ...COMPLETE, pictogramme: "kitchen" },
+      "jardin_nature",
+    );
+
+    expect(saisie.categorie).toBe("jardin_nature");
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("potted_plant");
+  });
+});
+
+describe("suggestions de l'assistant appliquées à la saisie", () => {
+  const rien = { categorie: false, pictogramme: false };
+  const avis = (
+    categorieSuggeree: string | null,
+    pictogrammeSuggere: string | null,
+  ) => ({ categorieSuggeree, pictogrammeSuggere });
+
+  it("présélectionne la catégorie et le pictogramme suggérés", () => {
+    const saisie = appliquerSuggestions(
+      COMPLETE,
+      avis("culture_loisirs", "kitchen"),
+      rien,
+    );
+
+    expect(saisie.categorie).toBe("culture_loisirs");
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("kitchen");
+  });
+
+  it("sans suggestion, ne change rien", () => {
+    expect(appliquerSuggestions(COMPLETE, avis(null, null), rien)).toEqual(
+      COMPLETE,
+    );
+  });
+
+  it("une catégorie suggérée sans pictogramme rend celui de la catégorie", () => {
+    const saisie = appliquerSuggestions(
+      { ...COMPLETE, pictogramme: "kitchen" },
+      avis("jardin_nature", null),
+      rien,
+    );
+
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("potted_plant");
+  });
+
+  it("un pictogramme suggéré qui est celui de la catégorie n'est pas retenu à part", () => {
+    const saisie = appliquerSuggestions(
+      COMPLETE,
+      avis("jardin_nature", "potted_plant"),
+      rien,
+    );
+
+    expect(saisie.pictogramme).toBe("");
+  });
+
+  it("laisse la catégorie que le créateur a choisie", () => {
+    const saisie = appliquerSuggestions(
+      { ...COMPLETE, categorie: "entraide_partage" },
+      avis("culture_loisirs", "kitchen"),
+      { categorie: true, pictogramme: false },
+    );
+
+    expect(saisie.categorie).toBe("entraide_partage");
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("kitchen");
+  });
+
+  it("laisse le pictogramme que le créateur a gardé", () => {
+    const saisie = appliquerSuggestions(
+      COMPLETE,
+      avis("culture_loisirs", "kitchen"),
+      { categorie: false, pictogramme: true },
+    );
+
+    expect(saisie.categorie).toBe("culture_loisirs");
+    expect(pictogrammeDeLaSaisie(saisie)).toBe("menu_book");
   });
 });

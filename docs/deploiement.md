@@ -89,6 +89,22 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
 5. Redéployer la production (**Deployments > Redeploy**, ou un merge sur `main`) : les variables
    `NEXT_PUBLIC_*` sont intégrées au build.
 
+### Jev, l'assistant de création (facultatif)
+
+Sans `OPENROUTER_API_KEY`, l'assistant de création ne suggère rien et ne pré-modère rien : l'app se
+comporte comme sans Jev. Avec une clé OpenRouter (**Sensitive**, environnement **Production** seul
+tant que l'essai n'est pas fait), Jev (`jev-1.13`, API System One de TypeSafe servie par OpenRouter) présélectionne la catégorie et le
+pictogramme au-delà de 0,6 de confiance, signale les informations qui semblent manquer, et met en
+relecture au-delà de 0,8 de confiance une proposition qu'il juge contraire aux règles de bon
+voisinage. Seuls le titre, la description et le créneau lui sont envoyés. Jev lent (plus de
+3 secondes) ou en erreur (clé refusée, crédit épuisé, limite de débit, panne) : le parcours continue
+sans avis.
+
+Avant de poser la clé en production, essayer Jev sur une dizaine de propositions en français (des
+conformes, des hors sujet, des nuisances, des ventes) avec la clé dans `.env.local`, et noter sur le
+ticket #20 ce qu'il suggère et ce qu'il met en relecture. `OPENROUTER_BASE_URL` ne sert qu'aux tests
+navigateur : ne pas la définir en production.
+
 ## 4. Premier membre du syndic
 
 Choisir une adresse qui **n'est pas membre de l'équipe du projet Supabase** : elle sert aussi au test

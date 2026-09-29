@@ -3,10 +3,15 @@
  *
  * Reçoit une proposition et renvoie des suggestions (catégorie, pictogramme),
  * des avertissements et un avis de modération. Deux moteurs s'y branchent : le moteur de
- * règles, toujours actif (ci-dessous), et Jev, optionnel, pas encore branché. Tant que Jev
- * ne l'est pas, l'assistant ne suggère rien et ne donne aucun avis de modération.
+ * règles, toujours actif (ci-dessous), et Jev, optionnel, fourni par l'appelant. Sans Jev,
+ * ou quand Jev est en erreur ou trop lent, l'assistant ne suggère rien et ne donne aucun avis
+ * de modération : Jev ne bloque jamais la publication.
  */
 
+import {
+  categoriesActiviteListe,
+  pictogrammesActivite,
+} from "@/lib/categories-activite";
 import { creneau, heure } from "@/lib/partage-activite";
 
 /** Identifiant d'une catégorie fixe (ex. « moments-partages »). */
@@ -69,7 +74,11 @@ const AUCUNE_REGLE: ReglesResidence = {
 };
 
 export type RegleAssistant =
-  "heure_fin_max" | "capacite_espace" | "heure_calme" | "chevauchement";
+  | "heure_fin_max"
+  | "capacite_espace"
+  | "heure_calme"
+  | "chevauchement"
+  | "information_manquante";
 
 export type Avertissement = {
   /** La règle enfreinte : elle dit à quelle étape du parcours revenir. */
@@ -160,14 +169,163 @@ function appliquerRegles(
   return avertissements;
 }
 
+/** Ce que l'assistant envoie à Jev : le titre, la description et le créneau, jamais rien de personnel. */
+export type EntreeJev = {
+  titre: string;
+  description: string;
+  /** Date au format AAAA-MM-JJ. */
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+};
+
+/** Un choix de Jev et sa confiance, de 0 à 1. */
+export type ChoixJev = { valeur: string; confiance: number };
+
+/** Ce que Jev répond ; l'assistant n'en retient que ce qui passe ses seuils de confiance. */
+export type ReponseJev = {
+  categorie: ChoixJev | null;
+  pictogramme: ChoixJev | null;
+  /** Les informations importantes qui semblent manquer, en une phrase chacune. */
+  informationsManquantes: string[];
+  /** Le verdict de conformité aux règles de bon voisinage ; `null` sans avis. */
+  conformite: { conforme: boolean; raison: string; confiance: number } | null;
+};
+
+/** Le moteur Jev : interrogé côté serveur, il abandonne quand `signal` est coupé. */
+export type MoteurJev = (
+  entree: EntreeJev,
+  signal: AbortSignal,
+) => Promise<ReponseJev>;
+
+export type OptionsAnalyse = {
+  jev?: MoteurJev;
+  /** Au-delà, l'assistant renonce à Jev. */
+  delaiJevMs?: number;
+};
+
+/** Confiance minimale pour appliquer une suggestion de catégorie ou de pictogramme. */
+export const SEUIL_SUGGESTION = 0.6;
+
+/** Confiance minimale pour mettre une proposition en relecture, ou la dire conforme. */
+export const SEUIL_MODERATION = 0.8;
+
+/** Au-delà de ce délai, l'assistant renonce à Jev plutôt que de faire attendre le créateur. */
+export const DELAI_JEV_MS = 3000;
+
+const MAX_INFORMATIONS_MANQUANTES = 3;
+
+const RAISON_PAR_DEFAUT =
+  "Jev juge cette proposition contraire aux règles de bon voisinage.";
+
+/** Interroge Jev ; `null` sur erreur, réponse illisible ou dépassement du délai. */
+async function interrogerJev(
+  jev: MoteurJev,
+  entree: EntreeJev,
+  delaiMs: number,
+): Promise<ReponseJev | null> {
+  const coupure = new AbortController();
+  let minuteur: ReturnType<typeof setTimeout> | undefined;
+  const delai = new Promise<null>((resoudre) => {
+    minuteur = setTimeout(() => {
+      coupure.abort();
+      resoudre(null);
+    }, delaiMs);
+  });
+  try {
+    return await Promise.race([
+      jev(entree, coupure.signal).catch((erreur: unknown) => {
+        // Sans effet pour le créateur, mais dit pourquoi Jev n'a pas donné d'avis.
+        console.warn(
+          "Jev sans avis :",
+          erreur instanceof Error ? erreur.message : erreur,
+        );
+        return null;
+      }),
+      delai,
+    ]);
+  } finally {
+    clearTimeout(minuteur);
+  }
+}
+
+function confianceValide(confiance: unknown): confiance is number {
+  return typeof confiance === "number" && confiance >= 0 && confiance <= 1;
+}
+
+/** La valeur d'un choix de Jev quand elle est connue et assez sûre, sinon `null`. */
+function choisir(
+  choix: ChoixJev | null | undefined,
+  connues: readonly string[],
+): string | null {
+  if (
+    !choix ||
+    !confianceValide(choix.confiance) ||
+    choix.confiance < SEUIL_SUGGESTION
+  )
+    return null;
+  return connues.includes(choix.valeur) ? choix.valeur : null;
+}
+
+function informationsManquantes(reponse: ReponseJev): Avertissement[] {
+  if (!Array.isArray(reponse.informationsManquantes)) return [];
+  return reponse.informationsManquantes
+    .filter((phrase): phrase is string => typeof phrase === "string")
+    .map((phrase) => phrase.trim())
+    .filter((phrase) => phrase.length > 0)
+    .slice(0, MAX_INFORMATIONS_MANQUANTES)
+    .map((message) => ({
+      regle: "information_manquante",
+      bloquant: false,
+      message,
+    }));
+}
+
+function moderationDe(reponse: ReponseJev): AvisModeration {
+  const verdict = reponse.conformite;
+  if (
+    !verdict ||
+    !confianceValide(verdict.confiance) ||
+    verdict.confiance < SEUIL_MODERATION
+  )
+    return { avis: "pas_d_avis" };
+  if (verdict.conforme) return { avis: "conforme" };
+  const raison =
+    typeof verdict.raison === "string" ? verdict.raison.trim() : "";
+  return { avis: "a_relire", raison: raison || RAISON_PAR_DEFAUT };
+}
+
 export async function analyserProposition(
   proposition: Proposition,
   regles: ReglesResidence = AUCUNE_REGLE,
+  { jev, delaiJevMs = DELAI_JEV_MS }: OptionsAnalyse = {},
 ): Promise<AvisAssistant> {
+  const avertissements = appliquerRegles(proposition, regles);
+  const reponse = jev
+    ? await interrogerJev(
+        jev,
+        {
+          titre: proposition.titre,
+          description: proposition.description,
+          date: proposition.date,
+          heureDebut: proposition.heureDebut,
+          heureFin: proposition.heureFin,
+        },
+        delaiJevMs,
+      )
+    : null;
+  if (!reponse || typeof reponse !== "object")
+    return {
+      categorieSuggeree: null,
+      pictogrammeSuggere: null,
+      avertissements,
+      moderation: { avis: "pas_d_avis" },
+    };
+
   return {
-    categorieSuggeree: null,
-    pictogrammeSuggere: null,
-    avertissements: appliquerRegles(proposition, regles),
-    moderation: { avis: "pas_d_avis" },
+    categorieSuggeree: choisir(reponse.categorie, categoriesActiviteListe),
+    pictogrammeSuggere: choisir(reponse.pictogramme, pictogrammesActivite),
+    avertissements: [...avertissements, ...informationsManquantes(reponse)],
+    moderation: moderationDe(reponse),
   };
 }

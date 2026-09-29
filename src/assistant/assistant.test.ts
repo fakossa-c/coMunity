@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   analyserProposition,
+  type EntreeJev,
+  type MoteurJev,
   type Proposition,
   type ReglesResidence,
+  type ReponseJev,
 } from "@/assistant";
 
 const SALLE = "salle-commune";
@@ -221,6 +224,310 @@ describe("assistant de création", () => {
       );
 
       expect(regle.map((a) => a.regle)).toEqual(["heure_calme"]);
+    });
+  });
+});
+
+/** Une réponse de Jev sans avis : à compléter par ce que chaque test veut lui faire dire. */
+const SANS_AVIS: ReponseJev = {
+  categorie: null,
+  pictogramme: null,
+  informationsManquantes: [],
+  conformite: null,
+};
+
+/** Un faux Jev qui répond `reponse`, et garde ce qu'on lui a envoyé. */
+function fauxJev(reponse: Partial<ReponseJev>) {
+  const recus: EntreeJev[] = [];
+  const moteur: MoteurJev = async (entree) => {
+    recus.push(entree);
+    return { ...SANS_AVIS, ...reponse };
+  };
+  return { moteur, recus };
+}
+
+describe("assistant de création avec Jev", () => {
+  describe("catégorie et pictogramme", () => {
+    it("suggère la catégorie et le pictogramme quand Jev est sûr de lui", async () => {
+      const { moteur } = fauxJev({
+        categorie: { valeur: "culture_loisirs", confiance: 0.9 },
+        pictogramme: { valeur: "menu_book", confiance: 0.85 },
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.categorieSuggeree).toBe("culture_loisirs");
+      expect(avis.pictogrammeSuggere).toBe("menu_book");
+    });
+
+    it("suggère à partir de 0,6 de confiance, pas en dessous", async () => {
+      const limite = fauxJev({
+        categorie: { valeur: "culture_loisirs", confiance: 0.6 },
+        pictogramme: { valeur: "menu_book", confiance: 0.6 },
+      });
+      const dessous = fauxJev({
+        categorie: { valeur: "culture_loisirs", confiance: 0.59 },
+        pictogramme: { valeur: "menu_book", confiance: 0.59 },
+      });
+
+      const pile = await analyserProposition(proposition, regles, {
+        jev: limite.moteur,
+      });
+      const incertain = await analyserProposition(proposition, regles, {
+        jev: dessous.moteur,
+      });
+
+      expect(pile.categorieSuggeree).toBe("culture_loisirs");
+      expect(pile.pictogrammeSuggere).toBe("menu_book");
+      expect(incertain.categorieSuggeree).toBeNull();
+      expect(incertain.pictogrammeSuggere).toBeNull();
+    });
+
+    it("écarte une catégorie ou un pictogramme qui n'existe pas", async () => {
+      const { moteur } = fauxJev({
+        categorie: { valeur: "sport_extreme", confiance: 0.99 },
+        pictogramme: { valeur: "fusee", confiance: 0.99 },
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.categorieSuggeree).toBeNull();
+      expect(avis.pictogrammeSuggere).toBeNull();
+    });
+  });
+
+  describe("informations qui semblent manquer", () => {
+    it("les signale comme des conseils qui ne bloquent pas, après les règles", async () => {
+      const { moteur } = fauxJev({
+        informationsManquantes: [
+          "Que faut-il apporter ?",
+          "  ",
+          "Le niveau requis n'est pas précisé.",
+        ],
+      });
+
+      const avis = await analyserProposition(
+        { ...proposition, heureFin: "23:00" },
+        regles,
+        { jev: moteur },
+      );
+
+      expect(avis.avertissements.map((a) => a.regle)).toEqual([
+        "heure_fin_max",
+        "heure_calme",
+        "information_manquante",
+        "information_manquante",
+      ]);
+      expect(avis.avertissements.slice(2)).toEqual([
+        {
+          regle: "information_manquante",
+          bloquant: false,
+          message: "Que faut-il apporter ?",
+        },
+        {
+          regle: "information_manquante",
+          bloquant: false,
+          message: "Le niveau requis n'est pas précisé.",
+        },
+      ]);
+    });
+
+    it("n'en garde que trois", async () => {
+      const { moteur } = fauxJev({
+        informationsManquantes: ["a ?", "b ?", "c ?", "d ?", "e ?"],
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.avertissements.map((a) => a.message)).toEqual([
+        "a ?",
+        "b ?",
+        "c ?",
+      ]);
+    });
+  });
+
+  describe("pré-modération", () => {
+    it("met en relecture, avec la raison, une proposition non conforme à 0,8 de confiance", async () => {
+      const { moteur } = fauxJev({
+        conformite: {
+          conforme: false,
+          raison: "Une soirée bruyante jusqu'à l'aube.",
+          confiance: 0.8,
+        },
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.moderation).toEqual({
+        avis: "a_relire",
+        raison: "Une soirée bruyante jusqu'à l'aube.",
+      });
+    });
+
+    it("ne met pas en relecture sous 0,8 de confiance", async () => {
+      const { moteur } = fauxJev({
+        conformite: {
+          conforme: false,
+          raison: "Peut-être du bruit.",
+          confiance: 0.79,
+        },
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.moderation).toEqual({ avis: "pas_d_avis" });
+    });
+
+    it("donne une raison même quand Jev n'en donne pas", async () => {
+      const { moteur } = fauxJev({
+        conformite: { conforme: false, raison: " ", confiance: 0.95 },
+      });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: moteur,
+      });
+
+      expect(avis.moderation).toEqual({
+        avis: "a_relire",
+        raison:
+          "Jev juge cette proposition contraire aux règles de bon voisinage.",
+      });
+    });
+
+    it("dit conforme quand Jev en est sûr, pas d'avis sinon", async () => {
+      const sur = fauxJev({
+        conformite: { conforme: true, raison: "", confiance: 0.9 },
+      });
+      const hesitant = fauxJev({
+        conformite: { conforme: true, raison: "", confiance: 0.5 },
+      });
+
+      const conforme = await analyserProposition(proposition, regles, {
+        jev: sur.moteur,
+      });
+      const incertain = await analyserProposition(proposition, regles, {
+        jev: hesitant.moteur,
+      });
+
+      expect(conforme.moderation).toEqual({ avis: "conforme" });
+      expect(incertain.moderation).toEqual({ avis: "pas_d_avis" });
+    });
+  });
+
+  describe("ce qui part vers Jev", () => {
+    it("ne contient que le titre, la description et le créneau", async () => {
+      const { moteur, recus } = fauxJev({});
+
+      await analyserProposition(
+        {
+          ...proposition,
+          lieu: { type: "libre", libelle: "Chez Danielle, 2e étage" },
+          capaciteMax: 4,
+        },
+        regles,
+        { jev: moteur },
+      );
+
+      expect(recus).toEqual([
+        {
+          titre: "Goûter crêpes",
+          description: "On apporte des crêpes et on joue aux cartes.",
+          date: "2026-10-24",
+          heureDebut: "16:00",
+          heureFin: "18:00",
+        },
+      ]);
+    });
+  });
+
+  describe("Jev en erreur ou trop lent", () => {
+    it("sur erreur, ne suggère rien, ne donne pas d'avis et garde les règles", async () => {
+      const enPanne: MoteurJev = async () => {
+        throw new Error("503");
+      };
+
+      const avis = await analyserProposition(
+        { ...proposition, heureFin: "21:30" },
+        regles,
+        { jev: enPanne },
+      );
+
+      expect(avis).toEqual({
+        categorieSuggeree: null,
+        pictogrammeSuggere: null,
+        avertissements: [
+          expect.objectContaining({ regle: "heure_fin_max", bloquant: true }),
+        ],
+        moderation: { avis: "pas_d_avis" },
+      });
+    });
+
+    it("sur réponse illisible, se comporte comme sur erreur", async () => {
+      const illisible = (async () => ({ n_importe: "quoi" })) as never;
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: illisible,
+      });
+
+      expect(avis).toEqual({
+        categorieSuggeree: null,
+        pictogrammeSuggere: null,
+        avertissements: [],
+        moderation: { avis: "pas_d_avis" },
+      });
+    });
+
+    it("au-delà du délai, n'attend plus et coupe l'appel", async () => {
+      let coupe = false;
+      const lent: MoteurJev = (_entree, signal) =>
+        new Promise((_resoudre, rejeter) => {
+          signal.addEventListener("abort", () => {
+            coupe = true;
+            rejeter(new Error("coupé"));
+          });
+        });
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: lent,
+        delaiJevMs: 20,
+      });
+
+      expect(avis.moderation).toEqual({ avis: "pas_d_avis" });
+      expect(avis.categorieSuggeree).toBeNull();
+      expect(coupe).toBe(true);
+    });
+
+    it("au-delà du délai, n'attend pas non plus un Jev qui ignore la coupure", async () => {
+      const sourd: MoteurJev = () => new Promise(() => {});
+
+      const avis = await analyserProposition(proposition, regles, {
+        jev: sourd,
+        delaiJevMs: 20,
+      });
+
+      expect(avis.moderation).toEqual({ avis: "pas_d_avis" });
+    });
+  });
+
+  it("sans Jev, l'assistant ne suggère rien et ne donne aucun avis", async () => {
+    const avis = await analyserProposition(proposition, regles, {});
+
+    expect(avis).toEqual({
+      categorieSuggeree: null,
+      pictogrammeSuggere: null,
+      avertissements: [],
+      moderation: { avis: "pas_d_avis" },
     });
   });
 });
