@@ -416,3 +416,113 @@ test("une modification quand Jev est en panne reste publiée : Jev ne bloque jam
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(titre);
   expect(await statutDe(titre)).toBe("publiee");
 });
+
+// Ticket #100 : chaque appel à Jev est réservé auprès de la base (10 par heure en création, 10 par
+// heure en modification, 30 par jour). Plafond atteint, le parcours se passe de Jev comme d'un Jev
+// en panne : rien n'est bloqué ni perdu, et l'activité est publiée sans avis.
+
+/** Des appels que le compte vient de faire : autant que le budget horaire de `action` en accorde. */
+async function epuiserLeBudget(
+  compte: string,
+  action: "creation" | "modification",
+) {
+  const { error } = await clientAdmin()
+    .from("appel_jev")
+    .insert(Array.from({ length: 10 }, () => ({ compte_id: compte, action })));
+  if (error) throw error;
+}
+
+async function appelsReserves(compte: string) {
+  const { data, error } = await clientAdmin()
+    .from("appel_jev")
+    .select("action")
+    .eq("compte_id", compte);
+  if (error) throw error;
+  return data.map((ligne) => ligne.action as string);
+}
+
+test("un parcours de création réserve ses appels à Jev sur le budget de création", async ({
+  page,
+}) => {
+  const titre = titreDuCas("Bricolage");
+  const resident = await commencer(page, titre);
+  await continuer(page);
+  await jusquAuRecapitulatif(page);
+  await page.getByRole("button", { name: "Publier" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
+  ).toBeVisible();
+
+  const appels = await appelsReserves(resident.id);
+  expect(appels.length).toBeGreaterThanOrEqual(2);
+  expect(new Set(appels)).toEqual(new Set(["creation"]));
+  expect((await recuParJev(titre)).length).toBe(appels.length);
+});
+
+test("plafond de création atteint : Jev n'est pas appelé, le parcours va au bout et l'activité est publiée", async ({
+  page,
+}) => {
+  // « Bruyante » : Jev, s'il était écouté, mettrait l'activité en relecture.
+  const titre = titreDuCas("Bruyante");
+  const resident = await commencer(page, titre);
+  await epuiserLeBudget(resident.id, "creation");
+
+  await continuer(page);
+  await jusquAuRecapitulatif(page);
+  await expect(page.getByRole("main")).toContainText("Rien à signaler");
+  await page.getByRole("button", { name: "Publier" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
+  ).toBeVisible();
+
+  expect(await recuParJev(titre)).toEqual([]);
+  expect(await statutDe(titre)).toBe("publiee");
+  expect(await appelsReserves(resident.id)).toHaveLength(10);
+});
+
+test("une modification réserve un appel sur le budget de modification", async ({
+  page,
+}) => {
+  const createur = await nouveauResident("valide");
+  emails.push(createur.email);
+  const identifiant = await nouvelleActivite(createur.id);
+  await seConnecter(page, createur.email);
+  const titre = titreDuCas("Bricolage");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  expect(await appelsReserves(createur.id)).toEqual(["modification"]);
+});
+
+test("plafond de modification atteint : Jev n'est pas appelé, la modification est enregistrée et publiée", async ({
+  page,
+}) => {
+  const createur = await nouveauResident("valide");
+  emails.push(createur.email);
+  const identifiant = await nouvelleActivite(createur.id);
+  await epuiserLeBudget(createur.id, "modification");
+  await seConnecter(page, createur.email);
+  const titre = titreDuCas("Bruyante");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(titre);
+  expect(await statutDe(titre)).toBe("publiee");
+  expect(await recuParJev(titre)).toEqual([]);
+});
+
+test("le plafond de création ne prive pas de Jev une modification", async ({
+  page,
+}) => {
+  const createur = await nouveauResident("valide");
+  emails.push(createur.email);
+  const identifiant = await nouvelleActivite(createur.id);
+  await epuiserLeBudget(createur.id, "creation");
+  await seConnecter(page, createur.email);
+  const titre = titreDuCas("Bruyante");
+
+  await modifierLeTitre(page, identifiant, titre);
+
+  await expect(page.getByRole("main")).toContainText("En relecture");
+  expect(await statutDe(titre)).toBe("en_relecture");
+});
