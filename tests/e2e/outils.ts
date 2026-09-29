@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
@@ -541,4 +541,33 @@ export async function choisirDate(page: Page, date: string) {
   for (let i = 0; i < 24 && !(await mois.isVisible()); i++)
     await calendrier.getByRole("button", { name: "Mois suivant" }).click();
   await calendrier.getByRole("button", { name: libelleJour(date) }).click();
+}
+
+/**
+ * Vérifie que la page ouverte ne défile pas horizontalement et qu'aucun de ses éléments n'a de
+ * barre de défilement horizontale : un élément qui défile en `x`, déborde de sa boîte et affiche
+ * sa barre (elle prend de la place sous son contenu). Une rangée qui se défile au doigt sur
+ * mobile, où la barre est en surimpression ou masquée, n'en a pas. À appeler une fois la page
+ * chargée, pour chaque écran, en largeur mobile comme en ordinateur.
+ */
+export async function verifierSansDefilementHorizontal(page: Page) {
+  const debordements = await page.evaluate(() => {
+    const racine = document.documentElement;
+    const fautifs: string[] = [];
+    if (racine.scrollWidth > racine.clientWidth) fautifs.push("la page");
+    for (const element of document.querySelectorAll<HTMLElement>("*")) {
+      const style = getComputedStyle(element);
+      const defile = style.overflowX === "auto" || style.overflowX === "scroll";
+      const deborde = element.scrollWidth > element.clientWidth;
+      const bordures =
+        parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+      const barreVisible =
+        element.offsetHeight - element.clientHeight - bordures > 0;
+      if (defile && deborde && barreVisible) {
+        fautifs.push(`${element.tagName.toLowerCase()}.${element.className}`);
+      }
+    }
+    return fautifs;
+  });
+  expect(debordements, "éléments avec une barre horizontale").toEqual([]);
 }

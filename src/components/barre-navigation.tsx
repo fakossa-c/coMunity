@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-/** Onglets de la barre du bas. Un onglet de plus s'ajoute ici, sans rien d'autre à changer. */
+/** Onglets de l'application. Un onglet de plus s'ajoute ici, sans rien d'autre à changer. */
 export const ONGLETS = [
   { id: "accueil", href: "/", libelle: "Accueil", icone: "home" },
   {
@@ -28,32 +28,37 @@ const MISES_EN_PAGE = {
     liste: "mx-auto flex h-barre-nav max-w-lg",
     item: "flex flex-1",
     lien: "flex min-w-cible flex-1 flex-col items-center justify-center gap-1 rounded-lg font-headline text-etiquette hover:bg-surface-container-low",
-    pilule: "w-onglet",
   },
-  /** Onglets de l'en-tête de résidence : pictogramme et libellé côte à côte, sans filet ni fond. */
-  entete: {
-    nav: "ml-space-md hidden desktop:block",
-    liste: "flex gap-1",
-    item: "flex",
-    lien: "flex min-h-cible items-center gap-2 rounded-lg px-2 font-headline text-label-lg hover:bg-surface-container-low",
-    pilule: "w-12",
+  /** Barre du haut du cadre Journal : pilules de libellé seul, l'onglet actif en pêche. */
+  haut: {
+    nav: undefined,
+    liste: "flex gap-1.5",
+    item: undefined,
+    lien: "flex min-h-12 items-center rounded-full px-6 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal",
   },
 };
 
+const LIEN_ACTIF_HAUT = "bg-fond-action font-extrabold text-texte-action";
+const LIEN_INACTIF_HAUT =
+  "font-bold text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
+
 /**
- * Onglets des écrans principaux. Onglet actif : pictogramme plein sur une pilule pêche, libellé
- * en 800. `bas` : barre fixe du mobile, après le contenu ; `entete` : sur ordinateur, dans
- * l'en-tête de résidence. Les deux sont posées, une seule s'affiche selon la largeur : l'autre
- * est absente de l'arbre d'accessibilité et de l'ordre de tabulation.
+ * Onglets de l'application. `bas` : barre fixe du mobile, après le contenu ; pictogramme
+ * au-dessus du libellé, un filet la sépare du contenu ; onglet actif : pictogramme plein sur une
+ * pilule pêche, libellé en 800. `haut` : onglets de la barre du haut du cadre Journal, sur
+ * ordinateur ; pilules de libellé seul, l'onglet actif en pêche et en 800. Les deux sont posées
+ * dans la page, une seule s'affiche selon la largeur : l'autre est absente de l'arbre
+ * d'accessibilité et de l'ordre de tabulation. `actif` est absent d'un écran secondaire.
  */
 export function BarreNavigation({
   actif,
   emplacement,
 }: {
-  actif: IdOnglet;
+  actif?: IdOnglet;
   emplacement: keyof typeof MISES_EN_PAGE;
 }) {
   const mise = MISES_EN_PAGE[emplacement];
+  const bas = emplacement === "bas";
   return (
     <nav aria-label="Navigation principale" className={mise.nav}>
       <ul className={mise.liste}>
@@ -64,18 +69,24 @@ export function BarreNavigation({
               <Link
                 href={href}
                 aria-current={estActif ? "page" : undefined}
-                className={mise.lien}
+                className={`${mise.lien} ${bas ? "" : estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT}`}
               >
-                <span
-                  className={`flex h-8 ${mise.pilule} items-center justify-center rounded-full ${estActif ? "bg-fond-action text-texte-action" : "text-on-surface-variant"}`}
-                >
-                  <Icone nom={icone} plein={estActif} taille={26} />
-                </span>
-                <span
-                  className={`whitespace-nowrap ${estActif ? "font-extrabold text-on-surface" : "font-bold text-on-surface-variant"}`}
-                >
-                  {libelle}
-                </span>
+                {bas ? (
+                  <>
+                    <span
+                      className={`flex h-8 w-onglet items-center justify-center rounded-full ${estActif ? "bg-fond-action text-texte-action" : "text-on-surface-variant"}`}
+                    >
+                      <Icone nom={icone} plein={estActif} taille={26} />
+                    </span>
+                    <span
+                      className={`whitespace-nowrap ${estActif ? "font-extrabold text-on-surface" : "font-bold text-on-surface-variant"}`}
+                    >
+                      {libelle}
+                    </span>
+                  </>
+                ) : (
+                  libelle
+                )}
               </Link>
             </li>
           );

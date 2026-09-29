@@ -32,7 +32,8 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
     .getByRole("navigation", { name: "Navigation principale" })
     .getByRole("link", { name: "Activités" })
     .click();
-  await page.getByRole("link", { name: "Proposer" }).click();
+  // Le bouton flottant du mobile, ou « Proposer » de la barre du haut sur ordinateur.
+  await page.getByRole("link", { name: "Proposer" }).first().click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Proposer" }),
   ).toBeVisible();
@@ -57,7 +58,8 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Accueil" }).click();
+  // Le lien de retour ; sur ordinateur, l'onglet « Accueil » de la barre du haut le précède.
+  await page.getByRole("link", { name: "Accueil" }).last().click();
 
   await expect(titreAccueil(page)).toBeVisible();
   const catalogue = page.getByRole("region", { name: "Activités à venir" });

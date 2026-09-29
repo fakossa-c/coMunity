@@ -11,15 +11,10 @@ export const metadata: Metadata = { title: "Ajouter une fiche" };
 
 export default async function NouvelleFiche() {
   const { refus } = await accesSyndic("/syndic/mon-syndic/nouvelle");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Ajouter une fiche"
         sousTitre="Elle prend la dernière place de Mon syndic ; vous pourrez la remonter ensuite."

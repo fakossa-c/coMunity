@@ -1,0 +1,38 @@
+/* Présentation « Journal » (ordinateur, à partir de 64 rem) : jetons du cadre, décidés le 29/09/2026 (spec #125).
+   Dans l'application, `src/app/globals.css` les porte sous les noms Tailwind : --container-conteneur, --spacing-marge-journal,
+   --shadow-douce, --color-filet, --radius-flottante, --text-titre-journal. */
+:root {
+  /* Conteneur unique de toutes les pages : 1280 px, marges intérieures de 64 px */
+  --largeur-conteneur: 80rem;
+  --marge-journal: 4rem;
+
+  /* Mouvement : une courbe, deux durées. Dépliage : grid-template-rows 0fr vers 1fr, contenu toujours dans le DOM.
+     Menu et pop-ups : opacité, translation, léger agrandissement, avec un voile. Survol : légère élévation. */
+  --ease-journal: cubic-bezier(.2, .8, .2, 1);
+  --duree-courte: .35s;
+  --duree-longue: .45s;
+
+  /* Hiérarchie : teinte de fond, espace, ombre très douce. Filet rare : 1 px, 8 % d'opacité au plus. */
+  --ombre-douce: 0 1px 2px rgba(24, 34, 48, .04), 0 10px 28px -14px rgba(24, 34, 48, .16);
+  --ombre-douce-survol: 0 2px 4px rgba(24, 34, 48, .05), 0 22px 40px -16px rgba(24, 34, 48, .26);
+  --ombre-flottante: 0 4px 8px rgba(24, 34, 48, .05), 0 28px 56px -16px rgba(24, 34, 48, .3);
+  --filet: rgba(18, 28, 42, .08);
+  --rayon-carte: 1.5rem; /* 24 px ; encarts, menu et pop-ups : 28 px */
+  --rayon-flottant: 1.75rem;
+
+  /* Très grands titres de page : 72/76 800 (90 en grands caractères) */
+  --titre-journal: 72px;
+}
+
+/* Cartes sans contour, à partir de 64 rem : la bordure disparaît, l'ombre douce prend le relais. */
+@media (min-width: 64rem) {
+  :root {
+    --bordure-carte-couleur: transparent;
+    --ombre-carte: var(--ombre-douce);
+  }
+}
+
+/* La préférence de réduction des animations coupe tout. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after, ::backdrop { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

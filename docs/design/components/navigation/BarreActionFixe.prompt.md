@@ -6,3 +6,5 @@ Panneau blanc fixé en bas des fiches (remplace la barre de navigation), ombre p
   <Bouton pleineLargeur style={{ fontSize: "var(--text-body-lg)" }}>Je participe, avec 2 personnes</Bouton>
 </BarreActionFixe>
 ```
+
+Sur ordinateur (cadre Journal), elle reste collée au bas de la fenêtre mais suit le conteneur de 1280 px aux marges de 64 px, comme le contenu. Un écran dont l'action passe dans une carte ou une colonne visible (fiche, Proposer) peut la retirer sur ordinateur.

@@ -16,19 +16,14 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ModifierUneAnnonce({ params }: Props) {
   const { id } = await params;
   const { refus } = await accesSyndic(`/syndic/annonces/${id}`);
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const annonce = await lireAnnonce(id);
   if (!annonce) notFound();
   const sondage = await lireSondageDeLAnnonce(annonce.id);
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage titre="Modifier une annonce" sousTitre={annonce.titre} />
       <FormulaireAnnonce
         annonce={{

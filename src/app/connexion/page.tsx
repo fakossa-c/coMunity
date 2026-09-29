@@ -22,7 +22,8 @@ export default async function Connexion({
       avecCompte={false}
     >
       <div className="flex max-w-md flex-col">
-        <div className="mb-space-lg">
+        {/* Sur ordinateur, la barre du haut du cadre porte déjà le logo. */}
+        <div className="mb-space-lg desktop:hidden">
           <Logo hauteur={40} />
         </div>
         <TitrePage

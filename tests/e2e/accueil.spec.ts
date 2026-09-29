@@ -9,11 +9,13 @@ const onglets = [
 
 test("l'accueil affiche le logo, la résidence et la barre du bas", async ({
   page,
+  isMobile,
 }) => {
   await page.goto("/");
 
   const entete = page.getByRole("banner");
-  await expect(entete).toContainText("Résidence Les Tilleuls");
+  // Sur ordinateur, la barre du haut du cadre Journal n'a que le logo (décision sur #126).
+  if (isMobile) await expect(entete).toContainText("Résidence Les Tilleuls");
   await expect(entete.getByRole("img", { name: "coMunity" })).toBeVisible();
   await expect(titreAccueil(page)).toBeVisible();
 
@@ -124,7 +126,10 @@ test("la barre du bas se parcourt et s'active au clavier", async ({ page }) => {
   ).toHaveAttribute("aria-current", "page");
 });
 
-test("chaque onglet mène à sa page, sous le même en-tête", async ({ page }) => {
+test("chaque onglet mène à sa page, sous le même en-tête", async ({
+  page,
+  isMobile,
+}) => {
   await page.goto("/");
 
   for (const { libelle, chemin } of onglets) {
@@ -132,9 +137,11 @@ test("chaque onglet mène à sa page, sous le même en-tête", async ({ page }) 
       .getByRole("link", { name: libelle })
       .click();
     await expect(page).toHaveURL(new RegExp(`${chemin}$`));
-    await expect(page.getByRole("banner")).toContainText(
-      "Résidence Les Tilleuls",
-    );
+    if (isMobile) {
+      await expect(page.getByRole("banner")).toContainText(
+        "Résidence Les Tilleuls",
+      );
+    }
     await expect(
       navigationPrincipale(page).getByRole("link", { name: libelle }),
     ).toHaveAttribute("aria-current", "page");
@@ -196,7 +203,10 @@ test("les anciennes pages n'existent plus", async ({ page }) => {
     await expect(
       page.getByRole("main").getByRole("heading", { name: "Page introuvable" }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Accueil" })).toBeVisible();
+    // Le lien de retour : sur ordinateur, l'onglet « Accueil » de la barre du haut le précède.
+    await expect(
+      page.getByRole("link", { name: "Accueil" }).last(),
+    ).toBeVisible();
   }
 });
 

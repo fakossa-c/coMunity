@@ -43,7 +43,7 @@ Logo officiel : mot-symbole « coMunity », le M formé de deux mains qui se ser
 - **Élévation.** Ombre plate pour les cartes ; ombre diffuse pour le bouton flottant ; ombre inversée pour la barre d'action fixe. Pas d'ombre sur la barre de navigation : un filet de 1,5 px. La feuille du bas se détache par un voile encre à 40 %.
 - **Images.** Photos réelles des activités ; en maquette, emplacement rayé à 135° avec légende monospace.
 - **États.** Sélection = passage au pêche plein + coche (ou pastille radio). Onglet actif = pictogramme plein + pilule pêche + graisse 800. Choix segmenté actif = case blanche bordée, icône pleine. Désactivé = opacité 50 %. Focus = anneau 3 px `--color-focus`.
-- **Mouvement.** Seulement fonctionnel : la feuille du bas monte en 0,3 s `cubic-bezier(.2,.8,.2,1)`, le voile en 0,25 s. Pas de transparence ni de flou décoratifs, pas de dégradé.
+- **Mouvement.** Seulement fonctionnel : la feuille du bas monte en 0,3 s `cubic-bezier(.2,.8,.2,1)`, le voile en 0,25 s. Pas de transparence ni de flou décoratifs, pas de dégradé. Sur ordinateur (présentation Journal), voir « Présentation Journal » : mêmes intentions, une courbe et deux durées (0,35 s, 0,45 s), et la préférence de réduction des animations du système coupe toutes les transitions et animations.
 
 ## Écrans et en-têtes
 Chaque écran est un `Ecran` : une zone qui défile, une barre fixe en bas. L'avatar marine est présent partout et ouvre le `MenuProfil`.
@@ -56,11 +56,21 @@ Chaque écran est un `Ecran` : une zone qui défile, une barre fixe en bas. L'av
 - **Menu du profil** : feuille du bas au-dessus de tout (Profil, Mon syndic, Ma copro, Fermer).
 Règle : toute barre de filtres colle en haut, avec les onglets qui la précèdent.
 
+## Présentation Journal (ordinateur)
+Décidée le 29/09/2026 (spec #125) : à partir du point de rupture ordinateur (`64 rem`, `--breakpoint-desktop`), tous les écrans passent dans le cadre « Journal ». En dessous, rien ne change : barre du bas, `EnTeteResidence`, `BarreRetour`, feuilles du bas. Mêmes couleurs, polices, pastels par catégorie et pilules ; jetons dans `tokens/journal.css`.
+- **Cadre.** Une `BarreHaute` légère et sans bordure (logo, onglets, « Proposer », avatar) remplace `EnTeteResidence`, `BarreRetour` et `BarreNavigation` du bas. Un conteneur de 1280 px aux marges de 64 px, identique sur toutes les pages (`Ecran`), y compris l'espace syndic et les écrans de connexion, qui gardent leur rendu actuel dans ce cadre. Le nom de la résidence n'est pas dans la barre du haut (les maquettes n'en ont pas) ; le mobile le garde.
+- **Retour.** Sur une page secondaire, « Retour » (ou la destination) est un lien sous la barre du haut, en tête du contenu, avec « Partager » à l'autre bout sur une fiche.
+- **Hiérarchie.** Teinte de fond, espace, ombre très douce (`--ombre-douce`) : les cartes n'ont plus de contour (`--bordure-carte-couleur` devient transparent, l'ombre plate des cartes de contenu devient l'ombre douce, et une carte qui n'avait qu'un contour prend l'ombre douce). Arrondis de 24 px pour les cartes (`--radius-lg`), 28 pour les encarts, le menu et les pop-ups. Filet séparateur rare : 1 px, `--filet` (8 % d'opacité au plus). Très grands titres : `--titre-journal`, 72/76 en 800 (90 en grands caractères), que chaque écran applique à son titre.
+- **Menu de l'avatar.** Menu déroulant sous l'avatar, aligné à son bord droit, de 340 px, en fondu, translation et léger agrandissement (0,45 s), sans voile visible. Il se ferme à Échap ou d'un clic à côté (sortie de 0,35 s), le focus y reste puis revient à l'avatar. Pas de « Fermer » ni de poignée. « Espace syndic » n'y figure que pour un membre du conseil syndical.
+- **Pop-ups.** Sur ordinateur, `FeuilleConfirmation` s'ouvre en pop-up centrée, de 34 rem au plus, avec le voile encre ; fermeture par son bouton de sortie (« Garder ma place », « Garder l'activité »…), Échap ou un clic sur le voile. Le focus est piégé dans la boîte puis revient à l'élément qui l'a ouverte. Le mobile garde la feuille du bas.
+- **Mouvement.** Courbe `--ease-journal` (`cubic-bezier(.2,.8,.2,1)`), durées `--duree-courte` (0,35 s) et `--duree-longue` (0,45 s). Dépliage : classe `depliage` (`grid-template-rows` de `0fr` à `1fr`, `data-ouvert` pour l'ouvrir), le contenu reste dans le DOM. Survol : classe `survol-eleve` (légère élévation, ordinateur seulement) ; un bouton s'élève de 2 px. Menu et pop-ups : opacité, translation, léger agrandissement, avec un voile. Toutes coupées par `prefers-reduced-motion`.
+- **Défilement.** Aucune barre de défilement horizontale, sur aucun écran ni aucun réglage d'affichage (clair, sombre, grands caractères). Le test `tests/e2e/defilement-horizontal.spec.ts` le vérifie écran par écran, en mobile et en ordinateur ; un écran qui s'ajoute s'ajoute à sa liste.
+
 ## Iconographie
 Material Symbols Rounded (`opsz 24, wght 500, FILL 0..1`), via `<Icone nom="…" />`. Glyphe plein uniquement pour l'onglet actif, le choix segmenté actif et `check_circle`. Toujours accompagné d'un texte. Tailles : 20 badge/visibilité, 22 puce/catégorie, 24 défaut/lignes, 26 infos/nav/menu, 28 retour/flottant. Pictos récurrents : `celebration`, `potted_plant` (catégories) ; `groups`, `how_to_vote`, `construction`, `campaign` (annonces) ; `key`, `badge`, `interests`, `tune` (profil) ; `person`, `support_agent`, `apartment` (menu). Pas d'emoji.
 
 ## Index
-- `styles.css` → `tokens/` (fonts, colors, typography, spacing, elevation, base)
+- `styles.css` → `tokens/` (fonts, colors, typography, spacing, elevation, base, journal)
 - `components/`
   - general : Icone, TitrePage, TitreSection
   - actions : Bouton (action, contour, danger, fantome), BoutonRond, BoutonFlottant, Compteur
@@ -70,7 +80,7 @@ Material Symbols Rounded (`opsz 24, wght 500, FILL 0..1`), via `<Icone nom="…"
   - medias : EmplacementPhoto
   - identite : Logo, Avatar, EnTeteResidence, EnTeteProfil, ProposePar, Salutation
   - cartes : CarteActivite, CarteAnnonce, CarteLignes, PanneauInfos, EncartPastel, BlocTexte
-  - navigation : BarreNavigation, Onglets, BarreRetour, BarreActionFixe, LigneMenu, MenuProfil
+  - navigation : BarreNavigation, BarreHaute, Onglets, BarreRetour, BarreActionFixe, LigneMenu, MenuProfil
   - formulaires : Champ, Calendrier, ChoixSegmente, ChoixEtiquettes, BoutonVisibilite
   - structure : Ecran
 - `assets/` : logo, logo inversé, symbole

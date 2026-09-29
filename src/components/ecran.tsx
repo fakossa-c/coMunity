@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 type Props = {
-  /** EnTeteResidence, qui défile, ou BarreRetour, qui colle en haut. */
+  /** EnTeteResidence ou BarreRetour (mobile) et BarreHaute (ordinateur). */
   haut: ReactNode;
   /** BarreNavigation `bas` ou BarreActionFixe, fixée en bas. */
   barreBas?: ReactNode;
@@ -14,14 +14,13 @@ type Props = {
   paddingBas?: number;
   /** Réserve sur ordinateur, où la navigation est dans l'en-tête ; par défaut, celle du mobile. */
   paddingBasBureau?: number;
-  /** Espace syndic : sur ordinateur, le cadre prend toute la largeur au lieu de la colonne. */
-  pleineLargeur?: boolean;
   children: ReactNode;
 };
 
 /**
- * Cadre d'un écran : en-tête, contenu qui défile, barres fixées en bas. Sur ordinateur, tout
- * suit la colonne centrée (`--largeur-colonne`), sauf `pleineLargeur`.
+ * Cadre d'un écran : en-tête, contenu qui défile, barres fixées en bas. Sur ordinateur, le
+ * contenu, comme la barre du haut, suit le conteneur de 1280 px aux marges de 64 px, identique
+ * sur toutes les pages.
  */
 export function Ecran({
   haut,
@@ -29,14 +28,10 @@ export function Ecran({
   flottant,
   paddingBas = barreBas ? 180 : 40,
   paddingBasBureau = paddingBas,
-  pleineLargeur = false,
   children,
 }: Props) {
   return (
-    <div
-      data-largeur={pleineLargeur ? "pleine" : undefined}
-      className="flex flex-1 flex-col"
-    >
+    <div className="flex flex-1 flex-col">
       {haut}
       <main
         id="contenu"
@@ -47,7 +42,7 @@ export function Ecran({
             "--reserve-bas-bureau": `${paddingBasBureau}px`,
           } as React.CSSProperties
         }
-        className="mx-auto w-full max-w-(--largeur-colonne) flex-1 px-margin pt-space-sm pb-[calc(var(--reserve-bas)+env(safe-area-inset-bottom))] desktop:px-margin-desktop desktop:pb-[calc(var(--reserve-bas-bureau)+env(safe-area-inset-bottom))]"
+        className="mx-auto w-full max-w-conteneur flex-1 px-margin pt-space-sm pb-[calc(var(--reserve-bas)+env(safe-area-inset-bottom))] desktop:px-marge-journal desktop:pt-5 desktop:pb-[calc(var(--reserve-bas-bureau)+env(safe-area-inset-bottom))]"
       >
         {children}
       </main>

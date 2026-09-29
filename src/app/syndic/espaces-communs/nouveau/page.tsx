@@ -10,15 +10,10 @@ export const metadata: Metadata = { title: "Ajouter un espace commun" };
 
 export default async function NouvelEspaceCommun() {
   const { refus } = await accesSyndic("/syndic/espaces-communs/nouveau");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Ajouter un espace commun"
         sousTitre="Seul le nom est obligatoire ; le reste aide les voisins et l'assistant."

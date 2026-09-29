@@ -36,19 +36,14 @@ const CONFIRMATIONS: Record<string, (titre: string) => string> = {
 
 export default async function AnnoncesDuSyndic({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/annonces");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const annonces = await lireToutesLesAnnonces();
   const confirmation = fait && titre ? CONFIRMATIONS[fait]?.(titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Annonces"
         sousTitre="Les informations du conseil syndical pour les résidents : assemblées, travaux, sondages, informations pratiques."

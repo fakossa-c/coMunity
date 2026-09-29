@@ -28,19 +28,14 @@ export default async function ReglementInterieurSyndic({
   searchParams,
 }: Props) {
   const { refus } = await accesSyndic("/syndic/reglement");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const { sections, misAJourLe } = await lireReglement();
   const confirmation = fait && titre ? CONFIRMATIONS[fait]?.(titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Règlement intérieur"
         sousTitre="Les règles de vie de la résidence, que les résidents lisent dans Ma copro, section par section."

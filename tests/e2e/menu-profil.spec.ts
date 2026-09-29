@@ -43,6 +43,7 @@ async function ouvrirMenu(page: Page) {
 
 test("l'avatar ouvre le menu du profil depuis un écran principal", async ({
   page,
+  isMobile,
 }) => {
   await residentConnecte(page);
 
@@ -67,12 +68,20 @@ test("l'avatar ouvre le menu du profil depuis un écran principal", async ({
     menu(page).getByRole("button", { name: "Se déconnecter" }),
   ).toBeVisible();
 
-  await menu(page).getByRole("button", { name: "Fermer" }).click();
+  if (isMobile) {
+    await menu(page).getByRole("button", { name: "Fermer" }).click();
+  } else {
+    // Sur ordinateur, le menu déroulant n'a pas de « Fermer » : Échap et le clic à côté suffisent.
+    await expect(
+      menu(page).getByRole("button", { name: "Fermer" }),
+    ).toBeHidden();
+    await page.keyboard.press("Escape");
+  }
   await expect(menu(page)).toBeHidden();
   await expect(avatar(page)).toBeFocused();
 });
 
-test("le menu se ferme avec Échap et par le voile, et rend le focus à l'avatar", async ({
+test("le menu se ferme avec Échap et par un clic à côté, et rend le focus à l'avatar", async ({
   page,
 }) => {
   await residentConnecte(page);

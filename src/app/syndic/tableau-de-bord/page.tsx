@@ -46,12 +46,7 @@ type Props = { searchParams: Promise<{ periode?: string }> };
 
 export default async function TableauDeBord({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/tableau-de-bord");
-  if (refus)
-    return (
-      <EcranSecondaire retour={RETOUR} pleineLargeur>
-        {refus}
-      </EcranSecondaire>
-    );
+  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   const { periode: demandee } = await searchParams;
   const cle = clePeriode(demandee);
@@ -63,7 +58,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
   const sansActivite = synthese.nombre_activites === 0;
 
   return (
-    <EcranSecondaire retour={RETOUR} pleineLargeur>
+    <EcranSecondaire retour={RETOUR}>
       <TitrePage
         titre="Tableau de bord"
         sousTitre="Ce qui fait vivre la résidence, d'après les activités publiées qui ont eu lieu sur la période."

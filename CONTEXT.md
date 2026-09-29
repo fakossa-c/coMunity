@@ -42,7 +42,8 @@ _Avoid_ : copro, immeuble
 
 **Espace commun** :
 Un lieu de la résidence défini par le conseil syndical (salle commune, cour, jardin), avec ses horaires d'accès, son contact et ses règles, où une activité peut se tenir.
-_Avoid_ : salle, salle partagée, espace copro
+« Biens communs » n'est qu'un libellé visible de l'interface (l'entrée « Espaces, biens communs et règlement » du menu, le titre de section « Espaces et biens communs » de Ma copro) ; dans le code, les tickets et la base, le terme du domaine reste **espace commun**.
+_Avoid_ : salle, salle partagée, espace copro, bien commun (hors de ces deux libellés)
 
 **Lieu libre** :
 Le lieu d'une activité qui se tient hors des espaces communs, saisi par son créateur (« chez Danielle, 2e étage »).
