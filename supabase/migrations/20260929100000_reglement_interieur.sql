@@ -134,7 +134,7 @@ begin
   select array_agg(id order by position, cree_le, id) into ordre from public.section_reglement;
   rang := array_position(ordre, section);
   if rang is null then
-    raise exception 'Section du règlement introuvable' using errcode = 'P0002';
+    raise exception 'Section du règlement introuvable' using errcode = '22023';
   end if;
 
   voisin := case when vers_le_haut then rang - 1 else rang + 1 end;

@@ -280,7 +280,11 @@ describe("règlement intérieur : l'ordre des sections", () => {
       vers_le_haut: true,
     });
 
-    expect(error).not.toBeNull();
+    // Un code que PostgREST sait traduire : le message arrive lisible jusqu'à l'application.
+    expect(error).toMatchObject({
+      code: "22023",
+      message: "Section du règlement introuvable",
+    });
   });
 });
 
