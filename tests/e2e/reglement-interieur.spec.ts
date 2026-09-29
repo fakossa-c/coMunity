@@ -243,6 +243,25 @@ test("un résident n'entre pas dans la rédaction du règlement", async ({
   );
 });
 
+test("un résident en attente de validation lit le règlement", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("en_attente");
+  emails.push(resident.email);
+  const section = await nouvelleSectionReglement();
+  titres.push(section.titre);
+
+  await seConnecter(page, resident.email);
+  await page.goto("/ma-copro");
+
+  const titre = page.getByRole("button", { name: section.titre });
+  await titre.click();
+  await expect(titre).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("region", { name: section.titre })).toContainText(
+    "Pas de bruit après 22h.",
+  );
+});
+
 test("un résident refusé ne lit pas le règlement", async ({ page }) => {
   const resident = await nouveauResident("refuse");
   emails.push(resident.email);

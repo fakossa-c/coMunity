@@ -1,12 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
-import { dateReglement } from "@/lib/reglement";
+import { dateReglement, type SectionLue } from "@/lib/reglement";
 import { Bouton } from "./bouton";
 import { Icone } from "./icone";
 import { TexteReglement } from "./texte-reglement";
-
-export type SectionLue = { id: string; titre: string; texte: string };
 
 type Props = {
   /** Dans l'ordre du règlement. */
@@ -21,7 +19,7 @@ type Props = {
  */
 export function ReglementInterieur({ sections, misAJourLe }: Props) {
   const [ouvertes, setOuvertes] = useState<ReadonlySet<string>>(new Set());
-  const base = useId();
+  const prefixe = useId();
 
   if (sections.length === 0)
     return (
@@ -33,9 +31,9 @@ export function ReglementInterieur({ sections, misAJourLe }: Props) {
   const toutesOuvertes = sections.every((s) => ouvertes.has(s.id));
 
   function basculer(id: string) {
-    const suite = new Set(ouvertes);
-    if (!suite.delete(id)) suite.add(id);
-    setOuvertes(suite);
+    const apres = new Set(ouvertes);
+    if (!apres.delete(id)) apres.add(id);
+    setOuvertes(apres);
   }
 
   return (
@@ -61,7 +59,7 @@ export function ReglementInterieur({ sections, misAJourLe }: Props) {
       <ul className="flex flex-col gap-space-sm">
         {sections.map((section) => {
           const ouverte = ouvertes.has(section.id);
-          const id = `${base}-${section.id}`;
+          const id = `${prefixe}-${section.id}`;
           return (
             <li
               key={section.id}
@@ -76,7 +74,9 @@ export function ReglementInterieur({ sections, misAJourLe }: Props) {
                   onClick={() => basculer(section.id)}
                   className="flex min-h-cible w-full items-center justify-between gap-space-sm rounded-lg px-4 py-3 text-left font-headline text-headline-sm text-on-surface hover:bg-surface-container-low"
                 >
-                  {section.titre}
+                  <span className="[overflow-wrap:anywhere]">
+                    {section.titre}
+                  </span>
                   <Icone nom={ouverte ? "expand_less" : "expand_more"} />
                 </button>
               </h2>

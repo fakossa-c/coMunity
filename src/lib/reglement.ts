@@ -8,6 +8,9 @@ export type Bloc =
   | { type: "paragraphe"; morceaux: Morceau[] }
   | { type: "liste"; elements: Morceau[][] };
 
+/** Une section du règlement intérieur telle que la table `section_reglement` la livre. */
+export type SectionLue = { id: string; titre: string; texte: string };
+
 /** Ce que le conseil syndical saisit pour une section du règlement intérieur. */
 export type SaisieSection = { titre: string; texte: string };
 export type ChampSection = keyof SaisieSection;

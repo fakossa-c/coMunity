@@ -1,5 +1,5 @@
 import "server-only";
-import type { SectionLue } from "@/components/reglement-interieur";
+import type { SectionLue } from "./reglement";
 import { clientSession } from "./supabase/serveur";
 
 /**
