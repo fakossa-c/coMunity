@@ -20,7 +20,12 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ModifierEspaceCommun({ params }: Props) {
   const { id } = await params;
   const { refus } = await accesSyndic(`/syndic/espaces-communs/${id}`);
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return (
+      <EcranSecondaire retour={RETOUR} pleineLargeur>
+        {refus}
+      </EcranSecondaire>
+    );
 
   const supabase = await clientSession();
   const { data: espace } = await supabase
@@ -31,7 +36,7 @@ export default async function ModifierEspaceCommun({ params }: Props) {
   if (!espace) notFound();
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire pleineLargeur>
       <TitrePage titre="Modifier un espace commun" sousTitre={espace.nom} />
       <FormulaireEspace
         espace={{ id: espace.id, saisie: saisieDepuisEspace(espace) }}

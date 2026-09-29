@@ -169,13 +169,22 @@
 
   --breakpoint-desktop: 64rem;
 
+  /* Panneau latéral du menu de l'avatar, sur ordinateur */
+  --spacing-panneau: 26rem;
+
   /* Seul mouvement du design system : la feuille du bas monte, le voile apparaît. */
   --animate-feuille: feuille-monte 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-voile: voile-apparait 0.25s ease-out;
+  --animate-panneau: panneau-entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 
   @keyframes feuille-monte {
     from {
       transform: translateY(100%);
+    }
+  }
+  @keyframes panneau-entre {
+    from {
+      transform: translateX(100%);
     }
   }
   @keyframes voile-apparait {
@@ -288,6 +297,15 @@
   --text-etiquette: 19px;
   --text-etiquette--line-height: 1.4;
   --text-legende-photo: 16px;
+}
+
+/* Colonne des écrans sur ordinateur : l'en-tête, le contenu et la barre d'action la suivent.
+   L'espace syndic (`data-largeur="pleine"` sur son cadre) n'en a pas. */
+:root {
+  --largeur-colonne: 61.25rem;
+}
+[data-largeur="pleine"] {
+  --largeur-colonne: none;
 }
 
 @layer base {

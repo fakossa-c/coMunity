@@ -27,7 +27,12 @@ const CONFIRMATIONS: Record<string, (nom: string) => string> = {
 
 export default async function EspacesCommuns({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/espaces-communs");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return (
+      <EcranSecondaire retour={RETOUR} pleineLargeur>
+        {refus}
+      </EcranSecondaire>
+    );
 
   const { fait, nom } = await searchParams;
   const [espaces, heureCalme] = await Promise.all([
@@ -37,7 +42,7 @@ export default async function EspacesCommuns({ searchParams }: Props) {
   const confirmation = fait && nom ? CONFIRMATIONS[fait]?.(nom) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSecondaire retour={RETOUR} pleineLargeur>
       <TitrePage
         titre="Espaces communs"
         sousTitre="Les lieux où les voisins se retrouvent, avec leurs règles, et l'heure de calme de la résidence."

@@ -33,7 +33,8 @@ const SEUIL_FERMETURE = 90;
 
 /**
  * Avatar marine et menu du profil qu'il ouvre : feuille du bas modale, qui se ferme par
- * « Fermer », par le voile, par Échap ou en la faisant glisser vers le bas.
+ * « Fermer », par le voile, par Échap ou en la faisant glisser vers le bas. Sur ordinateur, la
+ * même boîte de dialogue est un panneau latéral droit, sans poignée à glisser.
  * Le focus reste dans la feuille, puis revient à l'avatar.
  */
 export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
@@ -117,16 +118,16 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
         onClose={quandFermee}
         onClick={fermerSurLeVoile}
         onKeyDown={retenirLeFocus}
-        className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile"
+        className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-y-0 desktop:right-0 desktop:left-auto desktop:h-dvh desktop:w-panneau desktop:motion-safe:animate-panneau"
       >
-        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:mx-0 desktop:h-full desktop:max-h-none desktop:max-w-none desktop:rounded-t-none desktop:rounded-l-feuille desktop:pt-space-lg">
           <div
             aria-hidden="true"
             onPointerDown={commencerGlissement}
             onPointerMove={glisser}
             onPointerUp={finirGlissement}
             onPointerCancel={finirGlissement}
-            className="flex h-cible shrink-0 cursor-grab touch-none items-center justify-center"
+            className="flex h-cible shrink-0 cursor-grab touch-none items-center justify-center desktop:hidden"
           >
             <span className="h-1.5 w-10 rounded-full bg-outline-variant" />
           </div>
@@ -138,7 +139,7 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
           />
           <nav
             aria-label="Rubriques du profil"
-            className="mt-space-md flex flex-col gap-2"
+            className="mt-space-md flex flex-col gap-2 desktop:mb-space-md"
           >
             {rubriques.map((rubrique) => (
               <LigneMenu
@@ -161,7 +162,7 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
             variante="contour"
             icone="close"
             pleineLargeur
-            className="mt-space-md shrink-0"
+            className="mt-space-md shrink-0 desktop:mt-auto"
             onClick={fermer}
           >
             Fermer

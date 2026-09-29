@@ -11,7 +11,12 @@ export const metadata: Metadata = { title: "Résidents" };
 
 export default async function Residents() {
   const { refus } = await accesSyndic("/syndic/residents");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return (
+      <EcranSecondaire retour={RETOUR} pleineLargeur>
+        {refus}
+      </EcranSecondaire>
+    );
 
   const supabase = await clientSession();
   const { data, error } = await supabase
@@ -30,7 +35,7 @@ export default async function Residents() {
     );
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSecondaire retour={RETOUR} pleineLargeur>
       <TitrePage
         titre="Résidents"
         sousTitre="Validez les comptes des nouveaux résidents et retirez l'accès de ceux qui quittent la résidence."

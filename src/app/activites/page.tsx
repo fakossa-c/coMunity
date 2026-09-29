@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Bientot } from "@/components/bientot";
 import { BoutonFlottant } from "@/components/bouton-flottant";
 import { EcranPrincipal } from "@/components/cadre";
+import { classesBouton } from "@/components/bouton";
 import { CarteActivite, type Activite } from "@/components/carte-activite";
+import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
 import { aujourdhui, ordreChronologique } from "@/lib/partage-activite";
 import { lireSession } from "@/lib/session";
@@ -29,6 +32,13 @@ export default async function Activites({ searchParams }: Props) {
         titre="Activités"
         sousTitre="Vos inscriptions et vos propositions"
       />
+      {/* Sur ordinateur, le bouton flottant est remplacé par ce bouton sous le titre. */}
+      <div className="mb-space-md hidden desktop:block">
+        <Link href="/proposer" className={classesBouton("action")}>
+          <Icone nom="add" taille={24} />
+          Proposer une activité
+        </Link>
+      </div>
       <Onglets onglet={onglet} puce={puce} />
       {onglet === "j_organise" ? (
         <MesActivitesOrganisees puce={puce} />

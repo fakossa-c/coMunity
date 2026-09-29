@@ -160,6 +160,10 @@ test("le menu de l'avatar s'ouvre en panneau latéral droit, avec le clavier hab
 
   await avatar.click();
   await expect(menu).toBeVisible();
+  // Le panneau entre par la droite, pas par le bas.
+  expect(await menu.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    "panneau-entre",
+  );
   // Laisse finir l'entrée du panneau avant de mesurer.
   await menu.evaluate((el) =>
     Promise.all(el.getAnimations().map((a) => a.finished)),
@@ -188,7 +192,9 @@ test("la barre d'action est collée au bas de la colonne", async ({ page }) => {
 
   const enregistrer = page.getByRole("button", { name: "Enregistrer" });
   await expect(enregistrer).toBeVisible();
-  const barre = enregistrer.locator("xpath=ancestor::div[contains(@class,'fixed')][1]");
+  const barre = enregistrer.locator(
+    "xpath=ancestor::div[contains(@class,'fixed')][1]",
+  );
   const viewport = page.viewportSize()!;
   const boiteBarre = await boite(barre);
   const contenu = await boite(page.getByRole("main"));
@@ -213,7 +219,7 @@ test("l'espace syndic occupe toute la largeur, avec les mêmes cartes", async ({
   expect(contenu.width).toBeGreaterThan(viewport.width - 40);
   // Les rubriques restent des cartes : elles se rangent en colonnes sur la largeur.
   const rubriques = page.getByRole("main").getByRole("link");
-  expect(
-    (await boite(rubriques.nth(1))).x,
-  ).toBeGreaterThan((await boite(rubriques.first())).x);
+  expect((await boite(rubriques.nth(1))).x).toBeGreaterThan(
+    (await boite(rubriques.first())).x,
+  );
 });
