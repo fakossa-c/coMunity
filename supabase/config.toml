@@ -113,8 +113,8 @@ port = 54424
 # sender_name = "Admin"
 
 [storage]
-# Coupé tant qu'aucun fichier n'est stocké ; le ticket des photos d'activité (#10) le réactive.
-enabled = false
+# Les annonces (#13) y déposent leur photo et leur document PDF ; le ticket des photos d'activité (#10) s'en sert aussi.
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
