@@ -32,7 +32,7 @@ export function BarreNavigation({ actif }: { actif: IdOnglet }) {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-bordure-carte bg-fond-carte pb-[env(safe-area-inset-bottom)] desktop:static desktop:z-auto desktop:mx-space-md desktop:border-0 desktop:bg-transparent desktop:pb-0"
+      className="fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-bordure-carte bg-fond-carte pb-[env(safe-area-inset-bottom)] desktop:static desktop:z-auto desktop:ml-space-md desktop:border-0 desktop:bg-transparent desktop:pb-0"
     >
       <ul className="mx-auto flex h-barre-nav max-w-lg desktop:mx-0 desktop:h-auto desktop:max-w-none desktop:gap-1">
         {ONGLETS.map(({ id, href, libelle, icone }) => {
@@ -45,7 +45,7 @@ export function BarreNavigation({ actif }: { actif: IdOnglet }) {
                 className="flex min-w-cible flex-1 flex-col items-center justify-center gap-1 rounded-lg font-headline text-etiquette hover:bg-surface-container-low desktop:min-h-cible desktop:flex-row desktop:gap-2 desktop:px-2 desktop:text-label-lg"
               >
                 <span
-                  className={`flex h-8 w-onglet items-center justify-center rounded-full ${estActif ? "bg-fond-action text-texte-action" : "text-on-surface-variant"}`}
+                  className={`flex h-8 w-onglet items-center justify-center rounded-full desktop:w-12 ${estActif ? "bg-fond-action text-texte-action" : "text-on-surface-variant"}`}
                 >
                   <Icone nom={icone} plein={estActif} taille={26} />
                 </span>
