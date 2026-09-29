@@ -369,7 +369,7 @@ test("Ma copro présente les espaces et biens communs avant le règlement intér
   // Sur ordinateur : le lien vers les espaces d'abord, puis les sections du règlement, dans l'ordre.
   await expect(sommaire).toBeVisible();
   const liens = await sommaire.getByRole("link").allTextContents();
-  expect(liens[0]).toBe("Espaces et biens communs");
+  expect(liens[0]).toBe("Espaces communs");
   // Les sections des autres tests peuvent s'intercaler : on ne compare que les nôtres.
   expect(liens.filter((texte) => sections.includes(texte))).toEqual(sections);
 

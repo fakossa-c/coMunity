@@ -34,7 +34,7 @@ export default async function MaCopro() {
           Ma copro
         </h1>
         <p className="mt-1 max-w-[65ch] text-body-lg text-on-surface-variant desktop:mt-0 desktop:pb-3">
-          Les espaces et biens communs, puis le règlement de la résidence
+          Les espaces communs, puis le règlement de la résidence
         </p>
       </div>
       {reglement && espaces ? (

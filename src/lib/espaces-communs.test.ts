@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SAISIE_ESPACE_VIDE,
   decouperConsignes,
+  emplacementEspace,
   lienFicheEspace,
   lienProposerIci,
   libelleCapacite,
@@ -191,5 +192,17 @@ describe("decouperConsignes", () => {
       visibles: ["Une.", "Deux."],
       suite: [],
     });
+  });
+});
+
+describe("emplacementEspace", () => {
+  it("joint bâtiment et localisation, sans rien inventer quand l'un manque", () => {
+    expect(
+      emplacementEspace({ batiment: "Bâtiment A", localisation: "Sous-sol" }),
+    ).toBe("Bâtiment A · Sous-sol");
+    expect(
+      emplacementEspace({ batiment: null, localisation: "Sous-sol" }),
+    ).toBe("Sous-sol");
+    expect(emplacementEspace({ batiment: null, localisation: null })).toBe("");
   });
 });

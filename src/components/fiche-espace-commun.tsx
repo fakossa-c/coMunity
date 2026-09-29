@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   decouperConsignes,
+  emplacementEspace,
   libelleCapacite,
   lienFicheEspace,
   lienProposerIci,
@@ -14,6 +15,7 @@ import { EmplacementPhoto } from "./emplacement-photo";
 import { EquipementsEspace } from "./equipements-espace";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
+import { TitreSection } from "./titre-section";
 
 type Props = {
   espace: EspaceCommun;
@@ -25,11 +27,6 @@ type Props = {
 
 type Caracteristique = { icone: NomIcone; libelle: string; valeur: string };
 
-/** « Bâtiment A · rez-de-chaussée » : où se trouve l'espace ; vide sans l'un ni l'autre. */
-function emplacement(espace: EspaceCommun) {
-  return [espace.batiment, espace.localisation].filter(Boolean).join(" · ");
-}
-
 const CARTE =
   "rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-space-md desktop:p-8";
 
@@ -40,7 +37,7 @@ const CARTE =
  * renseigné n'a ni ligne ni carte.
  */
 export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
-  const lieu = emplacement(espace);
+  const lieu = emplacementEspace(espace);
   const consignes = decouperConsignes(espace.consignes);
   const caracteristiques = [
     espace.capacite !== null && {
@@ -89,35 +86,34 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
         <div className="flex flex-col gap-space-md desktop:gap-6">
           {(caracteristiques.length > 0 || aDesEquipements) && (
             <section aria-labelledby="titre-caracteristiques" className={CARTE}>
-              <h2
-                id="titre-caracteristiques"
-                className="font-headline text-headline-sm font-extrabold text-on-surface"
-              >
+              <TitreSection id="titre-caracteristiques">
                 Caractéristiques
-              </h2>
+              </TitreSection>
               <dl className="mt-space-md flex flex-col gap-space-md">
                 {caracteristiques.map(({ icone, libelle, valeur }) => (
-                  <Ligne key={libelle} icone={icone} libelle={libelle}>
+                  <LigneCaracteristique
+                    key={libelle}
+                    icone={icone}
+                    libelle={libelle}
+                  >
                     {valeur}
-                  </Ligne>
+                  </LigneCaracteristique>
                 ))}
                 {aDesEquipements && (
-                  <Ligne icone="chair" libelle="Équipements">
+                  <LigneCaracteristique icone="chair" libelle="Équipements">
                     <EquipementsEspace equipements={espace.equipements} />
-                  </Ligne>
+                  </LigneCaracteristique>
                 )}
               </dl>
             </section>
           )}
 
           {consignes.visibles.length > 0 && (
-            <section aria-labelledby="titre-consignes" className={CARTE}>
-              <h2
-                id="titre-consignes"
-                className="mb-space-sm font-headline text-headline-sm font-extrabold text-on-surface"
-              >
-                Consignes
-              </h2>
+            <section
+              aria-labelledby="titre-consignes"
+              className={`${CARTE} flex flex-col gap-space-sm`}
+            >
+              <TitreSection id="titre-consignes">Consignes</TitreSection>
               <ConsignesRepliables
                 visibles={consignes.visibles}
                 suite={consignes.suite}
@@ -130,26 +126,21 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
           aria-labelledby="titre-utiliser"
           className="flex flex-col gap-space-md rounded-flottante bg-surface-container-low p-space-md desktop:sticky desktop:top-6 desktop:p-7"
         >
-          <h2
-            id="titre-utiliser"
-            className="font-headline text-headline-sm font-extrabold text-on-surface"
-          >
-            Utiliser cet espace
-          </h2>
+          <TitreSection id="titre-utiliser">Utiliser cet espace</TitreSection>
           {espace.contact && (
-            <Aparte icone="support_agent" titre="Contact">
+            <LigneUtilisation icone="support_agent" titre="Contact">
               {espace.contact}
-            </Aparte>
+            </LigneUtilisation>
           )}
-          <Aparte icone="event_available">
+          <LigneUtilisation icone="event_available">
             Pour utiliser cet espace, proposez une activité : vous choisirez la
             date et l&apos;heure.
-          </Aparte>
+          </LigneUtilisation>
           {espace.heure_fin_max && (
-            <Aparte icone="schedule">
+            <LigneUtilisation icone="schedule">
               Les activités s&apos;y terminent au plus tard à{" "}
               {heure(espace.heure_fin_max)}.
-            </Aparte>
+            </LigneUtilisation>
           )}
           <Link
             href={lienProposerIci(espace.id)}
@@ -166,12 +157,7 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
           aria-labelledby="titre-autres"
           className="flex flex-col gap-space-md"
         >
-          <h2
-            id="titre-autres"
-            className="font-headline text-headline-sm font-extrabold text-on-surface"
-          >
-            Autres espaces et biens communs
-          </h2>
+          <TitreSection id="titre-autres">Autres espaces communs</TitreSection>
           <ul className="grid gap-space-sm desktop:grid-cols-2 desktop:gap-6">
             {autres.map((autre) => (
               <li
@@ -190,13 +176,13 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
                       {autre.nom}
                     </Link>
                   </h3>
-                  {emplacement(autre) && (
+                  {emplacementEspace(autre) && (
                     <span className="text-body-md [overflow-wrap:anywhere] text-on-surface-variant">
-                      {emplacement(autre)}
+                      {emplacementEspace(autre)}
                     </span>
                   )}
                 </div>
-                <span className="text-primary">
+                <span className="text-on-surface-variant">
                   <Icone nom="chevron_right" taille={24} />
                 </span>
               </li>
@@ -209,7 +195,7 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
 }
 
 /** Une ligne libellé et valeur des caractéristiques ; côte à côte sur ordinateur. */
-function Ligne({
+function LigneCaracteristique({
   icone,
   libelle,
   children,
@@ -234,7 +220,7 @@ function Ligne({
 }
 
 /** Une ligne de la carte « Utiliser cet espace » : pictogramme, titre facultatif et texte. */
-function Aparte({
+function LigneUtilisation({
   icone,
   titre,
   children,

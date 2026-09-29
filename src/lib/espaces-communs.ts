@@ -160,6 +160,13 @@ export function resumeEspace(
     .join(" · ");
 }
 
+/** « Bâtiment A · rez-de-chaussée » : où se trouve l'espace ; vide sans l'un ni l'autre. */
+export function emplacementEspace(
+  espace: Pick<EspaceCommun, "batiment" | "localisation">,
+) {
+  return [espace.batiment, espace.localisation].filter(Boolean).join(" · ");
+}
+
 /** La fiche d'un espace commun, sous Ma copro. */
 export function lienFicheEspace(id: string) {
   return `/ma-copro/espaces/${id}`;

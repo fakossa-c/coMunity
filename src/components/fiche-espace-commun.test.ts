@@ -148,7 +148,7 @@ describe("FicheEspaceCommun", () => {
   it("liste les autres espaces, sans celui de la fiche, chacun vers sa fiche", () => {
     const html = rendre(SALLE, { autres: [AUTRE] });
 
-    expect(html).toContain("Autres espaces et biens communs");
+    expect(html).toContain("Autres espaces communs");
     expect(html).toContain('href="/ma-copro/espaces/jardin"');
     expect(html).not.toContain('href="/ma-copro/espaces/salle"');
   });

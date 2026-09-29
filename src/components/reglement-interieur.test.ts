@@ -99,8 +99,8 @@ describe("ReglementInterieur", () => {
       )![0];
     expect(sommaire).toMatch(/class="[^"]*\bhidden\b[^"]*desktop:block/);
     expect(sommaire).toContain('href="#titre-espaces-communs"');
-    expect(sommaire).toContain("Espaces et biens communs");
-    expect(sommaire.indexOf("Espaces et biens communs")).toBeLessThan(
+    expect(sommaire).toContain("Espaces communs");
+    expect(sommaire.indexOf("Espaces communs")).toBeLessThan(
       sommaire.indexOf("Bruit et tranquillité"),
     );
     expect(sommaire.indexOf("Bruit et tranquillité")).toBeLessThan(

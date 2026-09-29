@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  emplacementEspace,
   libelleCapacite,
   lienFicheEspace,
   type EspaceCommun,
@@ -57,9 +58,7 @@ function FicheEspace({
   espace: EspaceCommun;
   photo?: string;
 }) {
-  const emplacement = [espace.batiment, espace.localisation]
-    .filter(Boolean)
-    .join(" · ");
+  const emplacement = emplacementEspace(espace);
   const lignes: (Ligne | false)[] = [
     !!espace.horaires_acces && {
       icone: "schedule",

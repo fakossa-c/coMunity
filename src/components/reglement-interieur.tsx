@@ -11,7 +11,7 @@ type Props = {
   sections: SectionLue[];
   /** La date de dernière mise à jour (ISO) ; `null` tant qu'aucune section n'a été écrite. */
   misAJourLe: string | null;
-  /** Ancre de la section « Espaces et biens communs » de la page, que le sommaire propose d'abord. */
+  /** Ancre de la section des espaces communs de la page, que le sommaire propose d'abord. */
   ancreEspaces: string;
 };
 
@@ -31,7 +31,7 @@ export function ReglementInterieur({
   ancreEspaces,
 }: Props) {
   const [ouvertes, setOuvertes] = useState<ReadonlySet<string>>(new Set());
-  const [derniere, setDerniere] = useState<string | null>(null);
+  const [derniereOuverte, setDerniereOuverte] = useState<string | null>(null);
   const prefixe = useId();
 
   if (sections.length === 0)
@@ -47,7 +47,7 @@ export function ReglementInterieur({
     const apres = new Set(ouvertes);
     if (!apres.delete(id)) {
       apres.add(id);
-      setDerniere(id);
+      setDerniereOuverte(id);
     }
     setOuvertes(apres);
   }
@@ -55,7 +55,7 @@ export function ReglementInterieur({
   /** Le lien du sommaire ouvre la section ; l'ancre y conduit. */
   function ouvrir(id: string) {
     setOuvertes(new Set(ouvertes).add(id));
-    setDerniere(id);
+    setDerniereOuverte(id);
   }
 
   return (
@@ -123,14 +123,14 @@ export function ReglementInterieur({
         >
           <a
             href={ancreEspaces}
-            className={`${LIEN_SOMMAIRE} text-primary hover:bg-surface-container`}
+            className={`${LIEN_SOMMAIRE} text-on-surface hover:bg-surface-container`}
           >
             <Icone nom="arrow_back" taille={22} className="rotate-90" />
-            Espaces et biens communs
+            Espaces communs
           </a>
           <ul className="mt-space-xs flex flex-col gap-space-xs">
             {sections.map((section) => {
-              const courante = derniere === section.id;
+              const courante = derniereOuverte === section.id;
               return (
                 <li key={section.id}>
                   <a
@@ -141,7 +141,7 @@ export function ReglementInterieur({
                   >
                     <span
                       aria-hidden="true"
-                      className={`size-2 shrink-0 rounded-full bg-primary transition-transform duration-(--duree-longue) ease-journal ${courante ? "scale-100" : "scale-0"}`}
+                      className={`size-2 shrink-0 rounded-full bg-current transition-transform duration-(--duree-longue) ease-journal ${courante ? "scale-100" : "scale-0"}`}
                     />
                     <span className="[overflow-wrap:anywhere]">
                       {section.titre}

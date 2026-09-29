@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Espace commun" };
 type Props = { params: Promise<{ identifiant: string }> };
 
 /** La fiche d'un espace commun : les mêmes lecteurs que Ma copro, dont elle est une page secondaire. */
-export default async function FicheEspace({ params }: Props) {
+export default async function PageFicheEspace({ params }: Props) {
   const { identifiant } = await params;
   const chemin = `/ma-copro/espaces/${identifiant}`;
   const session = await lireSession();
