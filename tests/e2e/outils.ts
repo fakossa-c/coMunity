@@ -205,6 +205,29 @@ export async function inscrireResident(
   if (inscription.error) throw inscription.error;
 }
 
+/** Le retour de `residentId` sur l'activité désignée par son identifiant public, déposé sans passer par la fiche. */
+export async function laisserRetour(
+  identifiant: string,
+  residentId: string,
+  note: number,
+  commentaire: string,
+) {
+  const admin = clientAdmin();
+  const { data: activite, error } = await admin
+    .from("activite")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .single();
+  if (error) throw error;
+  const retour = await admin.from("retour").insert({
+    activite_id: activite.id,
+    resident_id: residentId,
+    note,
+    commentaire,
+  });
+  if (retour.error) throw retour.error;
+}
+
 /** Passe l'activité à « annulée », comme le fait son créateur depuis la fiche. */
 export async function annulerActivite(identifiant: string) {
   const { error } = await clientAdmin()
