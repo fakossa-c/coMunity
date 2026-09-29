@@ -23,8 +23,11 @@ import { origine } from "@/lib/fiche-activite";
 import {
   lienAnnonce,
   lireFicheAnnonce,
+  lireSondageDeLIdentifiant,
   urlFichierAnnonce,
 } from "@/lib/lecture-annonces";
+import { lireSession } from "@/lib/session";
+import { SondageAnnonce } from "../sondage-annonce";
 
 type Props = { params: Promise<{ identifiant: string }> };
 
@@ -62,6 +65,9 @@ export default async function PageAnnonce({ params }: Props) {
   const type = typesAnnonce[annonce.type];
   const infos = infosAnnonce(annonce);
   const expiree = estExpiree(annonce.expire_le);
+  // Le lien est public, le sondage non : un visiteur lit l'annonce sans lui.
+  const session = await lireSession();
+  const sondage = session ? await lireSondageDeLIdentifiant(identifiant) : null;
 
   return (
     <EcranSecondaire
@@ -100,6 +106,12 @@ export default async function PageAnnonce({ params }: Props) {
         {infos.length > 0 && <PanneauInfos lignes={infos} />}
         {annonce.texte && (
           <BlocTexte titre="Détails">{annonce.texte}</BlocTexte>
+        )}
+        {sondage && (
+          <SondageAnnonce
+            lu={sondage}
+            peutRepondre={session?.statut === "valide"}
+          />
         )}
         {annonce.document_chemin && (
           <a

@@ -158,3 +158,18 @@ export async function lireSondageDeLAnnonce(
   if (error) throw new Error(`Sondage illisible : ${error.message}`);
   return data;
 }
+
+/** Le sondage de l'annonce d'un lien public, tel que la personne connectée le lit. `null` sans sondage. */
+export async function lireSondageDeLIdentifiant(
+  identifiant: string,
+): Promise<SondageLu | null> {
+  const supabase = await clientSession();
+  const { data, error } = await supabase
+    .from("annonce")
+    .select("id")
+    .eq("identifiant_public", identifiant)
+    .maybeSingle<{ id: string }>();
+  if (error) throw new Error(`Annonce illisible : ${error.message}`);
+  if (!data) return null;
+  return (await lireSondages([data.id])).get(data.id) ?? null;
+}

@@ -33,6 +33,7 @@ export async function repondreSondage(
         "Votre réponse n'a pas pu être enregistrée. Réessayez dans un instant.",
     };
 
-  revalidatePath("/annonces");
+  // La liste et la page de chaque annonce : le sondage se répond sur l'une comme sur l'autre.
+  revalidatePath("/annonces", "layout");
   return { ok: true, message: "Merci, votre réponse est enregistrée" };
 }

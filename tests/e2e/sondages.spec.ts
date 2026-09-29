@@ -273,3 +273,34 @@ test("le conseil syndical qui n'a pas encore répondu lit les résultats et peut
     annonce.getByRole("listitem").filter({ hasText: "7h à 21h" }),
   ).toContainText("Votre choix");
 });
+
+test("un résident répond depuis le lien public de l'annonce, un visiteur n'y voit pas le sondage", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const titre = titreUnique("Sondage partagé");
+  const { annonce } = await annonceAvecSondage(jour(5), titre);
+  const lien = `/annonces/${annonce.identifiant_public}`;
+
+  await page.goto(lien);
+  await expect(
+    page.getByRole("heading", { level: 1, name: titre }),
+  ).toBeVisible();
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await expect(page.getByRole("main")).not.toContainText(
+    "Quel créneau vous convient le mieux ?",
+  );
+
+  await seConnecter(page, resident.email);
+  await page.goto(lien);
+  await page.getByRole("radio", { name: "Accès 24h/24" }).check();
+  await page.getByRole("button", { name: "Envoyer ma réponse" }).click();
+
+  await expect(
+    page.getByText("Merci, votre réponse est enregistrée"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Accès 24h/24" }),
+  ).toContainText("Votre choix");
+});
