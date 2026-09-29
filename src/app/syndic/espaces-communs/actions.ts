@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -8,6 +10,12 @@ import {
   type SaisieEspace,
 } from "@/lib/espaces-communs";
 import { heure } from "@/lib/partage-activite";
+import {
+  BUCKET_PHOTOS_ESPACES,
+  cheminPhotoEspace,
+  estCheminPhotoEspace,
+} from "@/lib/photo-espace-commun";
+import { TAILLE_MAX_PHOTO } from "@/lib/photos-activite";
 import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
@@ -33,19 +41,68 @@ function retourALaListe(
   redirect(`${LISTE}?${new URLSearchParams({ fait, nom })}`);
 }
 
+/** Supprime une photo du bucket ; au pire, un fichier orphelin y reste : plus aucun espace commun ne le montre. */
+async function retirerPhoto(supabase: SupabaseClient, chemin: string | null) {
+  if (chemin && estCheminPhotoEspace(chemin))
+    await supabase.storage.from(BUCKET_PHOTOS_ESPACES).remove([chemin]);
+}
+
+type Depot =
+  { ok: true; chemin: string; token: string } | { ok: false; message: string };
+
 /**
- * Ajoute un espace commun (`id` absent) ou enregistre sa modification. La base ne laisse
- * écrire que le conseil syndical.
+ * Autorise le navigateur à déposer la photo d'un espace commun : vérifie son poids (`taille`, en
+ * octets), puis donne le chemin et un jeton à usage unique. La photo ne transite pas par le
+ * serveur. La base ne laisse déposer que le conseil syndical.
+ */
+export async function preparerDepotPhoto(taille: number): Promise<Depot> {
+  if (!(taille > 0 && taille <= TAILLE_MAX_PHOTO))
+    return {
+      ok: false,
+      message: "La photo est trop lourde. Choisissez-en une autre.",
+    };
+
+  const supabase = await clientSession();
+  const chemin = cheminPhotoEspace(randomUUID());
+  const { data, error } = await supabase.storage
+    .from(BUCKET_PHOTOS_ESPACES)
+    .createSignedUploadUrl(chemin);
+  if (error)
+    return {
+      ok: false,
+      message:
+        "La photo n'a pas pu être envoyée. Vous n'avez peut-être plus le droit de gérer les espaces communs.",
+    };
+  return { ok: true, chemin, token: data.token };
+}
+
+/**
+ * Ajoute un espace commun (`id` absent) ou enregistre sa modification. `photoChemin` est la photo
+ * de l'espace, déjà déposée par le navigateur, ou `null` pour n'en avoir aucune : la photo
+ * remplacée ou retirée disparaît du bucket. La base ne laisse écrire que le conseil syndical.
  */
 export async function enregistrerEspace(
   id: string | null,
   saisie: SaisieEspace,
+  photoChemin: string | null = null,
 ): Promise<Resultat> {
   const verdict = verifierEspace(saisie);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };
+  if (photoChemin !== null && !estCheminPhotoEspace(photoChemin))
+    return { ok: false, message: "La photo n'est pas valide." };
 
-  const espace = versEspaceCommun(saisie);
   const supabase = await clientSession();
+  let anciennePhoto: string | null = null;
+  if (id) {
+    const { data: avant } = await supabase
+      .from("espace_commun")
+      .select("photo_chemin")
+      .eq("id", id)
+      .maybeSingle();
+    anciennePhoto = avant?.photo_chemin ?? null;
+  }
+
+  const espace = { ...versEspaceCommun(saisie), photo_chemin: photoChemin };
   const { data, error } = id
     ? await supabase
         .from("espace_commun")
@@ -66,12 +123,14 @@ export async function enregistrerEspace(
         "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le modifier.",
     };
 
+  if (anciennePhoto !== photoChemin)
+    await retirerPhoto(supabase, anciennePhoto);
   return retourALaListe(id ? "enregistre" : "ajoute", espace.nom);
 }
 
 /**
- * Supprime un espace commun. Les activités qui s'y tenaient gardent son nom comme lieu libre,
- * sans ses règles.
+ * Supprime un espace commun, avec sa photo. Les activités qui s'y tenaient gardent son nom comme
+ * lieu libre, sans ses règles.
  */
 export async function supprimerEspace(
   id: string,
@@ -82,7 +141,7 @@ export async function supprimerEspace(
     .from("espace_commun")
     .delete()
     .eq("id", id)
-    .select("id");
+    .select("photo_chemin");
   if (error)
     return echec(
       error.code,
@@ -95,6 +154,7 @@ export async function supprimerEspace(
         "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le supprimer.",
     };
 
+  await retirerPhoto(supabase, data[0].photo_chemin);
   return retourALaListe("supprime", nom);
 }
 

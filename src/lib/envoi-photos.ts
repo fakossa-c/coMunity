@@ -7,11 +7,13 @@ type Depot = { chemin: string; token: string };
 /**
  * Envoie chaque photo compressée vers son dépôt, directement depuis le navigateur. Rend, dans le
  * même ordre que `photos`, le chemin de la photo envoyée ou `null` quand son envoi a échoué (ou
- * qu'aucun dépôt ne lui était autorisé) : les autres photos partent quand même.
+ * qu'aucun dépôt ne lui était autorisé) : les autres photos partent quand même. Le bucket est
+ * celui des photos d'activité, sauf indication contraire.
  */
 export async function envoyerPhotos(
   depots: Depot[],
   photos: Blob[],
+  bucket = BUCKET_PHOTOS_ACTIVITE,
 ): Promise<(string | null)[]> {
   const supabase = clientNavigateur();
   return Promise.all(
@@ -19,7 +21,7 @@ export async function envoyerPhotos(
       const depot = depots[i];
       if (!depot) return null;
       const { error } = await supabase.storage
-        .from(BUCKET_PHOTOS_ACTIVITE)
+        .from(bucket)
         .uploadToSignedUrl(depot.chemin, depot.token, photo, {
           contentType: photo.type,
         });
