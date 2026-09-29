@@ -80,18 +80,19 @@ function FicheEspace({ espace }: { espace: EspaceCommun }) {
       {renseignees.length > 0 && (
         <dl className="flex flex-col gap-space-sm">
           {renseignees.map(({ icone, libelle, valeur }) => (
-            <div key={libelle} className="flex items-start gap-space-sm">
-              <span className="text-texte-date">
-                <Icone nom={icone} taille={24} />
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <dt className="text-body-md text-on-surface-variant">
-                  {libelle}
-                </dt>
-                <dd className="max-w-[65ch] text-body-lg [overflow-wrap:anywhere] whitespace-pre-line text-on-surface">
-                  {valeur}
-                </dd>
-              </div>
+            <div
+              key={libelle}
+              className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-space-sm"
+            >
+              <dt className="col-span-2 grid grid-cols-subgrid items-center text-body-md text-on-surface-variant">
+                <span className="text-texte-date">
+                  <Icone nom={icone} taille={24} />
+                </span>
+                {libelle}
+              </dt>
+              <dd className="col-start-2 max-w-[65ch] text-body-lg [overflow-wrap:anywhere] whitespace-pre-line text-on-surface">
+                {valeur}
+              </dd>
             </div>
           ))}
         </dl>

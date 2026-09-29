@@ -62,16 +62,16 @@ describe("EspacesCommunsCopro", () => {
     expect(html).toContain("Rez-de-chaussée, à gauche du hall");
     expect(html).toContain("Une grande pièce claire avec une cuisine.");
     expect(html).toMatch(
-      /<dt[^>]*>Horaires d&#x27;accès<\/dt>\s*<dd[^>]*>Tous les jours de 9h à 21h/,
+      /<dt[^>]*>(?:(?!<\/dt>).)*Horaires d&#x27;accès<\/dt>\s*<dd[^>]*>Tous les jours de 9h à 21h/,
     );
     expect(html).toMatch(
-      /<dt[^>]*>Contact<\/dt>\s*<dd[^>]*>Colette, gardienne : 06 12 34 56 78/,
+      /<dt[^>]*>(?:(?!<\/dt>).)*Contact<\/dt>\s*<dd[^>]*>Colette, gardienne : 06 12 34 56 78/,
     );
     expect(html).toMatch(
-      /<dt[^>]*>Capacité<\/dt>\s*<dd[^>]*>Jusqu&#x27;à 20 personnes/,
+      /<dt[^>]*>(?:(?!<\/dt>).)*Capacité<\/dt>\s*<dd[^>]*>Jusqu&#x27;à 20 personnes/,
     );
     expect(html).toMatch(
-      /<dt[^>]*>Consignes<\/dt>\s*<dd[^>]*>Laissez la salle propre\./,
+      /<dt[^>]*>(?:(?!<\/dt>).)*Consignes<\/dt>\s*<dd[^>]*>Laissez la salle propre\./,
     );
   });
 

@@ -88,6 +88,55 @@ describe("espaces communs : qui lit, qui écrit", () => {
     }
   });
 
+  it("Ma copro : un résident validé ou en attente et le conseil syndical lisent tous les champs à afficher", async () => {
+    const syndic = await nouveauSyndic();
+    const espace = await nouvelEspace(syndic);
+    const lecteurs = [
+      syndic,
+      await nouveauResident("valide"),
+      await nouveauResident("en_attente"),
+    ];
+
+    for (const lecteur of lecteurs) {
+      const { data } = await lecteur.client
+        .from("espace_commun")
+        .select(
+          "nom, batiment, localisation, description, capacite, equipements, consignes, horaires_acces, contact",
+        )
+        .eq("id", espace.id);
+      expect(data).toEqual([
+        {
+          nom: espace.nom,
+          batiment: SALLE.batiment,
+          localisation: SALLE.localisation,
+          description: SALLE.description,
+          capacite: SALLE.capacite,
+          equipements: SALLE.equipements,
+          consignes: SALLE.consignes,
+          horaires_acces: SALLE.horaires_acces,
+          contact: SALLE.contact,
+        },
+      ]);
+    }
+  });
+
+  it("Ma copro : un membre du conseil syndical dont l'accès est retiré n'en lit aucun", async () => {
+    const syndic = await nouveauSyndic();
+    const retire = await nouveauSyndic();
+    const espace = await nouvelEspace(syndic);
+    await clientAdmin()
+      .from("profil")
+      .update({ statut: "retire" })
+      .eq("id", retire.id);
+
+    const { data } = await retire.client
+      .from("espace_commun")
+      .select("id")
+      .eq("id", espace.id);
+
+    expect(data).toEqual([]);
+  });
+
   it("un résident refusé ou retiré, et un visiteur, n'en lisent aucun", async () => {
     const syndic = await nouveauSyndic();
     const espace = await nouvelEspace(syndic);
