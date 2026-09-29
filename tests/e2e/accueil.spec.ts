@@ -203,7 +203,10 @@ test("les anciennes pages n'existent plus", async ({ page }) => {
     await expect(
       page.getByRole("main").getByRole("heading", { name: "Page introuvable" }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Accueil" })).toBeVisible();
+    // Le lien de retour : sur ordinateur, l'onglet « Accueil » de la barre du haut le précède.
+    await expect(
+      page.getByRole("link", { name: "Accueil" }).last(),
+    ).toBeVisible();
   }
 });
 

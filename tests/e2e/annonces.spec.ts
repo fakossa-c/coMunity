@@ -60,7 +60,10 @@ test("le conseil syndical publie une annonce épinglée, un résident la voit en
 
   await seConnecter(page, syndic.email);
   await page.goto("/syndic");
-  await page.getByRole("link", { name: /^Annonces/ }).click();
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: /^Annonces/ })
+    .click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Annonces" }),
   ).toBeVisible();

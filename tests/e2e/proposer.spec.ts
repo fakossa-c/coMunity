@@ -84,7 +84,8 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
 
   await seConnecter(page, resident.email);
   await page.goto("/activites");
-  await page.getByRole("link", { name: "Proposer" }).click();
+  // Le bouton flottant du mobile, ou « Proposer » de la barre du haut sur ordinateur.
+  await page.getByRole("link", { name: "Proposer" }).first().click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Proposer" }),
   ).toBeVisible();
