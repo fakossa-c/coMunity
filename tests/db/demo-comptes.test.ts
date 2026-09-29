@@ -17,6 +17,9 @@ const modele = {
 };
 const emails = COMPTES.map((c) => adresseDemo(c.username, modele));
 
+// Amorcer ou retirer enchaîne une centaine d'appels : plus que les 5 s par défaut quand la suite tourne en entier.
+const DELAI_LONG = 60_000;
+
 function parametres() {
   const { url, cleSecrete } = inject("supabase");
   return { url, cleSecrete, modele };
@@ -43,11 +46,11 @@ async function activitesDemo() {
 beforeAll(async () => {
   await retirerDemo(parametres());
   await amorcerDemo(parametres());
-});
+}, DELAI_LONG);
 
 afterAll(async () => {
   await retirerDemo(parametres());
-});
+}, DELAI_LONG);
 
 describe("amorcerDemo : comptes", () => {
   it("crée un compte par username, avec le rôle et le statut prévus", async () => {
@@ -72,16 +75,20 @@ describe("amorcerDemo : comptes", () => {
     }
   });
 
-  it("ne double rien quand on relance", async () => {
-    const avant = {
-      profils: (await profilsDemo()).length,
-      activites: (await activitesDemo()).length,
-    };
-    await amorcerDemo(parametres());
-    expect((await profilsDemo()).length).toBe(avant.profils);
-    expect((await activitesDemo()).length).toBe(avant.activites);
-    await expect(connecter(emails[0], emails[0])).resolves.toBeDefined();
-  });
+  it(
+    "ne double rien quand on relance",
+    async () => {
+      const avant = {
+        profils: (await profilsDemo()).length,
+        activites: (await activitesDemo()).length,
+      };
+      await amorcerDemo(parametres());
+      expect((await profilsDemo()).length).toBe(avant.profils);
+      expect((await activitesDemo()).length).toBe(avant.activites);
+      await expect(connecter(emails[0], emails[0])).resolves.toBeDefined();
+    },
+    DELAI_LONG,
+  );
 });
 
 describe("amorcerDemo : activités", () => {
@@ -196,35 +203,46 @@ describe("amorcerDemo : annonces", () => {
 });
 
 describe("retirerDemo", () => {
-  it("supprime les comptes, leurs activités et les annonces de démonstration, rien d'autre", async () => {
-    const admin = clientAdmin();
-    const etranger = await nouveauResident();
-    const autre = await admin
-      .from("annonce")
-      .insert({ type: "info", titre: "Annonce d'un autre", texte: "à garder" })
-      .select("id")
-      .single();
+  it(
+    "supprime les comptes, leurs activités et les annonces de démonstration, rien d'autre",
+    async () => {
+      const admin = clientAdmin();
+      const etranger = await nouveauResident();
+      const autre = await admin
+        .from("annonce")
+        .insert({
+          type: "info",
+          titre: "Annonce d'un autre",
+          texte: "à garder",
+        })
+        .select("id")
+        .single();
 
-    const retires = await retirerDemo(parametres());
-    expect(retires.comptes).toBe(COMPTES.length);
+      const retires = await retirerDemo(parametres());
+      expect(retires.comptes).toBe(COMPTES.length);
 
-    expect(await profilsDemo()).toHaveLength(0);
-    expect(await activitesDemo()).toHaveLength(0);
-    const annonces = await admin
-      .from("annonce")
-      .select("id")
-      .like("identifiant_public", "dmtt%");
-    expect(annonces.data).toHaveLength(0);
+      expect(await profilsDemo()).toHaveLength(0);
+      expect(await activitesDemo()).toHaveLength(0);
+      const annonces = await admin
+        .from("annonce")
+        .select("id")
+        .like("identifiant_public", "dmtt%");
+      expect(annonces.data).toHaveLength(0);
 
-    const reste = await admin.from("profil").select("id").eq("id", etranger.id);
-    expect(reste.data).toHaveLength(1);
-    const annonceRestante = await admin
-      .from("annonce")
-      .select("id")
-      .eq("id", autre.data!.id);
-    expect(annonceRestante.data).toHaveLength(1);
-    await admin.from("annonce").delete().eq("id", autre.data!.id);
-  });
+      const reste = await admin
+        .from("profil")
+        .select("id")
+        .eq("id", etranger.id);
+      expect(reste.data).toHaveLength(1);
+      const annonceRestante = await admin
+        .from("annonce")
+        .select("id")
+        .eq("id", autre.data!.id);
+      expect(annonceRestante.data).toHaveLength(1);
+      await admin.from("annonce").delete().eq("id", autre.data!.id);
+    },
+    DELAI_LONG,
+  );
 
   it("peut se relancer sans rien à retirer", async () => {
     await expect(retirerDemo(parametres())).resolves.toMatchObject({
