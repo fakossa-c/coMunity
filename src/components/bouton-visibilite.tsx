@@ -43,7 +43,6 @@ export function BoutonVisibilite({
   return (
     <button
       type="button"
-      aria-pressed={visible}
       onClick={onClick}
       disabled={disabled}
       className={`${classes} ${ton} transition-transform active:translate-y-0.5 disabled:opacity-50`}

@@ -111,7 +111,6 @@ test("par défaut, les voisins ne voient que le pseudo ; chaque visibilité se r
   for (const nom of ["Téléphone", "Bâtiment", "Étage"]) {
     const bouton = carte.getByRole("button", { name: new RegExp(nom) });
     await expect(bouton).toContainText("Masqué");
-    await expect(bouton).toHaveAttribute("aria-pressed", "false");
   }
   await page.screenshot({
     path: test.info().outputPath("mes-informations-defaut.png"),
@@ -143,9 +142,9 @@ test("par défaut, les voisins ne voient que le pseudo ; chaque visibilité se r
   await expect(synthese(page)).toContainText(
     "Les voisins voient votre pseudo, téléphone, bâtiment et étage.",
   );
-  await expect(
-    carte.getByRole("button", { name: /Téléphone/ }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(carte.getByRole("button", { name: /Téléphone/ })).toContainText(
+    "Visible",
+  );
 
   enregistre = reglageEnregistre(page);
   await carte.getByRole("button", { name: /Téléphone/ }).click();

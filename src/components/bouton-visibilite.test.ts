@@ -18,7 +18,6 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("<button");
     expect(html).toContain("Visible");
     expect(html).toContain("Téléphone");
-    expect(html).toContain('aria-pressed="true"');
   });
 
   it("dit « Masqué » quand l'information ne l'est pas", () => {
@@ -31,7 +30,6 @@ describe("BoutonVisibilite", () => {
     );
 
     expect(html).toContain("Masqué");
-    expect(html).toContain('aria-pressed="false"');
   });
 
   it("n'est pas un bouton quand l'information est verrouillée : cadenas, toujours visible", () => {

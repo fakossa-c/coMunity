@@ -236,7 +236,8 @@ drop function public.nom_affiche(text, text);
 /**
  * Ce qu'un résident lit d'un voisin : son pseudo, plus le téléphone, le bâtiment et l'étage que
  * le voisin a rendus visibles. Jamais son prénom ni son nom, ni sa photo. Le conseil syndical, lui,
- * lit tout le profil directement. Vide pour un compte qui ne consulte pas la résidence.
+ * lit tout le profil directement. Vide pour un compte qui ne consulte pas la résidence, et pour un
+ * voisin dont le compte n'est pas validé.
  */
 create function public.fiche_voisin(voisin uuid)
 returns table (pseudo text, telephone text, batiment text, etage smallint)
@@ -251,7 +252,7 @@ as $$
     case when p.batiment_visible then p.batiment end,
     case when p.etage_visible then p.etage end
   from public.profil p
-  where p.id = voisin and public.peut_consulter();
+  where p.id = voisin and p.statut = 'valide' and public.peut_consulter();
 $$;
 
 revoke execute on function public.fiche_voisin(uuid) from public, anon;

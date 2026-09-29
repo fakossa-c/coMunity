@@ -435,6 +435,17 @@ describe("ce que lit chaque rôle", () => {
     ]);
   });
 
+  it("la fiche d'un voisin dont le compte n'est pas validé est vide", async () => {
+    const resident = await nouveauResident();
+    const enAttente = await nouveauResident("en_attente");
+
+    const { data } = await resident.client
+      .rpc("fiche_voisin", { voisin: enAttente.id })
+      .maybeSingle();
+
+    expect(data).toBeNull();
+  });
+
   it("un visiteur ou un compte refusé ne lit pas la fiche d'un voisin", async () => {
     const voisin = await nouveauResident();
     const refuse = await nouveauResident("refuse");

@@ -7,21 +7,9 @@ describe("identite", () => {
       identite({
         pseudo: "dany",
         prenom: "Danielle",
-        nom: "Martin",
         email: "d@exemple.fr",
       }),
     ).toEqual({ initiale: "D", nom: "dany" });
-  });
-
-  it("se rabat sur le prénom et le nom d'un compte sans pseudo", () => {
-    expect(
-      identite({
-        pseudo: null,
-        prenom: "danielle",
-        nom: "Martin",
-        email: "d@exemple.fr",
-      }),
-    ).toEqual({ initiale: "D", nom: "danielle Martin" });
   });
 
   it("garde l'initiale d'un prénom accentué", () => {
@@ -29,7 +17,6 @@ describe("identite", () => {
       identite({
         pseudo: null,
         prenom: "Élise",
-        nom: "Roy",
         email: "e@exemple.fr",
       }).initiale,
     ).toBe("É");
@@ -40,7 +27,6 @@ describe("identite", () => {
       identite({
         pseudo: null,
         prenom: null,
-        nom: null,
         email: "gestion@syndic.fr",
       }),
     ).toEqual({ initiale: "G", nom: "gestion@syndic.fr" });

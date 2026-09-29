@@ -10,34 +10,33 @@ const INTERETS = "/profil/interets";
 const NON_CONNECTE = { ok: false, message: "Vous devez être connecté." };
 const DEJA_DECLARE = "Vous avez déjà déclaré ce centre d'intérêt.";
 
-/** Les centres d'intérêt de la personne connectée, dans l'ordre où elle les a déclarés. */
-async function mesInterets() {
-  const supabase = await clientSession();
-  const { data } = await supabase
-    .from("centre_interet")
-    .select("id, libelle")
-    .order("cree_le");
-  return { supabase, interets: (data ?? []) as CentreInteret[] };
-}
-
 async function personneConnectee() {
-  const { supabase, interets } = await mesInterets();
+  const supabase = await clientSession();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return { supabase, interets, user };
+  return { supabase, user };
+}
+
+/** Les centres d'intérêt de la personne connectée, pour repérer un doublon. */
+async function mesInterets(
+  supabase: Awaited<ReturnType<typeof clientSession>>,
+) {
+  const { data } = await supabase.from("centre_interet").select("id, libelle");
+  return (data ?? []) as CentreInteret[];
 }
 
 /** Déclare un centre d'intérêt. */
 export async function ajouterInteret(libelle: string): Promise<Resultat> {
-  const { supabase, interets, user } = await personneConnectee();
+  const { supabase, user } = await personneConnectee();
   if (!user) return NON_CONNECTE;
-  const refus = refusInteret(String(libelle), interets);
+  const saisi = String(libelle).trim();
+  const refus = refusInteret(saisi, await mesInterets(supabase));
   if (refus) return { ok: false, message: refus };
 
   const { error } = await supabase
     .from("centre_interet")
-    .insert({ profil_id: user.id, libelle: String(libelle).trim() });
+    .insert({ profil_id: user.id, libelle: saisi });
   if (error) {
     return {
       ok: false,
@@ -49,7 +48,7 @@ export async function ajouterInteret(libelle: string): Promise<Resultat> {
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${String(libelle).trim()} » est ajouté.` };
+  return { ok: true, message: `« ${saisi} » est ajouté.` };
 }
 
 /** Change le libellé d'un centre d'intérêt de la personne connectée. */
@@ -57,14 +56,15 @@ export async function modifierInteret(
   id: string,
   libelle: string,
 ): Promise<Resultat> {
-  const { supabase, interets, user } = await personneConnectee();
+  const { supabase, user } = await personneConnectee();
   if (!user) return NON_CONNECTE;
-  const refus = refusInteret(String(libelle), interets, id);
+  const saisi = String(libelle).trim();
+  const refus = refusInteret(saisi, await mesInterets(supabase), id);
   if (refus) return { ok: false, message: refus };
 
   const { data, error } = await supabase
     .from("centre_interet")
-    .update({ libelle: String(libelle).trim() })
+    .update({ libelle: saisi })
     .eq("id", id)
     .select("id");
   if (error) {
@@ -81,7 +81,7 @@ export async function modifierInteret(
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${String(libelle).trim()} » est enregistré.` };
+  return { ok: true, message: `« ${saisi} » est enregistré.` };
 }
 
 /** Retire un centre d'intérêt de la personne connectée. */

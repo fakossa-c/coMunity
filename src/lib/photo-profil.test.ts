@@ -3,7 +3,6 @@ import {
   BUCKET_PHOTOS_PROFILS,
   cheminPhotoProfil,
   estCheminPhotoProfil,
-  texteAlternatifProfil,
 } from "./photo-profil";
 
 const PROFIL = "3f0a7b1e-5c2d-4e8f-9a6b-1c2d3e4f5a6b";
@@ -30,9 +29,5 @@ describe("photo de profil", () => {
 
   it("refuse tout chemin quand l'identifiant du profil n'en est pas un", () => {
     expect(estCheminPhotoProfil(`a.*/${PHOTO}.jpg`, ".*")).toBe(false);
-  });
-
-  it("décrit la photo par le pseudo", () => {
-    expect(texteAlternatifProfil("Dany")).toBe("Dany, photo de profil");
   });
 });

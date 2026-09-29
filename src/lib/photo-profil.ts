@@ -20,8 +20,3 @@ export function estCheminPhotoProfil(chemin: string, profil: string) {
     new RegExp(`^${profil}/${UUID}\\.jpg$`).test(chemin)
   );
 }
-
-/** Le texte alternatif de la photo d'un profil. */
-export function texteAlternatifProfil(pseudo: string) {
-  return `${pseudo}, photo de profil`;
-}
