@@ -37,7 +37,7 @@ Logo officiel : mot-symbole « coMunity », le M formé de deux mains qui se ser
 
 ## Écrans et en-têtes
 Chaque écran est un `Ecran` : une zone qui défile, une barre fixe en bas. L'avatar marine est présent partout et ouvre le `MenuProfil`.
-- **Accueil** : `EnTeteResidence` (logo, résidence, avatar) et `Salutation` défilent ; `BarreFiltres` **colle** ; activités groupées par jour sous un `TitreSection`, cartes à détails dépliables ; `BarreNavigation` fixe.
+- **Accueil** : `EnTeteResidence` (logo, résidence, avatar) et `Salutation` défilent ; `BarreFiltres` **colle** ; activités groupées par jour sous un `TitreSection`, cartes à détails dépliables (sur ordinateur, en grille de deux colonnes) ; `BarreNavigation` fixe. Aucune barre de défilement horizontale visible, nulle part.
 - **Activités** : `EnTeteResidence`, `TitrePage` défilent ; `Onglets` + `BarreFiltres variante="liste"` **collent** ensemble ; `BoutonFlottant` fixe ; `BarreNavigation` fixe.
 - **Annonces** : `EnTeteResidence`, `TitrePage` défilent ; `BarreFiltres` **colle** ; `CarteAnnonce` (dont `Sondage`) ; `BarreNavigation` fixe.
 - **Fiche** : `BarreRetour` (Retour, Partager, avatar) **colle** ; `BarreActionFixe` (compteur + CTA) fixe. Réserve basse 170 px.

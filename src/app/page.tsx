@@ -144,7 +144,7 @@ function Catalogue({
               <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
                 {jour.titre}
               </TitreSection>
-              <ul className="flex flex-col gap-bloc">
+              <ul className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start">
                 {jour.activites.map((activite) => (
                   <li key={activite.id}>
                     <CarteActivite activite={activite} detailsDepliables />

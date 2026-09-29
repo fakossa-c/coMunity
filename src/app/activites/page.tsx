@@ -59,7 +59,10 @@ function ListeActivites({
   activites: Activite[];
 }) {
   return (
-    <ul aria-label={libelle} className="flex flex-col gap-space-sm">
+    <ul
+      aria-label={libelle}
+      className="flex flex-col gap-space-sm desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-bloc"
+    >
       {activites.map((activite) => (
         <li key={activite.id}>
           <CarteActivite activite={activite} />
