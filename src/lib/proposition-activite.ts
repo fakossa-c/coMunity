@@ -81,7 +81,7 @@ export const SAISIE_VIDE: SaisieActivite = {
   precision_acces: "",
   places: "sans_limite",
   capacite_max: "",
-  capacite_min: "",
+  capacite_min: "1",
   etiquettes: [],
   conseils_pratiques: "",
   materiel_prevoir: "",
