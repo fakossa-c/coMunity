@@ -515,13 +515,12 @@ describe("le conseil syndical modifie ou annule toute activité", () => {
     expect(data).toEqual([]);
   });
 
-  it("annule l'activité d'un résident, inscrits gardés, en relecture ou masquée comprise", async () => {
+  it("annule l'activité publiée d'un résident, inscrits gardés", async () => {
     const createur = await nouveauResident("valide");
     const syndic = await nouveauSyndic();
     const inscrit = await nouveauResident("valide");
     const identifiant = await publier(createur);
     await inscrire(inscrit, identifiant);
-    await moderer(syndic, identifiant, "masquer", "Signalement");
 
     const { error } = await syndic.client.rpc("annuler_activite", {
       p_identifiant: identifiant,
@@ -533,6 +532,48 @@ describe("le conseil syndical modifie ou annule toute activité", () => {
       statut: "annulee",
       mes_accompagnants: 0,
     });
+  });
+
+  it("n'annule pas une activité en relecture ou masquée : annulée, elle deviendrait publique", async () => {
+    const createur = await nouveauResident("valide");
+    const syndic = await nouveauSyndic();
+    const enRelecture = await publier(createur);
+    const masquee = await publier(createur);
+    await mettreEnRelecture(createur, enRelecture);
+    await moderer(syndic, masquee, "masquer", "Hors sujet");
+
+    for (const identifiant of [enRelecture, masquee]) {
+      for (const auteur of [createur, syndic]) {
+        const { error } = await auteur.client.rpc("annuler_activite", {
+          p_identifiant: identifiant,
+        });
+        expect(error?.code).toBe("P0011");
+      }
+      expect((await fiche(clientVisiteur(), identifiant)).data).toBeNull();
+    }
+    expect(await statutDe(syndic, enRelecture)).toBe("en_relecture");
+    expect(await statutDe(syndic, masquee)).toBe("masquee");
+  });
+
+  it("n'accepte plus de retour sur une activité masquée ou en relecture", async () => {
+    const createur = await nouveauResident("valide");
+    const syndic = await nouveauSyndic();
+    const inscrit = await nouveauResident("valide");
+    const identifiant = await publier(createur, {
+      date_activite: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10),
+    });
+    await inscrire(inscrit, identifiant);
+    await moderer(syndic, identifiant, "masquer", "Signalement");
+
+    const { error } = await inscrit.client.rpc("laisser_retour", {
+      p_identifiant: identifiant,
+      p_note: 4,
+      p_commentaire: "Très bien",
+    });
+
+    expect(error?.code).toBe("P0002");
   });
 
   it("un résident n'annule toujours pas l'activité d'autrui", async () => {
