@@ -21,6 +21,40 @@ type PropsCadre = {
   children: ReactNode;
 };
 
+/** Texte d'aide sous un champ : `aria-describedby` de la saisie le désigne par `<id>-aide`. */
+export function AideChamp({
+  id,
+  children,
+}: {
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
+      {children}
+    </p>
+  );
+}
+
+/** Erreur sous un champ, annoncée : `aria-describedby` la désigne par `<id>-erreur`. */
+export function ErreurChamp({
+  id,
+  children,
+}: {
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <p
+      id={`${id}-erreur`}
+      role="alert"
+      className="font-headline text-label-lg text-error"
+    >
+      {children}
+    </p>
+  );
+}
+
 /** Libellé au-dessus, boîte de 56 px, aide puis erreur en dessous. */
 function Cadre({
   id,
@@ -53,21 +87,9 @@ function Cadre({
           {compteur.longueur} / {compteur.max} caractères
         </p>
       ) : (
-        aide && (
-          <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
-            {aide}
-          </p>
-        )
+        aide && <AideChamp id={id}>{aide}</AideChamp>
       )}
-      {erreur && (
-        <p
-          id={`${id}-erreur`}
-          role="alert"
-          className="font-headline text-label-lg text-error"
-        >
-          {erreur}
-        </p>
-      )}
+      {erreur && <ErreurChamp id={id}>{erreur}</ErreurChamp>}
     </div>
   );
 }

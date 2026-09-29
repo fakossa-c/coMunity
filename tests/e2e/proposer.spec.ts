@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
   saisirLieuLibre,
@@ -47,9 +48,9 @@ async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await continuer(page);
 
   await etape(page, 2);
-  await page.getByLabel("Date").fill(dansUnMois());
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois());
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
   await page
     .getByLabel("Précision d'accès")
@@ -105,17 +106,42 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await expect(page.getByRole("main")).toContainText("22 / 300");
   await continuer(page);
 
-  // Étape 2 : une fin avant le début est refusée sous le champ concerné.
+  // Étape 2 : sans date ni heures choisies, chaque champ le dit ; un jour se touche au calendrier,
+  // les heures se choisissent dans des listes et la fin suit le début.
   await etape(page, 2);
-  await page.getByLabel("Date").fill(dansUnMois());
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("09:00");
   await saisirLieuLibre(page, "Cour intérieure");
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
-    "L'heure de fin doit être après l'heure de début.",
+    "Choisissez une date.",
   );
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois());
+  await continuer(page);
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Indiquez l'heure de début.",
+  );
+  const debut = page.getByLabel("Heure de début");
+  const fin = page.getByLabel("Heure de fin");
+  await debut.selectOption("10:00");
+  await expect(fin).toHaveValue("11:30");
+  await expect(debut.locator("option")).toContainText([
+    "Choisir l'heure",
+    "06h00",
+  ]);
+  // La fin ne propose que des heures après le début.
+  await expect(fin.locator("option[value='10:00']")).toHaveCount(0);
+  await expect(fin.locator("option[value='10:15']")).toHaveCount(1);
+  await expect(fin.locator("option[value='23:45']")).toHaveCount(1);
+  // Une fin choisie reste en place quand le début change sans la dépasser ; sinon elle suit.
+  await fin.selectOption("12:00");
+  await debut.selectOption("10:30");
+  await expect(fin).toHaveValue("12:00");
+  await debut.selectOption("12:00");
+  await expect(fin).toHaveValue("13:30");
+  // La fin recalculée n'est pas un choix : elle suit de nouveau le début.
+  await debut.selectOption("14:00");
+  await expect(fin).toHaveValue("15:30");
+  await debut.selectOption("10:00");
+  await fin.selectOption("11:30");
   await page.getByLabel("Précision d'accès").fill("Par le portail vert.");
   await expect(page.getByRole("main")).toContainText("20 / 120");
   await continuer(page);

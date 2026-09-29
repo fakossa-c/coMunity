@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -74,9 +75,9 @@ async function commencer(page: Page, titre: string) {
 /** Remplit l'étape 2 (lieu libre) puis l'étape 3, et s'arrête sur le récapitulatif. */
 async function jusquAuRecapitulatif(page: Page) {
   await etape(page, 2);
-  await page.getByLabel("Date").fill(dansUnMois());
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois());
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Chez Danielle, 2e étage");
   await continuer(page);
   await etape(page, 3);

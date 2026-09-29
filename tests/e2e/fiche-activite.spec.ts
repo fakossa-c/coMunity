@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  choisirDate,
   IDENTITE_SYNDIC,
   MOT_DE_PASSE,
   nouveauResident,
@@ -206,9 +207,9 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
-  await page.getByLabel("Date").fill(dansUnMois);
-  await page.getByLabel("Heure de début").fill("10:00");
-  await page.getByLabel("Heure de fin").fill("11:30");
+  await choisirDate(page, dansUnMois);
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -55,7 +56,7 @@ async function commencerProposition(page: Page, titre: string) {
   await page.getByLabel("Titre de l'activité").fill(titre);
   await continuer(page);
   await etape(page, 2);
-  await page.getByLabel("Date").fill(dansUnMois());
+  await choisirDate(page, dansUnMois());
 }
 
 test("le conseil syndical ajoute, modifie puis supprime un espace commun", async ({
@@ -205,8 +206,8 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   await expect(page.getByLabel("Lieu", { exact: true })).toHaveCount(0);
 
   // Bloqué après l'heure de fin maximale, avec l'heure limite.
-  await page.getByLabel("Heure de début").fill("19:30");
-  await page.getByLabel("Heure de fin").fill("21:30");
+  await page.getByLabel("Heure de début").selectOption("19:30");
+  await page.getByLabel("Heure de fin").selectOption("21:30");
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "ferme à 21h00 : finissez au plus tard à 21h00.",
@@ -215,7 +216,7 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
     path: test.info().outputPath("heure-limite.png"),
     fullPage: true,
   });
-  await page.getByLabel("Heure de fin").fill("21:00");
+  await page.getByLabel("Heure de fin").selectOption("21:00");
   await continuer(page);
 
   // Bloqué sans limite de places dans un espace qui en a une.
@@ -263,8 +264,8 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
   await commencerProposition(page, titre);
 
   await expect(page.getByRole("radio", { name: /^Autre/ })).toBeVisible();
-  await page.getByLabel("Heure de début").fill("21:00");
-  await page.getByLabel("Heure de fin").fill("22:30");
+  await page.getByLabel("Heure de début").selectOption("21:00");
+  await page.getByLabel("Heure de fin").selectOption("22:30");
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Choisissez où se tient l'activité.",

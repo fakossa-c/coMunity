@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { libelleJour } from "../../src/lib/calendrier";
 import {
+  choisirDate,
   MOT_DE_PASSE,
   annulerActivite,
   inscrireResident,
@@ -70,6 +72,34 @@ test("le créateur modifie son activité dans le parcours pré-rempli", async ({
   );
 });
 
+test("modifier reprend le jour et les heures, même hors du pas de 15 minutes", async ({
+  page,
+}) => {
+  const { identifiant } = await createurAvecActivite(page, {
+    date_activite: il(10),
+    heure_debut: "16:10",
+    heure_fin: "18:20",
+  });
+
+  await page.goto(`/activites/${identifiant}`);
+  await page.getByRole("link", { name: "Modifier" }).click();
+  await continuer(page);
+
+  await expect(
+    page
+      .getByRole("group", { name: "Date", exact: true })
+      .getByRole("button", { pressed: true }),
+  ).toHaveAccessibleName(libelleJour(il(10)));
+  await expect(page.getByLabel("Heure de début")).toHaveValue("16:10");
+  await expect(page.getByLabel("Heure de fin")).toHaveValue("18:20");
+  // Sans y toucher, l'activité s'enregistre avec ses heures d'origine.
+  await continuer(page);
+  await continuer(page);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+  await expect(page.getByRole("main")).toContainText("de 16h10 à 18h20");
+});
+
 test("la capacité ne peut pas descendre sous les personnes déjà inscrites", async ({
   page,
 }) => {
@@ -108,9 +138,13 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
     "Goûter crêpes",
   );
   await continuer(page);
-  await expect(page.getByLabel("Date")).toHaveValue("");
+  await expect(
+    page
+      .getByRole("group", { name: "Date", exact: true })
+      .getByRole("button", { pressed: true }),
+  ).toHaveCount(0);
   await expect(page.getByLabel("Heure de début")).toHaveValue("16:00");
-  await page.getByLabel("Date").fill(il(20));
+  await choisirDate(page, il(20));
   await continuer(page);
   await expect(page.getByLabel("Nombre de places")).toHaveValue("12");
   await continuer(page);

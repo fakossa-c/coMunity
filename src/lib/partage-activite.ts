@@ -57,7 +57,7 @@ const FORMAT_JOUR = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "UTC",
 });
 
-function majusculeInitiale(texte: string) {
+export function majusculeInitiale(texte: string) {
   return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
 

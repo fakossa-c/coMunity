@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { analyserProposition, type ReglesResidence } from "@/assistant";
 import { BarreActionFixe } from "@/components/barre-action-fixe";
 import { Bouton, classesBouton } from "@/components/bouton";
+import { Calendrier } from "@/components/calendrier";
 import { Champ, ChampListe, ChampTexte } from "@/components/champ";
 import { ChampPhotos, type PhotoSaisie } from "@/components/champ-photos";
 import { ChoixEspaceCommun } from "@/components/choix-espace-commun";
@@ -20,6 +21,12 @@ import {
   categoriesActiviteListe,
   type CategorieActivite,
 } from "@/lib/categories-activite";
+import {
+  finApresDebut,
+  libelleHeure,
+  optionsDebut,
+  optionsFin,
+} from "@/lib/creneaux";
 import { envoyerPhotos } from "@/lib/envoi-photos";
 import type { EspaceCommun } from "@/lib/espaces-communs";
 import {
@@ -48,7 +55,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { cheminFiche } from "@/lib/partage-activite";
+import { aujourdhui, cheminFiche } from "@/lib/partage-activite";
 import {
   MAX_PHOTOS,
   messagePhotosIncompletes,
@@ -121,6 +128,10 @@ export function ParcoursProposition({
     identifiant: string;
     message: string;
   } | null>(null);
+  // Vrai quand la fin vient du créateur (ou d'une activité existante) : le début ne la déplace plus.
+  const [finChoisie, setFinChoisie] = useState(initial.heure_fin !== "");
+  // Le jour de référence, comme partout dans l'app : les jours d'avant sont grisés au calendrier.
+  const [jourDeReference] = useState(() => aujourdhui());
   const [erreur, setErreur] = useState<Erreur>({});
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
@@ -151,6 +162,21 @@ export function ParcoursProposition({
     valeur: SaisieActivite[C],
   ) {
     setSaisie((s) => ({ ...s, [champ]: valeur }));
+  }
+
+  /**
+   * Choisir le début rapproche la fin si besoin : elle suit tant que le créateur ne l'a pas
+   * choisie, et une fin recalculée n'est pas un choix du créateur.
+   */
+  function changerDebut(debut: string) {
+    const fin = finApresDebut(debut, saisie.heure_fin, finChoisie);
+    if (fin !== saisie.heure_fin) setFinChoisie(false);
+    setSaisie((s) => ({ ...s, heure_debut: debut, heure_fin: fin }));
+  }
+
+  function changerFin(fin: string) {
+    setFinChoisie(true);
+    poser("heure_fin", fin);
   }
 
   function aller(cible: Etape) {
@@ -450,39 +476,50 @@ export function ParcoursProposition({
 
       {etape === 2 && (
         <>
-          <Champ
+          <Calendrier
             libelle="Date"
-            name="date_activite"
-            type="date"
-            autoComplete="off"
-            value={saisie.date_activite}
-            onChange={(e) => poser("date_activite", e.target.value)}
+            valeur={saisie.date_activite}
+            onChange={(date) => poser("date_activite", date)}
+            aujourdhui={jourDeReference}
             erreur={erreurDe("date_activite")}
-            required
           />
           <div className="flex flex-col gap-bloc desktop:flex-row">
-            <Champ
+            <ChampListe
               libelle="Heure de début"
               name="heure_debut"
-              type="time"
-              autoComplete="off"
               value={saisie.heure_debut}
-              onChange={(e) => poser("heure_debut", e.target.value)}
+              onChange={(e) => changerDebut(e.target.value)}
               erreur={erreurDe("heure_debut")}
               required
               className="flex-1"
-            />
-            <Champ
+            >
+              <option value="" disabled>
+                Choisir l&apos;heure
+              </option>
+              {optionsDebut(saisie.heure_debut).map((heure) => (
+                <option key={heure} value={heure}>
+                  {libelleHeure(heure)}
+                </option>
+              ))}
+            </ChampListe>
+            <ChampListe
               libelle="Heure de fin"
               name="heure_fin"
-              type="time"
-              autoComplete="off"
               value={saisie.heure_fin}
-              onChange={(e) => poser("heure_fin", e.target.value)}
+              onChange={(e) => changerFin(e.target.value)}
               erreur={erreurDe("heure_fin")}
               required
               className="flex-1"
-            />
+            >
+              <option value="" disabled>
+                Choisir l&apos;heure
+              </option>
+              {optionsFin(saisie.heure_debut, saisie.heure_fin).map((heure) => (
+                <option key={heure} value={heure}>
+                  {libelleHeure(heure)}
+                </option>
+              ))}
+            </ChampListe>
           </div>
           {espaces.length > 0 && (
             <ChoixEspaceCommun
