@@ -31,6 +31,8 @@
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
 - Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
 - `npm run syndic:amorcer -- <email> <mot-de-passe> <prénom> <nom>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.
+- `npm run demo:amorcer` : comptes de test `fakossa+<username>@gmail.com` (syndic, résidents validés, en attente, refusé, retiré), avec activités dans chaque état, annonces et sondages ; relançable sans doublon. Sur le Supabase local par défaut ; pour le distant, passer `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SECRET_KEY` devant la commande et ajouter `-- --distant` (accord de l'utilisateur).
+- `npm run demo:retirer` : supprime ces comptes et leurs données, eux seuls. À lancer avant l'ouverture aux vrais résidents : leur mot de passe se devine.
 
 ## Design system
 
