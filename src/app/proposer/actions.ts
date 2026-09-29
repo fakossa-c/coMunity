@@ -42,6 +42,9 @@ export type Publication =
       enRelecture: boolean;
     };
 
+/** Le budget d'appels à Jev sur lequel un appel se compte : celui de la création ou celui de la modification. */
+type ActionJev = "creation" | "modification";
+
 const SANS_AVIS: AvisAssistant = {
   categorieSuggeree: null,
   pictogrammeSuggere: null,
@@ -50,10 +53,34 @@ const SANS_AVIS: AvisAssistant = {
 };
 
 /**
+ * Réserve auprès de la base un appel à Jev pour ce compte, qui en plafonne le nombre (10 par heure
+ * en création, 10 par heure en modification, 30 par jour : chaque appel coûte un appel
+ * OpenRouter). Faux quand un plafond est atteint, et aussi quand la base ne répond pas : dans le
+ * doute on ne paie pas, et l'appelant se passe de Jev, comme d'un Jev en panne.
+ */
+async function reserverAppelJev(
+  compte: string,
+  action: ActionJev,
+): Promise<boolean> {
+  try {
+    const { data, error } = await clientAdmin().rpc("reserver_appel_jev", {
+      p_compte: compte,
+      p_action: action,
+    });
+    if (error) throw new Error(error.message);
+    return data === true;
+  } catch (erreur) {
+    console.error("Réservation d'un appel à Jev impossible :", erreur);
+    return false;
+  }
+}
+
+/**
  * L'avis de Jev sur une proposition en cours de saisie : suggestions de catégorie et de
  * pictogramme, informations qui semblent manquer, et avis de modération. Sans clé Jev, sans
- * compte validé, ou si Jev est lent ou en erreur : aucun avis. Seuls le titre, la description et
- * le créneau partent vers Jev ; le texte est borné comme en base.
+ * compte validé, plafond d'appels atteint, ou si Jev est lent ou en erreur : aucun avis. Seuls le
+ * titre, la description et le créneau partent vers Jev ; le texte est borné comme en base. Le
+ * parcours qui l'appelle est celui d'une création : ses appels comptent sur ce budget.
  */
 export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
   const jev = moteurJev();
@@ -62,6 +89,10 @@ export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
   const supabase = await clientSession();
   const { data: peutParticiper } = await supabase.rpc("peut_participer");
   if (!peutParticiper) return SANS_AVIS;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !(await reserverAppelJev(user.id, "creation"))) return SANS_AVIS;
 
   // Le navigateur envoie ce qu'il veut : on ne retient que le titre, la description et le
   // créneau, en texte borné, et rien du lieu ni des places.
@@ -87,22 +118,25 @@ export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
  * Conclut la pré-modération d'une activité que la base vient de mettre en relecture (création ou
  * modification par son créateur) : Jev est écouté, puis le serveur, seul à tenir la clé secrète,
  * la publie ou la laisse au conseil syndical avec la raison de Jev. Jev ne bloque jamais : sans
- * clé, sans avis ou en panne, l'activité est publiée. L'inverse vaut si la conclusion elle-même
- * échoue : l'activité reste en relecture, chez son créateur et le conseil syndical, jamais chez
- * tous. Vrai si elle est en relecture.
+ * clé, sans avis, en panne ou plafond d'appels atteint (voir `reserverAppelJev`), l'activité est
+ * publiée. L'inverse vaut si la conclusion elle-même échoue : l'activité reste en relecture, chez
+ * son créateur et le conseil syndical, jamais chez tous. Vrai si elle est en relecture.
  */
 async function conclurePreModeration(
   identifiant: string,
   activite: NouvelleActivite,
+  compte: string,
+  action: ActionJev,
 ): Promise<boolean> {
   const jev = moteurJev();
-  const avis = jev
-    ? await analyserProposition(
-        propositionDeNouvelleActivite(activite),
-        undefined,
-        { jev },
-      )
-    : SANS_AVIS;
+  const avis =
+    jev && (await reserverAppelJev(compte, action))
+      ? await analyserProposition(
+          propositionDeNouvelleActivite(activite),
+          undefined,
+          { jev },
+        )
+      : SANS_AVIS;
   const raison =
     avis.moderation.avis === "a_relire"
       ? avis.moderation.raison.trim() || null
@@ -227,6 +261,8 @@ export async function publier(
   const enRelecture = await conclurePreModeration(
     data.identifiant_public,
     activite,
+    user.id,
+    "creation",
   );
   revalidatePath("/");
   if (poidsPhotos.length === 0)
@@ -324,7 +360,8 @@ const messagesModification: Record<string, string> = {
  * que le créateur, sur une activité non annulée : sinon aucune ligne n'est touchée. `photos` : la
  * nouvelle liste ordonnée, photos déjà envoyées comprises ; absente, les photos ne changent pas.
  * Jev relit ce que change le créateur, comme à la création : la base met l'activité en relecture,
- * puis elle est republiée sans objection de Jev, sinon elle reste au conseil syndical.
+ * puis elle est republiée sans objection de Jev, sinon elle reste au conseil syndical. Chaque
+ * relecture consomme un appel du budget de modification, qui est séparé de celui de création.
  */
 export async function enregistrer(
   identifiant: string,
@@ -360,8 +397,12 @@ export async function enregistrer(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (data[0].statut === "en_relecture" && data[0].organisateur === user?.id)
-    await conclurePreModeration(identifiant, activite);
+  if (
+    user &&
+    data[0].statut === "en_relecture" &&
+    data[0].organisateur === user.id
+  )
+    await conclurePreModeration(identifiant, activite, user.id, "modification");
 
   if (photos) {
     const resultat = await fixerPhotos(supabase, identifiant, photos);
