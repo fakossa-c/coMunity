@@ -11,7 +11,12 @@ export const metadata: Metadata = { title: "Membres du syndic" };
 
 export default async function MembresDuSyndic() {
   const { session, refus } = await accesSyndic("/syndic/membres");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return (
+      <EcranSecondaire retour={RETOUR} pleineLargeur>
+        {refus}
+      </EcranSecondaire>
+    );
 
   const supabase = await clientSession();
   const { data: membres, error } = await supabase
@@ -23,7 +28,7 @@ export default async function MembresDuSyndic() {
   if (error) throw new Error(`Liste des membres illisible : ${error.message}`);
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSecondaire retour={RETOUR} pleineLargeur>
       <TitrePage
         titre="Membres du syndic"
         sousTitre="Invitez un collègue par email ou retirez l'accès d'un membre qui quitte l'équipe."

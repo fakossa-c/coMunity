@@ -83,7 +83,10 @@ type PropsPrincipal = {
   children: ReactNode;
 };
 
-/** Écran principal (Accueil, Activités, Annonces) : en-tête de résidence et barre du bas. */
+/**
+ * Écran principal (Accueil, Activités, Annonces) : en-tête de résidence, dont les onglets
+ * forment la barre du bas sur mobile.
+ */
 export async function EcranPrincipal({
   onglet,
   flottant,
@@ -96,14 +99,22 @@ export async function EcranPrincipal({
       haut={
         <EnTeteResidence
           residence={residence?.nom ?? "Notre résidence"}
+          navigation={
+            <SiCompteOuvert>
+              <BarreNavigation actif={onglet} emplacement="entete" />
+            </SiCompteOuvert>
+          }
           compte={<Compte />}
         />
       }
       barreBas={
         <SiCompteOuvert>
-          <BarreNavigation actif={onglet} />
+          <BarreNavigation actif={onglet} emplacement="bas" />
         </SiCompteOuvert>
       }
+      // Sur ordinateur, les onglets sont dans l'en-tête : plus de barre du bas à dégager.
+      paddingBas={180}
+      paddingBasBureau={40}
       flottant={flottant && <SiCompteOuvert>{flottant}</SiCompteOuvert>}
     >
       <GardeCompte>{children}</GardeCompte>
@@ -126,6 +137,8 @@ type PropsSecondaire = {
   actionDansLeFormulaire?: boolean;
   /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
   completionExigee?: boolean;
+  /** Espace syndic : sur ordinateur, toute la largeur au lieu de la colonne centrée. */
+  pleineLargeur?: boolean;
   children: ReactNode;
 };
 
@@ -137,10 +150,12 @@ export function EcranSecondaire({
   action,
   actionDansLeFormulaire = false,
   completionExigee,
+  pleineLargeur,
   children,
 }: PropsSecondaire) {
   return (
     <Ecran
+      pleineLargeur={pleineLargeur}
       haut={
         <BarreRetour
           href={retour.href}
