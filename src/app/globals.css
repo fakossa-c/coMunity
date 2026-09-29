@@ -393,9 +393,13 @@
 }
 
 @layer components {
-  /* Une carte qui n'avait qu'un contour (réglages, lignes de menu, panneaux) prend l'ombre douce. */
+  /* Une carte qui n'avait qu'un contour sur ses quatre côtés (réglages, lignes de menu, panneaux) prend
+     l'ombre douce ; un simple filet d'un côté (`border-t-…`) disparaît sans remplaçant. */
   @media (min-width: 64rem) {
-    [class*="border-bordure-carte"]:not([class*="shadow-"]) {
+    [class*="border-bordure-carte"]:is(
+        [class*="border-[1.5px]"],
+        [class*="border-2"]
+      ):not([class*="shadow-"]) {
       box-shadow: var(--shadow-douce);
     }
   }
