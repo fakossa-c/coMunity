@@ -1,4 +1,4 @@
-Sondage du syndic, à placer dans une CarteAnnonce : options à choix unique (56 px de haut), bouton d'envoi, puis résultats en barres vertes avec le choix de la personne coché.
+Sondage du syndic, à placer dans une CarteAnnonce : options à choix unique (56 px de haut), bouton d'envoi, puis résultats en barres vertes avec le choix de la personne coché. Sur ordinateur (présentation Journal), les options n'ont plus de contour et s'arrondissent à 18 px ; en thème sombre, la barre de résultat est le vert profond `secondary-container`, sous un libellé clair.
 
 ```jsx
 <Sondage

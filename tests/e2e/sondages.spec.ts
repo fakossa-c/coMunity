@@ -8,8 +8,10 @@ import {
   nouveauResident,
   nouveauSondage,
   nouveauSyndic,
+  reglerAffichage,
   supprimerAnnonces,
   supprimerComptes,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #39 : le conseil syndical joint un sondage à choix unique à une annonce ; un résident
@@ -304,3 +306,42 @@ test("un résident répond depuis le lien public de l'annonce, un visiteur n'y v
     page.getByRole("listitem").filter({ hasText: "Accès 24h/24" }),
   ).toContainText("Votre choix");
 });
+
+// Ticket #130 (spec #125) : le sondage de la présentation Journal, à voter puis en résultats, dans
+// la carte de la liste et sur la fiche, reste dans la page en sombre comme en grands caractères.
+for (const [nom, reglages] of [
+  ["sombre", { theme: "sombre", taille: "standard" }],
+  ["grands caractères", { theme: "clair", taille: "grands" }],
+] as const) {
+  test(`un sondage à voter puis en résultats ne fait pas défiler la page horizontalement, en ${nom}`, async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    await reglerAffichage(resident.id, reglages);
+    const aVoter = titreUnique("Sondage à voter");
+    const vote = titreUnique("Sondage voté");
+    await annonceAvecSondage(jour(5), aVoter);
+    const { sondage } = await annonceAvecSondage(jour(5), vote);
+    await nouvelleReponseSondage(sondage.id, resident.id, 2);
+
+    await seConnecter(page, resident.email);
+    await page.goto("/annonces");
+    await expect(
+      carte(page, aVoter).getByRole("radio", { name: "6h à 23h" }),
+    ).toBeAttached();
+    await expect(carte(page, vote)).toContainText("Votre choix");
+    await verifierSansDefilementHorizontal(page);
+    await page.screenshot({
+      path: test.info().outputPath(`sondages-liste-${reglages.theme}.png`),
+      fullPage: true,
+    });
+
+    await carte(page, vote).getByRole("link", { name: vote }).click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: vote }),
+    ).toBeVisible();
+    await expect(page.getByRole("main")).toContainText("Votre choix");
+    await verifierSansDefilementHorizontal(page);
+  });
+}

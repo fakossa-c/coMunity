@@ -10,21 +10,26 @@ const PUCES: { id: FiltreAnnonce; libelle: string; icone?: NomIcone }[] = [
   { id: "travaux-infos", libelle: "Travaux & infos", icone: "construction" },
 ];
 
-/** Les puces de l'onglet Annonces, collées en haut de l'écran : Toutes, Assemblées, Sondages, Travaux & infos. */
+/**
+ * Les puces de l'onglet Annonces, collées en haut de l'écran : Toutes, Assemblées, Sondages, Travaux & infos.
+ * Sur ordinateur, la rangée passe à la ligne faute de place : elle ne défile jamais.
+ */
 export function Filtres({ filtre }: { filtre: FiltreAnnonce }) {
   return (
     <BarreFiltres libelle="Types d'annonce">
-      {PUCES.map(({ id, libelle, icone }) => (
-        <PuceFiltre
-          key={id}
-          categorie
-          icone={icone}
-          selectionnee={filtre === id}
-          href={id === "toutes" ? "/annonces" : `/annonces?filtre=${id}`}
-        >
-          {libelle}
-        </PuceFiltre>
-      ))}
+      <div className="contents desktop:flex desktop:min-w-0 desktop:flex-1 desktop:flex-wrap desktop:gap-3">
+        {PUCES.map(({ id, libelle, icone }) => (
+          <PuceFiltre
+            key={id}
+            categorie
+            icone={icone}
+            selectionnee={filtre === id}
+            href={id === "toutes" ? "/annonces" : `/annonces?filtre=${id}`}
+          >
+            {libelle}
+          </PuceFiltre>
+        ))}
+      </div>
     </BarreFiltres>
   );
 }

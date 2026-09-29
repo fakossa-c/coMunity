@@ -23,12 +23,14 @@ type Props = {
 };
 
 const ligne =
-  "relative flex min-h-bouton w-full items-center gap-space-sm overflow-hidden rounded-md border-[1.5px] px-4 text-left text-body-lg text-on-surface";
+  "relative flex min-h-bouton w-full items-center gap-space-sm overflow-hidden rounded-md border-[1.5px] px-4 text-left text-body-lg text-on-surface desktop:rounded-[18px] desktop:border-transparent desktop:px-5";
 
 /**
  * Sondage à choix unique, à placer dans une `CarteAnnonce` : les options de 56 px, le bouton
  * « Envoyer ma réponse » désactivé tant que rien n'est choisi, puis les résultats en barres
  * vertes avec le choix de la personne coché. Un compte qui ne peut pas répondre lit les options.
+ * Sur ordinateur (cadre Journal), les options n'ont plus de contour : la teinte de fond et le
+ * pictogramme marquent le choix.
  */
 export function Sondage({
   question,
@@ -53,7 +55,7 @@ export function Sondage({
   }
 
   return (
-    <div className="flex flex-col gap-space-sm rounded-lg bg-surface-container-low p-space-md">
+    <div className="flex flex-col gap-space-sm rounded-lg bg-surface-container-low p-space-md desktop:p-6">
       {affichage.etat === "vote" ||
       (affichage.etat === "resultats" && enVote) ? (
         <Vote
@@ -140,7 +142,7 @@ function Vote({
           return (
             <label
               key={rang}
-              className={`${ligne} cursor-pointer has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
+              className={`${ligne} cursor-pointer has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus desktop:transition-colors desktop:duration-(--duree-courte) desktop:ease-journal ${
                 actif
                   ? "border-primary bg-fond-action text-texte-action"
                   : "border-outline bg-fond-carte"
@@ -201,7 +203,7 @@ function Resultats({
           >
             <span
               aria-hidden
-              className="absolute inset-y-0 left-0 bg-secondary-fixed-dim"
+              className="absolute inset-y-0 left-0 bg-secondary-fixed-dim sombre:bg-secondary-container"
               style={{ width: `${part}%` }}
             />
             <span className="relative flex items-center gap-space-xs">

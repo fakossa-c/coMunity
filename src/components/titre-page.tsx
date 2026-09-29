@@ -1,10 +1,10 @@
 type Props = { titre: string; sousTitre?: string };
 
-/** Titre de rubrique en haut d'une page. Il défile avec le contenu. */
+/** Titre de rubrique en haut d'une page. Il défile avec le contenu ; sur ordinateur, il prend les très grands titres du cadre Journal. */
 export function TitrePage({ titre, sousTitre }: Props) {
   return (
-    <div className="mb-space-lg">
-      <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
+    <div className="mb-space-lg desktop:mb-8">
+      <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-titre-journal">
         {titre}
       </h1>
       {sousTitre && (
