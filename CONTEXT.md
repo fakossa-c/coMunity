@@ -63,3 +63,15 @@ _Avoid_ : enquête, scrutin
 **Règlement intérieur** :
 Les règles de vie communes de la résidence, présentées dans Ma copro en sections qu'on déplie.
 _Avoid_ : règlement de copropriété (le texte juridique qui fixe les droits des copropriétaires), document
+
+**Tableau de bord** :
+La page où le conseil syndical suit, sur une période, ce qui fait vivre la résidence : activités, inscriptions, participants distincts, remplissage, activités les mieux notées, comptes validés et en attente. Seules comptent les activités publiées et terminées, celles qui ont eu lieu.
+_Avoid_ : statistiques, dashboard, analytics
+
+**Participants distincts** :
+Le nombre de résidents différents inscrits à au moins une activité qui a eu lieu sur la période. C'est l'indicateur principal : il mesure du lien réel entre des personnes différentes, pas l'assiduité de quelques habitués.
+_Avoid_ : utilisateurs actifs, fréquentation
+
+**Taux de remplissage** :
+La part des places d'une activité prises par ses inscrits, accompagnants compris. Une activité sans limite de places n'en a pas ; le taux d'un groupe d'activités est la moyenne des taux de celles qui en ont un.
+_Avoid_ : taux de participation
