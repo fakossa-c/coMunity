@@ -201,7 +201,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
                 : "Aucune activité de la période n'a reçu de retour pour le moment."}
             </p>
           ) : (
-            <ol className="flex flex-col gap-space-md">
+            <ol className="grid gap-space-md desktop:grid-cols-2">
               {classement.map((ligne, rang) => (
                 <ActiviteClassee
                   key={ligne.identifiant_public}
