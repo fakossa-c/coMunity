@@ -60,6 +60,17 @@ describe("le budget horaire", () => {
     expect(await accorde(compte, "creation")).toBe(false);
   });
 
+  it("ne dépasse pas le plafond quand les requêtes arrivent ensemble", async () => {
+    const compte = await nouveauResident("valide");
+
+    const reponses = await Promise.all(
+      Array.from({ length: 15 }, () => accorde(compte, "creation")),
+    );
+
+    expect(reponses.filter(Boolean)).toHaveLength(10);
+    expect(await nombreDeLignes(compte)).toBe(10);
+  });
+
   it("tient un budget de modification séparé de celui de création", async () => {
     const compte = await nouveauResident("valide");
     for (let i = 0; i < 10; i++) await accorde(compte, "creation");
