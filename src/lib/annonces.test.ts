@@ -61,6 +61,12 @@ describe("filtres de la liste", () => {
     expect(filtreAnnonce("n'importe quoi")).toBe("toutes");
     expect(filtreAnnonce(undefined)).toBe("toutes");
   });
+
+  it("un nom hérité de tout objet ne passe pas pour un filtre", () => {
+    expect(filtreAnnonce("constructor")).toBe("toutes");
+    expect(filtreAnnonce("toString")).toBe("toutes");
+    expect(filtreAnnonce("__proto__")).toBe("toutes");
+  });
 });
 
 describe("étiquette « Nouveau »", () => {
@@ -89,6 +95,15 @@ describe("expiration", () => {
 });
 
 describe("carte d'une annonce", () => {
+  it("date la publication au jour de la résidence, pas au jour UTC", () => {
+    expect(libellePublication("2026-10-19T23:30:00+00:00")).toBe(
+      "Publiée le 20 octobre par le conseil syndical",
+    );
+    expect(libellePublication("2026-12-19T23:30:00+00:00")).toBe(
+      "Publiée le 20 décembre par le conseil syndical",
+    );
+  });
+
   it("dit qui publie, avec le mot du glossaire", () => {
     expect(libellePublication("2026-10-20T08:30:00+00:00")).toBe(
       "Publiée le 20 octobre par le conseil syndical",
@@ -189,6 +204,16 @@ describe("saisie d'une annonce", () => {
     expect(
       verifierAnnonce({ ...SAISIE, expire_le: "2026-10-20" }, "2026-10-20"),
     ).toEqual({});
+  });
+
+  it("une annonce expirée s'enregistre tant que sa date d'expiration ne change pas", () => {
+    const expiree = { ...SAISIE, expire_le: "2026-10-01" };
+    expect(verifierAnnonce(expiree, "2026-10-20", "2026-10-01")).toEqual({});
+    expect(verifierAnnonce(expiree, "2026-10-20", "2026-09-01")).toEqual({
+      champ: "expire_le",
+      erreur:
+        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
+    });
   });
 
   it("la saisie devient une ligne : textes nettoyés, vides à null", () => {
