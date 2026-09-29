@@ -87,9 +87,14 @@ test("le conseil syndical publie une annonce épinglée, un résident la voit en
     `« ${titre} » est publiée.`,
   );
   await expect(ligneDeGestion(page, titre)).toContainText("Épinglée");
+  await page.screenshot({
+    path: test.info().outputPath("annonces-syndic.png"),
+    fullPage: true,
+  });
 
   // Une annonce plus récente et non épinglée ne passe pas devant.
-  await nouvelleAnnonce({ titre: titreUnique("Plus récente") });
+  const plusRecente = titreUnique("Plus récente");
+  await nouvelleAnnonce({ titre: plusRecente });
 
   // Le résident, lui, lit l'annonce dans l'onglet Annonces, épinglée en tête.
   await page.context().clearCookies();
@@ -98,8 +103,12 @@ test("le conseil syndical publie une annonce épinglée, un résident la voit en
   await expect(
     page.getByRole("heading", { level: 1, name: "Annonces" }),
   ).toBeVisible();
-  const articles = page.getByRole("article");
-  await expect(articles.first()).toContainText(titre);
+  // L'ordre se lit entre nos deux annonces : les autres parcours, en parallèle, en publient aussi.
+  await expect(carte(page, plusRecente)).toBeVisible();
+  const cartes = await page.getByRole("article").allTextContents();
+  const rang = (t: string) => cartes.findIndex((texte) => texte.includes(t));
+  expect(rang(titre)).toBeGreaterThanOrEqual(0);
+  expect(rang(titre)).toBeLessThan(rang(plusRecente));
   const annonce = carte(page, titre);
   await expect(annonce).toContainText("Assemblée générale");
   await expect(annonce).toContainText("Nouveau");
