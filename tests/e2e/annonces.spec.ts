@@ -8,6 +8,7 @@ import {
   nouveauSyndic,
   supprimerAnnonces,
   supprimerComptes,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #13 : le conseil syndical publie, épingle, modifie, duplique et supprime des annonces ;
@@ -532,4 +533,94 @@ test("un visiteur sur Annonces est invité à se connecter pour les lire", async
     "Connectez-vous pour lire les annonces de la résidence.",
   );
   await expect(page.getByRole("article")).toHaveCount(0);
+});
+
+// Ticket #130 (spec #125) : les annonces en présentation Journal sur ordinateur ; le mobile garde
+// sa colonne et ses cartes contournées.
+
+test("les annonces se lisent en deux colonnes de cartes sans contour sur ordinateur, en une colonne contournée sur mobile", async ({
+  page,
+  isMobile,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  await nouvelleAnnonce({ titre: titreUnique("Première annonce") });
+  await nouvelleAnnonce({ titre: titreUnique("Seconde annonce") });
+
+  await seConnecter(page, resident.email);
+  await page.goto("/annonces");
+  await expect(page.getByRole("article").nth(1)).toBeVisible();
+
+  const { colonnes, contour } = await page
+    .getByRole("article")
+    .evaluateAll((cartes) => ({
+      colonnes: new Set(
+        cartes.map((c) => Math.round(c.getBoundingClientRect().left)),
+      ).size,
+      contour: getComputedStyle(cartes[0]).borderTopColor,
+    }));
+  expect(colonnes).toBe(isMobile ? 1 : 2);
+  if (isMobile) expect(contour).not.toBe("rgba(0, 0, 0, 0)");
+  else expect(contour).toBe("rgba(0, 0, 0, 0)");
+  await verifierSansDefilementHorizontal(page);
+  await page.screenshot({
+    path: test.info().outputPath("annonces-journal.png"),
+    fullPage: true,
+  });
+});
+
+test("sur ordinateur, les puces de filtre passent à la ligne faute de place, sans barre de défilement horizontale", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "présentation Journal : ordinateur seulement");
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+
+  await seConnecter(page, resident.email);
+  await page.goto("/annonces");
+  // Une colonne plus étroite que la rangée, comme le ferait un jeu de puces plus long.
+  await page.addStyleTag({ content: "main { max-width: 30rem !important; }" });
+
+  const puces = page
+    .getByRole("navigation", { name: "Types d'annonce" })
+    .getByRole("link");
+  await expect(puces).toHaveCount(4);
+  const hauts = await puces.evaluateAll((liens) =>
+    liens.map((l) => Math.round(l.getBoundingClientRect().top)),
+  );
+  expect(new Set(hauts).size, "les puces tiennent sur plusieurs lignes").toBe(
+    2,
+  );
+  await verifierSansDefilementHorizontal(page);
+});
+
+test("sur ordinateur, la fiche d'une annonce met les infos et les boutons à droite du texte", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "présentation Journal : ordinateur seulement");
+  const annonce = await nouvelleAnnonce({
+    type: "travaux",
+    titre: titreUnique("Rénovation du hall"),
+    texte: "L'entrée se fait par la porte de la cour.",
+    quand: "Du 2 au 20 novembre",
+    lieu: "Hall du bâtiment A",
+  });
+
+  await page.goto(`/annonces/${annonce.identifiant_public}`);
+  const texte = await page
+    .getByText("L'entrée se fait par la porte de la cour.")
+    .boundingBox();
+  const relais = await page
+    .getByRole("link", { name: "Relayer sur le groupe WhatsApp" })
+    .boundingBox();
+  const infos = await page.getByText("Hall du bâtiment A").boundingBox();
+  expect(relais!.x).toBeGreaterThanOrEqual(texte!.x + texte!.width);
+  expect(infos!.x).toBeGreaterThanOrEqual(texte!.x + texte!.width);
+  await verifierSansDefilementHorizontal(page);
+  await page.screenshot({
+    path: test.info().outputPath("annonce-journal.png"),
+    fullPage: true,
+  });
 });
