@@ -199,7 +199,7 @@ test("le tiroir « Détails » se déplie au clavier et montre horaire, lieu, ac
   await expect(details).toHaveAttribute("aria-expanded", "false");
 });
 
-test("« Voir la fiche » et « Je participe » ouvrent la fiche ; inscrit, la carte dit « J'y vais » sans boutons", async ({
+test("« Voir la fiche » et « Je participe » ouvrent la fiche ; inscrit, la carte dit « Vous participez » sans boutons", async ({
   page,
 }) => {
   const organisateur = await nouveauResident("valide");
@@ -229,7 +229,7 @@ test("« Voir la fiche » et « Je participe » ouvrent la fiche ; inscrit, la c
 
   await page.goto("/");
   const carteInscrit = carte(page, inscrit);
-  await expect(carteInscrit).toContainText("J'y vais, avec 2 personnes");
+  await expect(carteInscrit).toContainText("Vous participez, avec 2 personnes");
   await expect(
     carteInscrit.getByRole("link", { name: "Je participe" }),
   ).toHaveCount(0);

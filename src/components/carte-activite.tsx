@@ -145,7 +145,7 @@ export function CarteActivite(props: Props) {
       {inscrit && (
         <p className="flex items-center gap-space-xs font-headline text-body-bold text-primary">
           <Icone nom="check_circle" plein taille={20} />
-          J&apos;y vais
+          Vous participez
         </p>
       )}
     </article>

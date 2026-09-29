@@ -23,7 +23,7 @@ type Props = { fiche: FicheActivite; statut: StatutVisiteur };
 
 /**
  * L'action fixée en bas de la fiche : « Je participe » avec son compteur d'accompagnants pour
- * qui n'est pas encore inscrit, le statut « J'y vais » avec l'annulation pour qui l'est déjà.
+ * qui n'est pas encore inscrit, le statut « Vous participez » avec l'annulation pour qui l'est déjà.
  */
 export function BlocInscription({ fiche, statut }: Props) {
   const [accompagnants, setAccompagnants] = useState(0);

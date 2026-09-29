@@ -40,7 +40,7 @@ test("un visiteur ouvre le lien déconnecté, se connecte, s'inscrit puis annule
   await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
 
   await page.getByRole("button", { name: "Je participe" }).click();
-  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+  await expect(page.getByText("Vous participez", { exact: false })).toBeVisible();
   await expect(page.getByText("1 inscrit sur 12 places")).toBeVisible();
 
   // Le premier clic ouvre la feuille de confirmation, le second (dans la feuille) confirme.
@@ -75,7 +75,7 @@ test("une activité complète refuse une nouvelle inscription", async ({
   await page.getByRole("button", { name: "Je participe" }).click();
   await seConnecter(page, premier.email);
   await page.getByRole("button", { name: "Je participe" }).click();
-  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+  await expect(page.getByText("Vous participez", { exact: false })).toBeVisible();
 
   await page.context().clearCookies();
   await page.goto(`/activites/${identifiant}`);
@@ -108,7 +108,7 @@ test("un résident en attente voit le bouton désactivé avec une explication", 
   ).toBeVisible();
 });
 
-test("une activité où je suis déjà inscrit affiche « J'y vais » sur sa carte à l'Accueil", async ({
+test("une activité où je suis déjà inscrit affiche « Vous participez » sur sa carte à l'Accueil", async ({
   page,
 }) => {
   const organisateur = await nouveauResident("valide");
@@ -121,11 +121,11 @@ test("une activité où je suis déjà inscrit affiche « J'y vais » sur sa car
   await page.getByRole("button", { name: "Je participe" }).click();
   await seConnecter(page, resident.email);
   await page.getByRole("button", { name: "Je participe" }).click();
-  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+  await expect(page.getByText("Vous participez", { exact: false })).toBeVisible();
 
   await page.goto("/");
   const carte = page.getByRole("listitem").filter({ hasText: titre });
-  await expect(carte.getByText("J'y vais", { exact: true })).toBeVisible();
+  await expect(carte.getByText("Vous participez", { exact: true })).toBeVisible();
   await expect(carte.getByRole("link", { name: "Je participe" })).toHaveCount(
     0,
   );
@@ -142,5 +142,5 @@ test("une activité du syndic s'inscrit comme les autres", async ({ page }) => {
   await seConnecter(page, resident.email);
   await page.getByRole("button", { name: "Je participe" }).click();
 
-  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+  await expect(page.getByText("Vous participez", { exact: false })).toBeVisible();
 });
