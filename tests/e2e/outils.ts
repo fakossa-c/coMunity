@@ -248,3 +248,36 @@ export async function reglerAffichage(
     .eq("id", compteId);
   if (error) throw error;
 }
+
+/** Une annonce publiée comme par le conseil syndical, sous un titre jamais utilisé. */
+export async function nouvelleAnnonce(
+  champs: Partial<Record<string, string | boolean | null>> = {},
+) {
+  const { data, error } = await clientAdmin()
+    .from("annonce")
+    .insert({
+      type: "info",
+      titre: `Relevé des compteurs ${randomUUID().slice(0, 6)}`,
+      texte: "Le technicien passera le mardi 3 novembre entre 9h et 12h.",
+      ...champs,
+    })
+    .select("id, identifiant_public, titre")
+    .single();
+  if (error) throw error;
+  return data as { id: string; identifiant_public: string; titre: string };
+}
+
+/** Supprime des annonces, par leur titre, et leurs fichiers : celles qu'un test a créées, par l'écran ou non. */
+export async function supprimerAnnonces(titres: string[]) {
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("annonce")
+    .select("photo_chemin, document_chemin")
+    .in("titre", titres);
+  const fichiers = (data ?? [])
+    .flatMap((a) => [a.photo_chemin, a.document_chemin])
+    .filter((chemin): chemin is string => Boolean(chemin));
+  if (fichiers.length > 0)
+    await admin.storage.from("annonces").remove(fichiers);
+  await admin.from("annonce").delete().in("titre", titres);
+}
