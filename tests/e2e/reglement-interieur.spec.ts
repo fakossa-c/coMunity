@@ -105,13 +105,25 @@ test("le conseil syndical rédige deux sections, un résident les lit en les dé
   );
   let ordre = await titresDeLaListe(page);
   expect(ordre.indexOf(bruit)).toBeLessThan(ordre.indexOf(dechets));
-  await page.getByRole("button", { name: `Monter : ${dechets}` }).click();
-  await expect
-    .poll(async () => {
-      ordre = await titresDeLaListe(page);
-      return ordre.indexOf(dechets) < ordre.indexOf(bruit);
-    })
-    .toBe(true);
+  // Le projet mobile et le projet desktop écrivent dans la même base : la voisine du dessus peut
+  // être une section de l'autre, on remonte donc jusqu'à passer avant « bruit ».
+  for (let essai = 0; essai < 10; essai++) {
+    const place = ordre.indexOf(dechets);
+    if (place < ordre.indexOf(bruit)) break;
+    // Le clic peut précéder l'hydratation de la page, qui vient de s'ouvrir : on le rejoue.
+    await expect(async () => {
+      await page
+        .getByRole("button", { name: `Monter : ${dechets}` })
+        .click({ timeout: 2000 });
+      await expect
+        .poll(async () => (await titresDeLaListe(page)).indexOf(dechets), {
+          timeout: 3000,
+        })
+        .toBeLessThan(place);
+    }).toPass({ timeout: 20_000 });
+    ordre = await titresDeLaListe(page);
+  }
+  expect(ordre.indexOf(dechets)).toBeLessThan(ordre.indexOf(bruit));
   await page.screenshot({
     path: test.info().outputPath("liste-sections.png"),
     fullPage: true,
@@ -146,22 +158,29 @@ test("le conseil syndical rédige deux sections, un résident les lit en les dé
 
     const titreBruit = lecteur.getByRole("button", { name: bruit });
     const titreDechets = lecteur.getByRole("button", { name: dechets });
+    // Le texte se lit dans la section qui le porte : l'autre projet écrit les mêmes phrases.
+    const texteBruit = lecteur.getByRole("region", { name: bruit });
+    const texteDechets = lecteur.getByRole("region", { name: dechets });
     await expect(titreBruit).toHaveAttribute("aria-expanded", "false");
     await expect(titreDechets).toHaveAttribute("aria-expanded", "false");
-    await expect(lecteur.getByText("Pas de bruit après 22h.")).toBeHidden();
+    await expect(texteBruit).toBeHidden();
 
     await titreBruit.click();
     await expect(titreBruit).toHaveAttribute("aria-expanded", "true");
-    await expect(lecteur.getByText("Pas de bruit après 22h.")).toBeVisible();
-    await expect(lecteur.getByText("Pas de fête")).toBeVisible();
-    await expect(lecteur.getByText("Triez vos déchets.")).toBeHidden();
+    await expect(texteBruit).toContainText("Pas de bruit après 22h.");
+    await expect(texteBruit.getByRole("listitem")).toHaveText([
+      "Musique douce",
+      "Pas de fête",
+    ]);
+    await expect(texteBruit.locator("strong")).toHaveText("Pas de fête");
+    await expect(texteDechets).toBeHidden();
     await titreBruit.click();
     await expect(titreBruit).toHaveAttribute("aria-expanded", "false");
 
     await lecteur.getByRole("button", { name: "Tout déplier" }).click();
     await expect(titreBruit).toHaveAttribute("aria-expanded", "true");
     await expect(titreDechets).toHaveAttribute("aria-expanded", "true");
-    await expect(lecteur.getByText("Triez vos déchets.")).toBeVisible();
+    await expect(texteDechets).toContainText("Triez vos déchets.");
     await lecteur.screenshot({
       path: test.info().outputPath("ma-copro.png"),
       fullPage: true,
