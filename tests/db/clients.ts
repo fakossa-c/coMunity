@@ -24,11 +24,19 @@ export function clientAdmin() {
  * compte vient de créer avec sa session, car la base la met d'abord en relecture.
  */
 export async function publierApresJev(identifiant: string) {
-  const { error } = await clientAdmin().rpc("conclure_pre_moderation", {
-    p_identifiant: identifiant,
-    p_raison: null,
-  });
+  const { error } = await conclurePreModeration(identifiant);
   if (error) throw error;
+}
+
+/** Ce que fait le serveur une fois Jev entendu : sans raison il publie, avec une raison il garde en relecture. */
+export function conclurePreModeration(
+  identifiant: string,
+  raison: string | null = null,
+) {
+  return clientAdmin().rpc("conclure_pre_moderation", {
+    p_identifiant: identifiant,
+    p_raison: raison,
+  });
 }
 
 export type Compte = { id: string; email: string; client: SupabaseClient };

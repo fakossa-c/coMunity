@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   clientAdmin,
   clientVisiteur,
+  conclurePreModeration,
   nouveauResident,
   nouveauSyndic,
+  publierApresJev,
   type Compte,
 } from "./clients";
 
@@ -36,19 +38,10 @@ async function creer(createur: Compte, complements: object = {}) {
   return data as { id: string; identifiant_public: string };
 }
 
-/** Ce que fait le serveur une fois Jev entendu : sans raison il publie, avec une raison il laisse en relecture. */
-function conclure(identifiant: string, raison: string | null = null) {
-  return clientAdmin().rpc("conclure_pre_moderation", {
-    p_identifiant: identifiant,
-    p_raison: raison,
-  });
-}
-
 /** Une activité créée puis publiée, comme un Jev sans objection. */
 async function creerEtPublier(createur: Compte, complements: object = {}) {
   const activite = await creer(createur, complements);
-  const { error } = await conclure(activite.identifiant_public);
-  if (error) throw error;
+  await publierApresJev(activite.identifiant_public);
   return activite.identifiant_public;
 }
 
@@ -162,7 +155,7 @@ describe("la conclusion du serveur", () => {
     const voisin = await nouveauResident("valide");
     const { identifiant_public } = await creer(createur);
 
-    const { error } = await conclure(identifiant_public);
+    const { error } = await conclurePreModeration(identifiant_public);
 
     expect(error).toBeNull();
     expect((await fiche(voisin, identifiant_public)).data).toMatchObject({
@@ -179,7 +172,7 @@ describe("la conclusion du serveur", () => {
     const voisin = await nouveauResident("valide");
     const { identifiant_public } = await creer(createur);
 
-    const { error } = await conclure(
+    const { error } = await conclurePreModeration(
       identifiant_public,
       "Nuisances sonores : l'activité risque de gêner le voisinage.",
     );
@@ -207,7 +200,7 @@ describe("la conclusion du serveur", () => {
     const createur = await nouveauResident("valide");
     const { identifiant_public } = await creer(createur);
 
-    const { error } = await conclure(identifiant_public, "   ");
+    const { error } = await conclurePreModeration(identifiant_public, "   ");
 
     expect(error).toBeNull();
     expect(await statutDe(identifiant_public)).toBe("publiee");
@@ -217,7 +210,7 @@ describe("la conclusion du serveur", () => {
     const createur = await nouveauResident("valide");
     const identifiant = await creerEtPublier(createur);
 
-    const { error } = await conclure(identifiant, "Trop tard");
+    const { error } = await conclurePreModeration(identifiant, "Trop tard");
 
     expect(error?.code).toBe("P0011");
     expect(await statutDe(identifiant)).toBe("publiee");
@@ -226,9 +219,9 @@ describe("la conclusion du serveur", () => {
   it("ne publie pas une activité que le conseil syndical a déjà à relire", async () => {
     const createur = await nouveauResident("valide");
     const { identifiant_public } = await creer(createur);
-    await conclure(identifiant_public, "Nuisances sonores");
+    await conclurePreModeration(identifiant_public, "Nuisances sonores");
 
-    const { error } = await conclure(identifiant_public);
+    const { error } = await conclurePreModeration(identifiant_public);
 
     expect(error?.code).toBe("P0011");
     expect(await statutDe(identifiant_public)).toBe("en_relecture");
@@ -244,14 +237,14 @@ describe("la conclusion du serveur", () => {
       p_message: "Hors sujet",
     });
 
-    const { error } = await conclure(identifiant);
+    const { error } = await conclurePreModeration(identifiant);
 
     expect(error?.code).toBe("P0011");
     expect(await statutDe(identifiant)).toBe("masquee");
   });
 
   it("dit d'une activité inconnue qu'elle n'existe pas", async () => {
-    const { error } = await conclure("inconnue");
+    const { error } = await conclurePreModeration("inconnue");
 
     expect(error?.code).toBe("P0002");
   });
@@ -285,7 +278,7 @@ describe("la modification par son créateur", () => {
       .update({ titre: "Goûter du soir" })
       .eq("identifiant_public", identifiant);
 
-    const { error } = await conclure(identifiant);
+    const { error } = await conclurePreModeration(identifiant);
 
     expect(error).toBeNull();
     expect(await statutDe(identifiant)).toBe("publiee");
@@ -300,7 +293,7 @@ describe("la modification par son créateur", () => {
       .update({ titre: "Fête bruyante" })
       .eq("identifiant_public", identifiant);
 
-    await conclure(identifiant, "Nuisances sonores");
+    await conclurePreModeration(identifiant, "Nuisances sonores");
 
     expect((await fiche(syndic, identifiant)).data).toMatchObject({
       statut: "en_relecture",
@@ -312,7 +305,7 @@ describe("la modification par son créateur", () => {
     const createur = await nouveauResident("valide");
     const syndic = await nouveauSyndic();
     const { identifiant_public } = await creer(createur);
-    await conclure(identifiant_public, "Nuisances sonores");
+    await conclurePreModeration(identifiant_public, "Nuisances sonores");
     await syndic.client.rpc("moderer_activite", {
       p_identifiant: identifiant_public,
       p_decision: "publier",
@@ -323,7 +316,7 @@ describe("la modification par son créateur", () => {
       .update({ titre: "Goûter du soir" })
       .eq("identifiant_public", identifiant_public);
 
-    const { error } = await conclure(identifiant_public);
+    const { error } = await conclurePreModeration(identifiant_public);
 
     expect(error).toBeNull();
     expect(await statutDe(identifiant_public)).toBe("publiee");

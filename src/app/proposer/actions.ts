@@ -91,7 +91,7 @@ export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
  * échoue : l'activité reste en relecture, chez son créateur et le conseil syndical, jamais chez
  * tous. Vrai si elle est en relecture.
  */
-async function preModerer(
+async function conclurePreModeration(
   identifiant: string,
   activite: NouvelleActivite,
 ): Promise<boolean> {
@@ -224,7 +224,10 @@ export async function publier(
   }
 
   // La base l'a mise en relecture : elle n'est publique qu'une fois Jev entendu.
-  const enRelecture = await preModerer(data.identifiant_public, activite);
+  const enRelecture = await conclurePreModeration(
+    data.identifiant_public,
+    activite,
+  );
   revalidatePath("/");
   if (poidsPhotos.length === 0)
     redirect(
@@ -333,7 +336,7 @@ export async function enregistrer(
     .from("activite")
     .update(activite)
     .eq("identifiant_public", identifiant)
-    .select("identifiant_public, statut");
+    .select("identifiant_public, statut, organisateur");
 
   if (error) {
     return {
@@ -352,9 +355,13 @@ export async function enregistrer(
   }
 
   // Une modification du créateur remet l'activité en relecture jusqu'à l'avis de Jev. Sans
-  // changement, ou par le conseil syndical, elle reste publiée et Jev n'est pas appelé.
-  if (data[0].statut === "en_relecture")
-    await preModerer(identifiant, activite);
+  // changement, ou par le conseil syndical, elle reste publiée (ou dans l'état où le conseil
+  // syndical l'a laissée) et Jev n'est pas appelé.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (data[0].statut === "en_relecture" && data[0].organisateur === user?.id)
+    await conclurePreModeration(identifiant, activite);
 
   if (photos) {
     const resultat = await fixerPhotos(supabase, identifiant, photos);

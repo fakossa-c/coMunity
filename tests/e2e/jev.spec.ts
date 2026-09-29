@@ -93,11 +93,15 @@ async function recuParJev(titre: string) {
   return recues.filter((r) => r.titre === titre);
 }
 
-async function activitePubliee(titre: string) {
-  const admin = createClient(local.url, local.cleSecrete, {
+/** Le client de la clé secrète : il voit aussi l'activité en relecture. */
+function clientAdmin() {
+  return createClient(local.url, local.cleSecrete, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data, error } = await admin
+}
+
+async function activitePubliee(titre: string) {
+  const { data, error } = await clientAdmin()
     .from("activite")
     .select("identifiant_public, categorie, pictogramme, statut")
     .eq("titre", titre)
@@ -310,12 +314,9 @@ test("un Jev trop lent ne bloque ni le parcours ni la publication", async ({
   expect((await activitePubliee(titre)).statut).toBe("publiee");
 });
 
-/** L'état d'une activité en base, lu avec la clé secrète (elle voit aussi l'activité en relecture). */
+/** L'état d'une activité en base, lu avec la clé secrète. */
 async function statutDe(titre: string) {
-  const admin = createClient(local.url, local.cleSecrete, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data } = await admin
+  const { data } = await clientAdmin()
     .from("activite")
     .select("statut")
     .eq("titre", titre)
