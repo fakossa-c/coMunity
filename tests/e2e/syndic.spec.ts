@@ -85,7 +85,7 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   await pageDuCollegue.getByRole("button", { name: "Mon profil" }).click();
   await expect(
     pageDuCollegue.getByRole("dialog", { name: "Menu du profil" }),
-  ).toContainText("Bernard Lefèvre");
+  ).toContainText("Bernard L.");
   await page.screenshot({
     path: test.info().outputPath("membres-du-syndic.png"),
     fullPage: true,

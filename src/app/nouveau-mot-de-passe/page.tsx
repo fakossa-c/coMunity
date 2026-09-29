@@ -25,7 +25,7 @@ export default async function NouveauMotDePasse() {
             !session
               ? "Ouvrez le lien reçu par email pour choisir votre mot de passe."
               : demanderIdentite
-                ? `Pour le compte ${session.email}. Présentez-vous à vos voisins, puis choisissez le mot de passe que vous utiliserez à chaque connexion.`
+                ? `Pour le compte ${session.email}. Donnez votre prénom et votre nom (vos voisins ne verront que votre pseudo), puis choisissez le mot de passe que vous utiliserez à chaque connexion.`
                 : `Pour le compte ${session.email}. Vous l'utiliserez à chaque connexion.`
           }
         />

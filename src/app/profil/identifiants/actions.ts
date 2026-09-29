@@ -13,6 +13,7 @@ import {
   clientSession,
   verifierMotDePasse,
 } from "@/lib/supabase/serveur";
+import { BUCKET_PHOTOS_PROFILS } from "@/lib/photo-profil";
 import { retirerPhotosDesActivites } from "@/lib/suppression-compte";
 
 const IDENTIFIANTS = "/profil/identifiants";
@@ -143,11 +144,11 @@ const messagesSuppression: Record<string, string> = {
 
 /**
  * Supprime le compte de la personne connectée : la base efface ses informations et règle le sort
- * de ses activités, puis le serveur retire les photos des activités supprimées ou annulées (le
- * compte n'existant plus, seule la clé secrète le peut) et referme la session.
+ * de ses activités, puis le serveur retire sa photo de profil et celles des activités supprimées ou
+ * annulées (le compte n'existant plus, seule la clé secrète le peut) et referme la session.
  */
 export async function supprimerMonCompte(): Promise<Resultat> {
-  await sessionExigee();
+  const session = await sessionExigee();
   const echec = {
     ok: false,
     message:
@@ -163,6 +164,11 @@ export async function supprimerMonCompte(): Promise<Resultat> {
   }
 
   const supabase = await clientSession();
+  const { data: profil } = await supabase
+    .from("profil")
+    .select("photo_chemin")
+    .eq("id", session.id)
+    .maybeSingle();
   const { data, error } = await supabase.rpc("supprimer_mon_compte");
   if (error) {
     return {
@@ -173,6 +179,11 @@ export async function supprimerMonCompte(): Promise<Resultat> {
 
   // Au pire, un fichier orphelin reste dans le bucket : plus aucune activité ne le montre.
   try {
+    if (profil?.photo_chemin) {
+      await admin.storage
+        .from(BUCKET_PHOTOS_PROFILS)
+        .remove([profil.photo_chemin]);
+    }
     await retirerPhotosDesActivites(admin, (data as string[] | null) ?? []);
   } catch {}
   await supabase.auth.signOut();

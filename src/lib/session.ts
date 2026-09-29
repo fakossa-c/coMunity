@@ -15,6 +15,8 @@ export type Session = {
   /** `null` : compte sans profil, qui n'a accès à rien. */
   role: Role | null;
   statut: StatutCompte | null;
+  /** Le nom que les voisins lisent ; `null` pour un membre du syndic qui n'a pas encore saisi son prénom et son nom. */
+  pseudo: string | null;
   /** `null` pour un membre du syndic qui ne les a pas encore saisis. */
   prenom: string | null;
   nom: string | null;
@@ -33,7 +35,7 @@ export const lireSession = cache(async (): Promise<Session | null> => {
 
   const { data: profil } = await supabase
     .from("profil")
-    .select("role, statut, prenom, nom, taille, theme")
+    .select("role, statut, pseudo, prenom, nom, taille, theme")
     .eq("id", claims.sub)
     .maybeSingle();
   return {
@@ -41,6 +43,7 @@ export const lireSession = cache(async (): Promise<Session | null> => {
     email: claims.email ?? "",
     role: profil?.role ?? null,
     statut: profil?.statut ?? null,
+    pseudo: profil?.pseudo ?? null,
     prenom: profil?.prenom ?? null,
     nom: profil?.nom ?? null,
     taille: profil?.taille ?? "standard",

@@ -73,7 +73,7 @@ test("un membre du syndic sans prénom ni nom les saisit avant d'aller plus loin
   await page.getByRole("button", { name: "Mon profil" }).click();
   await expect(
     page.getByRole("dialog", { name: "Menu du profil" }),
-  ).toContainText("Colette Durand");
+  ).toContainText("Colette D.");
 });
 
 test("un membre du syndic sans prénom ni nom retrouve la page demandée après les avoir saisis", async ({
