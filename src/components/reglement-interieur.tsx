@@ -65,7 +65,7 @@ export function ReglementInterieur({ sections, misAJourLe }: Props) {
               key={section.id}
               className="rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte"
             >
-              <h2>
+              <h3>
                 <button
                   type="button"
                   id={`${id}-bouton`}
@@ -79,7 +79,7 @@ export function ReglementInterieur({ sections, misAJourLe }: Props) {
                   </span>
                   <Icone nom={ouverte ? "expand_less" : "expand_more"} />
                 </button>
-              </h2>
+              </h3>
               <div
                 id={`${id}-texte`}
                 role="region"
