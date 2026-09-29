@@ -223,7 +223,7 @@ export default async function Fiche({ params }: Props) {
           capaciteMax={fiche.capacite_max}
           placesPrises={fiche.places_prises}
         />
-        {fiche.capacite_min !== null && (
+        {fiche.capacite_min !== null && fiche.capacite_min > 1 && (
           <p className="text-body-md text-on-surface-variant">
             {libelleMinimum(fiche.capacite_min)} pour que l&apos;activité ait
             lieu.

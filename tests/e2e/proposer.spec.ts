@@ -268,10 +268,19 @@ test("le minimum de participants démarre à 1, et les conseils de l'assistant o
   await saisirLieuLibre(page, "Cour intérieure");
   await continuer(page);
 
-  // Un minimum de 1 est déjà là ; il se vide et se remplit comme avant.
+  // Un minimum de 1 est déjà là ; le vider reste permis : « Aucun minimum ».
   await etape(page, 3);
   const minimum = page.getByLabel("Minimum de participants");
   await expect(minimum).toHaveValue("1");
+  await minimum.fill("");
+  await continuer(page);
+  await etape(page, 4);
+  await expect(page.getByRole("main")).toContainText("Aucun minimum");
+  await page
+    .getByRole("button", { name: "Modifier : Capacité et confort" })
+    .click();
+  await etape(page, 3);
+  await minimum.fill("1");
   await continuer(page);
 
   // L'encart de l'assistant est sous le titre de l'étape, au-dessus des cartes, sans défiler.
@@ -295,12 +304,13 @@ test("le minimum de participants démarre à 1, et les conseils de l'assistant o
   });
   await page.getByRole("button", { name: "Publier" }).click();
 
-  // Un minimum de 1 ne demande rien de plus : la fiche ne parle pas de participants manquants.
+  // Un minimum de 1 ne demande rien de plus : la fiche ne parle ni de minimum ni de participants
+  // manquants.
   await page.getByRole("link", { name: "Voir la fiche" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: titre }),
   ).toBeVisible();
-  await expect(page.getByRole("main")).toContainText("Au moins 1 participant");
+  await expect(page.getByRole("main")).not.toContainText("Au moins 1");
   await expect(page.getByRole("main")).not.toContainText(
     "Encore 1 participant pour confirmer",
   );
