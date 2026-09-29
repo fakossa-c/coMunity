@@ -175,6 +175,43 @@ describe("sondage : création par le conseil syndical", () => {
     expect(reponses.data).toEqual([]);
   });
 
+  it("un sondage ne se joint qu'à une annonce de type sondage", async () => {
+    const syndic = await nouveauSyndic();
+    const annonce = await syndic.client
+      .from("annonce")
+      .insert({ type: "info", titre: "Simple information" })
+      .select("id")
+      .single();
+    annoncesCreees.push(annonce.data!.id);
+
+    const { error } = await syndic.client.from("sondage").insert({
+      annonce_id: annonce.data!.id,
+      question: "Question ?",
+      options: OPTIONS,
+      echeance: jour(7),
+    });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("l'annonce qui porte un sondage garde son type", async () => {
+    const syndic = await nouveauSyndic();
+    const sondage = await publierSondage(syndic);
+
+    const { error } = await syndic.client
+      .from("annonce")
+      .update({ type: "info" })
+      .eq("id", sondage.annonce_id);
+    const titre = await syndic.client
+      .from("annonce")
+      .update({ titre: "Titre corrigé" })
+      .eq("id", sondage.annonce_id)
+      .select("titre");
+
+    expect(error?.code).toBe("23514");
+    expect(titre.data).toEqual([{ titre: "Titre corrigé" }]);
+  });
+
   it("un sondage ne se modifie pas une fois publié", async () => {
     const syndic = await nouveauSyndic();
     const sondage = await publierSondage(syndic);
