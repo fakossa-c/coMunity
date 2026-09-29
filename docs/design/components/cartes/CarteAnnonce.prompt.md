@@ -15,3 +15,5 @@ Carte d'annonce du syndic (écran Annonces) : une information à lire, jamais un
 ```
 
 Types : `ag` pêche · `sondage` abricot · `travaux` et `info` vert.
+
+Sur ordinateur (présentation Journal, voir le README) : la carte n'a plus de contour mais l'ombre douce, relevée au survol, avec 32 px de marge intérieure ; titre 26/34, texte 20/32 ; les boutons se placent côte à côte. La liste les range en deux colonnes, dans l'ordre de lecture.

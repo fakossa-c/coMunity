@@ -28,13 +28,14 @@ type Props = {
 /**
  * Carte d'une annonce de la liste : une information à lire, jamais une activité, donc ni photo,
  * ni jauge, ni inscription. Ordre : pastille de type, « Nouveau », date de publication, titre,
- * texte, infos, sondage, boutons.
+ * texte, infos, sondage, boutons. Sur ordinateur (cadre Journal) : sans contour, ombre douce,
+ * relevée au survol, et les boutons côte à côte.
  */
 export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
   const type = typesAnnonce[annonce.type];
   const infos = infosAnnonce(annonce);
   return (
-    <article className="relative flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+    <article className="relative flex survol-eleve flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-space-md shadow-carte desktop:gap-space-md desktop:p-8">
       <div className="flex flex-wrap items-center gap-space-sm">
         <Etiquette ton={type.ton} icone={type.icone}>
           {type.libelle}
@@ -44,7 +45,7 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
       <p className="text-body-md text-on-surface-variant">
         {libellePublication(annonce.publiee_le)}
       </p>
-      <h2 className="font-headline text-headline-sm text-on-surface">
+      <h2 className="font-headline text-headline-sm text-on-surface desktop:text-headline-lg">
         {/* Toute la carte ouvre l'annonce : le lien s'étend sur elle, les boutons restent au-dessus. */}
         <Link
           href={cheminAnnonce(annonce.identifiant_public)}
@@ -54,7 +55,7 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
         </Link>
       </h2>
       {annonce.texte && (
-        <p className="max-w-[65ch] text-body-lg whitespace-pre-line text-on-surface">
+        <p className="max-w-[65ch] text-body-lg whitespace-pre-line text-on-surface desktop:text-body-xl">
           {annonce.texte}
         </p>
       )}
@@ -75,7 +76,7 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
       )}
       {/* Le sondage se répond dans la carte : il reste au-dessus du lien qui l'étend. */}
       {children && <div className="relative z-10">{children}</div>}
-      <div className="relative z-10 flex flex-col gap-space-sm">
+      <div className="relative z-10 flex flex-col gap-space-sm desktop:flex-row desktop:flex-wrap">
         {urlDocument && (
           <a
             href={urlDocument}

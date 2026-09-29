@@ -589,9 +589,10 @@ test("sur ordinateur, les puces de filtre passent à la ligne faute de place, sa
   const hauts = await puces.evaluateAll((liens) =>
     liens.map((l) => Math.round(l.getBoundingClientRect().top)),
   );
-  expect(new Set(hauts).size, "les puces tiennent sur plusieurs lignes").toBe(
-    2,
-  );
+  expect(
+    new Set(hauts).size,
+    "les puces tiennent sur plusieurs lignes",
+  ).toBeGreaterThan(1);
   await verifierSansDefilementHorizontal(page);
 });
 

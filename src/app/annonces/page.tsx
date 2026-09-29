@@ -67,11 +67,17 @@ async function ListeAnnonces({
     annonces.filter((a) => a.type === "sondage").map((a) => a.id),
   );
   return (
-    <ul aria-label="Annonces" className="flex flex-col gap-space-md">
+    <ul
+      aria-label="Annonces"
+      className="flex flex-col gap-space-md desktop:block desktop:columns-2 desktop:gap-x-8"
+    >
       {annonces.map((annonce) => {
         const sondage = sondages.get(annonce.id);
         return (
-          <li key={annonce.id}>
+          <li
+            key={annonce.id}
+            className="desktop:mb-8 desktop:break-inside-avoid"
+          >
             <CarteAnnonce
               annonce={annonce}
               lien={`${racine}${cheminAnnonce(annonce.identifiant_public)}`}
