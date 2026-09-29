@@ -79,7 +79,7 @@ function fiche(
 
 async function statutDe(syndic: Compte, identifiant: string) {
   const { data } = await fiche(syndic, identifiant);
-  return data?.statut as string | undefined;
+  return (data as { statut?: string } | null)?.statut;
 }
 
 describe("sans Jev, la publication est directe", () => {
