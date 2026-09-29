@@ -1,6 +1,8 @@
 export const BUCKET_PHOTOS_ACTIVITE = "activites";
 /** Photos par activité, la même limite que la base. */
 export const MAX_PHOTOS = 5;
+/** Poids maximal d'une photo compressée, en octets : la limite du bucket. */
+export const TAILLE_MAX_PHOTO = 2 * 1024 * 1024;
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 

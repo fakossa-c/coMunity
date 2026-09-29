@@ -36,6 +36,8 @@ type Props = {
   regles: ReglesResidence;
   /** En modification, la saisie de départ (voir `avertissementsApplicables`). */
   reference?: SaisieActivite;
+  /** Les photos choisies, à l'étape 1. */
+  nombrePhotos: number;
   onModifier: (etape: Etape) => void;
   onAnnuler: () => void;
 };
@@ -68,6 +70,7 @@ function libellesEtiquettes(
 function sectionsDe(
   saisie: SaisieActivite,
   espace: EspaceCommun | undefined,
+  nombrePhotos: number,
 ): { etape: Etape; lignes: LigneCarte[] }[] {
   const categorie = categoriesActivite[saisie.categorie];
   return [
@@ -84,6 +87,16 @@ function sectionsDe(
           icone: "waving_hand",
           titre: "Mot d'accueil",
           detail: saisie.mot_accueil || "Aucun",
+        },
+        {
+          icone: "visibility",
+          titre: "Photos",
+          detail:
+            nombrePhotos === 0
+              ? "Aucune"
+              : nombrePhotos === 1
+                ? "1 photo"
+                : `${nombrePhotos} photos`,
         },
       ],
     },
@@ -161,6 +174,7 @@ export function Recapitulatif({
   espace,
   regles,
   reference,
+  nombrePhotos,
   onModifier,
   onAnnuler,
 }: Props) {
@@ -186,7 +200,7 @@ export function Recapitulatif({
 
   return (
     <>
-      {sectionsDe(saisie, espace).map(({ etape, lignes }) => (
+      {sectionsDe(saisie, espace, nombrePhotos).map(({ etape, lignes }) => (
         <section key={etape} className="flex flex-col gap-space-sm">
           <div className="flex items-center justify-between gap-space-sm">
             <TitreSection>{TITRES_ETAPES[etape]}</TitreSection>

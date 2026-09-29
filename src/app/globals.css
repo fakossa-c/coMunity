@@ -167,6 +167,13 @@
   --shadow-flottant: 0 8px 24px -4px rgba(24, 34, 48, 0.35);
   --shadow-barre-action: 0 -8px 24px -4px rgba(24, 34, 48, 0.16);
 
+  /* Emplacement de photo, rayé à 135° (docs/design/tokens/elevation.css), sous la photo qui charge */
+  --background-image-rayures-photo: repeating-linear-gradient(
+    135deg,
+    var(--color-surface-container) 0 12px,
+    var(--color-surface-container-high) 12px 24px
+  );
+
   --breakpoint-desktop: 64rem;
 
   /* Panneau latéral du menu de l'avatar, sur ordinateur */
@@ -264,6 +271,11 @@
   --shadow-carte: 0 3px 0 0 rgba(0, 0, 0, 0.35);
   --shadow-flottant: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
   --shadow-barre-action: 0 -8px 24px -4px rgba(0, 0, 0, 0.45);
+  --background-image-rayures-photo: repeating-linear-gradient(
+    135deg,
+    var(--color-surface-container) 0 12px,
+    var(--color-surface-container-high) 12px 24px
+  );
 }
 
 /* Grands caractères (docs/design/tokens/typography.css) : tailles × 1,25, interlignage 1,4.

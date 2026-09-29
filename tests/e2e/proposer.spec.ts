@@ -90,7 +90,9 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
 
   // Étape 1 : le titre se compte, un titre vide ne passe pas.
   await etape(page, 1);
-  await expect(page.getByRole("main")).toContainText("Titre et catégorie");
+  await expect(page.getByRole("main")).toContainText(
+    "Titre, catégorie et photos",
+  );
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Donnez un titre",
@@ -179,7 +181,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   });
 
   await page
-    .getByRole("button", { name: "Modifier : Titre et catégorie" })
+    .getByRole("button", { name: "Modifier : Titre, catégorie et photos" })
     .click();
   await etape(page, 1);
   await expect(page.getByLabel("Titre de l'activité")).toHaveValue(titre);

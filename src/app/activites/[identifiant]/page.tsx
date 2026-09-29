@@ -9,6 +9,7 @@ import { EcranSecondaire } from "@/components/cadre";
 import { EncartPastel } from "@/components/encart-pastel";
 import { EtatActivite } from "@/components/etat-activite";
 import { EtiquettesActivite } from "@/components/etiquette";
+import { GaleriePhotos } from "@/components/galerie-photos";
 import { Icone } from "@/components/icone";
 import type { NomIcone } from "@/components/icones";
 import { Jauge } from "@/components/jauge";
@@ -17,6 +18,7 @@ import { ProposePar } from "@/components/propose-par";
 import { VisuelActivite } from "@/components/visuel-activite";
 import { categoriesActivite } from "@/lib/categories-activite";
 import {
+  adressePhoto,
   lienFiche,
   lireFiche,
   origine,
@@ -110,7 +112,14 @@ export default async function Fiche({ params }: Props) {
       action={actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
     >
       <article className="flex flex-col gap-[14px]">
-        <VisuelActivite pictogramme={fiche.pictogramme as NomIcone} />
+        {fiche.photos.length > 0 ? (
+          <GaleriePhotos
+            photos={fiche.photos.map(adressePhoto)}
+            titre={fiche.titre}
+          />
+        ) : (
+          <VisuelActivite pictogramme={fiche.pictogramme as NomIcone} />
+        )}
         <p className="flex items-center gap-2 pt-1.5 font-headline text-label-md text-on-surface-variant">
           <span className="text-primary">
             <Icone nom={categorie.pictogramme} taille={22} />

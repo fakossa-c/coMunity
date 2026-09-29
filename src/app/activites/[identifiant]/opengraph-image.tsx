@@ -3,10 +3,11 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { icones, type NomIcone } from "@/components/icones";
 import { categoriesActivite } from "@/lib/categories-activite";
-import { lireFiche } from "@/lib/fiche-activite";
+import { adressePhoto, lireFiche } from "@/lib/fiche-activite";
 import { creneau, jourLong } from "@/lib/partage-activite";
 
-// Aperçu du lien dans WhatsApp : le pictogramme de l'activité tient lieu de photo.
+// Aperçu du lien dans WhatsApp : la première photo de l'activité quand elle en a une, sinon son
+// pictogramme, son titre et ses horaires.
 export const alt = "Aperçu de l'activité";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -33,6 +34,19 @@ export default async function Image({
   const { identifiant } = await params;
   const fiche = await lireFiche(identifiant);
   if (!fiche) return new Response(null, { status: 404 });
+
+  if (fiche.photos.length > 0) {
+    return new ImageResponse(
+      <img
+        src={adressePhoto(fiche.photos[0])}
+        alt=""
+        width={size.width}
+        height={size.height}
+        style={{ objectFit: "cover" }}
+      />,
+      size,
+    );
+  }
 
   const trace = icones[fiche.pictogramme as NomIcone] ?? icones.celebration;
   const logoBase64 = `data:image/png;base64,${(await logo).toString("base64")}`;

@@ -6,7 +6,8 @@ import type { CategorieActivite } from "./categories-activite";
 import type { EtiquetteActivite } from "./etiquettes-activite";
 import { origineDe } from "./origine";
 import { cheminFiche } from "./partage-activite";
-import { clientSession } from "./supabase/serveur";
+import { urlPhoto } from "./photos-activite";
+import { clientSession, configurationSupabase } from "./supabase/serveur";
 
 /** Ce que la fonction `fiche_activite` livre d'une activité, visiteurs compris. */
 export type FicheActivite = {
@@ -47,7 +48,16 @@ export type FicheActivite = {
   espace_commun_id: string | null;
   /** Les consignes de l'espace commun où se tient l'activité ; `null` sans espace ou sans consigne. */
   consignes_espace: string | null;
+  /** Chemins des photos dans le bucket `activites`, dans l'ordre ; vide sans photo. */
+  photos: string[];
 };
+
+/** L'adresse publique d'une photo du bucket `activites`. */
+export function adressePhoto(chemin: string) {
+  const configuration = configurationSupabase();
+  if (!configuration) throw new Error("Supabase n'est pas configuré.");
+  return urlPhoto(configuration.url, chemin);
+}
 
 /** La fiche d'une activité par son identifiant public, lue une fois par requête. `null` si elle n'existe pas. */
 export const lireFiche = cache(
