@@ -8,6 +8,11 @@ alter table public.espace_commun
     constraint espace_commun_photo_chemin_valide
       check (photo_chemin ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$');
 
+-- Une photo n'illustre qu'un espace : supprimer l'un ne retire pas la photo d'un autre.
+create unique index espace_commun_photo_chemin_unique
+  on public.espace_commun (photo_chemin)
+  where photo_chemin is not null;
+
 comment on column public.espace_commun.photo_chemin is 'Chemin de la photo dans le bucket `espaces-communs` ; `null` sans photo. Une photo ne se remplace pas sur place : la nouvelle a un nouveau chemin.';
 
 grant insert (photo_chemin) on public.espace_commun to authenticated;
@@ -29,7 +34,11 @@ create policy "Les comptes actifs lisent les photos d'espace commun"
 create policy "Le conseil syndical dépose une photo d'espace commun"
   on storage.objects for insert
   to authenticated
-  with check (bucket_id = 'espaces-communs' and (select public.est_syndic()));
+  with check (
+    bucket_id = 'espaces-communs'
+    and name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$'
+    and (select public.est_syndic())
+  );
 
 -- Aucune politique de modification : une photo ne se remplace pas, on en dépose une autre.
 create policy "Le conseil syndical retire une photo d'espace commun"

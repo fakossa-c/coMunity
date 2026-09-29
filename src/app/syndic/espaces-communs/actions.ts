@@ -84,7 +84,7 @@ export async function preparerDepotPhoto(taille: number): Promise<Depot> {
 export async function enregistrerEspace(
   id: string | null,
   saisie: SaisieEspace,
-  photoChemin: string | null = null,
+  photoChemin: string | null,
 ): Promise<Resultat> {
   const verdict = verifierEspace(saisie);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };

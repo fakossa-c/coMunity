@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { compresserImage } from "@/lib/compression-image";
 import { texteAlternatifEspace } from "@/lib/photo-espace-commun";
 import { Bouton } from "./bouton";
@@ -36,6 +36,8 @@ export function ChampPhotoEspace({ photo, nom, onChoisir, onRetirer }: Props) {
   const [cleSelecteur, setCleSelecteur] = useState(0);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
+  // Reçoit le focus quand « Retirer la photo » disparaît avec la photo : le lecteur d'écran lit le nouvel état.
+  const etat = useRef<HTMLParagraphElement>(null);
 
   async function choisir(fichier: File | undefined) {
     if (!fichier) return;
@@ -60,7 +62,12 @@ export function ChampPhotoEspace({ photo, nom, onChoisir, onRetirer }: Props) {
         Facultative. Les voisins la voient sur la fiche de l&apos;espace commun,
         dans Ma copro.
       </p>
-      <p role="status" className="font-headline text-body-bold">
+      <p
+        ref={etat}
+        tabIndex={-1}
+        role="status"
+        className="font-headline text-body-bold outline-none"
+      >
         {enCours
           ? "Préparation de la photo…"
           : photo
@@ -95,7 +102,10 @@ export function ChampPhotoEspace({ photo, nom, onChoisir, onRetirer }: Props) {
             variante="fantome"
             icone="close"
             iconeTaille={22}
-            onClick={onRetirer}
+            onClick={() => {
+              onRetirer();
+              etat.current?.focus();
+            }}
             disabled={enCours}
           >
             Retirer la photo

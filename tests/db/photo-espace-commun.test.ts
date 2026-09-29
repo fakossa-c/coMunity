@@ -84,6 +84,19 @@ describe("dépôt et retrait dans le bucket", () => {
     expect(error).not.toBeNull();
   });
 
+  it("le conseil syndical ne dépose que sous un nom de photo d'espace commun", async () => {
+    const syndic = await nouveauSyndic();
+
+    for (const chemin of [
+      "photo.jpg",
+      `dossier/${randomUUID()}.jpg`,
+      `${randomUUID()}.jpeg`,
+    ]) {
+      const { error } = await deposer(syndic, chemin);
+      expect(error, chemin).not.toBeNull();
+    }
+  });
+
   it("le bucket refuse tout ce qui n'est pas du JPEG, et au-delà de 2 Mo", async () => {
     const syndic = await nouveauSyndic();
 
@@ -239,6 +252,24 @@ describe("colonne photo_chemin", () => {
         .single();
       expect(data).toEqual({ photo_chemin: chemin });
     }
+  });
+
+  it("une photo n'illustre qu'un seul espace commun", async () => {
+    const syndic = await nouveauSyndic();
+    const chemin = cheminPhotoEspace(randomUUID());
+    const premier = await nouvelEspace();
+    const second = await nouvelEspace();
+    await syndic.client
+      .from("espace_commun")
+      .update({ photo_chemin: chemin })
+      .eq("id", premier);
+
+    const { error } = await syndic.client
+      .from("espace_commun")
+      .update({ photo_chemin: chemin })
+      .eq("id", second);
+
+    expect(error?.code).toBe("23505");
   });
 
   it("refuse un chemin qui n'est pas celui d'une photo du bucket", async () => {
