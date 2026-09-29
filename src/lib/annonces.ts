@@ -74,7 +74,7 @@ export function typesDuFiltre(filtre: FiltreAnnonce) {
 
 /** Le filtre demandé par l'adresse ; « Toutes » quand elle n'en nomme aucun connu. */
 export function filtreAnnonce(parametre: string | undefined): FiltreAnnonce {
-  return parametre !== undefined && parametre in typesParFiltre
+  return parametre !== undefined && Object.hasOwn(typesParFiltre, parametre)
     ? (parametre as FiltreAnnonce)
     : "toutes";
 }
@@ -91,9 +91,19 @@ export function estExpiree(expireLe: string | null, jour = aujourdhui()) {
   return expireLe !== null && expireLe < jour;
 }
 
-/** « 20 octobre », pour une date `AAAA-MM-JJ` ou un horodatage ISO. */
+const FORMAT_JOUR_RESIDENCE = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "long",
+  timeZone: "Europe/Paris",
+});
+
+/**
+ * « 20 octobre », pour une date `AAAA-MM-JJ` ou un horodatage ISO. Un horodatage se lit dans le
+ * fuseau de la résidence : une annonce publiée à 1 h du matin ne porte pas la date de la veille.
+ */
 export function dateSansJour(date: string) {
-  return jourLong(date.slice(0, 10)).split(" ").slice(1).join(" ");
+  if (date.length > 10) return FORMAT_JOUR_RESIDENCE.format(new Date(date));
+  return jourLong(date).split(" ").slice(1).join(" ");
 }
 
 /** « Publiée le 20 octobre par le conseil syndical ». */
@@ -173,6 +183,8 @@ export const SAISIE_ANNONCE_VIDE: SaisieAnnonce = {
 export function verifierAnnonce(
   saisie: SaisieAnnonce,
   jour = aujourdhui(),
+  /** L'expiration déjà enregistrée : la garder ne bloque pas la correction d'une annonce expirée. */
+  expirationEnregistree: string | null = null,
 ): ErreurFormulaire<ChampAnnonce> {
   if (saisie.titre.trim().length === 0)
     return { champ: "titre", erreur: "Donnez un titre à l'annonce." };
@@ -180,7 +192,11 @@ export function verifierAnnonce(
     if (saisie[champ].trim().length > LIMITES_ANNONCE[champ])
       return { champ, erreur: `${LIMITES_ANNONCE[champ]} caractères maximum.` };
   }
-  if (saisie.expire_le !== "" && saisie.expire_le < jour)
+  if (
+    saisie.expire_le !== "" &&
+    saisie.expire_le < jour &&
+    saisie.expire_le !== expirationEnregistree
+  )
     return {
       champ: "expire_le",
       erreur:

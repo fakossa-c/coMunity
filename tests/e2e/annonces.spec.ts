@@ -478,3 +478,46 @@ test("les écrans des annonces n'ont aucune violation critique", async ({
     expect(critiques, `${chemin} : ${JSON.stringify(critiques)}`).toEqual([]);
   }
 });
+
+test("le conseil syndical corrige une annonce expirée sans changer son expiration", async ({
+  page,
+}) => {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  const titre = titreUnique("Coupure d'eau terminée");
+  const corrige = titreUnique("Coupure d'eau terminée, merci");
+  const annonce = await nouvelleAnnonce({ titre, expire_le: jour(-5) });
+
+  await seConnecter(page, syndic.email);
+  await page.goto(`/syndic/annonces/${annonce.id}`);
+  await page.getByLabel("Titre").fill(corrige);
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
+    `« ${corrige} » est enregistrée.`,
+  );
+  await expect(ligneDeGestion(page, corrige)).toContainText("Expirée");
+
+  await ligneDeGestion(page, corrige)
+    .getByRole("link", { name: /^Modifier/ })
+    .click();
+  await page.getByLabel("Expire le").fill(jour(-1));
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Cette date est déjà passée",
+  );
+});
+
+test("un visiteur sur Annonces est invité à se connecter pour les lire", async ({
+  page,
+}) => {
+  await page.goto("/annonces");
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Annonces" }),
+  ).toBeVisible();
+  await expect(page.getByRole("main")).toContainText(
+    "Connectez-vous pour lire les annonces de la résidence.",
+  );
+  await expect(page.getByRole("article")).toHaveCount(0);
+});

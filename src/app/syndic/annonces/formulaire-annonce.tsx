@@ -67,6 +67,8 @@ export function FormulaireAnnonce({ annonce }: Props) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [enCours, demarrer] = useTransition();
   const id = annonce?.id ?? null;
+  // La modification d'une annonce expirée garde son expiration : seule une nouvelle date doit être à venir.
+  const expirationEnregistree = id ? annonce?.saisie.expire_le || null : null;
 
   function poser<C extends keyof SaisieAnnonce>(
     champ: C,
@@ -90,7 +92,7 @@ export function FormulaireAnnonce({ annonce }: Props) {
 
   /** Envoie les fichiers choisis, puis enregistre l'annonce avec leurs chemins. */
   function enregistrer() {
-    const verdict = verifierAnnonce(saisie);
+    const verdict = verifierAnnonce(saisie, undefined, expirationEnregistree);
     setErreur(verdict);
     setResultat(null);
     if (verdict.erreur) return;
@@ -117,7 +119,10 @@ export function FormulaireAnnonce({ annonce }: Props) {
             ok: false,
             message: `Le fichier « ${fichier.name} » n'a pas pu être envoyé. Réessayez dans un instant.`,
           });
+        // Un fichier déposé n'est pas renvoyé à l'essai suivant : il garde son chemin.
         aEnregistrer = { ...aEnregistrer, [CHAMP_CHEMIN[genre]]: depot.chemin };
+        setSaisie(aEnregistrer);
+        setFichiers((f) => ({ ...f, [genre]: null }));
       }
       setResultat(await enregistrerAnnonce(id, aEnregistrer));
     });

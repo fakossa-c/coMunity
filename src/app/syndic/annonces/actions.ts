@@ -106,7 +106,20 @@ export async function enregistrerAnnonce(
   id: string | null,
   saisie: SaisieAnnonce,
 ): Promise<Resultat> {
-  const verdict = verifierAnnonce(saisie);
+  const supabase = await clientSession();
+  let anciens: (string | null)[] = [];
+  let expirationEnregistree: string | null = null;
+  if (id) {
+    const { data } = await supabase
+      .from("annonce")
+      .select("photo_chemin, document_chemin, expire_le")
+      .eq("id", id)
+      .maybeSingle();
+    anciens = [data?.photo_chemin ?? null, data?.document_chemin ?? null];
+    expirationEnregistree = data?.expire_le ?? null;
+  }
+
+  const verdict = verifierAnnonce(saisie, undefined, expirationEnregistree);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };
   for (const chemin of [saisie.photo_chemin, saisie.document_chemin]) {
     if (chemin !== null && !estCheminDeFichier(chemin))
@@ -114,17 +127,6 @@ export async function enregistrerAnnonce(
   }
 
   const annonce = versLigneAnnonce(saisie);
-  const supabase = await clientSession();
-  let anciens: (string | null)[] = [];
-  if (id) {
-    const { data } = await supabase
-      .from("annonce")
-      .select("photo_chemin, document_chemin")
-      .eq("id", id)
-      .maybeSingle();
-    anciens = [data?.photo_chemin ?? null, data?.document_chemin ?? null];
-  }
-
   const { data, error } = id
     ? await supabase.from("annonce").update(annonce).eq("id", id).select("id")
     : await supabase.from("annonce").insert(annonce).select("id");

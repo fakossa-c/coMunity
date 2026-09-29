@@ -77,6 +77,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
               {annonces.map((annonce) => {
                 const type = typesAnnonce[annonce.type];
                 const expiree = estExpiree(annonce.expire_le);
+                const infos = infosAnnonce(annonce);
                 return (
                   <li
                     key={annonce.id}
@@ -106,11 +107,9 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
                     <h3 className="font-headline text-headline-sm text-on-surface">
                       {annonce.titre}
                     </h3>
-                    {infosAnnonce(annonce).length > 0 && (
+                    {infos.length > 0 && (
                       <p className="text-body-lg text-on-surface-variant">
-                        {infosAnnonce(annonce)
-                          .map((ligne) => ligne.titre)
-                          .join(" · ")}
+                        {infos.map((ligne) => ligne.titre).join(" · ")}
                       </p>
                     )}
                     <Link
