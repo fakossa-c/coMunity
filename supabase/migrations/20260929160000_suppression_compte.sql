@@ -7,8 +7,8 @@
 -- annulée, elle deviendrait publique, alors que ses inscrits ne la voient déjà plus.
 --
 -- Migration additive : deux colonnes deviennent facultatives et leur clé étrangère met à `null`
--- au lieu d'effacer ; une fonction est nouvelle ; la fiche et les retours d'une activité se
--- relisent sans organisateur, avec les mêmes colonnes qu'avant.
+-- au lieu d'effacer ; une fonction est nouvelle ; la fiche, les retours d'une activité et la synthèse
+-- du tableau de bord se relisent sans organisateur, avec les mêmes colonnes qu'avant.
 
 alter table public.activite
   alter column organisateur drop not null,
@@ -115,6 +115,67 @@ as $$
     ))
   group by a.id;
 $$;
+
+-- Le tableau de bord compte l'activité passée d'un résident supprimé parmi celles des résidents.
+/**
+ * Les volumes de la période : activités, inscriptions, résidents différents inscrits (l'indicateur
+ * principal du produit), part des activités créées par le conseil syndical ou par des résidents.
+ * Les comptes validés et en attente sont ceux d'aujourd'hui, la période ne les touche pas. Une activité
+ * dont l'organisateur a supprimé son compte (`organisateur` à `null`) reste une activité de résident :
+ * seul un résident supprime son compte.
+ */
+create or replace function public.tableau_bord_synthese(p_debut date, p_fin date)
+returns table (
+  nombre_activites integer,
+  nombre_inscriptions integer,
+  nombre_participants integer,
+  activites_par_residents integer,
+  activites_par_conseil integer,
+  residents_valides integer,
+  residents_en_attente integer
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.est_syndic() then
+    raise exception 'Le tableau de bord est réservé au conseil syndical' using errcode = '42501';
+  end if;
+
+  return query
+  select
+    (select count(*) from public.activites_tenues(p_debut, p_fin))::integer,
+    (
+      select count(*)
+      from public.activites_tenues(p_debut, p_fin) t
+      join public.inscription_activite i on i.activite_id = t.id
+    )::integer,
+    (
+      select count(distinct i.resident_id)
+      from public.activites_tenues(p_debut, p_fin) t
+      join public.inscription_activite i on i.activite_id = t.id
+    )::integer,
+    (
+      select count(*)
+      from public.activites_tenues(p_debut, p_fin) t
+      left join public.profil p on p.id = t.organisateur
+      where coalesce(p.role, 'resident') <> 'syndic'
+    )::integer,
+    (
+      select count(*)
+      from public.activites_tenues(p_debut, p_fin) t
+      join public.profil p on p.id = t.organisateur
+      where p.role = 'syndic'
+    )::integer,
+    (select count(*) from public.profil where role = 'resident' and statut = 'valide')::integer,
+    (select count(*) from public.profil where role = 'resident' and statut = 'en_attente')::integer;
+end;
+$$;
+
+revoke execute on function public.tableau_bord_synthese(date, date) from public, anon;
+grant execute on function public.tableau_bord_synthese(date, date) to authenticated;
 
 -- La fiche d'une activité sans organisateur : pas de nom, pas « proposée par le syndic », et
 -- personne n'en est l'organisateur (`null = null` ne l'aurait pas dit à un visiteur).
