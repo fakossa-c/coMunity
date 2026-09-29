@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { Bouton } from "./bouton";
+import { Bouton, type VarianteBouton } from "./bouton";
 
 type Props = {
   ouverte: boolean;
@@ -11,6 +11,8 @@ type Props = {
   /** La sortie évidente : « Garder l'activité ». */
   libelleGarder: string;
   libelleConfirmer: string;
+  /** `danger` par défaut : une action qui ne se défait pas. `action` pour une décision qui se reprend. */
+  varianteConfirmer?: Extract<VarianteBouton, "danger" | "action">;
   onFermer: () => void;
   onConfirmer: () => void;
   desactive?: boolean;
@@ -27,6 +29,7 @@ export function FeuilleConfirmation({
   children,
   libelleGarder,
   libelleConfirmer,
+  varianteConfirmer = "danger",
   onFermer,
   onConfirmer,
   desactive = false,
@@ -60,7 +63,7 @@ export function FeuilleConfirmation({
             {libelleGarder}
           </Bouton>
           <Bouton
-            variante="danger"
+            variante={varianteConfirmer}
             pleineLargeur
             disabled={desactive}
             onClick={onConfirmer}

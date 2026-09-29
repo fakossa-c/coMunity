@@ -10,7 +10,7 @@ type A = {
   id: string;
   date_activite: string;
   heure_debut: string;
-  statut?: "publiee" | "annulee";
+  statut?: "publiee" | "annulee" | "en_relecture" | "masquee";
 };
 
 function activite(
@@ -93,6 +93,16 @@ describe("activités de la semaine", () => {
     const activites = [
       activite("a", "2026-10-24"),
       activite("b", "2026-10-25", "10:00:00", "annulee"),
+    ];
+
+    expect(activitesDeLaSemaine(activites, AUJOURDHUI)).toBe(1);
+  });
+
+  it("ne compte pas une activité en relecture ou masquée, que son créateur voit encore", () => {
+    const activites = [
+      activite("a", "2026-10-24"),
+      activite("b", "2026-10-25", "10:00:00", "en_relecture"),
+      activite("c", "2026-10-25", "11:00:00", "masquee"),
     ];
 
     expect(activitesDeLaSemaine(activites, AUJOURDHUI)).toBe(1);

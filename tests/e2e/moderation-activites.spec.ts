@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
@@ -218,7 +219,7 @@ test("le conseil syndical masque puis rétablit une activité depuis sa fiche, a
     .fill("Un voisin l'a signalée, nous vérifions.");
   await feuille.getByRole("button", { name: "Masquer", exact: true }).click();
 
-  await expect(moderation.getByText("Masquée")).toBeVisible();
+  await expect(moderation.getByText("Masquée", { exact: true })).toBeVisible();
   await page.screenshot({
     path: test.info().outputPath("fiche-masquee.png"),
     fullPage: true,
@@ -301,4 +302,44 @@ test("l'espace syndic annonce les activités à relire", async ({ page }) => {
   await expect(rubrique).toContainText(/activités? à relire/);
   await rubrique.click();
   await expect(page).toHaveURL(/\/syndic\/moderation$/);
+});
+
+test("aucune violation critique d'accessibilité sur la liste et les fiches modérées", async ({
+  page,
+  browser,
+}) => {
+  const { createur, titre, identifiant } = await activiteAModerer(page);
+  await mettreEnRelecture(identifiant, "Le titre ressemble à une vente");
+  const auditer = async (lecteur: Page) => {
+    const resultat = await new AxeBuilder({ page: lecteur })
+      .include("main")
+      .analyze();
+    const critiques = resultat.violations.filter(
+      (v) => v.impact === "critical",
+    );
+    expect(critiques, JSON.stringify(critiques, null, 2)).toEqual([]);
+  };
+
+  await page.goto("/syndic/moderation");
+  await expect(carte(page, titre)).toBeVisible();
+  await auditer(page);
+  await page.goto(`/activites/${identifiant}`);
+  await expect(
+    page.getByRole("region", { name: "Modération par le conseil syndical" }),
+  ).toBeVisible();
+  await auditer(page);
+  await page.screenshot({
+    path: test.info().outputPath("fiche-en-relecture-conseil.png"),
+    fullPage: true,
+  });
+
+  const pageCreateur = await pageConnectee(browser, createur.email);
+  await pageCreateur.goto(`/activites/${identifiant}`);
+  await expect(pageCreateur.getByText("En relecture").first()).toBeVisible();
+  await auditer(pageCreateur);
+  await pageCreateur.screenshot({
+    path: test.info().outputPath("fiche-en-relecture-createur.png"),
+    fullPage: true,
+  });
+  await pageCreateur.context().close();
 });

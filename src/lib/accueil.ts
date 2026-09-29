@@ -48,7 +48,8 @@ function dimancheDe(date: string) {
 
 /**
  * Le nombre d'activités prévues « cette semaine » : d'aujourd'hui à dimanche inclus, sans les
- * activités annulées. Seule définition de la semaine de la salutation.
+ * activités annulées, en relecture ou masquées (leur créateur les voit, pas ses voisins). Seule
+ * définition de la semaine de la salutation.
  */
 export function activitesDeLaSemaine(
   activites: { date_activite: string; statut?: string }[],
@@ -57,7 +58,7 @@ export function activitesDeLaSemaine(
   const dimanche = dimancheDe(aujourdhui);
   return activites.filter(
     (activite) =>
-      activite.statut !== "annulee" &&
+      (activite.statut === undefined || activite.statut === "publiee") &&
       activite.date_activite >= aujourdhui &&
       activite.date_activite <= dimanche,
   ).length;

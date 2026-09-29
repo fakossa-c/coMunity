@@ -36,6 +36,7 @@ import { estSyndicActif, lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
 import { FormulaireRetour } from "./formulaire-retour";
 import { GestionActivite } from "./gestion-activite";
+import { ModerationConseil } from "./moderation-conseil";
 import { Participants } from "./participants";
 import { Retours } from "./retours";
 
@@ -76,9 +77,19 @@ function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
 
 /**
  * L'action fixée en bas de la fiche : l'inscription, pour tous, créateur compris ; pour une
- * activité annulée, le seul constat. Le créateur gère son activité depuis le corps de la fiche.
+ * activité annulée, en relecture ou masquée, le seul constat. Le créateur gère son activité, et le
+ * conseil syndical la modère, depuis le corps de la fiche.
  */
 function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
+  if (fiche.statut === "en_relecture" || fiche.statut === "masquee") {
+    return (
+      <BarreActionFixe>
+        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
+          Cette activité n&apos;est pas publiée : les inscriptions sont fermées.
+        </p>
+      </BarreActionFixe>
+    );
+  }
   if (fiche.statut === "annulee") {
     return (
       <BarreActionFixe>
@@ -91,6 +102,41 @@ function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
   return <BlocInscription fiche={fiche} statut={statut} />;
 }
 
+/**
+ * Ce que le créateur lit de la modération : l'état de son activité quand le conseil syndical l'a
+ * mise de côté, et le message de sa dernière décision.
+ */
+function DecisionDuConseil({
+  statut,
+  message,
+}: {
+  statut: FicheActivite["statut"];
+  message: string | null;
+}) {
+  return (
+    <>
+      {statut === "en_relecture" && (
+        <EncartPastel titre="Pas encore publiée">
+          Le conseil syndical relit votre activité avant de la publier. Vous et
+          lui êtes les seuls à la voir pour l&apos;instant.
+        </EncartPastel>
+      )}
+      {statut === "masquee" && (
+        <EncartPastel titre="Masquée par le conseil syndical">
+          Les voisins ne voient plus votre activité, ni son lien.
+        </EncartPastel>
+      )}
+      {message && (
+        <section aria-label="Message du conseil syndical">
+          <EncartPastel titre="Message du conseil syndical">
+            {message}
+          </EncartPastel>
+        </section>
+      )}
+    </>
+  );
+}
+
 export default async function Fiche({ params }: Props) {
   const { identifiant } = await params;
   const fiche = await lireFiche(identifiant);
@@ -101,6 +147,9 @@ export default async function Fiche({ params }: Props) {
   const session = await lireSession();
 
   const annulee = fiche.statut === "annulee";
+  // En relecture ou masquée, l'activité n'a pas de lien à partager : les voisins ne la voient pas.
+  const partageable = fiche.statut === "publiee";
+  const conseilSyndical = estSyndicActif(session);
   // Distinct de `estPassee` (jour calendaire, ci-dessus pour EtatActivite) : ici la date et
   // l'heure de fin précises, l'échéance que la RLS de laisser_retour vérifie aussi.
   const activitePassee = activiteEstPassee(fiche);
@@ -108,7 +157,11 @@ export default async function Fiche({ params }: Props) {
   return (
     <EcranSecondaire
       retour={{ href: "/", libelle: "Retour" }}
-      partager={<BoutonPartager titre={fiche.titre} lien={lien} />}
+      partager={
+        partageable ? (
+          <BoutonPartager titre={fiche.titre} lien={lien} />
+        ) : undefined
+      }
       action={actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
     >
       <article className="flex flex-col gap-[14px]">
@@ -129,6 +182,12 @@ export default async function Fiche({ params }: Props) {
         <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
           {fiche.titre}
         </h1>
+        {fiche.est_organisateur && (
+          <DecisionDuConseil
+            statut={fiche.statut}
+            message={fiche.message_moderation}
+          />
+        )}
         <EtatActivite
           statut={fiche.statut}
           capaciteMin={fiche.capacite_min}
@@ -198,20 +257,33 @@ export default async function Fiche({ params }: Props) {
         )}
         {!annulee &&
           activitePassee &&
-          (fiche.est_organisateur || estSyndicActif(session)) && (
+          (fiche.est_organisateur || conseilSyndical) && (
             <Retours identifiant={identifiant} />
           )}
-        {!annulee && <BoutonRelayer message={messageWhatsApp(fiche, lien)} />}
-        <BoutonCopier
-          texte={lien}
-          libelle="Copier le lien"
-          confirmation="Lien copié"
-        />
+        {partageable && (
+          <>
+            <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
+            <BoutonCopier
+              texte={lien}
+              libelle="Copier le lien"
+              confirmation="Lien copié"
+            />
+          </>
+        )}
         {fiche.est_organisateur && (
           <GestionActivite
             identifiant={identifiant}
             annulee={annulee}
+            modifiable={fiche.statut === "publiee"}
             placesPrises={fiche.places_prises}
+          />
+        )}
+        {conseilSyndical && (
+          <ModerationConseil
+            identifiant={identifiant}
+            titre={fiche.titre}
+            statut={fiche.statut}
+            raison={fiche.raison_relecture}
           />
         )}
       </article>

@@ -51,10 +51,20 @@ export type Activite = {
 /** Une activité de l'Accueil : sa carte donne son horaire, heure de fin comprise. */
 export type ActiviteDuJour = Activite & { heure_fin: string };
 
-/** Annulée, l'activité ne compte plus ses inscrits comme participants. */
+/**
+ * Annulée, l'activité ne compte plus ses inscrits comme participants. En relecture ou masquée,
+ * elle n'est pas ouverte aux inscriptions : `fermee`.
+ */
 function etatInscription(activite: Activite) {
   const annulee = activite.statut === "annulee";
-  return { annulee, inscrit: activite.mes_accompagnants != null && !annulee };
+  const fermee =
+    annulee ||
+    activite.statut === "en_relecture" ||
+    activite.statut === "masquee";
+  return {
+    fermee,
+    inscrit: activite.mes_accompagnants != null && !annulee,
+  };
 }
 
 const FORMAT_DATE = new Intl.DateTimeFormat("fr-FR", {
@@ -142,7 +152,7 @@ export function CarteActivite(props: Props) {
 
 /** La carte d'une activité dans l'Accueil, où les activités sont groupées par jour. */
 function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
-  const { annulee, inscrit } = etatInscription(activite);
+  const { fermee, inscrit } = etatInscription(activite);
   const complete = estComplete({
     capaciteMax: activite.capacite_max ?? null,
     placesPrises: activite.places_prises ?? 0,
@@ -222,7 +232,7 @@ function CarteDuJour({ activite }: { activite: ActiviteDuJour }) {
             >
               Voir la fiche
             </Link>
-            {!annulee && !complete && (
+            {!fermee && !complete && (
               <Link
                 href={fiche}
                 className={`${classesBouton("action")} flex-auto`}
