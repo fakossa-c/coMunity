@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
@@ -373,4 +374,107 @@ test("un document qui n'est pas un PDF est refusé avant l'envoi", async ({
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Choisissez un document au format PDF.",
   );
+});
+
+/** Un PNG d'un pixel : de quoi joindre une vraie photo sans peser dans le dépôt. */
+const PIXEL_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+test("une photo jointe illustre la page publique et son aperçu dans WhatsApp", async ({
+  page,
+  request,
+}) => {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  const titre = titreUnique("Nouveau local vélos");
+
+  await seConnecter(page, syndic.email);
+  await page.goto("/syndic/annonces/nouvelle");
+  await page.getByLabel("Titre").fill(titre);
+  await page.getByLabel("Photo").setInputFiles({
+    name: "Local vélos.PNG",
+    mimeType: "image/png",
+    buffer: PIXEL_PNG,
+  });
+  await page.getByRole("button", { name: "Publier", exact: true }).click();
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
+    `« ${titre} » est publiée.`,
+  );
+
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: titre })
+    .getByRole("link", { name: /Voir la page publique/ })
+    .click();
+  const photo = page.getByRole("img", {
+    name: `Photo de l'annonce : ${titre}`,
+  });
+  await expect(photo).toHaveAttribute(
+    "src",
+    /\/storage\/v1\/object\/public\/annonces\/.+\/local-velos\.png$/,
+  );
+  expect((await request.get((await photo.getAttribute("src"))!)).status()).toBe(
+    200,
+  );
+
+  const apercu = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  const image = await request.get(apercu!);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toBe("image/png");
+});
+
+test("l'aperçu d'une annonce sans photo est une image à son titre", async ({
+  page,
+  request,
+}) => {
+  const annonce = await nouvelleAnnonce({
+    type: "assemblee",
+    titre: titreUnique("Assemblée sans photo"),
+  });
+
+  await page.goto(`/annonces/${annonce.identifiant_public}`);
+  const apercu = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  const image = await request.get(apercu!);
+
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toBe("image/png");
+});
+
+test("les écrans des annonces n'ont aucune violation critique", async ({
+  page,
+}) => {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  const annonce = await nouvelleAnnonce({
+    type: "assemblee",
+    titre: titreUnique("Assemblée accessible"),
+    quand: "Jeudi 12 novembre à 18h30",
+    lieu: "Salle commune",
+    epinglee: true,
+    expire_le: jour(-1),
+  });
+  await nouvelleAnnonce({ titre: titreUnique("Annonce en cours") });
+
+  await seConnecter(page, syndic.email);
+  for (const chemin of [
+    "/annonces",
+    `/annonces/${annonce.identifiant_public}`,
+    "/syndic/annonces",
+    "/syndic/annonces/nouvelle",
+    `/syndic/annonces/${annonce.id}`,
+  ]) {
+    await page.goto(chemin);
+    await expect(page.getByRole("main")).toBeVisible();
+    const resultat = await new AxeBuilder({ page }).include("main").analyze();
+    const critiques = resultat.violations.filter(
+      (v) => v.impact === "critical",
+    );
+    expect(critiques, `${chemin} : ${JSON.stringify(critiques)}`).toEqual([]);
+  }
 });
