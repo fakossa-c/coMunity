@@ -69,7 +69,8 @@ create trigger section_reglement_place
 
 -- La date de dernière mise à jour du règlement : une seule ligne, tenue par la base à chaque
 -- création, modification, déplacement ou suppression d'une section (une suppression ne peut pas
--- se lire dans les dates des sections restantes).
+-- se lire dans les dates des sections restantes). Le déclencheur agit par ligne : une écriture que
+-- la RLS écarte, ou qui ne touche aucune ligne, ne change pas la date.
 create table public.reglement (
   id boolean primary key default true check (id),
   mis_a_jour_le timestamptz not null default now()
@@ -104,7 +105,7 @@ revoke execute on function public.dater_reglement() from public, anon, authentic
 
 create trigger section_reglement_datee
   after insert or update or delete on public.section_reglement
-  for each statement
+  for each row
   execute function public.dater_reglement();
 
 /**
