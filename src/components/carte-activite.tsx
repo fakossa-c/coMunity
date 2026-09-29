@@ -12,6 +12,7 @@ import {
   estComplete,
   libelleStatutInscription,
 } from "@/lib/inscription-activite";
+import { estMiseDeCote } from "@/lib/decision-moderation";
 import { adressePhoto } from "@/lib/fiche-activite";
 import { cheminFiche, estPassee, horaire } from "@/lib/partage-activite";
 import { classesBouton } from "./bouton";
@@ -57,10 +58,7 @@ export type ActiviteDuJour = Activite & { heure_fin: string };
  */
 function etatInscription(activite: Activite) {
   const annulee = activite.statut === "annulee";
-  const fermee =
-    annulee ||
-    activite.statut === "en_relecture" ||
-    activite.statut === "masquee";
+  const fermee = annulee || estMiseDeCote(activite.statut);
   return {
     fermee,
     inscrit: activite.mes_accompagnants != null && !annulee,

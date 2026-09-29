@@ -19,6 +19,8 @@ const messagesCreateur: Record<string, string> = {
   "42501":
     "Seuls le créateur de l'activité et le conseil syndical peuvent faire cela.",
   P0002: "Cette activité n'existe plus.",
+  P0011:
+    "Cette activité est en relecture ou masquée : elle s'annule après sa publication.",
   P0006:
     "Des personnes viennent de s'inscrire : annulez l'activité plutôt que de la supprimer.",
 };

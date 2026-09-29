@@ -24,6 +24,7 @@ import {
   origine,
   type FicheActivite,
 } from "@/lib/fiche-activite";
+import { estMiseDeCote } from "@/lib/decision-moderation";
 import { libelleMinimum } from "@/lib/inscription-activite";
 import {
   creneau,
@@ -81,7 +82,7 @@ function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
  * conseil syndical la modère, depuis le corps de la fiche.
  */
 function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
-  if (fiche.statut === "en_relecture" || fiche.statut === "masquee") {
+  if (estMiseDeCote(fiche.statut)) {
     return (
       <BarreActionFixe>
         <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
@@ -275,6 +276,7 @@ export default async function Fiche({ params }: Props) {
             identifiant={identifiant}
             annulee={annulee}
             modifiable={fiche.statut === "publiee"}
+            annulable={!estMiseDeCote(fiche.statut)}
             placesPrises={fiche.places_prises}
           />
         )}

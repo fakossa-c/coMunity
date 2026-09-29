@@ -240,7 +240,9 @@ $$;
 revoke execute on function public.activites_a_moderer() from public, anon;
 grant execute on function public.activites_a_moderer() to authenticated;
 
--- Le conseil syndical annule aussi l'activité d'un résident, masquée ou en relecture comprise.
+-- Le conseil syndical annule aussi l'activité d'un résident. Une activité en relecture ou masquée
+-- ne s'annule pas : une activité annulée est visible de tous, elle deviendrait publique. Il faut
+-- d'abord la publier ou la rétablir.
 create or replace function public.annuler_activite(p_identifiant text)
 returns void
 language plpgsql
@@ -248,9 +250,9 @@ security definer
 set search_path = ''
 as $$
 declare
-  createur uuid;
+  cible public.activite;
 begin
-  select organisateur into createur
+  select * into cible
   from public.activite
   where identifiant_public = p_identifiant
   for update;
@@ -258,14 +260,66 @@ begin
     raise exception 'Activité introuvable' using errcode = 'P0002';
   end if;
   if not (
-    (createur is not distinct from auth.uid() and public.peut_participer())
+    (cible.organisateur is not distinct from auth.uid() and public.peut_participer())
     or public.est_syndic()
   ) then
     raise exception 'Seuls le créateur et le conseil syndical annulent une activité'
       using errcode = '42501';
   end if;
+  if cible.statut in ('en_relecture', 'masquee') then
+    raise exception 'Une activité en relecture ou masquée s''annule après sa publication'
+      using errcode = 'P0011';
+  end if;
 
-  update public.activite set statut = 'annulee' where identifiant_public = p_identifiant;
+  update public.activite set statut = 'annulee' where id = cible.id;
+end;
+$$;
+
+-- Un retour ne se laisse pas sur une activité qu'on ne peut pas lire.
+create or replace function public.laisser_retour(
+  p_identifiant text,
+  p_note smallint,
+  p_commentaire text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  id_activite uuid;
+  statut_actuel public.statut_activite;
+begin
+  if not public.peut_participer() then
+    raise exception 'Seul un résident validé peut laisser un retour' using errcode = '42501';
+  end if;
+
+  select a.id, a.statut into id_activite, statut_actuel
+  from public.activite a
+  where a.identifiant_public = p_identifiant;
+  if not found or statut_actuel in ('en_relecture', 'masquee') then
+    raise exception 'Activité introuvable' using errcode = 'P0002';
+  end if;
+  if statut_actuel = 'annulee' then
+    raise exception 'Une activité annulée n''a pas eu lieu : elle n''accepte pas de retour'
+      using errcode = 'P0004';
+  end if;
+
+  if not exists (
+    select 1 from public.inscription_activite i
+    where i.activite_id = id_activite and i.resident_id = (select auth.uid())
+  ) then
+    raise exception 'Seul un participant inscrit peut laisser un retour' using errcode = '42501';
+  end if;
+
+  if not public.activite_est_passee(id_activite) then
+    raise exception 'L''activité n''est pas encore terminée' using errcode = 'P0003';
+  end if;
+
+  insert into public.retour (activite_id, resident_id, note, commentaire)
+  values (id_activite, (select auth.uid()), p_note, trim(p_commentaire))
+  on conflict (activite_id, resident_id) do update
+    set note = excluded.note, commentaire = excluded.commentaire;
 end;
 $$;
 

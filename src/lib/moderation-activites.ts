@@ -33,8 +33,3 @@ export async function lireActivitesAModerer(): Promise<ActiviteAModerer[]> {
     throw new Error(`Activités à modérer illisibles : ${error.message}`);
   return data as ActiviteAModerer[];
 }
-
-/** Le nombre d'activités qui attendent la relecture du conseil syndical. */
-export function compterARelire(activites: ActiviteAModerer[]) {
-  return activites.filter((a) => a.statut === "en_relecture").length;
-}

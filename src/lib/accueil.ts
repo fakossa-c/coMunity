@@ -1,3 +1,4 @@
+import { estMiseDeCote } from "./decision-moderation";
 import {
   categoriesActivite,
   type CategorieActivite,
@@ -58,7 +59,8 @@ export function activitesDeLaSemaine(
   const dimanche = dimancheDe(aujourdhui);
   return activites.filter(
     (activite) =>
-      (activite.statut === undefined || activite.statut === "publiee") &&
+      activite.statut !== "annulee" &&
+      !estMiseDeCote(activite.statut) &&
       activite.date_activite >= aujourdhui &&
       activite.date_activite <= dimanche,
   ).length;

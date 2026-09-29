@@ -13,3 +13,12 @@ export const CONFIRMATIONS: Record<Decision, (titre: string) => string> = {
 export function estDecision(valeur: string | undefined): valeur is Decision {
   return valeur !== undefined && Object.hasOwn(CONFIRMATIONS, valeur);
 }
+
+/**
+ * Vrai si la modération a mis l'activité de côté (en relecture ou masquée) : seuls son créateur et
+ * le conseil syndical la voient, personne ne s'y inscrit, elle n'a pas de lien à partager et ne
+ * s'annule pas avant d'être publiée.
+ */
+export function estMiseDeCote(statut: string | undefined) {
+  return statut === "en_relecture" || statut === "masquee";
+}

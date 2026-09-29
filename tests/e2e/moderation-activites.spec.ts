@@ -220,6 +220,10 @@ test("le conseil syndical masque puis rétablit une activité depuis sa fiche, a
   await feuille.getByRole("button", { name: "Masquer", exact: true }).click();
 
   await expect(moderation.getByText("Masquée", { exact: true })).toBeVisible();
+  // Annulée, une activité masquée deviendrait publique : le bouton n'est là qu'une fois rétablie.
+  await expect(
+    moderation.getByRole("button", { name: "Annuler l'activité" }),
+  ).toHaveCount(0);
   await page.screenshot({
     path: test.info().outputPath("fiche-masquee.png"),
     fullPage: true,
@@ -231,6 +235,9 @@ test("le conseil syndical masque puis rétablit une activité depuis sa fiche, a
   ).toContainText("Un voisin l'a signalée, nous vérifions.");
 
   await moderation.getByRole("button", { name: "Rétablir" }).click();
+  await expect(
+    moderation.getByRole("button", { name: "Annuler l'activité" }),
+  ).toBeVisible();
   await expect(
     moderation.getByRole("button", { name: "Masquer" }),
   ).toBeVisible();

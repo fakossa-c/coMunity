@@ -8,6 +8,7 @@ import { FeuilleConfirmation } from "@/components/feuille-confirmation";
 import { Annonce as Message } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitreSection } from "@/components/titre-section";
+import { estMiseDeCote } from "@/lib/decision-moderation";
 import { cheminFiche } from "@/lib/partage-activite";
 import { DecisionModeration } from "@/app/syndic/moderation/decision-moderation";
 import { annulerActivite } from "./actions";
@@ -23,8 +24,9 @@ type Props = {
 const ETATS: Record<StatutActivite, string> = {
   publiee: "Publiée : visible de toute la résidence.",
   en_relecture:
-    "Visible de son créateur et du conseil syndical seulement, jusqu'à votre décision.",
-  masquee: "Visible de son créateur et du conseil syndical seulement.",
+    "Visible de son créateur et du conseil syndical seulement, jusqu'à votre décision. Publiez-la pour pouvoir l'annuler.",
+  masquee:
+    "Visible de son créateur et du conseil syndical seulement. Rétablissez-la pour pouvoir l'annuler.",
   annulee: "Annulée : ses inscrits en sont informés, elle ne se modère plus.",
 };
 
@@ -43,6 +45,8 @@ export function ModerationConseil({
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, demarrer] = useTransition();
   const annulee = statut === "annulee";
+  // Annulée, une activité masquée ou en relecture deviendrait publique : on la publie d'abord.
+  const annulable = !annulee && !estMiseDeCote(statut);
 
   function annuler() {
     setErreur(null);
@@ -55,10 +59,12 @@ export function ModerationConseil({
 
   return (
     <section
-      aria-label="Modération par le conseil syndical"
+      aria-labelledby="moderation-conseil"
       className="flex flex-col gap-space-sm"
     >
-      <TitreSection>Modération par le conseil syndical</TitreSection>
+      <TitreSection id="moderation-conseil">
+        Modération par le conseil syndical
+      </TitreSection>
       {statut !== "publiee" && (
         <EtatActivite
           statut={statut}
@@ -87,14 +93,16 @@ export function ModerationConseil({
             <Icone nom="edit" taille={24} />
             Modifier
           </Link>
-          <Bouton
-            variante="danger"
-            icone="event_busy"
-            disabled={enCours}
-            onClick={() => setAnnulation(true)}
-          >
-            Annuler l&apos;activité
-          </Bouton>
+          {annulable && (
+            <Bouton
+              variante="danger"
+              icone="event_busy"
+              disabled={enCours}
+              onClick={() => setAnnulation(true)}
+            >
+              Annuler l&apos;activité
+            </Bouton>
+          )}
         </div>
       )}
       <FeuilleConfirmation

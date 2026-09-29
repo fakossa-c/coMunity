@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CONFIRMATIONS, estDecision } from "./decision-moderation";
+import {
+  CONFIRMATIONS,
+  estDecision,
+  estMiseDeCote,
+} from "./decision-moderation";
 
 describe("décisions de modération", () => {
   it("annonce chaque décision par une phrase accordée avec l'activité", () => {
@@ -21,6 +25,14 @@ describe("décisions de modération", () => {
       "constructor",
     ]) {
       expect(estDecision(autre)).toBe(false);
+    }
+  });
+
+  it("met de côté une activité en relecture ou masquée, pas les autres", () => {
+    expect(estMiseDeCote("en_relecture")).toBe(true);
+    expect(estMiseDeCote("masquee")).toBe(true);
+    for (const autre of ["publiee", "annulee", undefined]) {
+      expect(estMiseDeCote(autre)).toBe(false);
     }
   });
 });

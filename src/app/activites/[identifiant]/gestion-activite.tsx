@@ -14,6 +14,8 @@ type Props = {
   annulee: boolean;
   /** Seule une activité publiée se modifie : en relecture ou masquée, elle attend le conseil syndical. */
   modifiable: boolean;
+  /** Une activité en relecture ou masquée ne s'annule pas : annulée, elle deviendrait publique. */
+  annulable: boolean;
   /** Les personnes inscrites, accompagnants compris : avec elles, on annule au lieu de supprimer. */
   placesPrises: number;
 };
@@ -44,6 +46,7 @@ export function GestionActivite({
   identifiant,
   annulee,
   modifiable,
+  annulable,
   placesPrises,
 }: Props) {
   const [ouverte, setOuverte] = useState(false);
@@ -52,7 +55,7 @@ export function GestionActivite({
   const supprimable = placesPrises === 0;
   const retrait = supprimable ? RETRAIT.supprimer : RETRAIT.annuler;
   // Annulée avec des inscrits : il ne reste rien à retirer, ils gardent la trace de l'annulation.
-  const retirable = supprimable || !annulee;
+  const retirable = supprimable || (!annulee && annulable);
 
   function confirmer() {
     setErreur(null);
