@@ -9,6 +9,7 @@ import {
   nouvelleActivite,
   photoJpeg,
   photosDeProfil,
+  poserPhotoProfil,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -283,6 +284,61 @@ test("la fiche d'une activité et ses participants nomment les voisins par leur 
   );
   await expect(page.getByRole("main")).not.toContainText("Martin");
   await expect(page.getByRole("main")).not.toContainText("Danielle");
+});
+
+test("les voisins voient la photo de l'organisateur et des participants, validés comme en attente ; à défaut, l'initiale du pseudo", async ({
+  page,
+}) => {
+  const organisateur = await resident();
+  const avecPhoto = await resident();
+  const sansPhoto = await resident();
+  await modifierProfil(organisateur.id, { pseudo: "Coco" });
+  await modifierProfil(avecPhoto.id, { pseudo: "Voisine du 3" });
+  await modifierProfil(sansPhoto.id, { pseudo: "Voisin du 4" });
+  await poserPhotoProfil(organisateur.id);
+  await poserPhotoProfil(avecPhoto.id, "#0d3b66");
+  const identifiant = await nouvelleActivite(organisateur.id);
+  await inscrireResident(identifiant, avecPhoto.id);
+  await inscrireResident(identifiant, sansPhoto.id);
+  const valide = await resident();
+  const enAttente = await nouveauResident("en_attente");
+  emails.push(enAttente.email);
+
+  for (const spectateur of [valide, enAttente]) {
+    await page.context().clearCookies();
+    await page.goto("/connexion");
+    await page.getByLabel("Adresse email").fill(spectateur.email);
+    await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
+    await page.getByRole("button", { name: "Se connecter" }).click();
+    await page.waitForURL((url) => url.pathname !== "/connexion");
+    await page.goto(`/activites/${identifiant}`);
+
+    const main = page.getByRole("main");
+    const participants = page.getByRole("list", { name: "Participants" });
+    // La photo de l'organisateur remplace son initiale, et elle se charge.
+    const photoOrganisateur = main.locator("img[src*='/profils/']").first();
+    await expect(photoOrganisateur).toBeVisible();
+    await expect
+      .poll(() =>
+        photoOrganisateur.evaluate((img: HTMLImageElement) => img.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    await expect(main).toContainText("Coco");
+    // Deux participants : l'un a une photo, l'autre son initiale.
+    await expect(participants.locator("img")).toHaveCount(1);
+    await expect(
+      participants.getByRole("listitem").filter({ hasText: "Voisine du 3" }),
+    ).toContainText("Voisine du 3");
+    await expect(
+      participants
+        .getByRole("listitem")
+        .filter({ hasText: "Voisin du 4" })
+        .locator("img"),
+    ).toHaveCount(0);
+    await expect(
+      participants.getByRole("listitem").filter({ hasText: "Voisin du 4" }),
+    ).toContainText("V");
+  }
 });
 
 test("la photo se choisit, se remplace puis se retire ; à défaut, l'initiale du pseudo", async ({

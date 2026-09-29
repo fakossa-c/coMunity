@@ -111,6 +111,19 @@ export async function photosDeProfil(id: string) {
   return data.map((fichier) => fichier.name);
 }
 
+/** Donne à `id` une photo de profil, comme après « Enregistrer » dans Modifier mes informations ; renvoie son chemin. */
+export async function poserPhotoProfil(id: string, couleur = "#8f2b00") {
+  const chemin = `${id}/${randomUUID()}.jpg`;
+  const depot = await clientAdmin()
+    .storage.from("profils")
+    .upload(chemin, await photoJpeg(couleur, 400, 400), {
+      contentType: "image/jpeg",
+    });
+  if (depot.error) throw depot.error;
+  await modifierProfil(id, { photo_chemin: chemin });
+  return chemin;
+}
+
 /** Les centres d'intérêt de `id`, dans l'ordre où ils ont été déclarés. */
 export async function interetsDe(id: string) {
   const { data, error } = await clientAdmin()

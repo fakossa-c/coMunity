@@ -43,6 +43,19 @@ function deposer(compte: Compte, chemin = cheminPhoto(compte)) {
     .upload(chemin, JPEG, { contentType: "image/jpeg" });
 }
 
+/** La personne enregistre une photo : le fichier dans son dossier, puis son chemin sur son profil. */
+async function poserPhoto(compte: Compte) {
+  const chemin = cheminPhoto(compte);
+  const depot = await deposer(compte, chemin);
+  if (depot.error) throw depot.error;
+  const { error } = await compte.client
+    .from("profil")
+    .update({ photo_chemin: chemin })
+    .eq("id", compte.id);
+  if (error) throw error;
+  return chemin;
+}
+
 describe("pseudo", () => {
   it("un résident a pour pseudo son prénom et l'initiale de son nom", async () => {
     const resident = await nouveauResident();
@@ -232,7 +245,60 @@ describe("nom lu par les voisins", () => {
       identifiant,
     });
 
-    expect(data).toEqual([{ nom_affiche: "Voisine du 3", accompagnants: 0 }]);
+    expect(data).toEqual([
+      { nom_affiche: "Voisine du 3", accompagnants: 0, photo_chemin: null },
+    ]);
+  });
+
+  it("la fiche d'une activité rend le chemin de la photo de son organisateur, null sans photo", async () => {
+    const organisateur = await nouveauResident();
+    const voisin = await nouveauResident();
+    const identifiant = await publier(organisateur);
+
+    const sans = await voisin.client
+      .rpc("fiche_activite", { identifiant })
+      .single();
+    const chemin = await poserPhoto(organisateur);
+    const avec = await voisin.client
+      .rpc("fiche_activite", { identifiant })
+      .single();
+
+    expect(sans.data).toMatchObject({ organisateur_photo_chemin: null });
+    expect(avec.data).toMatchObject({ organisateur_photo_chemin: chemin });
+  });
+
+  it("un visiteur ne lit ni le nom ni la photo de l'organisateur", async () => {
+    const organisateur = await nouveauResident();
+    await poserPhoto(organisateur);
+    const identifiant = await publier(organisateur);
+
+    const { data } = await clientVisiteur()
+      .rpc("fiche_activite", { identifiant })
+      .single();
+
+    expect(data).toMatchObject({
+      organisateur_nom_affiche: null,
+      organisateur_photo_chemin: null,
+    });
+  });
+
+  it("la liste des participants donne le chemin de la photo de chacun", async () => {
+    const organisateur = await nouveauResident();
+    const inscrit = await nouveauResident();
+    const chemin = await poserPhoto(inscrit);
+    const identifiant = await publier(organisateur);
+    await inscrit.client.rpc("s_inscrire", {
+      p_identifiant: identifiant,
+      p_accompagnants: 0,
+    });
+
+    const { data } = await organisateur.client.rpc("participants_activite", {
+      identifiant,
+    });
+
+    expect(data).toEqual([
+      { nom_affiche: "Danielle M.", accompagnants: 0, photo_chemin: chemin },
+    ]);
   });
 });
 
@@ -395,6 +461,7 @@ describe("ce que lit chaque rôle", () => {
       telephone: null,
       batiment: null,
       etage: null,
+      photo_chemin: null,
     });
   });
 
@@ -416,7 +483,20 @@ describe("ce que lit chaque rôle", () => {
       telephone: "06 12 34 56 78",
       batiment: null,
       etage: 2,
+      photo_chemin: null,
     });
+  });
+
+  it("un voisin lit la photo de la personne sans qu'elle ait rien rendu visible", async () => {
+    const resident = await nouveauResident();
+    const voisin = await nouveauResident();
+    const chemin = await poserPhoto(voisin);
+
+    const { data } = await resident.client
+      .rpc("fiche_voisin", { voisin: voisin.id })
+      .single();
+
+    expect(data).toMatchObject({ photo_chemin: chemin, telephone: null });
   });
 
   it("la fiche d'un voisin ne contient jamais son prénom ni son nom", async () => {
@@ -430,6 +510,7 @@ describe("ce que lit chaque rôle", () => {
     expect(Object.keys(data as object).sort()).toEqual([
       "batiment",
       "etage",
+      "photo_chemin",
       "pseudo",
       "telephone",
     ]);
@@ -497,18 +578,55 @@ describe("photo de profil", () => {
     expect(error).not.toBeNull();
   });
 
-  it("un voisin ne lit pas la photo d'un autre ; le conseil syndical la lit", async () => {
+  it("les résidents validés et en attente et le conseil syndical lisent la photo d'un autre", async () => {
     const resident = await nouveauResident();
     const voisin = await nouveauResident();
+    const enAttente = await nouveauResident("en_attente");
     const syndic = await nouveauSyndic();
     const chemin = cheminPhoto(resident);
     await deposer(resident, chemin);
 
     const parVoisin = await voisin.client.storage.from(BUCKET).download(chemin);
+    const parEnAttente = await enAttente.client.storage
+      .from(BUCKET)
+      .download(chemin);
     const parSyndic = await syndic.client.storage.from(BUCKET).download(chemin);
 
-    expect(parVoisin.error).not.toBeNull();
+    expect(parVoisin.error).toBeNull();
+    expect(parEnAttente.error).toBeNull();
     expect(parSyndic.error).toBeNull();
+  });
+
+  it("un compte refusé ou retiré, et un visiteur, ne lisent pas la photo d'un autre", async () => {
+    const resident = await nouveauResident();
+    const refuse = await nouveauResident("refuse");
+    const retire = await nouveauResident("retire");
+    const chemin = cheminPhoto(resident);
+    await deposer(resident, chemin);
+
+    const parRefuse = await refuse.client.storage.from(BUCKET).download(chemin);
+    const parRetire = await retire.client.storage.from(BUCKET).download(chemin);
+    const parVisiteur = await clientVisiteur()
+      .storage.from(BUCKET)
+      .download(chemin);
+
+    expect(parRefuse.error).not.toBeNull();
+    expect(parRetire.error).not.toBeNull();
+    expect(parVisiteur.error).not.toBeNull();
+  });
+
+  it("un voisin signe l'adresse de la photo d'un autre", async () => {
+    const resident = await nouveauResident();
+    const voisin = await nouveauResident();
+    const chemin = cheminPhoto(resident);
+    await deposer(resident, chemin);
+
+    const { data, error } = await voisin.client.storage
+      .from(BUCKET)
+      .createSignedUrl(chemin, 60);
+
+    expect(error).toBeNull();
+    expect(data?.signedUrl).toBeTruthy();
   });
 
   it("la personne retire sa photo, un voisin ne retire pas celle d'un autre", async () => {
