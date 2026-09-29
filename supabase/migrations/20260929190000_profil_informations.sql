@@ -26,7 +26,7 @@ alter table public.profil
   add column etage_visible boolean not null default false;
 
 comment on column public.profil.pseudo is 'Le seul nom sous lequel les voisins voient la personne. Prérempli avec le prénom et l''initiale du nom (« Danielle M. »), modifiable. Obligatoire, sauf pour un membre du conseil syndical qui n''a pas encore saisi son prénom et son nom.';
-comment on column public.profil.photo_chemin is 'Chemin de la photo dans le bucket `profils` (`<id du profil>/<photo>.jpg`) ; `null` sans photo. Elle ne se remplace pas sur place : la nouvelle a un nouveau chemin. Seuls la personne et le conseil syndical la voient.';
+comment on column public.profil.photo_chemin is 'Chemin de la photo dans le bucket `profils` (`<id du profil>/<photo>.jpg`) ; `null` sans photo. Elle ne se remplace pas sur place : la nouvelle a un nouveau chemin. Sans réglage de visibilité : tous les résidents (validés et en attente) et le conseil syndical la voient, à la place de l''initiale du pseudo.';
 comment on column public.profil.telephone_visible is 'Vrai quand les voisins lisent le téléphone (`fiche_voisin`). Masqué par défaut.';
 comment on column public.profil.batiment_visible is 'Vrai quand les voisins lisent le bâtiment (`fiche_voisin`). Masqué par défaut.';
 comment on column public.profil.etage_visible is 'Vrai quand les voisins lisent l''étage (`fiche_voisin`). Masqué par défaut.';
@@ -86,14 +86,18 @@ $$;
 revoke execute on function public.nom_affiche(public.profil) from public, anon;
 grant execute on function public.nom_affiche(public.profil) to authenticated;
 
-create or replace function public.participants_activite(identifiant text)
-returns table (nom_affiche text, accompagnants smallint)
+-- Le pseudo et la photo : ce qu'un voisin lit d'un autre résident (le chemin de la photo remplace
+-- l'initiale du pseudo). Une colonne de plus en retour : la fonction est recréée.
+drop function public.participants_activite(text);
+
+create function public.participants_activite(identifiant text)
+returns table (nom_affiche text, accompagnants smallint, photo_chemin text)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select public.nom_affiche(p), i.accompagnants
+  select public.nom_affiche(p), i.accompagnants, p.photo_chemin
   from public.inscription_activite i
   join public.activite a on a.id = i.activite_id
   join public.profil p on p.id = i.resident_id
@@ -102,6 +106,9 @@ as $$
     and public.peut_voir_activite(a.statut, a.organisateur)
   order by i.inscrit_le;
 $$;
+
+revoke execute on function public.participants_activite(text) from public, anon;
+grant execute on function public.participants_activite(text) to authenticated;
 
 create or replace function public.activites_a_moderer()
 returns table (
@@ -143,7 +150,9 @@ as $$
   order by (a.statut = 'masquee'), a.publiee_le;
 $$;
 
-create or replace function public.fiche_activite(identifiant text)
+drop function public.fiche_activite(text);
+
+create function public.fiche_activite(identifiant text)
 returns table (
   identifiant_public text,
   titre text,
@@ -174,7 +183,8 @@ returns table (
   consignes_espace text,
   photos text[],
   message_moderation text,
-  raison_relecture text
+  raison_relecture text,
+  organisateur_photo_chemin text
 )
 language sql
 stable
@@ -222,7 +232,8 @@ as $$
     case
       when coalesce(a.organisateur = auth.uid(), false) or public.est_syndic() then m.message
     end,
-    case when public.est_syndic() then m.raison_relecture end
+    case when public.est_syndic() then m.raison_relecture end,
+    case when public.peut_consulter() then p.photo_chemin end
   from public.activite a
   left join public.profil p on p.id = a.organisateur
   left join public.espace_commun e on e.id = a.espace_commun_id
@@ -231,16 +242,20 @@ as $$
     and public.peut_voir_activite(a.statut, a.organisateur);
 $$;
 
+revoke execute on function public.fiche_activite(text) from public;
+grant execute on function public.fiche_activite(text) to anon, authenticated;
+
 drop function public.nom_affiche(text, text);
 
 /**
- * Ce qu'un résident lit d'un voisin : son pseudo, plus le téléphone, le bâtiment et l'étage que
- * le voisin a rendus visibles. Jamais son prénom ni son nom, ni sa photo. Le conseil syndical, lui,
- * lit tout le profil directement. Vide pour un compte qui ne consulte pas la résidence, et pour un
- * voisin dont le compte n'est pas validé.
+ * Ce qu'un résident lit d'un voisin : son pseudo et le chemin de sa photo, plus le téléphone, le
+ * bâtiment et l'étage que le voisin a rendus visibles. La photo n'a pas de réglage : quand il y en a
+ * une, elle remplace l'initiale du pseudo pour tous. Jamais son prénom ni son nom. Le conseil
+ * syndical, lui, lit tout le profil directement. Vide pour un compte qui ne consulte pas la
+ * résidence, et pour un voisin dont le compte n'est pas validé.
  */
 create function public.fiche_voisin(voisin uuid)
-returns table (pseudo text, telephone text, batiment text, etage smallint)
+returns table (pseudo text, telephone text, batiment text, etage smallint, photo_chemin text)
 language sql
 stable
 security definer
@@ -250,7 +265,8 @@ as $$
     p.pseudo,
     case when p.telephone_visible then p.telephone end,
     case when p.batiment_visible then p.batiment end,
-    case when p.etage_visible then p.etage end
+    case when p.etage_visible then p.etage end,
+    p.photo_chemin
   from public.profil p
   where p.id = voisin and p.statut = 'valide' and public.peut_consulter();
 $$;
@@ -321,17 +337,16 @@ create policy "Chacun supprime ses centres d'intérêt"
 
 -- Photo de profil : bucket privé, un dossier par profil. La compression du navigateur ne produit que
 -- du JPEG, d'au plus quelques centaines de Ko : le bucket refuse tout le reste, et au-delà de 2 Mo.
--- Seuls la personne et le conseil syndical la lisent, par une adresse signée que le serveur donne.
+-- Elle n'a pas de réglage de visibilité : tous les résidents (validés et en attente, comme pour le
+-- pseudo) et le conseil syndical la lisent, par une adresse signée que le serveur donne. Seule la
+-- personne dépose et retire la sienne.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('profils', 'profils', false, 2097152, array['image/jpeg']);
 
-create policy "Chacun lit sa photo de profil, le conseil syndical les lit toutes"
+create policy "Les comptes qui consultent la résidence lisent les photos de profil"
   on storage.objects for select
   to authenticated
-  using (
-    bucket_id = 'profils'
-    and ((storage.foldername(name))[1] = (select auth.uid())::text or (select public.est_syndic()))
-  );
+  using (bucket_id = 'profils' and (select public.peut_consulter()));
 
 create policy "Chacun dépose sa photo de profil dans son dossier"
   on storage.objects for insert
