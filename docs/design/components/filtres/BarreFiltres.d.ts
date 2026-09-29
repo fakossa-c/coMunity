@@ -1,5 +1,5 @@
 export interface BarreFiltresProps {
-  /** accueil : défilement horizontal, 12/20 px · liste : 16 px (Activités) */
+  /** accueil : rangée qui défile sans barre visible sur mobile, puces qui passent à la ligne sur ordinateur · liste : 16 px (Activités) */
   variante?: "accueil" | "liste";
   /** Élément placé au-dessus des puces et qui colle avec elles (ex. <Onglets>) */
   avant?: React.ReactNode;

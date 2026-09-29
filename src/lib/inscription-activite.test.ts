@@ -82,11 +82,15 @@ describe("libellé du statut d'inscription", () => {
   });
 
   it("« Vous participez, avec 2 personnes » avec des accompagnants", () => {
-    expect(libelleStatutInscription(2)).toBe("Vous participez, avec 2 personnes");
+    expect(libelleStatutInscription(2)).toBe(
+      "Vous participez, avec 2 personnes",
+    );
   });
 
   it("« Vous participez, avec 1 personne » au singulier", () => {
-    expect(libelleStatutInscription(1)).toBe("Vous participez, avec 1 personne");
+    expect(libelleStatutInscription(1)).toBe(
+      "Vous participez, avec 1 personne",
+    );
   });
 });
 

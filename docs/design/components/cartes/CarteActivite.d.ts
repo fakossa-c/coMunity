@@ -15,6 +15,8 @@ export interface CarteActiviteProps {
   horaire?: string;
   /** Range horaire, lieu et étiquettes dans une rubrique « Détails » dépliable (vert → Accessibilité, autres → Pour qui) */
   detailsDepliables?: boolean;
+  /** Bloc « À la une » de l'Accueil : visuel et texte côte à côte sur ordinateur, empilés sur mobile ; sans détails dépliables */
+  aLaUne?: boolean;
   inscrits?: number;
   places?: number;
   /** À FAIRE : les valeurs des étiquettes (accessibilité, pour qui…) seront des enums à définir.
@@ -23,7 +25,7 @@ export interface CarteActiviteProps {
   /** Bandeau marine « Proposée par le syndic » en tête. Abandonné le 25/09/2026 : une activité
    *  du syndic se présente comme celle d'un voisin. */
   syndic?: boolean;
-  /** Bandeau vert d'inscription ("Inscrite, avec 2 personnes") */
+  /** Bandeau vert d'inscription ("Vous participez, avec 2 personnes") */
   statut?: string;
   /** Déduit : "inscrit" si statut, "aucune" si syndic, sinon "participer" */
   actions?: "participer" | "inscrit" | "aucune";
