@@ -91,10 +91,14 @@ export function estExpiree(expireLe: string | null, jour = aujourdhui()) {
   return expireLe !== null && expireLe < jour;
 }
 
+/** « 20 octobre », pour une date `AAAA-MM-JJ` ou un horodatage ISO. */
+export function dateSansJour(date: string) {
+  return jourLong(date.slice(0, 10)).split(" ").slice(1).join(" ");
+}
+
 /** « Publiée le 20 octobre par le conseil syndical ». */
 export function libellePublication(publieeLe: string) {
-  const date = jourLong(publieeLe.slice(0, 10)).split(" ").slice(1).join(" ");
-  return `Publiée le ${date} par le conseil syndical`;
+  return `Publiée le ${dateSansJour(publieeLe)} par le conseil syndical`;
 }
 
 /** Les lignes d'information d'une carte : quand (une période pour des travaux), puis où. */
@@ -254,4 +258,34 @@ export function verifierFichier(
   if (!formats[genre].types.includes(fichier.type)) return formats[genre].refus;
   if (fichier.size > TAILLE_MAX_FICHIER) return "Ce fichier pèse plus de 5 Mo.";
   return null;
+}
+
+const EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "application/pdf": "pdf",
+};
+
+/**
+ * Le chemin d'un fichier dans le bucket : un dossier propre à chaque dépôt (`dossier`, un UUID),
+ * puis le nom du fichier sans accents ni caractères d'adresse, avec l'extension de son format.
+ */
+export function cheminDeDepot(dossier: string, nom: string, type: string) {
+  const base = nom
+    .replace(/\.[^.]*$/, "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return `${dossier}/${base || "fichier"}.${EXTENSIONS[type]}`;
+}
+
+/** Vrai pour un chemin que `cheminDeDepot` a pu produire : rien d'autre ne s'enregistre en base. */
+export function estCheminDeFichier(chemin: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9][a-z0-9-]*\.(jpg|png|webp|pdf)$/.test(
+    chemin,
+  );
 }
