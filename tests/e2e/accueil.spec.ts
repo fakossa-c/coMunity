@@ -143,6 +143,7 @@ test("chaque onglet mène à sa page, sous le même en-tête", async ({ page }) 
 
 test("le bouton « Proposer » n'apparaît que sur Activités et mène à /proposer", async ({
   page,
+  isMobile,
 }) => {
   for (const chemin of ["/", "/annonces"]) {
     await page.goto(chemin);
@@ -152,7 +153,8 @@ test("le bouton « Proposer » n'apparaît que sur Activités et mène à /propo
   await page.goto("/activites");
   const proposer = page.getByRole("link", { name: "Proposer" });
   await expect(proposer).toBeVisible();
-  expect(await position(proposer)).toBe("fixed");
+  // Flottant sur mobile ; sur ordinateur, « Proposer une activité » sous le titre (ordinateur.spec.ts).
+  expect(await position(proposer)).toBe(isMobile ? "fixed" : "static");
   await proposer.click();
   await expect(page).toHaveURL(/\/proposer$/);
 });

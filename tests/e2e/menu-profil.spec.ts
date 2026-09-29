@@ -84,7 +84,9 @@ test("le menu se ferme avec Échap et par le voile, et rend le focus à l'avatar
 
 test("le menu se ferme en faisant glisser la feuille vers le bas", async ({
   page,
+  isMobile,
 }) => {
+  test.skip(!isMobile, "La feuille du bas est propre au mobile.");
   await residentConnecte(page);
 
   await ouvrirMenu(page);
