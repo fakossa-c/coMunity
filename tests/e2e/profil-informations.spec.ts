@@ -314,7 +314,6 @@ test("les voisins voient la photo de l'organisateur et des participants, validé
     await page.goto(`/activites/${identifiant}`);
 
     const main = page.getByRole("main");
-    const participants = page.getByRole("list", { name: "Participants" });
     // La photo de l'organisateur remplace son initiale, et elle se charge.
     const photoOrganisateur = main.locator("img[src*='/profils/']").first();
     await expect(photoOrganisateur).toBeVisible();
@@ -324,20 +323,17 @@ test("les voisins voient la photo de l'organisateur et des participants, validé
       )
       .toBeGreaterThan(0);
     await expect(main).toContainText("Coco");
-    // Deux participants : l'un a une photo, l'autre son initiale.
-    await expect(participants.locator("img")).toHaveCount(1);
-    await expect(
-      participants.getByRole("listitem").filter({ hasText: "Voisine du 3" }),
-    ).toContainText("Voisine du 3");
-    await expect(
-      participants
-        .getByRole("listitem")
-        .filter({ hasText: "Voisin du 4" })
-        .locator("img"),
-    ).toHaveCount(0);
-    await expect(
-      participants.getByRole("listitem").filter({ hasText: "Voisin du 4" }),
-    ).toContainText("V");
+
+    // La liste des participants n'est lue que par un compte validé : l'un a une photo, l'autre son initiale.
+    if (spectateur === valide) {
+      const participants = page.getByRole("list", { name: "Participants" });
+      const ligne = (pseudo: string) =>
+        participants.getByRole("listitem").filter({ hasText: pseudo });
+      await expect(participants.locator("img")).toHaveCount(1);
+      await expect(ligne("Voisine du 3").locator("img")).toHaveCount(1);
+      await expect(ligne("Voisin du 4").locator("img")).toHaveCount(0);
+      await expect(ligne("Voisin du 4")).toContainText("V");
+    }
   }
 });
 

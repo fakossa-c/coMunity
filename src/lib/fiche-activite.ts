@@ -24,6 +24,8 @@ export type FicheActivite = {
   proposee_par_syndic: boolean;
   /** « Danielle M. » ; `null` pour un visiteur, qui ne lit aucun nom. */
   organisateur_nom_affiche: string | null;
+  /** Chemin de sa photo dans le bucket des profils ; `null` sans photo, et pour un visiteur. */
+  organisateur_photo_chemin: string | null;
   est_organisateur: boolean;
   /** `null` : pas de limite de participants. */
   capacite_max: number | null;

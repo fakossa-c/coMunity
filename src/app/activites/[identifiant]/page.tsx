@@ -26,6 +26,7 @@ import {
 } from "@/lib/fiche-activite";
 import { estMiseDeCote } from "@/lib/decision-moderation";
 import { libelleMinimum } from "@/lib/inscription-activite";
+import { adressesPhotosProfils } from "@/lib/lecture-photos-profils";
 import {
   creneau,
   estPassee,
@@ -146,6 +147,12 @@ export default async function Fiche({ params }: Props) {
   const lien = await lienFiche(identifiant);
   const categorie = categoriesActivite[fiche.categorie];
   const session = await lireSession();
+  // La photo de l'organisateur remplace l'initiale de son pseudo, quand il en a une.
+  const photoOrganisateur = fiche.organisateur_photo_chemin
+    ? (await adressesPhotosProfils([fiche.organisateur_photo_chemin])).get(
+        fiche.organisateur_photo_chemin,
+      )
+    : undefined;
 
   const annulee = fiche.statut === "annulee";
   // En relecture ou masquée, l'activité n'a pas de lien à partager : les voisins ne la voient pas.
@@ -224,6 +231,7 @@ export default async function Fiche({ params }: Props) {
           <ProposePar
             initiale={fiche.organisateur_nom_affiche.charAt(0).toUpperCase()}
             nom={fiche.organisateur_nom_affiche}
+            photo={photoOrganisateur}
           />
         )}
         {fiche.mot_accueil && <EncartPastel>{fiche.mot_accueil}</EncartPastel>}
