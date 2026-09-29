@@ -62,6 +62,12 @@ export default async function EspaceSyndic() {
           titre="Règlement intérieur"
           description="Rédigez les règles de vie de la résidence, section par section."
         />
+        <Rubrique
+          href="/syndic/annonces"
+          icone="campaign"
+          titre="Annonces"
+          description="Publiez assemblées, travaux et informations pratiques, épinglez-les et partagez leur lien."
+        />
       </ul>
     </EcranSecondaire>
   );
