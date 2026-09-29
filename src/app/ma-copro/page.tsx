@@ -4,6 +4,7 @@ import { Bientot } from "@/components/bientot";
 import { EcranSecondaire } from "@/components/cadre";
 import { EspacesCommunsCopro } from "@/components/espaces-communs-copro";
 import { ReglementInterieur } from "@/components/reglement-interieur";
+import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
 import { lireReglement } from "@/lib/lecture-reglement";
 import {
@@ -29,14 +30,10 @@ export default async function MaCopro() {
 
   return (
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
-      <div className="mb-space-lg desktop:mb-9 desktop:flex desktop:items-end desktop:justify-between desktop:gap-8">
-        <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-titre-journal">
-          Ma copro
-        </h1>
-        <p className="mt-1 max-w-[65ch] text-body-lg text-on-surface-variant desktop:mt-0 desktop:pb-3">
-          Les espaces communs, puis le règlement de la résidence
-        </p>
-      </div>
+      <TitrePage
+        titre="Ma copro"
+        sousTitre="Les espaces communs, puis le règlement de la résidence"
+      />
       {reglement && espaces ? (
         <div className="flex flex-col gap-space-lg desktop:gap-16">
           <section
