@@ -111,13 +111,15 @@ test.describe("sur ordinateur", () => {
       expect((await boite(bouton)).width).toBeCloseTo(176, 0);
     }
     // Le pseudo, verrouillé, a la même largeur : les boutons s'alignent en colonne.
-    const verrou = carte.getByText("Visible", { exact: true });
+    // (sa pilule est le parent du texte réservé au lecteur d'écran)
+    const verrou = carte.getByText("Pseudo : ").locator("..");
     expect((await boite(verrou)).width).toBeCloseTo(176, 0);
 
     const telephone = carte.getByRole("button", { name: /Téléphone/ });
     await telephone.click();
-    await expect(telephone.getByText("Visible", { exact: true })).toBeVisible();
-    await expect(telephone.getByText("Privé")).toBeHidden();
+    // Le texte lu à l'écran (les libellés cachés par la mise en page ne comptent pas).
+    await expect(telephone).toHaveText(/Visible/, { useInnerText: true });
+    await expect(telephone).not.toHaveText(/Privé/, { useInnerText: true });
     expect((await boite(telephone)).width).toBeCloseTo(176, 0);
   });
 

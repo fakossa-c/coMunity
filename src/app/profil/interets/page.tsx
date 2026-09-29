@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { EcranSecondaire } from "@/components/cadre";
-import { TitrePage } from "@/components/titre-page";
 import type { CentreInteret } from "@/lib/centres-interet";
 import { lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
+import { TitreProfil } from "../titre-profil";
 import { MesInterets } from "./mes-interets";
 
 export const metadata: Metadata = { title: "Mes intérêts" };
@@ -21,8 +21,8 @@ export default async function PageMesInterets() {
 
   return (
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
-      <div className="flex max-w-xl flex-col gap-bloc">
-        <TitrePage
+      <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
+        <TitreProfil
           titre="Mes intérêts"
           sousTitre="Ce qui vous plaît, en quelques mots : jardinage, jeux de société, cuisine…"
         />

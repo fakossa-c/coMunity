@@ -76,7 +76,7 @@ export function MesInterets({ interets }: { interets: CentreInteret[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-bloc">
+    <div className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-8">
       <form
         onSubmit={ajouter}
         noValidate

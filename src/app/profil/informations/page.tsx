@@ -7,12 +7,12 @@ import { CarteLignes } from "@/components/carte-lignes";
 import { EnTeteProfil } from "@/components/en-tete-profil";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
-import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
 import { adresse } from "@/lib/informations-profil";
 import { identite } from "@/lib/identite";
 import { lireInformations } from "@/lib/lecture-informations";
 import { lireSession } from "@/lib/session";
+import { TitreProfil } from "../titre-profil";
 import { InformationsVisibles } from "./informations-visibles";
 
 export const metadata: Metadata = { title: "Mes informations" };
@@ -32,8 +32,8 @@ export default async function MesInformations({
 
   return (
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
-      <div className="flex max-w-xl flex-col gap-bloc">
-        <TitrePage
+      <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
+        <TitreProfil
           titre="Mes informations"
           sousTitre="Contrôlez les informations partagées"
         />
@@ -52,52 +52,61 @@ export default async function MesInformations({
           )}
           photo={informations?.photo}
         />
-        {informations?.pseudo ? (
-          <InformationsVisibles
-            pseudo={informations.pseudo}
-            telephone={informations.telephone}
-            batiment={informations.batiment}
-            etage={informations.etage}
-            visibilites={{
-              telephone: informations.telephone_visible,
-              batiment: informations.batiment_visible,
-              etage: informations.etage_visible,
-            }}
-          />
-        ) : null}
-        <section className="flex flex-col gap-2.5">
-          <TitreSection>Réservés au conseil syndical</TitreSection>
-          <CarteLignes
-            libelle="Prénom et nom"
-            lignes={[
-              {
-                icone: "person",
-                titre: "Prénom",
-                detail: informations?.prenom ?? "Non renseigné",
-              },
-              {
-                icone: "badge",
-                titre: "Nom",
-                detail: informations?.nom ?? "Non renseigné",
-              },
-            ]}
-          />
-          <p className="text-body-md text-on-surface-variant">
-            Votre prénom et votre nom ne servent qu&apos;au conseil syndical,
-            pour valider votre compte. Vos voisins ne les voient jamais.
-          </p>
-        </section>
-        <p className="text-body-md text-on-surface-variant">
-          Votre pseudo est toujours visible : c&apos;est ainsi que vos voisins
-          vous reconnaissent. Le conseil syndical voit toutes vos informations.
-        </p>
-        <Link
-          href="/profil/informations/modifier"
-          className={classesBouton("contour", true)}
-        >
-          <Icone nom="edit" />
-          Modifier mes informations
-        </Link>
+        {/* Sur ordinateur, ce que voient les voisins à gauche ; ce que voit le conseil syndical à droite. */}
+        <div className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-8">
+          {informations?.pseudo ? (
+            <div className="flex flex-col gap-bloc">
+              <InformationsVisibles
+                pseudo={informations.pseudo}
+                telephone={informations.telephone}
+                batiment={informations.batiment}
+                etage={informations.etage}
+                visibilites={{
+                  telephone: informations.telephone_visible,
+                  batiment: informations.batiment_visible,
+                  etage: informations.etage_visible,
+                }}
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-bloc">
+            <section className="flex flex-col gap-2.5">
+              <TitreSection>Réservés au conseil syndical</TitreSection>
+              <CarteLignes
+                libelle="Prénom et nom"
+                lignes={[
+                  {
+                    icone: "person",
+                    titre: "Prénom",
+                    detail: informations?.prenom ?? "Non renseigné",
+                  },
+                  {
+                    icone: "badge",
+                    titre: "Nom",
+                    detail: informations?.nom ?? "Non renseigné",
+                  },
+                ]}
+              />
+              <p className="text-body-md text-on-surface-variant">
+                Votre prénom et votre nom ne servent qu&apos;au conseil
+                syndical, pour valider votre compte. Vos voisins ne les voient
+                jamais.
+              </p>
+            </section>
+            <p className="text-body-md text-on-surface-variant">
+              Votre pseudo est toujours visible : c&apos;est ainsi que vos
+              voisins vous reconnaissent. Le conseil syndical voit toutes vos
+              informations.
+            </p>
+            <Link
+              href="/profil/informations/modifier"
+              className={`${classesBouton("contour", true)} desktop:w-auto desktop:self-start`}
+            >
+              <Icone nom="edit" />
+              Modifier mes informations
+            </Link>
+          </div>
+        </div>
       </div>
     </EcranSecondaire>
   );

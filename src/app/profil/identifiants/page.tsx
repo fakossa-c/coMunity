@@ -6,9 +6,9 @@ import { Bouton, classesBouton } from "@/components/bouton";
 import { EcranSecondaire } from "@/components/cadre";
 import { CarteLignes } from "@/components/carte-lignes";
 import { Annonce } from "@/components/formulaire";
-import { TitrePage } from "@/components/titre-page";
 import { lireSession } from "@/lib/session";
 import { configurationSupabase, clientSession } from "@/lib/supabase/serveur";
+import { TitreProfil } from "../titre-profil";
 import { SuppressionCompte } from "./suppression-compte";
 
 export const metadata: Metadata = { title: "Mes identifiants" };
@@ -58,8 +58,8 @@ export default async function MesIdentifiants({
 
   return (
     <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
-      <div className="flex max-w-xl flex-col gap-bloc">
-        <TitrePage titre="Mes identifiants" />
+      <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
+        <TitreProfil titre="Mes identifiants" />
         <Annonce message={confirmation ?? enAttente} />
         <Annonce
           message={
@@ -69,36 +69,46 @@ export default async function MesIdentifiants({
           }
           erreur
         />
-        <CarteLignes
-          libelle="Vos identifiants"
-          lignes={[
-            {
-              icone: "mail",
-              titre: "Email",
-              detail: utilisateur.email,
-              fin: (
-                <Modifier href="/profil/identifiants/email" quoi="l'email" />
-              ),
-            },
-            {
-              icone: "lock",
-              titre: "Mot de passe",
-              detail: "••••••••",
-              fin: (
-                <Modifier
-                  href="/profil/identifiants/mot-de-passe"
-                  quoi="le mot de passe"
-                />
-              ),
-            },
-          ]}
-        />
-        <form action={seDeconnecter}>
-          <Bouton type="submit" variante="contour" icone="logout" pleineLargeur>
-            Se déconnecter
-          </Bouton>
-        </form>
-        {peutSupprimer && <SuppressionCompte />}
+        <div className="flex flex-col gap-bloc desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-8">
+          <CarteLignes
+            libelle="Vos identifiants"
+            lignes={[
+              {
+                icone: "mail",
+                titre: "Email",
+                detail: utilisateur.email,
+                fin: (
+                  <Modifier href="/profil/identifiants/email" quoi="l'email" />
+                ),
+              },
+              {
+                icone: "lock",
+                titre: "Mot de passe",
+                detail: "••••••••",
+                fin: (
+                  <Modifier
+                    href="/profil/identifiants/mot-de-passe"
+                    quoi="le mot de passe"
+                  />
+                ),
+              },
+            ]}
+          />
+          <div className="flex flex-col gap-bloc">
+            <form action={seDeconnecter}>
+              <Bouton
+                type="submit"
+                variante="contour"
+                icone="logout"
+                pleineLargeur
+                className="desktop:w-auto desktop:self-start"
+              >
+                Se déconnecter
+              </Bouton>
+            </form>
+            {peutSupprimer && <SuppressionCompte />}
+          </div>
+        </div>
       </div>
     </EcranSecondaire>
   );

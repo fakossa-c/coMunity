@@ -75,7 +75,7 @@ export function SuppressionCompte() {
           variante="fantome"
           icone="delete"
           pleineLargeur
-          className="text-error!"
+          className="text-error! desktop:w-auto desktop:self-start"
           onClick={() => setConfirmation(true)}
         >
           Supprimer mon compte

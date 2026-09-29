@@ -23,7 +23,9 @@ export function EnTeteProfil({
   const Nom = grand ? "h1" : "p";
 
   return (
-    <div className="flex items-center gap-space-md">
+    <div
+      className={`flex items-center gap-space-md ${grand ? "desktop:gap-7" : ""}`}
+    >
       <Avatar
         initiale={initiale}
         variante="marine"
@@ -32,7 +34,7 @@ export function EnTeteProfil({
       />
       <div className="flex min-w-0 flex-col">
         <Nom
-          className={`font-headline [overflow-wrap:anywhere] text-on-surface ${grand ? "text-headline-xl-mobile" : "text-headline-sm"}`}
+          className={`font-headline [overflow-wrap:anywhere] text-on-surface ${grand ? "text-headline-xl-mobile desktop:text-titre-journal" : "text-headline-sm"}`}
         >
           {nom}
         </Nom>
