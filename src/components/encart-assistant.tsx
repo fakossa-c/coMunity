@@ -5,9 +5,9 @@ import { Icone } from "./icone";
 type Props = { avis: AvisAssistant | null };
 
 /**
- * L'encart « Conseils de l'assistant » du récapitulatif : ce que renvoie le module assistant.
- * Un point bloquant se dit comme tel, avant la publication ; sans rien à signaler, l'encart le
- * dit en clair plutôt que de rester vide.
+ * L'encart « Conseils de l'assistant » du récapitulatif, en haut de page : ce que renvoie le module
+ * assistant. Un point bloquant se dit comme tel, visible sans défiler, avant la publication ;
+ * sans rien à signaler, l'encart le dit en clair plutôt que de rester vide.
  */
 export function EncartAssistant({ avis }: Props) {
   const conseils = avis

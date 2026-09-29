@@ -47,6 +47,12 @@ describe("limites de saisie", () => {
   });
 });
 
+describe("saisie de départ", () => {
+  it("une nouvelle activité démarre avec un minimum d'un participant", () => {
+    expect(SAISIE_VIDE.capacite_min).toBe("1");
+  });
+});
+
 describe("vérification d'une étape", () => {
   it("une saisie complète passe les trois étapes", () => {
     expect(verifierEtape(1, COMPLETE)).toEqual({});

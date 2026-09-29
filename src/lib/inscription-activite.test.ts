@@ -110,6 +110,11 @@ describe("état de confirmation selon le minimum", () => {
     expect(libelleConfirmation(null)).toBeNull();
   });
 
+  it("un minimum d'un participant n'a rien à confirmer, inscrit ou non", () => {
+    expect(etatConfirmation({ capaciteMin: 1, placesPrises: 0 })).toBeNull();
+    expect(etatConfirmation({ capaciteMin: 1, placesPrises: 3 })).toBeNull();
+  });
+
   it("confirmée quand les personnes inscrites atteignent le minimum", () => {
     const etat = etatConfirmation({ capaciteMin: 4, placesPrises: 4 });
     expect(etat).toEqual({ confirmee: true });

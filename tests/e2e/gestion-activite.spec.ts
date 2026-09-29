@@ -61,7 +61,7 @@ test("le créateur modifie son activité dans le parcours pré-rempli", async ({
   );
   await page.getByLabel("Titre de l'activité").fill("Goûter crêpes et jeux");
   await continuer(page);
-  await expect(page.getByLabel("Lieu")).toHaveValue("Jardin partagé");
+  await expect(page.getByLabel("Nom du lieu")).toHaveValue("Jardin partagé");
   await continuer(page);
   await continuer(page);
   await page.getByRole("button", { name: "Enregistrer" }).click();
