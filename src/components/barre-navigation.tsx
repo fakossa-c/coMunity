@@ -21,6 +21,27 @@ export const ONGLETS = [
 
 export type IdOnglet = (typeof ONGLETS)[number]["id"];
 
+const MISES_EN_PAGE = {
+  /** Barre du bas, fixe : pictogramme au-dessus du libellé. Un filet la sépare du contenu. */
+  bas: {
+    nav: "fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-bordure-carte bg-fond-carte pb-[env(safe-area-inset-bottom)] desktop:hidden",
+    liste: "mx-auto flex h-barre-nav max-w-lg",
+    item: "flex flex-1",
+    lien: "flex min-w-cible flex-1 flex-col items-center justify-center gap-1 rounded-lg font-headline text-etiquette hover:bg-surface-container-low",
+  },
+  /** Barre du haut du cadre Journal : pilules de libellé seul, l'onglet actif en pêche. */
+  haut: {
+    nav: undefined,
+    liste: "flex gap-1.5",
+    item: undefined,
+    lien: "flex min-h-12 items-center rounded-full px-6 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal",
+  },
+};
+
+const LIEN_ACTIF_HAUT = "bg-fond-action font-extrabold text-texte-action";
+const LIEN_INACTIF_HAUT =
+  "font-bold text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
+
 /**
  * Onglets de l'application. `bas` : barre fixe du mobile, après le contenu ; pictogramme
  * au-dessus du libellé, un filet la sépare du contenu ; onglet actif : pictogramme plein sur une
@@ -34,33 +55,21 @@ export function BarreNavigation({
   emplacement,
 }: {
   actif?: IdOnglet;
-  emplacement: "bas" | "haut";
+  emplacement: keyof typeof MISES_EN_PAGE;
 }) {
+  const mise = MISES_EN_PAGE[emplacement];
   const bas = emplacement === "bas";
   return (
-    <nav
-      aria-label="Navigation principale"
-      className={
-        bas
-          ? "fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-bordure-carte bg-fond-carte pb-[env(safe-area-inset-bottom)] desktop:hidden"
-          : undefined
-      }
-    >
-      <ul
-        className={bas ? "mx-auto flex h-barre-nav max-w-lg" : "flex gap-1.5"}
-      >
+    <nav aria-label="Navigation principale" className={mise.nav}>
+      <ul className={mise.liste}>
         {ONGLETS.map(({ id, href, libelle, icone }) => {
           const estActif = id === actif;
           return (
-            <li key={id} className={bas ? "flex flex-1" : undefined}>
+            <li key={id} className={mise.item}>
               <Link
                 href={href}
                 aria-current={estActif ? "page" : undefined}
-                className={
-                  bas
-                    ? "flex min-w-cible flex-1 flex-col items-center justify-center gap-1 rounded-lg font-headline text-etiquette hover:bg-surface-container-low"
-                    : `flex min-h-12 items-center rounded-full px-6 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal ${estActif ? "bg-fond-action font-extrabold text-texte-action" : "font-bold text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`
-                }
+                className={`${mise.lien} ${bas ? "" : estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT}`}
               >
                 {bas ? (
                   <>

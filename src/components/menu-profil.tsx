@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type MouseEvent,
@@ -32,8 +33,8 @@ type Props = {
 /** Glissement vers le bas, en px, au-delà duquel la feuille se ferme. */
 const SEUIL_FERMETURE = 90;
 
-/** Durée de la sortie du menu déroulant, en ms : celle de `--animate-menu-sortie`. */
-const DUREE_SORTIE = 300;
+/** Durée de la sortie du menu déroulant, en ms : celle de `--duree-courte`, qui règle `--animate-menu-sortie`. */
+const DUREE_SORTIE = 350;
 
 /** Écart, en px, entre l'avatar et le menu déroulant. */
 const ECART_MENU = 12;
@@ -55,6 +56,15 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
   const avatar = useRef<HTMLButtonElement>(null);
   const feuille = useRef<HTMLDialogElement>(null);
   const glissement = useRef<{ depart: number; ecart: number } | null>(null);
+
+  // Sa position est calculée à l'ouverture : un redimensionnement de la fenêtre le referme.
+  useEffect(() => {
+    // La feuille du mobile reste en place : la barre d'adresse et le clavier redimensionnent la fenêtre.
+    if (!ouvert || !surOrdinateur()) return;
+    const fermerSansAnimation = () => feuille.current?.close();
+    window.addEventListener("resize", fermerSansAnimation);
+    return () => window.removeEventListener("resize", fermerSansAnimation);
+  }, [ouvert]);
 
   function ouvrir() {
     const dialogue = feuille.current;
@@ -150,7 +160,7 @@ export function MenuProfil({ initiale, nom, adresse, rubriques }: Props) {
         onKeyDown={retenirLeFocus}
         className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-auto desktop:top-(--menu-haut) desktop:right-(--menu-droite) desktop:w-85 desktop:origin-top-right desktop:overflow-visible desktop:backdrop:bg-transparent desktop:motion-safe:animate-menu desktop:motion-safe:backdrop:animate-none desktop:motion-safe:data-sortie:animate-menu-sortie"
       >
-        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:mx-0 desktop:max-h-none desktop:max-w-none desktop:rounded-[1.75rem] desktop:p-3 desktop:shadow-flottante">
+        <div className="mx-auto flex max-h-[90dvh] max-w-xl flex-col overflow-y-auto rounded-t-feuille bg-fond-carte px-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:mx-0 desktop:max-h-[calc(100dvh-var(--menu-haut)-1rem)] desktop:max-w-none desktop:rounded-flottante desktop:p-3 desktop:shadow-flottante">
           <div
             aria-hidden="true"
             onPointerDown={commencerGlissement}

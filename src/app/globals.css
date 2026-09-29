@@ -151,6 +151,8 @@
   --radius-full: 9999px;
   /* Coins hauts de la feuille du bas */
   --radius-feuille: 28px;
+  /* Menu déroulant et pop-up de la présentation Journal, ordinateur */
+  --radius-flottante: 1.75rem;
 
   --spacing-gutter: 1rem;
   --spacing-gutter-tablet: 1.5rem;
@@ -196,11 +198,16 @@
   /* Mouvement du cadre Journal : une courbe et deux durées pour tout, coupés par la préférence de
      réduction des animations (voir plus bas). Le dépliage passe par `.depliage`. */
   --ease-journal: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duree-courte: 0.35s;
+  --duree-longue: 0.45s;
   --animate-feuille: feuille-monte 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-voile: voile-apparait 0.25s ease-out;
-  --animate-menu: menu-entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  --animate-menu-sortie: menu-sort 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  --animate-popup: popup-entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-voile-journal: voile-apparait var(--duree-courte)
+    var(--ease-journal);
+  --animate-menu: menu-entre var(--duree-longue) var(--ease-journal);
+  --animate-menu-sortie: menu-sort var(--duree-courte) var(--ease-journal)
+    forwards;
+  --animate-popup: popup-entre var(--duree-longue) var(--ease-journal);
 
   /* Ombres très douces de la présentation Journal : carte au repos, carte survolée, menu et pop-up */
   --shadow-douce:
@@ -375,11 +382,6 @@
   --text-titre-journal--line-height: 1.1;
 }
 
-:root {
-  /* Durées des transitions du cadre Journal, avec `ease-journal` : `duration-(--duree-courte)` */
-  --duree-courte: 0.35s;
-  --duree-longue: 0.45s;
-}
 /* Présentation « Journal », à partir du point de rupture ordinateur : les cartes n'ont plus de
    contour et se distinguent par la teinte de fond, l'espace et une ombre très douce ; arrondis
    de 24 px. Les composants ne changent pas : ils lisent ces jetons. */
@@ -406,14 +408,15 @@
 }
 
 /* Dépliage : la rangée de la grille passe de 0fr à 1fr, le contenu reste dans le DOM
-   (`<div class="depliage" data-ouvert><div>…</div></div>`, voir le composant Depliage). */
+   (`<div class="depliage" data-ouvert><div>…</div></div>`). Le contenu déplié reçoit `inert`
+   tant qu'il est replié. */
 @utility depliage {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
   transition:
-    grid-template-rows 0.45s var(--ease-journal),
-    opacity 0.35s var(--ease-journal);
+    grid-template-rows var(--duree-longue) var(--ease-journal),
+    opacity var(--duree-courte) var(--ease-journal);
   &[data-ouvert] {
     grid-template-rows: 1fr;
     opacity: 1;
@@ -427,8 +430,8 @@
 /* Survol en légère élévation, sur ordinateur seulement */
 @utility survol-eleve {
   transition:
-    transform 0.4s var(--ease-journal),
-    box-shadow 0.4s var(--ease-journal);
+    transform var(--duree-longue) var(--ease-journal),
+    box-shadow var(--duree-longue) var(--ease-journal);
   @media (hover: hover) and (min-width: 64rem) {
     &:hover {
       transform: translateY(-4px);

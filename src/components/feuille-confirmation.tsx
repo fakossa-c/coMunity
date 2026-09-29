@@ -64,9 +64,9 @@ export function FeuilleConfirmation({
       onClick={(e) => {
         if (e.target === e.currentTarget) onFermer();
       }}
-      className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-0 desktop:m-auto desktop:h-fit desktop:w-[min(34rem,calc(100%-2rem))] desktop:overflow-visible desktop:motion-safe:animate-popup"
+      className="fixed inset-x-0 top-auto bottom-0 m-0 max-h-none w-full max-w-none bg-transparent p-0 text-on-surface backdrop:bg-voile motion-safe:animate-feuille motion-safe:backdrop:animate-voile desktop:inset-0 desktop:m-auto desktop:h-fit desktop:w-[min(34rem,calc(100%-2rem))] desktop:overflow-visible desktop:motion-safe:animate-popup desktop:motion-safe:backdrop:animate-voile-journal"
     >
-      <div className="mx-auto flex max-w-xl flex-col gap-space-md rounded-t-feuille bg-fond-carte p-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:max-w-none desktop:rounded-[1.75rem] desktop:p-8 desktop:shadow-flottante">
+      <div className="mx-auto flex max-w-xl flex-col gap-space-md rounded-t-feuille bg-fond-carte p-margin pb-[calc(1.25rem+env(safe-area-inset-bottom))] desktop:max-h-[calc(100dvh-2rem)] desktop:max-w-none desktop:overflow-y-auto desktop:rounded-flottante desktop:p-8 desktop:shadow-flottante">
         <p className="font-headline text-headline-sm text-on-surface">
           {titre}
         </p>
