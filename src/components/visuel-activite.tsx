@@ -13,7 +13,7 @@ type Props = {
   enCarte?: boolean;
   /** Bloc « À la une » : 192 px sur mobile et le pictogramme plus grand, toute la hauteur du bloc sur ordinateur. */
   grand?: boolean;
-  /** Tête de fiche sans photo : 280 px de haut et le pictogramme de 144 px sur ordinateur, 150 px sur mobile. */
+  /** Tête de fiche sans photo : 280 px de haut et pictogramme de 144 px sur ordinateur ; sur mobile, 150 px de haut, comme avant. */
   enTeteDeFiche?: boolean;
 };
 

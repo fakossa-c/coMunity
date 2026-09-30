@@ -399,3 +399,39 @@ for (const [reglage, reglages] of [
     });
   });
 }
+
+test("le visiteur du lien partagé lit la fiche sans défilement horizontal, carte comprise", async ({
+  page,
+}) => {
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id, {
+    titre: "Le Grand Goûter Crêpes & Jeux du dimanche",
+    description: TEXTE_LONG,
+    capacite_max: "12",
+  });
+
+  await page.goto(`/activites/${identifiant}`);
+
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Je participe" }),
+  ).toBeVisible();
+  await verifierSansDefilementHorizontal(page);
+});
+
+test("avec la réduction des animations, la carte et ses boutons n'animent plus rien", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id);
+
+  await page.goto(`/activites/${identifiant}`);
+
+  const durees = await page
+    .getByRole("button", { name: "Je participe" })
+    .evaluate((bouton) => getComputedStyle(bouton).transitionDuration);
+  expect(durees.split(",").every((d) => parseFloat(d) === 0)).toBe(true);
+});
