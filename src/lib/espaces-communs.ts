@@ -160,6 +160,41 @@ export function resumeEspace(
     .join(" · ");
 }
 
+/** « Bâtiment A · rez-de-chaussée » : où se trouve l'espace ; vide sans l'un ni l'autre. */
+export function emplacementEspace(
+  espace: Pick<EspaceCommun, "batiment" | "localisation">,
+) {
+  return [espace.batiment, espace.localisation].filter(Boolean).join(" · ");
+}
+
+/** La fiche d'un espace commun, sous Ma copro. */
+export function lienFicheEspace(id: string) {
+  return `/ma-copro/espaces/${id}`;
+}
+
+/** Proposer, avec le lieu déjà choisi (paramètre `espace`). */
+export function lienProposerIci(id: string) {
+  return `/proposer?espace=${id}`;
+}
+
+/** Nombre de consignes toujours visibles sur la fiche ; les suivantes se replient. */
+const CONSIGNES_VISIBLES = 2;
+
+/**
+ * Les consignes d'un espace, une par ligne non vide : les deux premières restent visibles, les
+ * suivantes se replient. Rien sans consigne.
+ */
+export function decouperConsignes(consignes: string | null) {
+  const lignes = (consignes ?? "")
+    .split("\n")
+    .map((ligne) => ligne.trim())
+    .filter((ligne) => ligne.length > 0);
+  return {
+    visibles: lignes.slice(0, CONSIGNES_VISIBLES),
+    suite: lignes.slice(CONSIGNES_VISIBLES),
+  };
+}
+
 /** Une activité publiée dans un espace commun, telle que la table `activite` la livre. */
 export type OccupationEspace = {
   titre: string;

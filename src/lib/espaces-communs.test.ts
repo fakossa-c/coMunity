@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   SAISIE_ESPACE_VIDE,
+  decouperConsignes,
+  emplacementEspace,
+  lienFicheEspace,
+  lienProposerIci,
   libelleCapacite,
   reglesResidence,
   resumeEspace,
@@ -148,5 +152,57 @@ describe("règles transmises à l'assistant", () => {
         },
       ],
     });
+  });
+});
+
+describe("lienFicheEspace", () => {
+  it("mène à la fiche de l'espace, sous Ma copro", () => {
+    expect(lienFicheEspace("a1b2")).toBe("/ma-copro/espaces/a1b2");
+  });
+});
+
+describe("lienProposerIci", () => {
+  it("ouvre Proposer avec l'espace en paramètre `espace`", () => {
+    expect(lienProposerIci("a1b2")).toBe("/proposer?espace=a1b2");
+  });
+});
+
+describe("decouperConsignes", () => {
+  it("ne donne rien sans consigne", () => {
+    expect(decouperConsignes(null)).toEqual({ visibles: [], suite: [] });
+    expect(decouperConsignes("  \n \n")).toEqual({ visibles: [], suite: [] });
+  });
+
+  it("garde deux consignes visibles et replie les suivantes, une par ligne non vide", () => {
+    const consignes =
+      "Rangez les chaises.\n\n  Éteignez la cuisine. \nLa musique s'arrête à 22h.\nSignalez toute casse.";
+
+    expect(decouperConsignes(consignes)).toEqual({
+      visibles: ["Rangez les chaises.", "Éteignez la cuisine."],
+      suite: ["La musique s'arrête à 22h.", "Signalez toute casse."],
+    });
+  });
+
+  it("ne replie rien quand il y en a deux ou moins", () => {
+    expect(decouperConsignes("Une seule.")).toEqual({
+      visibles: ["Une seule."],
+      suite: [],
+    });
+    expect(decouperConsignes("Une.\nDeux.")).toEqual({
+      visibles: ["Une.", "Deux."],
+      suite: [],
+    });
+  });
+});
+
+describe("emplacementEspace", () => {
+  it("joint bâtiment et localisation, sans rien inventer quand l'un manque", () => {
+    expect(
+      emplacementEspace({ batiment: "Bâtiment A", localisation: "Sous-sol" }),
+    ).toBe("Bâtiment A · Sous-sol");
+    expect(
+      emplacementEspace({ batiment: null, localisation: "Sous-sol" }),
+    ).toBe("Sous-sol");
+    expect(emplacementEspace({ batiment: null, localisation: null })).toBe("");
   });
 });

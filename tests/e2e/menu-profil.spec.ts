@@ -55,12 +55,10 @@ test("l'avatar ouvre le menu du profil depuis un écran principal", async ({
       menu(page).getByRole("link", { name: new RegExp(`^${entree}`) }),
     ).toBeVisible();
   }
-  // Le détail de « Ma copro » reprend le sous-titre de l'écran : ce qu'on y trouve.
+  // Le détail de « Ma copro » dit ce qu'on y trouve, dans l'ordre de la page.
   await expect(
     menu(page).getByRole("link", { name: /^Ma copro/ }),
-  ).toContainText(
-    "Le règlement intérieur et les espaces communs de la résidence",
-  );
+  ).toContainText("Espaces, biens communs et règlement");
   await expect(
     menu(page).getByRole("link", { name: /Espace syndic/ }),
   ).toHaveCount(0);

@@ -55,7 +55,7 @@ async function fichierPhoto(nom: string, largeur: number, hauteur: number) {
 /** La carte d'un espace commun dans Ma copro, retrouvée par son nom. */
 function carte(page: Page, nom: string) {
   return page
-    .getByRole("region", { name: "Espaces communs" })
+    .getByRole("region", { name: "Espaces et biens communs" })
     .getByRole("listitem")
     .filter({ has: page.getByRole("heading", { level: 3, name: nom }) });
 }

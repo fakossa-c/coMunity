@@ -32,10 +32,19 @@ export default async function MaCopro() {
     <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
       <TitrePage
         titre="Ma copro"
-        sousTitre="Le règlement intérieur et les espaces communs de la résidence"
+        sousTitre="Les espaces communs, puis le règlement de la résidence"
       />
       {reglement && espaces ? (
-        <div className="flex flex-col gap-space-lg">
+        <div className="flex flex-col gap-space-lg desktop:gap-16">
+          <section
+            aria-labelledby="titre-espaces-communs"
+            className="flex flex-col gap-space-md"
+          >
+            <TitreSection id="titre-espaces-communs">
+              Espaces et biens communs
+            </TitreSection>
+            <EspacesCommunsCopro espaces={espaces} photos={photos} />
+          </section>
           <section
             aria-labelledby="titre-reglement"
             className="flex flex-col gap-space-md"
@@ -43,16 +52,10 @@ export default async function MaCopro() {
             <TitreSection id="titre-reglement">
               Règlement intérieur
             </TitreSection>
-            <ReglementInterieur {...reglement} />
-          </section>
-          <section
-            aria-labelledby="titre-espaces-communs"
-            className="flex flex-col gap-space-md"
-          >
-            <TitreSection id="titre-espaces-communs">
-              Espaces communs
-            </TitreSection>
-            <EspacesCommunsCopro espaces={espaces} photos={photos} />
+            <ReglementInterieur
+              {...reglement}
+              ancreEspaces="#titre-espaces-communs"
+            />
           </section>
         </div>
       ) : (

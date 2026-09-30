@@ -17,7 +17,11 @@ function rendre(
   misAJourLe: string | null = "2026-09-29T10:15:00+00:00",
 ) {
   return renderToStaticMarkup(
-    createElement(ReglementInterieur, { sections, misAJourLe }),
+    createElement(ReglementInterieur, {
+      sections,
+      misAJourLe,
+      ancreEspaces: "#titre-espaces-communs",
+    }),
   );
 }
 
@@ -84,5 +88,26 @@ describe("ReglementInterieur", () => {
     );
     expect(html).not.toContain("Tout déplier");
     expect(html).not.toContain("Mis à jour");
+  });
+
+  it("porte un sommaire nommé, réservé à l'ordinateur : lien vers les espaces communs d'abord, puis les sections dans l'ordre", () => {
+    const html = rendre();
+
+    const sommaire =
+      /<nav[^>]*aria-label="Sommaire du règlement"[^>]*>[\s\S]*?<\/nav>/.exec(
+        html,
+      )![0];
+    expect(sommaire).toMatch(/class="[^"]*\bhidden\b[^"]*desktop:block/);
+    expect(sommaire).toContain('href="#titre-espaces-communs"');
+    expect(sommaire).toContain("Espaces communs");
+    expect(sommaire.indexOf("Espaces communs")).toBeLessThan(
+      sommaire.indexOf("Bruit et tranquillité"),
+    );
+    expect(sommaire.indexOf("Bruit et tranquillité")).toBeLessThan(
+      sommaire.indexOf("Déchets"),
+    );
+    // Des liens vers les sections : ils ne doublent pas les boutons des titres.
+    expect(sommaire).not.toContain("<button");
+    expect((sommaire.match(/<a /g) ?? []).length).toBe(3);
   });
 });

@@ -135,4 +135,14 @@ describe("EspacesCommunsCopro", () => {
 
     expect(html).not.toContain("<img");
   });
+
+  it("ouvre la fiche de l'espace depuis sa carte, par un lien qui nomme l'espace", () => {
+    const html = rendre([SALLE, COUR]);
+
+    expect(html).toContain('href="/ma-copro/espaces/salle"');
+    expect(html).toContain('href="/ma-copro/espaces/cour"');
+    expect(html).toMatch(
+      /<a[^>]*href="\/ma-copro\/espaces\/salle"[^>]*>(?:(?!<\/a>).)*Voir le détail(?:(?!<\/a>).)*Salle commune/,
+    );
+  });
 });
