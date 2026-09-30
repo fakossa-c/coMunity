@@ -20,7 +20,7 @@ import { createClient } from "@supabase/supabase-js";
 /** Ce qui distingue les données de démonstration : adresses des comptes et préfixe des identifiants publics. */
 export const MODELE_DEMO = {
   prefixe: "fakossa+",
-  etiquette: "test-",
+  mentionTest: "test-",
   domaine: "gmail.com",
   marqueur: "demo",
 };
@@ -91,9 +91,9 @@ export const COMPTES = [
   },
 ];
 
-/** L'adresse (et le mot de passe) d'un compte de démonstration : `<préfixe>test-<rôle>-<username>@<domaine>`. */
+/** L'adresse (et le mot de passe) d'un compte de démonstration : `<préfixe><mentionTest><rôle>-<username>@<domaine>`. */
 export function adresseDemo({ role, username }, modele = MODELE_DEMO) {
-  return `${modele.prefixe}${modele.etiquette}${role}-${username}@${modele.domaine}`;
+  return `${modele.prefixe}${modele.mentionTest}${role}-${username}@${modele.domaine}`;
 }
 
 const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -106,7 +106,7 @@ const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function estAdresseDemo(adresse, modele = MODELE_DEMO) {
   if (typeof adresse !== "string") return false;
   const motif = new RegExp(
-    `^${echapper(modele.prefixe)}(?:${echapper(modele.etiquette)}[a-z0-9]+-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
+    `^${echapper(modele.prefixe)}(?:${echapper(modele.mentionTest)}[a-z0-9]+-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
     "i",
   );
   return motif.test(adresse);

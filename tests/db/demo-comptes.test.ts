@@ -151,16 +151,16 @@ describe("amorcerDemo : activités", () => {
   });
 
   it("montre le catalogue à un résident validé, et rien à un résident refusé", async () => {
-    const danielle = adresseDemo(compte("danielle"), modele);
-    const validé = await connecter(danielle, danielle);
+    const adresseDanielle = adresseDemo(compte("danielle"), modele);
+    const validé = await connecter(adresseDanielle, adresseDanielle);
     const vu = await validé
       .from("activite")
       .select("id")
       .like("identifiant_public", "dmtt%");
     expect(vu.data?.length ?? 0).toBeGreaterThan(3);
 
-    const refusé = adresseDemo(compte("refuse"), modele);
-    const refuse = await connecter(refusé, refusé);
+    const adresseRefuse = adresseDemo(compte("refuse"), modele);
+    const refuse = await connecter(adresseRefuse, adresseRefuse);
     const rien = await refuse
       .from("activite")
       .select("id")
