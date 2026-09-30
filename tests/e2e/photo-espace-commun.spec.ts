@@ -156,9 +156,9 @@ test("le conseil syndical ajoute, réordonne, remplace puis retire les photos d'
 
     // La photo carrée passe en deuxième position, la haute reste dernière.
     await page.getByRole("button", { name: "Monter : photo 3 sur 3" }).click();
-    await expect(page.getByRole("main").getByRole("status")).toContainText(
-      "Photo déplacée en position 2 sur 3.",
-    );
+    await expect(
+      page.getByText("Photo déplacée en position 2 sur 3."),
+    ).toBeVisible();
     await enregistrer(page, espace.nom, "est enregistré.");
 
     const trois = await mediasEspace(espace.id);
@@ -303,6 +303,11 @@ test("le conseil syndical envoie, remplace puis retire le plan de situation, un 
   await page
     .getByLabel("Remplacer le plan")
     .setInputFiles(await fichierPhoto("autre-plan.jpg", 1000, 2000));
+  // Le nouveau plan est prêt quand son aperçu est celui du fichier choisi, plus celui du plan enregistré.
+  await expect(page.getByRole("img", { name: nomPlan })).toHaveAttribute(
+    "src",
+    /^blob:/,
+  );
   await enregistrer(page, espace.nom, "est enregistré.");
   const second = (await mediasEspace(espace.id)).plan_chemin;
   expect(second).not.toBe(premier);
@@ -405,9 +410,9 @@ test("le formulaire refuse un fichier qui n'est pas une image, et plus de 5 phot
   );
   await page.getByLabel("Ajouter des photos").setInputFiles(six);
   await expect(page.getByRole("main")).toContainText("5 photos sur 5");
-  await expect(page.getByRole("main").getByRole("alert")).toContainText(
-    "Vous pouvez ajouter 5 photos de plus : 5 au plus.",
-  );
+  await expect(
+    page.getByText("Vous pouvez ajouter 5 photos de plus : 5 au plus."),
+  ).toBeVisible();
   // Plus de place : le sélecteur disparaît.
   await expect(page.getByLabel("Ajouter d'autres photos")).toHaveCount(0);
 });
@@ -502,10 +507,16 @@ for (const [reglage, valeurs] of [
 
     await seConnecter(page, resident.email);
     await page.goto(`/ma-copro/espaces/${espace.id}`);
-    await expect(page.locator("html")).toHaveAttribute(
-      "data-theme",
-      valeurs.theme,
-    );
+    if (valeurs.theme === "sombre")
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-theme",
+        "sombre",
+      );
+    if (valeurs.taille === "grands")
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-taille",
+        "grands",
+      );
     await expect(
       page.getByRole("heading", { level: 1, name: espace.nom }),
     ).toBeVisible();

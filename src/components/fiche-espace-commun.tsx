@@ -183,7 +183,7 @@ export function FicheEspaceCommun({
                   href={plan}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-headline text-label-lg text-texte-action underline underline-offset-4"
+                  className="font-headline text-label-lg text-primary underline underline-offset-4"
                 >
                   Agrandir le plan
                   <span className="sr-only">
