@@ -18,6 +18,8 @@ type Props = { lignes: LigneCarte[]; libelle?: string };
 /**
  * Carte bordée sans ombre (on la lit, on ne la touche pas en entier), découpée en lignes de 64 px.
  * Sur ordinateur (Journal), la bordure s'efface : un filet de 1 px en `--filet` sépare les lignes.
+ * Quand l'action ne tient pas à côté de 9 rem de texte, elle passe à la ligne, à droite : une
+ * adresse longue ne s'empile plus lettre par lettre (issues #177, #180, #181).
  */
 export function CarteLignes({ lignes, libelle }: Props) {
   return (
@@ -28,12 +30,12 @@ export function CarteLignes({ lignes, libelle }: Props) {
       {lignes.map(({ cle, icone, titre, detail, fin }) => (
         <li
           key={cle ?? titre}
-          className="flex min-h-ligne items-center gap-space-sm px-4 py-2"
+          className="flex min-h-ligne flex-wrap items-center gap-space-sm px-4 py-2"
         >
           <span className="text-on-surface-variant">
             <Icone nom={icone} taille={24} />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 basis-36 flex-col">
             <span className="text-body-md text-on-surface-variant">
               {titre}
             </span>
@@ -43,7 +45,7 @@ export function CarteLignes({ lignes, libelle }: Props) {
               </span>
             )}
           </div>
-          {fin}
+          {fin && <div className="ml-auto flex max-w-full">{fin}</div>}
         </li>
       ))}
     </ul>

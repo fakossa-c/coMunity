@@ -109,30 +109,24 @@ function Section({
   return (
     <section>
       <h2 className="mb-space-sm font-headline text-headline-sm">{titre}</h2>
-      {/* Liste vide : le titre le dit (« Aucun résident validé »), sans carte vide dessous.
-          Quand la place manque (mobile, grands caractères, confirmation), les actions passent à
-          la ligne sous le nom et l'adresse, qui gardent 12 rem : dans la même rangée, elles
-          écrasaient la colonne du texte, et une adresse longue s'empilait lettre par lettre
-          (issue #177). Même règle dans Membres du syndic. */}
+      {/* Liste vide : le titre le dit (« Aucun résident validé »), sans carte vide dessous. */}
       {residents.length > 0 && (
-        <div className="[&_li]:flex-wrap [&_li>div]:min-w-[min(100%,12rem)]">
-          <CarteLignes
-            libelle={liste}
-            lignes={residents.map((resident) => ({
-              cle: resident.id,
-              icone,
-              titre: nomComplet(resident),
-              detail: resident.email,
-              fin: (
-                <LigneActions
-                  resident={resident}
-                  onResultat={onResultat}
-                  actions={actions}
-                />
-              ),
-            }))}
-          />
-        </div>
+        <CarteLignes
+          libelle={liste}
+          lignes={residents.map((resident) => ({
+            cle: resident.id,
+            icone,
+            titre: nomComplet(resident),
+            detail: resident.email,
+            fin: (
+              <LigneActions
+                resident={resident}
+                onResultat={onResultat}
+                actions={actions}
+              />
+            ),
+          }))}
+        />
       )}
     </section>
   );
@@ -158,7 +152,7 @@ function LigneActions({
   }
 
   return (
-    <span aria-busy={enCours} className="ml-auto flex flex-wrap gap-space-sm">
+    <span aria-busy={enCours} className="flex flex-wrap gap-space-sm">
       {actions(resident, executer, enCours)}
     </span>
   );

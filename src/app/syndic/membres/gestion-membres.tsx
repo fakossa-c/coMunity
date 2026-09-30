@@ -68,27 +68,23 @@ export function GestionMembres({ membres, idMoi }: Props) {
           >
             {membres.length === 1 ? "1 membre" : `${membres.length} membres`}
           </h2>
-          {/* Quand la place manque, « Retirer l'accès » passe à la ligne sous l'adresse, qui garde
-              12 rem (issue #180, même règle que dans Résidents). */}
-          <div className="[&_li]:flex-wrap [&_li>div]:min-w-[min(100%,12rem)]">
-            <CarteLignes
-              libelle="Membres du conseil syndical"
-              lignes={membres.map((membre) => ({
-                cle: membre.id,
-                icone: "shield_person",
-                titre:
-                  membre.id === idMoi ? "Vous" : "Membre du conseil syndical",
-                detail: membre.email,
-                fin: (
-                  <LigneMembre
-                    membre={membre}
-                    estMoi={membre.id === idMoi}
-                    onResultat={setResultat}
-                  />
-                ),
-              }))}
-            />
-          </div>
+          <CarteLignes
+            libelle="Membres du conseil syndical"
+            lignes={membres.map((membre) => ({
+              cle: membre.id,
+              icone: "shield_person",
+              titre:
+                membre.id === idMoi ? "Vous" : "Membre du conseil syndical",
+              detail: membre.email,
+              fin: (
+                <LigneMembre
+                  membre={membre}
+                  estMoi={membre.id === idMoi}
+                  onResultat={setResultat}
+                />
+              ),
+            }))}
+          />
         </section>
       </div>
     </div>
@@ -118,7 +114,7 @@ function LigneMembre({
   if (estMoi) return null;
 
   return (
-    <span aria-busy={enCours} className="ml-auto flex flex-wrap gap-space-sm">
+    <span aria-busy={enCours} className="flex flex-wrap gap-space-sm">
       {confirmation ? (
         <>
           <Bouton
