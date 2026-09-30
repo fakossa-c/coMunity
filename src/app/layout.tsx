@@ -1,26 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Atkinson_Hyperlegible_Next,
-  Plus_Jakarta_Sans,
-} from "next/font/google";
 import { EcouteInstallation } from "@/components/ecoute-installation";
 import { attributsAffichage } from "@/lib/attributs-affichage";
 import { lireSession } from "@/lib/session";
+import { classesCorps, classesPolices } from "./polices";
 import "./globals.css";
-
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-});
-
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  // next/font ne connaît pas les métriques de cette police : sans cette option, avertissement au build.
-  adjustFontFallback: false,
-});
 
 export const metadata: Metadata = {
   title: {
@@ -48,12 +31,8 @@ export default async function RootLayout({
   const session = await lireSession();
 
   return (
-    <html
-      lang="fr"
-      className={`${plusJakarta.variable} ${atkinson.variable}`}
-      {...attributsAffichage(session)}
-    >
-      <body className="flex min-h-screen flex-col bg-surface font-body text-body-lg text-on-surface antialiased">
+    <html lang="fr" className={classesPolices} {...attributsAffichage(session)}>
+      <body className={classesCorps}>
         <a
           href="#contenu"
           className="sr-only z-[60] min-h-cible rounded-md bg-inverse-surface px-4 py-3 font-headline text-label-lg text-inverse-on-surface focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
