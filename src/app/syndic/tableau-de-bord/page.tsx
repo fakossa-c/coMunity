@@ -133,80 +133,89 @@ export default async function TableauDeBord({ searchParams }: Props) {
           </dl>
         </section>
 
-        <section
-          aria-labelledby="par-mois"
-          className="flex flex-col gap-space-sm"
-        >
-          <TitreSection id="par-mois">Mois par mois</TitreSection>
-          <GraphiqueBarres
-            titre="Participants distincts par mois"
-            resume={resumeParMois(parMois)}
-            maximum={Math.max(1, ...parMois.map((m) => m.nombre_participants))}
-            barres={parMois.map((m) => ({
-              cle: m.mois,
-              libelle: libelleMois(m.mois),
-              valeur: m.nombre_participants,
-              texteValeur: libelleNombreParticipants(m.nombre_participants),
-              detail: libelleNombreActivites(m.nombre_activites),
-            }))}
-          />
-        </section>
+        {/* Sur ordinateur, « Mois par mois » et « Activités les mieux notées » côte à côte, « Ce qui
+            remplit le mieux » dessous ; l'ordre du document reste celui du mobile, qui ne change pas. */}
+        <div className="contents desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-space-lg">
+          <section
+            aria-labelledby="par-mois"
+            className="flex flex-col gap-space-sm desktop:col-start-1 desktop:row-start-1"
+          >
+            <TitreSection id="par-mois">Mois par mois</TitreSection>
+            <GraphiqueBarres
+              titre="Participants distincts par mois"
+              resume={resumeParMois(parMois)}
+              maximum={Math.max(
+                1,
+                ...parMois.map((m) => m.nombre_participants),
+              )}
+              barres={parMois.map((m) => ({
+                cle: m.mois,
+                libelle: libelleMois(m.mois),
+                valeur: m.nombre_participants,
+                texteValeur: libelleNombreParticipants(m.nombre_participants),
+                detail: libelleNombreActivites(m.nombre_activites),
+              }))}
+            />
+          </section>
 
-        <section
-          aria-labelledby="remplissage"
-          className="flex flex-col gap-space-sm"
-        >
-          <TitreSection id="remplissage">Ce qui remplit le mieux</TitreSection>
-          <p className="max-w-[65ch] text-body-md text-on-surface-variant">
-            Le remplissage d&apos;une activité est la part de ses places prises,
-            accompagnants compris. Une activité sans limite de places n&apos;en
-            a pas : elle compte dans le nombre d&apos;activités, pas dans le
-            taux.
-          </p>
-          <div className="grid gap-space-md desktop:grid-cols-3">
-            <GraphiqueRemplissage
-              titre="Par catégorie"
-              lignes={remplissage}
-              dimension="categorie"
-            />
-            <GraphiqueRemplissage
-              titre="Par jour de la semaine"
-              lignes={remplissage}
-              dimension="jour"
-            />
-            <GraphiqueRemplissage
-              titre="Par tranche horaire"
-              lignes={remplissage}
-              dimension="creneau"
-            />
-          </div>
-        </section>
-
-        <section
-          aria-labelledby="classement"
-          className="flex flex-col gap-space-sm"
-        >
-          <TitreSection id="classement">
-            Activités les mieux notées
-          </TitreSection>
-          {classement.length === 0 ? (
-            <p className="text-body-lg text-on-surface-variant">
-              {sansActivite
-                ? "Aucune activité n'a eu lieu sur la période."
-                : "Aucune activité de la période n'a reçu de retour pour le moment."}
+          <section
+            aria-labelledby="remplissage"
+            className="flex flex-col gap-space-sm desktop:col-span-2 desktop:row-start-2"
+          >
+            <TitreSection id="remplissage">
+              Ce qui remplit le mieux
+            </TitreSection>
+            <p className="max-w-[65ch] text-body-md text-on-surface-variant">
+              Le remplissage d&apos;une activité est la part de ses places
+              prises, accompagnants compris. Une activité sans limite de places
+              n&apos;en a pas : elle compte dans le nombre d&apos;activités, pas
+              dans le taux.
             </p>
-          ) : (
-            <ol className="grid gap-space-md desktop:grid-cols-2">
-              {classement.map((ligne, rang) => (
-                <ActiviteClassee
-                  key={ligne.identifiant_public}
-                  ligne={ligne}
-                  rang={rang + 1}
-                />
-              ))}
-            </ol>
-          )}
-        </section>
+            <div className="grid gap-space-md desktop:grid-cols-3">
+              <GraphiqueRemplissage
+                titre="Par catégorie"
+                lignes={remplissage}
+                dimension="categorie"
+              />
+              <GraphiqueRemplissage
+                titre="Par jour de la semaine"
+                lignes={remplissage}
+                dimension="jour"
+              />
+              <GraphiqueRemplissage
+                titre="Par tranche horaire"
+                lignes={remplissage}
+                dimension="creneau"
+              />
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="classement"
+            className="flex flex-col gap-space-sm desktop:col-start-2 desktop:row-start-1"
+          >
+            <TitreSection id="classement">
+              Activités les mieux notées
+            </TitreSection>
+            {classement.length === 0 ? (
+              <p className="text-body-lg text-on-surface-variant">
+                {sansActivite
+                  ? "Aucune activité n'a eu lieu sur la période."
+                  : "Aucune activité de la période n'a reçu de retour pour le moment."}
+              </p>
+            ) : (
+              <ol className="grid gap-space-md">
+                {classement.map((ligne, rang) => (
+                  <ActiviteClassee
+                    key={ligne.identifiant_public}
+                    ligne={ligne}
+                    rang={rang + 1}
+                  />
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
       </div>
     </EcranSyndic>
   );
