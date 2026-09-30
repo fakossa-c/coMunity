@@ -26,9 +26,7 @@ describe("destinationArrivee", () => {
   });
 
   it("envoie sur l'Accueil un membre du conseil syndical qui l'a choisi", () => {
-    expect(destinationArrivee({ ...syndic, pageArrivee: "accueil" })).toBe(
-      "/",
-    );
+    expect(destinationArrivee({ ...syndic, pageArrivee: "accueil" })).toBe("/");
   });
 
   it("envoie un résident sur l'Accueil, quel que soit le réglage", () => {

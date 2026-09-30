@@ -27,7 +27,7 @@ function ecranDeCompletion(page: Page) {
   });
 }
 
-test("après connexion, un membre du syndic arrive sur l'espace syndic sur ordinateur, sur l'accueil sur mobile", async ({
+test("après connexion, un membre du syndic arrive sur le tableau de bord", async ({
   page,
   isMobile,
 }) => {
