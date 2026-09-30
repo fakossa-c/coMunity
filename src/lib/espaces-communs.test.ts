@@ -6,6 +6,8 @@ import {
   lienFicheEspace,
   lienProposerIci,
   libelleCapacite,
+  libelleDimensions,
+  libelleHauteur,
   reglesResidence,
   resumeEspace,
   saisieDepuisEspace,
@@ -26,6 +28,9 @@ const SAISIE: SaisieEspace = {
   consignes: "Laissez la salle propre.",
   horaires_acces: "",
   contact: "Colette, gardienne",
+  longueur: "",
+  largeur: "",
+  hauteur_plafond: "",
 };
 
 /** Un espace commun tel que la base le livre : heures avec secondes, champs absents à `null`. */
@@ -42,6 +47,11 @@ const ESPACE: EspaceCommun = {
   horaires_acces: null,
   contact: "Colette, gardienne",
   photo_chemin: null,
+  photos: [],
+  longueur_m: null,
+  largeur_m: null,
+  hauteur_plafond_m: null,
+  plan_chemin: null,
 };
 
 describe("saisie d'un espace commun", () => {
@@ -85,10 +95,70 @@ describe("saisie d'un espace commun", () => {
       consignes: "Laissez la salle propre.",
       horaires_acces: null,
       contact: "Colette, gardienne",
+      longueur_m: null,
+      largeur_m: null,
+      hauteur_plafond_m: null,
     });
     expect(
       versEspaceCommun({ ...SAISIE_ESPACE_VIDE, nom: "Cour" }),
     ).toMatchObject({ capacite: null, heure_fin_max: null, equipements: [] });
+  });
+
+  it("les dimensions et la hauteur sont facultatives, saisies avec une virgule ou un point", () => {
+    expect(verifierEspace(SAISIE)).toEqual({});
+    expect(
+      verifierEspace({
+        ...SAISIE,
+        longueur: "8",
+        largeur: "6,5",
+        hauteur_plafond: "2.70",
+      }),
+    ).toEqual({});
+    expect(
+      versEspaceCommun({
+        ...SAISIE,
+        longueur: " 8 ",
+        largeur: "6,5",
+        hauteur_plafond: "2.70",
+      }),
+    ).toMatchObject({ longueur_m: 8, largeur_m: 6.5, hauteur_plafond_m: 2.7 });
+  });
+
+  it("la longueur et la largeur vont ensemble : l'une sans l'autre est refusée", () => {
+    expect(verifierEspace({ ...SAISIE, longueur: "8" })).toEqual({
+      champ: "largeur",
+      erreur: "Indiquez aussi la largeur, ou videz la longueur.",
+    });
+    expect(verifierEspace({ ...SAISIE, largeur: "6" })).toEqual({
+      champ: "longueur",
+      erreur: "Indiquez aussi la longueur, ou videz la largeur.",
+    });
+  });
+
+  it("refuse une dimension hors de 0,5 à 100 m et une hauteur hors de 1 à 15 m", () => {
+    const dimensions = { longueur: "8", largeur: "6" };
+    for (const [champ, valeur, erreur] of [
+      ["longueur", "0,4", "Indiquez une longueur de 0,5 à 100 m."],
+      ["longueur", "101", "Indiquez une longueur de 0,5 à 100 m."],
+      ["largeur", "0", "Indiquez une largeur de 0,5 à 100 m."],
+      ["largeur", "abc", "Indiquez une largeur de 0,5 à 100 m."],
+      ["hauteur_plafond", "0,9", "Indiquez une hauteur de 1 à 15 m."],
+      ["hauteur_plafond", "15,5", "Indiquez une hauteur de 1 à 15 m."],
+      ["hauteur_plafond", "-2", "Indiquez une hauteur de 1 à 15 m."],
+    ] as const)
+      expect(
+        verifierEspace({ ...SAISIE, ...dimensions, [champ]: valeur }),
+        `${champ} ${valeur}`,
+      ).toEqual({ champ, erreur });
+    // Les bornes elles-mêmes passent.
+    expect(
+      verifierEspace({
+        ...SAISIE,
+        longueur: "0,5",
+        largeur: "100",
+        hauteur_plafond: "15",
+      }),
+    ).toEqual({});
   });
 
   it("modifier reprend l'espace tel quel, heures sans les secondes", () => {
@@ -97,9 +167,34 @@ describe("saisie d'un espace commun", () => {
       nom: "Salle commune",
     });
   });
+
+  it("modifier reprend les mesures avec une virgule décimale", () => {
+    expect(
+      saisieDepuisEspace({
+        ...ESPACE,
+        longueur_m: 8,
+        largeur_m: 6.5,
+        hauteur_plafond_m: 2.7,
+      }),
+    ).toMatchObject({ longueur: "8", largeur: "6,5", hauteur_plafond: "2,7" });
+  });
 });
 
 describe("affichage", () => {
+  it("dit les dimensions avec leur surface, ou rien sans les deux", () => {
+    expect(libelleDimensions(8, 6)).toBe("8 m × 6 m, soit 48 m²");
+    expect(libelleDimensions(7.5, 4.2)).toBe("7,5 m × 4,2 m, soit 31,5 m²");
+    expect(libelleDimensions(5.55, 3)).toBe("5,55 m × 3 m, soit 16,7 m²");
+    expect(libelleDimensions(null, 6)).toBeNull();
+    expect(libelleDimensions(8, null)).toBeNull();
+  });
+
+  it("dit la hauteur sous plafond en mètres, ou rien", () => {
+    expect(libelleHauteur(2.7)).toBe("2,7 m");
+    expect(libelleHauteur(3)).toBe("3 m");
+    expect(libelleHauteur(null)).toBeNull();
+  });
+
   it("dit la capacité d'un espace, ou son absence", () => {
     expect(libelleCapacite(20)).toBe("Jusqu'à 20 personnes");
     expect(libelleCapacite(1)).toBe("Jusqu'à 1 personne");
