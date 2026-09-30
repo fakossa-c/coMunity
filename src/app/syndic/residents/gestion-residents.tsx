@@ -16,7 +16,8 @@ export function GestionResidents({ enAttente, valides }: Props) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
 
   return (
-    <div className="flex flex-col gap-space-lg">
+    // Sur ordinateur, les deux listes l'une sous l'autre dans une colonne de 1000 px au plus.
+    <div className="flex flex-col gap-space-lg desktop:max-w-[62.5rem] desktop:gap-12">
       {/* Un seul bloc : vides, les deux zones n'ajoutent qu'un espacement. */}
       <div>
         <Annonce message={resultat?.ok && resultat.message} />
@@ -108,27 +109,30 @@ function Section({
   return (
     <section>
       <h2 className="mb-space-sm font-headline text-headline-sm">{titre}</h2>
-      {/* Sur mobile, les actions passent sous le nom et l'adresse : dans la même rangée, elles
+      {/* Liste vide : le titre le dit (« Aucun résident validé »), sans carte vide dessous.
+          Sur mobile, les actions passent sous le nom et l'adresse : dans la même rangée, elles
           écrasaient la colonne du texte, et une adresse longue s'empilait lettre par lettre
           (issue #177). Sur ordinateur, elles restent au bout de la ligne. */}
-      <div className="max-desktop:[&_li]:flex-wrap">
-        <CarteLignes
-          libelle={liste}
-          lignes={residents.map((resident) => ({
-            cle: resident.id,
-            icone,
-            titre: nomComplet(resident),
-            detail: resident.email,
-            fin: (
-              <LigneActions
-                resident={resident}
-                onResultat={onResultat}
-                actions={actions}
-              />
-            ),
-          }))}
-        />
-      </div>
+      {residents.length > 0 && (
+        <div className="max-desktop:[&_li]:flex-wrap">
+          <CarteLignes
+            libelle={liste}
+            lignes={residents.map((resident) => ({
+              cle: resident.id,
+              icone,
+              titre: nomComplet(resident),
+              detail: resident.email,
+              fin: (
+                <LigneActions
+                  resident={resident}
+                  onResultat={onResultat}
+                  actions={actions}
+                />
+              ),
+            }))}
+          />
+        </div>
+      )}
     </section>
   );
 }

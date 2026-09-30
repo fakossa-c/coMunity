@@ -1,4 +1,4 @@
-Carte blanche bordée (sans ombre : on la lit, on ne la touche pas en entier) découpée en lignes de 64 px séparées par le filet de carte. Libellé 16 px discret au-dessus, valeur 17 px 700, action à droite.
+Carte blanche bordée (sans ombre : on la lit, on ne la touche pas en entier) découpée en lignes de 64 px séparées par le filet de carte. Libellé 16 px discret au-dessus, valeur 17 px 700, action à droite. En présentation Journal (ordinateur), la bordure s'efface au profit de l'ombre douce et les lignes restent séparées par un filet de 1 px en `--filet`.
 
 ```jsx
 <CarteLignes lignes={[

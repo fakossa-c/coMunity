@@ -15,12 +15,15 @@ export type LigneCarte = {
 
 type Props = { lignes: LigneCarte[]; libelle?: string };
 
-/** Carte bordée sans ombre (on la lit, on ne la touche pas en entier), découpée en lignes de 64 px. */
+/**
+ * Carte bordée sans ombre (on la lit, on ne la touche pas en entier), découpée en lignes de 64 px.
+ * Sur ordinateur (Journal), la bordure s'efface : un filet de 1 px en `--filet` sépare les lignes.
+ */
 export function CarteLignes({ lignes, libelle }: Props) {
   return (
     <ul
       aria-label={libelle}
-      className="flex flex-col divide-y-[1.5px] divide-bordure-carte rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte"
+      className="flex flex-col divide-y-[1.5px] divide-bordure-carte rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte desktop:divide-y desktop:divide-filet"
     >
       {lignes.map(({ cle, icone, titre, detail, fin }) => (
         <li

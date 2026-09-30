@@ -28,7 +28,7 @@ export function GestionMembres({ membres, idMoi }: Props) {
 
       {/* Sur ordinateur, la liste à gauche et la carte d'invitation à côté ; sur mobile, la carte
           d'abord. */}
-      <div className="flex flex-col gap-space-lg desktop:grid desktop:grid-cols-[minmax(0,1fr)_24.5rem] desktop:items-start desktop:gap-x-8">
+      <div className="flex flex-col gap-space-lg desktop:grid desktop:grid-cols-[minmax(0,1fr)_24.5rem] desktop:items-start desktop:gap-x-14">
         <section
           aria-labelledby="titre-inviter"
           className="rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:col-start-2 desktop:row-start-1 desktop:border-transparent desktop:p-8 desktop:shadow-douce"
