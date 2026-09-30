@@ -5,6 +5,10 @@ vi.mock("server-only", () => ({}));
 /** Les appels `.gte(colonne, valeur)` reçus par le client de session, par table. */
 const bornes: { table: string; colonne: string; valeur: string }[] = [];
 
+/**
+ * Un client de session factice : chaque requête se chaîne comme celle de supabase-js, se lit
+ * comme une promesse (`then`) et rend une résidence sans heure de calme, sans espace ni occupation.
+ */
 vi.mock("./supabase/serveur", () => ({
   clientSession: async () => ({
     from: (table: string) => {
