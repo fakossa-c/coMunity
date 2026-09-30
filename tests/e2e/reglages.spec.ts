@@ -50,6 +50,18 @@ test("Mes réglages propose la taille des caractères et l'apparence", async ({
   ).not.toBeChecked();
 });
 
+test("un résident ne voit pas le réglage de la page d'arrivée", async ({
+  page,
+}) => {
+  await seConnecter(page, (await resident()).email);
+  await page.goto("/profil/reglages");
+
+  await expect(page.getByRole("group", { name: "Apparence" })).toBeVisible();
+  await expect(
+    page.getByRole("group", { name: "Page d'arrivée" }),
+  ).not.toBeAttached();
+});
+
 test("le choix s'applique tout de suite sur la racine du document", async ({
   page,
 }) => {
