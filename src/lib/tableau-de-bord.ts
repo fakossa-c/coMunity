@@ -68,14 +68,15 @@ function iso(annee: number, mois: number, jour: number) {
 }
 
 /**
- * Les bornes d'une période, jour de `aujourdhui` compris. Les périodes en mois commencent le 1er
- * du mois, mois en cours compris, pour que chaque barre de la courbe mensuelle soit un mois entier
- * (sauf le mois en cours) ; `30_jours` compte le jour même et les 29 précédents.
+ * Les bornes d'une période, `aujourdhui` compris : le jour de Paris, `AAAA-MM-JJ`, tel que le
+ * renvoie `aujourdhui()` de `partage-activite` (le jour de la base, jamais celui d'UTC). Les
+ * périodes en mois commencent le 1er du mois, mois en cours compris, pour que chaque barre de la
+ * courbe mensuelle soit un mois entier (sauf le mois en cours) ; `30_jours` compte le jour même et
+ * les 29 précédents.
  */
-export function periodeDe(cle: ClePeriode, aujourdhui: Date): Periode {
-  const annee = aujourdhui.getFullYear();
-  const mois = aujourdhui.getMonth();
-  const jour = aujourdhui.getDate();
+export function periodeDe(cle: ClePeriode, aujourdhui: string): Periode {
+  const [annee, moisDuJour, jour] = aujourdhui.split("-").map(Number);
+  const mois = moisDuJour - 1;
   const fin = iso(annee, mois, jour);
   switch (cle) {
     case "30_jours":

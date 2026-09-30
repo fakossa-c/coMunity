@@ -12,7 +12,7 @@ import { TitrePage } from "@/components/titre-page";
 import { TitreSection } from "@/components/titre-section";
 import { categoriesActivite } from "@/lib/categories-activite";
 import { lireTableauDeBord } from "@/lib/lecture-tableau-de-bord";
-import { cheminFiche, jourLong } from "@/lib/partage-activite";
+import { aujourdhui, cheminFiche, jourLong } from "@/lib/partage-activite";
 import {
   libelleNombreRetours,
   libelleNoteMoyenne,
@@ -50,7 +50,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
 
   const { periode: demandee } = await searchParams;
   const cle = clePeriode(demandee);
-  const periode = periodeDe(cle, new Date());
+  const periode = periodeDe(cle, aujourdhui());
   const { synthese, remplissage, classement, parMois } =
     await lireTableauDeBord(periode);
 
