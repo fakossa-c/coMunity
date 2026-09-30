@@ -5,7 +5,7 @@ type Props = {
   haut: ReactNode;
   /** BarreNavigation `bas` ou BarreActionFixe, fixée en bas. */
   barreBas?: ReactNode;
-  /** BoutonFlottant, au-dessus de la barre du bas ; mobile seulement. */
+  /** BoutonFlottant ou AideInstallation, au-dessus de la barre du bas ; mobile seulement. */
   flottant?: ReactNode;
   /**
    * Réserve en px sous le contenu, pour qu'aucune barre ne le masque : 180 avec la navigation du

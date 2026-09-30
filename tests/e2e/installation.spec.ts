@@ -123,34 +123,34 @@ test.describe("manifeste et icônes", () => {
 test.describe("aide à l'installation sur iPhone", () => {
   test.use(iPhone);
 
-  test("l'encart montre le geste, se masque et ne revient pas", async ({
+  test("le bandeau montre le geste, se masque et ne revient pas", async ({
     page,
   }) => {
     await page.goto("/");
 
-    const encart = aideInstallation(page);
-    await expect(encart).toBeVisible();
-    await expect(encart).toContainText("Partager");
-    await expect(encart).toContainText("Sur l'écran d'accueil");
+    const bandeau = aideInstallation(page);
+    await expect(bandeau).toBeVisible();
+    await expect(bandeau).toContainText("Partager");
+    await expect(bandeau).toContainText("Sur l'écran d'accueil");
 
     await page.screenshot({
       path: test.info().outputPath("aide-installation-iphone.png"),
       fullPage: true,
     });
 
-    const masquer = encart.getByRole("button", { name: /masquer/i });
+    const masquer = bandeau.getByRole("button", { name: /masquer/i });
     const boite = await masquer.boundingBox();
     expect(boite?.width).toBeGreaterThanOrEqual(52);
     expect(boite?.height).toBeGreaterThanOrEqual(52);
 
     await masquer.click();
-    await expect(encart).toBeHidden();
+    await expect(bandeau).toBeHidden();
 
     await page.reload({ waitUntil: "networkidle" });
     await expect(aideInstallation(page)).toBeHidden();
   });
 
-  test("l'encart se masque au clavier", async ({ page }) => {
+  test("le bandeau se masque au clavier", async ({ page }) => {
     await page.goto("/");
 
     const masquer = aideInstallation(page).getByRole("button", {
@@ -190,7 +190,7 @@ test.describe("aide à l'installation sur iPhone", () => {
       await sansScript.close();
     }
 
-    await attendreBandeauAuDessusDeLaBarre(page);
+    await verifierBandeauAuDessusDeLaBarre(page);
   });
 
   test("la dernière activité se lit et se touche au-dessus du bandeau", async ({
@@ -199,17 +199,12 @@ test.describe("aide à l'installation sur iPhone", () => {
     await accueilDeResident(page);
     await expect(aideInstallation(page)).toBeVisible();
 
-    await page.evaluate(() =>
-      window.scrollTo(0, document.documentElement.scrollHeight),
-    );
-    const derniere = page.getByRole("main").getByRole("article").last();
-    const carte = await derniere.boundingBox();
-    const bandeau = await aideInstallation(page).boundingBox();
-    expect(carte!.y + carte!.height).toBeLessThanOrEqual(bandeau!.y);
-    await derniere.getByRole("link").first().click({ trial: true });
+    await verifierDerniereCarteAuDessusDuBandeau(page);
   });
 
-  test("l'encart n'apparaît jamais dans l'app installée", async ({ page }) => {
+  test("le bandeau n'apparaît jamais dans l'app installée", async ({
+    page,
+  }) => {
     await simulerAppInstallee(page);
     await ouvrirAccueil(page);
     await expect(aideInstallation(page)).toBeHidden();
@@ -219,10 +214,10 @@ test.describe("aide à l'installation sur iPhone", () => {
 test.describe("aide à l'installation sur Android", () => {
   test.skip(
     ({ isMobile }) => !isMobile,
-    "L'encart Android ne concerne que la navigation mobile.",
+    "Le bandeau Android ne concerne que la navigation mobile.",
   );
 
-  test("le bouton de l'encart déclenche l'invite du navigateur", async ({
+  test("le bouton du bandeau déclenche l'invite du navigateur", async ({
     page,
   }) => {
     await ouvrirAccueil(page);
@@ -230,8 +225,8 @@ test.describe("aide à l'installation sur Android", () => {
 
     await proposerInstallation(page);
 
-    const encart = aideInstallation(page);
-    const installer = encart.getByRole("button", {
+    const bandeau = aideInstallation(page);
+    const installer = bandeau.getByRole("button", {
       name: "Installer l'application",
     });
     await expect(installer).toBeVisible();
@@ -247,7 +242,7 @@ test.describe("aide à l'installation sur Android", () => {
     await expect
       .poll(() => page.evaluate(() => window.__invitesOuvertes))
       .toBe(1);
-    await expect(encart).toBeHidden();
+    await expect(bandeau).toBeHidden();
     await expect(page.locator("#contenu")).toBeFocused();
   });
 
@@ -262,7 +257,8 @@ test.describe("aide à l'installation sur Android", () => {
 
     await expect(aideInstallation(page)).toBeVisible();
     expect(await aLaUne.boundingBox()).toEqual(avant);
-    await attendreBandeauAuDessusDeLaBarre(page);
+    await verifierBandeauAuDessusDeLaBarre(page);
+    await verifierDerniereCarteAuDessusDuBandeau(page);
   });
 
   test("l'invite reçue sur une autre page sert en arrivant sur l'accueil", async ({
@@ -284,7 +280,7 @@ test.describe("aide à l'installation sur Android", () => {
   });
 });
 
-test("l'encart n'apparaît pas en navigation sur ordinateur", async ({
+test("le bandeau n'apparaît pas en navigation sur ordinateur", async ({
   page,
   isMobile,
 }) => {
@@ -323,7 +319,7 @@ async function accueilDeResident(page: Page) {
 }
 
 /** Bandeau fixé au bas de l'écran, à 12 px des bords, juste au-dessus de la barre du bas. */
-async function attendreBandeauAuDessusDeLaBarre(page: Page) {
+async function verifierBandeauAuDessusDeLaBarre(page: Page) {
   const barre = page.getByRole("navigation", { name: "Navigation principale" });
   const bandeau = await aideInstallation(page).boundingBox();
   const boiteBarre = await barre.boundingBox();
@@ -338,6 +334,18 @@ async function attendreBandeauAuDessusDeLaBarre(page: Page) {
   expect(bandeau!.x + bandeau!.width).toBeCloseTo(largeur - 12, 0);
   expect(bandeau!.y + bandeau!.height).toBeLessThanOrEqual(boiteBarre!.y);
   expect(bandeau!.y + bandeau!.height).toBeGreaterThan(boiteBarre!.y - 24);
+}
+
+/** Tout en bas de l'Accueil, la dernière carte finit au-dessus du bandeau et reste touchable. */
+async function verifierDerniereCarteAuDessusDuBandeau(page: Page) {
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  const derniere = page.getByRole("main").getByRole("article").last();
+  const carte = await derniere.boundingBox();
+  const bandeau = await aideInstallation(page).boundingBox();
+  expect(carte!.y + carte!.height).toBeLessThanOrEqual(bandeau!.y);
+  await derniere.getByRole("link").first().click({ trial: true });
 }
 
 function aideInstallation(page: Page) {

@@ -7,15 +7,16 @@ import {
   masquer,
   sAbonner,
 } from "@/lib/installation";
+import { classesBouton } from "./bouton";
 import { Icone } from "./icone";
 
 /**
- * Bandeau de l'accueil qui aide à installer l'app, en navigation mobile uniquement : fixé au bas
- * de l'écran, juste au-dessus de la barre du bas, il arrive par-dessus la page sans rien déplacer.
- * Android : le bouton ouvre l'invite du navigateur. iPhone : les deux gestes de Safari.
- * Masqué d'un geste, il ne revient plus ; il n'apparaît jamais dans l'app installée.
- * Se place en fin de contenu : sa réserve y prolonge la page, pour que la dernière carte défile
- * jusqu'au-dessus de lui.
+ * Bandeau de l'accueil qui aide à installer l'application, en navigation mobile uniquement : fixé
+ * au bas de l'écran, juste au-dessus de la barre du bas, il arrive par-dessus la page sans rien
+ * déplacer. Android : le bouton ouvre l'invite du navigateur. iPhone : les deux gestes de Safari.
+ * Masqué d'un geste, il ne revient plus ; il n'apparaît jamais dans l'application installée.
+ * Se passe en `flottant` de l'écran : sa réserve prolonge alors la page sous le contenu, pour que
+ * la dernière carte défile jusqu'au-dessus de lui.
  */
 export function AideInstallation() {
   const affichage = useSyncExternalStore(
@@ -63,16 +64,16 @@ export function AideInstallation() {
             Installer l&apos;application
           </h2>
           {affichage === "android" ? (
+            // Mention secondaire, en 16 px : l'action est le bouton, à côté.
             <p className="text-body-md text-on-surface-variant">
               Retrouvez la résidence en un geste.
             </p>
           ) : (
-            <p className="text-body-md text-on-surface-variant">
+            <p className="text-body-lg text-on-surface-variant">
               Touchez <strong className="text-on-surface">Partager</strong>
-              <Icone
-                nom="ios_share"
-                className="mx-0.5 inline size-5 align-text-bottom text-primary"
-              />
+              <span className="mx-0.5 inline-block align-text-bottom text-primary">
+                <Icone nom="ios_share" taille={20} />
+              </span>
               , puis{" "}
               <strong className="text-on-surface">
                 Sur l&apos;écran d&apos;accueil
@@ -85,7 +86,7 @@ export function AideInstallation() {
           <button
             type="button"
             onClick={installerApp}
-            className="inline-flex min-h-cible shrink-0 items-center rounded-full bg-fond-action px-4 font-headline text-label-lg text-texte-action hover:bg-primary-fixed-dim active:translate-y-0.5"
+            className={`${classesBouton("action")} shrink-0`}
           >
             Installer<span className="sr-only"> l&apos;application</span>
           </button>
@@ -94,7 +95,7 @@ export function AideInstallation() {
           type="button"
           onClick={fermer}
           aria-label="Masquer l'aide à l'installation"
-          className="flex size-[52px] shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+          className="flex size-cible shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
         >
           <Icone nom="close" className="size-6" />
         </button>
@@ -103,7 +104,7 @@ export function AideInstallation() {
   );
 }
 
-/** Le bouton disparaît avec l'encart : le focus revient au contenu plutôt qu'en haut de page. */
+/** Le bouton disparaît avec le bandeau : le focus revient au contenu plutôt qu'en haut de page. */
 function rendreFocusAuContenu() {
   document.getElementById("contenu")?.focus();
 }
