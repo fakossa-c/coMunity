@@ -1,11 +1,16 @@
+import { useId } from "react";
 import {
   libelleJauge,
   placesRestantesDe,
   type JaugeActivite,
 } from "@/lib/inscription-activite";
 
-/** « 8 inscrits sur 12 places » avec une barre de remplissage ; « 8 inscrits » sans capacité. */
+/**
+ * « 8 inscrits sur 12 places » avec une barre de remplissage ; « 8 inscrits » sans capacité.
+ * La barre prend ce texte pour nom : un lecteur d'écran dit de quoi elle parle.
+ */
 export function Jauge(jauge: JaugeActivite) {
+  const idLibelle = useId();
   const restantes = placesRestantesDe(jauge);
   const pourcentage =
     restantes === null
@@ -20,6 +25,7 @@ export function Jauge(jauge: JaugeActivite) {
       {pourcentage !== null && (
         <div
           role="progressbar"
+          aria-labelledby={idLibelle}
           aria-valuenow={jauge.placesPrises}
           aria-valuemin={0}
           aria-valuemax={jauge.capaciteMax ?? undefined}
@@ -31,7 +37,7 @@ export function Jauge(jauge: JaugeActivite) {
           />
         </div>
       )}
-      <p className="text-body-md text-on-surface-variant">
+      <p id={idLibelle} className="text-body-md text-on-surface-variant">
         {libelleJauge(jauge)}
       </p>
     </div>
