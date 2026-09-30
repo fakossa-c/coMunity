@@ -5,9 +5,28 @@ import {
   type APIRequestContext,
   type Page,
 } from "@playwright/test";
-import { titreAccueil } from "./outils";
+import {
+  MOT_DE_PASSE,
+  nouveauResident,
+  nouvelleActivite,
+  supprimerComptes,
+  titreAccueil,
+} from "./outils";
 
-const iPhone = devices["iPhone 15"];
+const appareil = devices["iPhone 15"];
+const iPhone = {
+  userAgent: appareil.userAgent,
+  viewport: appareil.viewport,
+  deviceScaleFactor: appareil.deviceScaleFactor,
+  isMobile: true,
+  hasTouch: true,
+};
+
+const emails: string[] = [];
+
+test.afterEach(async () => {
+  await supprimerComptes(emails.splice(0));
+});
 
 test.describe("manifeste et icônes", () => {
   test("le manifeste décrit l'app installable de la résidence", async ({
@@ -102,13 +121,7 @@ test.describe("manifeste et icônes", () => {
 });
 
 test.describe("aide à l'installation sur iPhone", () => {
-  test.use({
-    userAgent: iPhone.userAgent,
-    viewport: iPhone.viewport,
-    deviceScaleFactor: iPhone.deviceScaleFactor,
-    isMobile: true,
-    hasTouch: true,
-  });
+  test.use(iPhone);
 
   test("l'encart montre le geste, se masque et ne revient pas", async ({
     page,
@@ -146,6 +159,54 @@ test.describe("aide à l'installation sur iPhone", () => {
     await masquer.focus();
     await page.keyboard.press("Enter");
     await expect(aideInstallation(page)).toBeHidden();
+  });
+
+  test("le bandeau apparaît sans faire sauter l'Accueil, au-dessus de la barre du bas", async ({
+    page,
+    browser,
+  }) => {
+    await accueilDeResident(page);
+    await expect(aideInstallation(page)).toBeVisible();
+    const aLaUne = await page
+      .getByRole("region", { name: "À la une" })
+      .boundingBox();
+
+    // Sans JavaScript, la page reste telle que le serveur l'envoie : avant l'arrivée du bandeau.
+    const sansScript = await browser.newContext({
+      ...iPhone,
+      javaScriptEnabled: false,
+      storageState: await page.context().storageState(),
+    });
+    try {
+      const pageServeur = await sansScript.newPage();
+      await pageServeur.goto("/");
+      await expect(aideInstallation(pageServeur)).toBeHidden();
+      expect(
+        await pageServeur
+          .getByRole("region", { name: "À la une" })
+          .boundingBox(),
+      ).toEqual(aLaUne);
+    } finally {
+      await sansScript.close();
+    }
+
+    await attendreBandeauAuDessusDeLaBarre(page);
+  });
+
+  test("la dernière activité se lit et se touche au-dessus du bandeau", async ({
+    page,
+  }) => {
+    await accueilDeResident(page);
+    await expect(aideInstallation(page)).toBeVisible();
+
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    const derniere = page.getByRole("main").getByRole("article").last();
+    const carte = await derniere.boundingBox();
+    const bandeau = await aideInstallation(page).boundingBox();
+    expect(carte!.y + carte!.height).toBeLessThanOrEqual(bandeau!.y);
+    await derniere.getByRole("link").first().click({ trial: true });
   });
 
   test("l'encart n'apparaît jamais dans l'app installée", async ({ page }) => {
@@ -190,6 +251,25 @@ test.describe("aide à l'installation sur Android", () => {
     await expect(page.locator("#contenu")).toBeFocused();
   });
 
+  test("le bandeau arrive avec l'invite sans rien déplacer dans la page", async ({
+    page,
+  }) => {
+    await accueilDeResident(page);
+    const aLaUne = page.getByRole("region", { name: "À la une" });
+    const avant = await aLaUne.boundingBox();
+
+    await proposerInstallation(page);
+
+    await expect(aideInstallation(page)).toBeVisible();
+    expect(await aLaUne.boundingBox()).toEqual(avant);
+    await attendreBandeauAuDessusDeLaBarre(page);
+    await expect(
+      aideInstallation(page).getByRole("button", {
+        name: "Installer l'application",
+      }),
+    ).toHaveText("Installer");
+  });
+
   test("l'invite reçue sur une autre page sert en arrivant sur l'accueil", async ({
     page,
   }) => {
@@ -230,6 +310,39 @@ declare global {
 async function ouvrirAccueil(page: Page) {
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(titreAccueil(page)).toBeVisible();
+}
+
+/** Un résident connecté, sur un Accueil qui a « À la une » et une activité dans la grille. */
+async function accueilDeResident(page: Page) {
+  const resident = await nouveauResident();
+  emails.push(resident.email);
+  await nouvelleActivite(resident.id, { titre: "Atelier tricot" });
+  await nouvelleActivite(resident.id, { titre: "Soirée jeux" });
+
+  await page.goto("/connexion");
+  await page.getByLabel("Adresse email").fill(resident.email);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await expect(titreAccueil(page)).toBeVisible();
+  await ouvrirAccueil(page);
+}
+
+/** Bandeau fixé au bas de l'écran, à 12 px des bords, juste au-dessus de la barre du bas. */
+async function attendreBandeauAuDessusDeLaBarre(page: Page) {
+  const barre = page.getByRole("navigation", { name: "Navigation principale" });
+  const bandeau = await aideInstallation(page).boundingBox();
+  const boiteBarre = await barre.boundingBox();
+  const largeur = page.viewportSize()!.width;
+
+  expect(
+    await aideInstallation(page).evaluate(
+      (element) => getComputedStyle(element).position,
+    ),
+  ).toBe("fixed");
+  expect(bandeau!.x).toBeCloseTo(12, 0);
+  expect(bandeau!.x + bandeau!.width).toBeCloseTo(largeur - 12, 0);
+  expect(bandeau!.y + bandeau!.height).toBeLessThanOrEqual(boiteBarre!.y);
+  expect(bandeau!.y + bandeau!.height).toBeGreaterThan(boiteBarre!.y - 24);
 }
 
 function aideInstallation(page: Page) {
