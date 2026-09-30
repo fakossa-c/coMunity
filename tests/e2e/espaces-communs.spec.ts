@@ -405,6 +405,8 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
   );
 });
 
+type EspaceCommun = Awaited<ReturnType<typeof nouvelEspaceCommun>>;
+
 /** Ce que le conseil syndical change à un espace commun entre la saisie d'un résident et sa publication. */
 async function changerEspaceCommun(
   id: string,
@@ -425,7 +427,7 @@ async function changerEspaceCommun(
 async function saisirDansEspaceCommun(
   page: Page,
   titre: string,
-  espace: { nom: string },
+  espace: EspaceCommun,
 ) {
   await commencerProposition(page, titre);
   await page.getByLabel("Lieu", { exact: true }).selectOption({
@@ -441,30 +443,30 @@ async function saisirDansEspaceCommun(
   await etapeProposer(page, 4);
 }
 
-const REFUS_DU_SERVEUR = [
+const REFUS_DE_LA_BASE = [
   {
     cas: "l'heure de fermeture de l'espace commun avancée après la saisie",
-    changement: (espace: { id: string; nom: string }) =>
+    changement: (espace: EspaceCommun) =>
       changerEspaceCommun(espace.id, { heure_fin_max: "20:00" }),
     message:
       "L'activité finit après l'heure de fermeture de l'espace commun. Corrigez l'heure de fin.",
   },
   {
     cas: "la capacité de l'espace commun réduite après la saisie",
-    changement: (espace: { id: string; nom: string }) =>
+    changement: (espace: EspaceCommun) =>
       changerEspaceCommun(espace.id, { capacite: 5 }),
     message:
       "L'activité a plus de places que l'espace commun n'en accueille. Corrigez le nombre de places.",
   },
   {
     cas: "l'espace commun supprimé après la saisie",
-    changement: async (espace: { id: string; nom: string }) =>
+    changement: async (espace: EspaceCommun) =>
       supprimerEspacesCommuns([espace.nom]),
     message: "Cet espace commun n'existe plus. Choisissez un autre lieu.",
   },
 ];
 
-for (const refus of REFUS_DU_SERVEUR) {
+for (const refus of REFUS_DE_LA_BASE) {
   test(`quand la base refuse la publication (${refus.cas}), le message ne renvoie à aucune étape`, async ({
     page,
   }) => {
