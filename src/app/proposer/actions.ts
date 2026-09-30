@@ -203,11 +203,10 @@ async function retirerFichiers(supabase: SupabaseClient, chemins: string[]) {
 /** Les règles bloquantes d'un espace commun, que la base vérifie aussi. */
 const reglesEspace: Record<string, string> = {
   P0007:
-    "L'activité finit après l'heure de fermeture de l'espace commun. Revenez à l'étape 2.",
+    "L'activité finit après l'heure de fermeture de l'espace commun. Corrigez l'heure de fin.",
   P0008:
-    "L'activité a plus de places que l'espace commun n'en accueille. Revenez à l'étape 3.",
-  "23503":
-    "Cet espace commun n'existe plus. Revenez à l'étape 2 pour choisir un autre lieu.",
+    "L'activité a plus de places que l'espace commun n'en accueille. Corrigez le nombre de places.",
+  "23503": "Cet espace commun n'existe plus. Choisissez un autre lieu.",
 };
 
 const messages: Record<string, string> = {
@@ -215,8 +214,7 @@ const messages: Record<string, string> = {
   "42501": "Seuls les comptes validés peuvent publier une activité.",
   "23514":
     "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
-  "22P02":
-    "Une étiquette n'est pas reconnue. Revenez à l'étape 3 et cochez à nouveau.",
+  "22P02": "Une étiquette n'est pas reconnue. Cochez à nouveau les étiquettes.",
 };
 
 /**
@@ -350,10 +348,9 @@ const messagesModification: Record<string, string> = {
   ...reglesEspace,
   "23514":
     "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
-  "22P02":
-    "Une étiquette n'est pas reconnue. Revenez à l'étape 3 et cochez à nouveau.",
+  "22P02": "Une étiquette n'est pas reconnue. Cochez à nouveau les étiquettes.",
   P0005:
-    "La capacité ne peut pas passer sous le nombre de personnes déjà inscrites. Revenez à l'étape 3.",
+    "La capacité ne peut pas passer sous le nombre de personnes déjà inscrites. Corrigez le nombre de places.",
 };
 
 /**
