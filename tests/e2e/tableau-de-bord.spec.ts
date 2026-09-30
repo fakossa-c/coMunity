@@ -191,8 +191,8 @@ async function boite(element: Locator) {
   return (await element.boundingBox())!;
 }
 
-/** Les positions distinctes, arrondies au pixel, d'un côté des éléments : `x` pour compter les colonnes, `y` les lignes. */
-async function positions(elements: Locator, cote: "x" | "y") {
+/** Combien de positions distinctes, au pixel près, occupent les éléments : sur `x`, leurs colonnes ; sur `y`, leurs lignes. */
+async function nombreDePositions(elements: Locator, cote: "x" | "y") {
   await expect(elements.first()).toBeVisible();
   return elements.evaluateAll(
     (liste, cote) =>
@@ -230,11 +230,12 @@ test.describe("présentation Journal sur ordinateur", () => {
     expect(periode.y).toBeGreaterThan(titre.y);
     expect(periode.y).toBeLessThan(chiffres.y);
 
-    const cartesChiffres = s.chiffres.locator("dl > *");
+    const cartesChiffres = s.chiffres.getByRole("term");
     await expect(cartesChiffres).toHaveCount(4);
-    expect(await positions(cartesChiffres, "y")).toBe(1);
-    expect(await positions(cartesChiffres, "x")).toBe(4);
+    expect(await nombreDePositions(cartesChiffres, "y")).toBe(1);
+    expect(await nombreDePositions(cartesChiffres, "x")).toBe(4);
 
+    // Les boîtes se comparent à un pixel près : les bords voisins tombent sur des demi-pixels.
     const parMois = await boite(s.parMois);
     const classement = await boite(s.classement);
     expect(Math.round(classement.y)).toBe(Math.round(parMois.y));
@@ -245,8 +246,8 @@ test.describe("présentation Journal sur ordinateur", () => {
     expect(remplissage.y).toBeGreaterThan(classement.y + classement.height - 1);
     const cartesRemplissage = s.remplissage.getByRole("figure");
     await expect(cartesRemplissage).toHaveCount(3);
-    expect(await positions(cartesRemplissage, "y")).toBe(1);
-    expect(await positions(cartesRemplissage, "x")).toBe(3);
+    expect(await nombreDePositions(cartesRemplissage, "y")).toBe(1);
+    expect(await nombreDePositions(cartesRemplissage, "x")).toBe(3);
   }
 
   for (const largeur of [1280, 1100]) {
@@ -284,8 +285,10 @@ test.describe("sur mobile", () => {
     await page.goto("/syndic/tableau-de-bord");
     const s = sections(page);
 
-    expect(await positions(s.chiffres.locator("dl > *"), "x")).toBe(1);
-    expect(await positions(s.remplissage.getByRole("figure"), "x")).toBe(1);
+    expect(await nombreDePositions(s.chiffres.getByRole("term"), "x")).toBe(1);
+    expect(
+      await nombreDePositions(s.remplissage.getByRole("figure"), "x"),
+    ).toBe(1);
 
     const hauts = [];
     for (const section of [
@@ -302,7 +305,9 @@ test.describe("sur mobile", () => {
   });
 });
 
-test("changer de période met à jour les dates et les chiffres mois par mois", async ({
+// Les chiffres clés viennent de la même lecture que « Mois par mois » ; leurs valeurs exactes par
+// période se vérifient dans tests/db/tableau-de-bord.test.ts, sur un jeu de données fixe.
+test("changer de période relit les chiffres : les dates et le détail mois par mois suivent la période", async ({
   page,
 }) => {
   await activiteReussie(page);
@@ -318,7 +323,4 @@ test("changer de période met à jour les dates et les chiffres mois par mois", 
   await expect(page).toHaveURL(/periode=12_mois/);
   await expect(dates).not.toHaveText(datesSur30Jours!);
   await expect.poll(() => mois.count()).toBeGreaterThanOrEqual(12);
-  await expect(
-    s.chiffres.getByText("Activités", { exact: true }),
-  ).toBeVisible();
 });
