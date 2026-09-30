@@ -3,6 +3,7 @@ import type { Avertissement } from "@/assistant";
 import {
   LIEU_LIBRE,
   LIMITES,
+  LONGUEUR_MAX_POUR_ASSISTANT,
   SAISIE_VIDE,
   appliquerSuggestions,
   avertissementsApplicables,
@@ -600,11 +601,17 @@ describe("description et mot d'accueil pour l'assistant", () => {
     ).toBe("");
   });
 
-  it("Jev reçoit les deux textes, bornés à la somme des deux limites", () => {
+  it("Jev reçoit les deux textes, sans les couper : la borne les contient au plus longs", () => {
     expect(entreeJevDe(COMPLETE).description).toBe(
       descriptionPourAssistant(COMPLETE),
     );
-    expect(LIMITES.description + LIMITES.mot_accueil).toBe(900);
+    expect(
+      descriptionPourAssistant({
+        ...COMPLETE,
+        description: "x".repeat(LIMITES.description),
+        mot_accueil: "y".repeat(LIMITES.mot_accueil),
+      }).length,
+    ).toBe(LONGUEUR_MAX_POUR_ASSISTANT);
   });
 });
 

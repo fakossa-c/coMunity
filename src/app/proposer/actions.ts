@@ -19,6 +19,7 @@ import {
 } from "@/lib/photos-activite";
 import {
   LIMITES,
+  LONGUEUR_MAX_POUR_ASSISTANT,
   propositionDeNouvelleActivite,
   type NouvelleActivite,
 } from "@/lib/proposition-activite";
@@ -101,7 +102,7 @@ export async function avisJev(entree: EntreeJev): Promise<AvisAssistant> {
   return analyserProposition(
     {
       titre: texte(entree?.titre, LIMITES.titre),
-      description: texte(entree?.description, LIMITES.mot_accueil),
+      description: texte(entree?.description, LONGUEUR_MAX_POUR_ASSISTANT),
       categorie: null,
       date: texte(entree?.date, 10),
       heureDebut: texte(entree?.heureDebut, 8),
