@@ -25,7 +25,7 @@ export default async function MembresDuSyndic() {
     <EcranSyndic rubrique="membres">
       <TitrePage
         titre="Conseil syndical"
-        sousTitre="Invitez un membre par email, ou retirez l'accès de celui qui quitte le conseil."
+        sousTitre="Invitez un membre par email, ou retirez l'accès de celui qui quitte le conseil syndical."
       />
       <GestionMembres membres={membres} idMoi={session.id} />
     </EcranSyndic>

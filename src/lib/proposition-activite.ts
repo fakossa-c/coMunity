@@ -497,7 +497,7 @@ export function saisieDepuisActivite(
   };
 }
 
-/** La saisie qui pré-remplit « Dupliquer » : tout sauf la date, à choisir de nouveau. */
+/** La saisie qui pré-remplit « Nouvelle date » : tout sauf la date, à choisir de nouveau. */
 export function saisieDeCopie(activite: ActiviteExistante): SaisieActivite {
   return { ...saisieDepuisActivite(activite), date_activite: "" };
 }

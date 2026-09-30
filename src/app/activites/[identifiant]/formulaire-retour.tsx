@@ -55,7 +55,7 @@ export function FormulaireRetour({ fiche }: Props) {
           Merci pour votre avis
         </p>
         <p className="text-body-md text-on-surface-variant">
-          Vous avez donné {note} / 5 : « {commentaire} »
+          Vous avez donné {note} / 5 : « {commentaire} »
         </p>
       </div>
     );

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Bouton, classesBouton } from "@/components/bouton";
 import { Annonce } from "@/components/formulaire";
 import { deplacerSection } from "./actions";
+import { rangOrdinal } from "@/lib/rang";
 
 type Props = { sections: { id: string; titre: string }[] };
 
@@ -30,7 +31,7 @@ export function ListeSections({ sections }: Props) {
       const resultat = await deplacerSection(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `« ${titre} » est maintenant ${arrivee === 0 ? "1re" : `${arrivee + 1}e`} sur ${sections.length}.`,
+          `« ${titre} » est maintenant ${rangOrdinal(arrivee + 1)} sur ${sections.length}.`,
         );
       else setErreur(resultat.message);
     });

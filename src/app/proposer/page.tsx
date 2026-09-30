@@ -19,8 +19,8 @@ export default async function Proposer({ searchParams }: Props) {
   const supabase = await clientSession();
   const { data: peutParticiper } = await supabase.rpc("peut_participer");
 
-  // « Dupliquer » et « Utiliser comme modèle » : le parcours repart de l'activité, sans sa date.
-  // Seuls son créateur et le conseil syndical la copient ; le lien d'une autre activité, ou d'une
+  // « Nouvelle date » et « Utiliser comme modèle » : le parcours repart de l'activité, sans sa date.
+  // Seuls son organisateur et le conseil syndical la copient ; le lien d'une autre activité, ou d'une
   // activité qui n'existe pas, ouvre un parcours vide.
   const modele = peutParticiper && copie ? await lireFiche(copie) : null;
   const { data: conseilSyndical } = modele

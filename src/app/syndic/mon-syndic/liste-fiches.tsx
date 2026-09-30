@@ -9,6 +9,7 @@ import { Annonce } from "@/components/formulaire";
 import { initialeFiche, nomFiche } from "@/lib/fiche-syndic";
 import type { FicheAvecPhoto } from "@/lib/lecture-fiches-syndic";
 import { deplacerFiche } from "./actions";
+import { rangOrdinal } from "@/lib/rang";
 
 type Fiche = Pick<
   FicheAvecPhoto,
@@ -37,7 +38,7 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
       const resultat = await deplacerFiche(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `${nomFiche(fiche)} est maintenant ${arrivee === 0 ? "1re" : `${arrivee + 1}e`} sur ${fiches.length}.`,
+          `${nomFiche(fiche)} est maintenant ${rangOrdinal(arrivee + 1)} sur ${fiches.length}.`,
         );
       else setErreur(resultat.message);
     });

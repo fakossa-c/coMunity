@@ -10,7 +10,7 @@ export default function PageIntrouvable() {
     <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Page introuvable"
-        sousTitre="Cette page n'existe pas."
+        sousTitre="Ce lien ne mène à aucune page."
       />
       <Bientot
         icone="home"

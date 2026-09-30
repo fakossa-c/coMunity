@@ -14,7 +14,7 @@ const LISTE = "/syndic/reglement";
 
 const messages: Record<string, string> = {
   "42501": "Seul le conseil syndical peut rédiger le règlement intérieur.",
-  "22023": "Cette section a été supprimée entre-temps.",
+  "22023": "Cette section a été supprimée entre-temps : revenez à la liste.",
   "23514": "Un texte est trop long. Raccourcissez-le, puis enregistrez.",
 };
 
