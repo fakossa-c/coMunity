@@ -118,8 +118,12 @@ export function DecisionModeration({
     setOuverte(decision);
   }
 
+  // Sur la liste en grille (ordinateur), les zones de message vides ne creusent pas d'écart
+  // au-dessus des boutons.
   return (
-    <div className="flex flex-col gap-space-sm">
+    <div
+      className={`flex flex-col gap-space-sm ${surLaListe ? "desktop:[&>div:empty]:hidden" : ""}`}
+    >
       <Message message={resultat?.ok === true && resultat.message} />
       <Message message={resultat?.ok === false && resultat.message} erreur />
       <div className="flex flex-wrap gap-space-sm">

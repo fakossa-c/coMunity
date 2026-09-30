@@ -60,6 +60,7 @@ async function commencerProposition(page: Page, titre: string) {
 
 test("le conseil syndical ajoute, modifie puis supprime un espace commun", async ({
   page,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
@@ -72,7 +73,12 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
     page.getByRole("heading", { level: 1, name: "Espaces communs" }),
   ).toBeVisible();
 
-  await page.getByRole("link", { name: "Ajouter un espace commun" }).click();
+  // Ticket #173 : sur ordinateur, le bouton d'ajout est en tête et dit « Nouvel espace ».
+  await page
+    .getByRole("link", {
+      name: isMobile ? "Ajouter un espace commun" : "Nouvel espace",
+    })
+    .click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Ajouter un espace commun" }),
   ).toBeVisible();

@@ -6,7 +6,9 @@ import { Icone } from "./icone";
 
 /**
  * Un espace commun dans la liste de l'espace syndic : carte de réglage bordée sans ombre, avec
- * sa pastille pêche, son nom, ses règles en une ligne, ses badges et le lien « Modifier ».
+ * sa pastille pêche, son nom, ses règles en une ligne, ses badges et le lien « Modifier ». Sur
+ * ordinateur, dans la grille de trois colonnes, la carte s'empile : le nom prend toute la largeur
+ * et « Modifier » passe en bas de carte.
  */
 export function CarteEspaceCommun({
   espace,
@@ -16,12 +18,12 @@ export function CarteEspaceCommun({
   href: string;
 }) {
   return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4">
-      <div className="flex items-start gap-space-sm">
+    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4 desktop:p-6">
+      <div className="flex items-start gap-space-sm desktop:contents">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-fond-action text-texte-action">
           <Icone nom="meeting_room" taille={24} />
         </span>
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col desktop:flex-none">
           <span className="font-headline text-label-lg [overflow-wrap:anywhere] text-on-surface">
             {espace.nom}
           </span>
@@ -29,7 +31,10 @@ export function CarteEspaceCommun({
             {resumeEspace(espace)}
           </span>
         </div>
-        <Link href={href} className={classesBouton("fantome")}>
+        <Link
+          href={href}
+          className={`${classesBouton("fantome")} desktop:order-last desktop:mt-auto desktop:-ml-3.5 desktop:self-start`}
+        >
           <Icone nom="edit" taille={22} />
           Modifier
           <span className="sr-only"> : {espace.nom}</span>

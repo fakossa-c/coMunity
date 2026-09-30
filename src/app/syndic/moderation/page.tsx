@@ -73,7 +73,13 @@ function Rubrique({
       {activites.length === 0 ? (
         <p className="text-body-lg text-on-surface-variant">{vide}</p>
       ) : (
-        <ul aria-label={titre} className="flex flex-col gap-space-md">
+        // Colonnes de 20,5 rem au moins, pour que « Publier » et « Refuser » tiennent côte à côte :
+        // deux colonnes à côté du menu déplié, trois avec le rail ou sur grand écran (le contenu
+        // plafonne à 1152 px, donc jamais plus de trois).
+        <ul
+          aria-label={titre}
+          className="flex flex-col gap-space-md desktop:grid desktop:grid-cols-[repeat(auto-fill,minmax(20.5rem,1fr))] desktop:gap-6"
+        >
           {activites.map((activite) => (
             <CarteModeration
               key={activite.identifiant_public}
@@ -89,7 +95,7 @@ function Rubrique({
 function CarteModeration({ activite }: { activite: ActiviteAModerer }) {
   const enRelecture = activite.statut === "en_relecture";
   return (
-    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+    <li className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:border-transparent desktop:p-5 desktop:shadow-douce">
       <EtatActivite
         statut={activite.statut}
         capaciteMin={null}
@@ -121,12 +127,14 @@ function CarteModeration({ activite }: { activite: ActiviteAModerer }) {
         Voir la fiche
         <span className="sr-only"> : {activite.titre}</span>
       </Link>
-      <DecisionModeration
-        identifiant={activite.identifiant_public}
-        titre={activite.titre}
-        statut={activite.statut}
-        surLaListe
-      />
+      <div className="desktop:mt-auto">
+        <DecisionModeration
+          identifiant={activite.identifiant_public}
+          titre={activite.titre}
+          statut={activite.statut}
+          surLaListe
+        />
+      </div>
     </li>
   );
 }
