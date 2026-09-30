@@ -41,7 +41,7 @@ L'ensemble d'immeubles d'une même copropriété, et le périmètre d'une instan
 _Avoid_ : copro, immeuble
 
 **Espace commun** :
-Un lieu de la résidence défini par le conseil syndical (salle commune, cour, jardin), avec ses horaires d'accès, son contact et ses règles, où une activité peut se tenir.
+Un lieu de la résidence défini par le conseil syndical (salle commune, cour, jardin), avec ses horaires d'accès, son contact et ses règles, où une activité peut se tenir. Il peut porter plusieurs photos (la première illustre sa carte), ses dimensions (longueur et largeur, ensemble), sa hauteur sous plafond et un **plan de situation** (une image qui montre où il se trouve dans la résidence).
 « Biens communs » n'est qu'un libellé visible de l'interface (l'entrée « Espaces, biens communs et règlement » du menu, le titre de section « Espaces et biens communs » de Ma copro) ; dans le code, les tickets et la base, le terme du domaine reste **espace commun**.
 _Avoid_ : salle, salle partagée, espace copro, bien commun (hors de ces deux libellés)
 
