@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import {
   choisirDate,
   continuerProposer,
@@ -402,3 +404,87 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
     "Consignes de l'espace commun",
   );
 });
+
+type EspaceCommun = Awaited<ReturnType<typeof nouvelEspaceCommun>>;
+
+/** Ce que le conseil syndical change à un espace commun entre la saisie d'un résident et sa publication. */
+async function changerEspaceCommun(
+  id: string,
+  champs: { heure_fin_max?: string; capacite?: number },
+) {
+  const local = lireSupabaseLocal();
+  const admin = createClient(local.url, local.cleSecrete, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await admin
+    .from("espace_commun")
+    .update(champs)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Saisit une proposition valide dans l'espace commun, jusqu'à « Publier » (récapitulatif sur mobile, page unique sur ordinateur). */
+async function saisirDansEspaceCommun(
+  page: Page,
+  titre: string,
+  espace: EspaceCommun,
+) {
+  await commencerProposition(page, titre);
+  await page.getByLabel("Lieu", { exact: true }).selectOption({
+    label: espace.nom,
+  });
+  await page.getByLabel("Heure de début").selectOption("19:00");
+  await page.getByLabel("Heure de fin").selectOption("20:30");
+  await continuerProposer(page);
+  await etapeProposer(page, 3);
+  await page.getByRole("radio", { name: "Limité", exact: true }).check();
+  await page.getByLabel("Nombre de places").fill("8");
+  await continuerProposer(page);
+  await etapeProposer(page, 4);
+}
+
+const REFUS_DE_LA_BASE = [
+  {
+    cas: "l'heure de fermeture de l'espace commun avancée après la saisie",
+    changement: (espace: EspaceCommun) =>
+      changerEspaceCommun(espace.id, { heure_fin_max: "20:00" }),
+    message:
+      "L'activité finit après l'heure de fermeture de l'espace commun. Corrigez l'heure de fin.",
+  },
+  {
+    cas: "la capacité de l'espace commun réduite après la saisie",
+    changement: (espace: EspaceCommun) =>
+      changerEspaceCommun(espace.id, { capacite: 5 }),
+    message:
+      "L'activité a plus de places que l'espace commun n'en accueille. Corrigez le nombre de places.",
+  },
+  {
+    cas: "l'espace commun supprimé après la saisie",
+    changement: async (espace: EspaceCommun) =>
+      supprimerEspacesCommuns([espace.nom]),
+    message: "Cet espace commun n'existe plus. Choisissez un autre lieu.",
+  },
+];
+
+for (const refus of REFUS_DE_LA_BASE) {
+  test(`quand la base refuse la publication (${refus.cas}), le message ne renvoie à aucune étape`, async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    const espace = await nouvelEspaceCommun();
+    espaces.push(espace.nom);
+
+    await seConnecter(page, resident.email);
+    await saisirDansEspaceCommun(page, `Soirée refusée ${Date.now()}`, espace);
+    await refus.changement(espace);
+    await page.getByRole("button", { name: /^Publier/ }).click();
+
+    const alerte = page
+      .getByRole("main")
+      .getByRole("alert")
+      .filter({ hasText: refus.message });
+    await expect(alerte).toBeVisible();
+    await expect(page.getByRole("main")).not.toContainText("Revenez à l'étape");
+  });
+}
