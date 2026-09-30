@@ -100,13 +100,15 @@ const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Vrai pour une adresse de démonstration et pour elle seule : jamais pour `fakossa@gmail.com`, la
- * vraie boîte, ni pour une adresse qui contiendrait le motif sans l'être. Reconnaît aussi l'ancien
- * format `<préfixe><username>@<domaine>`, pour que `demo:retirer` supprime ces comptes.
+ * vraie boîte, ni pour une adresse qui contiendrait le motif sans l'être, ni pour un rôle qu'aucun
+ * compte de démonstration n'a. Reconnaît aussi l'ancien format `<préfixe><username>@<domaine>`, pour
+ * que `demo:retirer` supprime ces comptes.
  */
 export function estAdresseDemo(adresse, modele = MODELE_DEMO) {
   if (typeof adresse !== "string") return false;
+  const roles = [...new Set(COMPTES.map((c) => c.role))].join("|");
   const motif = new RegExp(
-    `^${echapper(modele.prefixe)}(?:${echapper(modele.mentionTest)}[a-z0-9]+-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
+    `^${echapper(modele.prefixe)}(?:${echapper(modele.mentionTest)}(?:${roles})-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
     "i",
   );
   return motif.test(adresse);

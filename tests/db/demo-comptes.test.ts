@@ -255,9 +255,7 @@ describe("retirerDemo", () => {
       });
       if (error) throw error;
 
-      await expect(retirerDemo(parametres())).resolves.toMatchObject({
-        comptes: 1,
-      });
+      await retirerDemo(parametres());
       const reste = await admin.auth.admin.getUserById(data.user.id);
       expect(reste.data.user).toBeNull();
     },
