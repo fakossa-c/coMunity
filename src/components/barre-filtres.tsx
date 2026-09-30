@@ -3,7 +3,10 @@ import type { ReactNode } from "react";
 type Props = {
   /** Onglets qui précèdent la rangée de puces et collent avec elle, dans le même bloc. */
   avant?: ReactNode;
-  /** accueil : défilement horizontal, 12/20 px. liste : 16 px (Activités). */
+  /**
+   * accueil : sur mobile, une rangée qui défile au doigt sans barre visible ; sur ordinateur, des
+   * puces qui passent à la ligne. liste : 16 px (Activités).
+   */
   variante?: "accueil" | "liste";
   /** Nom de la barre, qui devient alors une navigation (« Catégories » sur l'Accueil). */
   libelle?: string;
@@ -31,7 +34,7 @@ export function BarreFiltres({
         className={
           variante === "liste"
             ? "flex gap-4"
-            : "flex gap-3 overflow-x-auto pb-1"
+            : "flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 desktop:flex-wrap desktop:overflow-visible [&::-webkit-scrollbar]:hidden"
         }
       >
         {children}

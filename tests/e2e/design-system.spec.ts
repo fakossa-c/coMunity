@@ -6,6 +6,7 @@ import {
   lienRecu,
   nouveauResident,
   nouvelleActivite,
+  nouvelleActiviteEnTete,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -253,6 +254,8 @@ test.describe("couleur d'une catégorie d'activité", () => {
     };
     await inscrireResident(culture.identifiant, resident.id);
     await inscrireResident(jardin.identifiant, resident.id);
+    // Une activité plus proche prend « À la une » : les deux du test restent dans la grille.
+    await nouvelleActiviteEnTete(resident.id);
     await seConnecter(page, resident.email);
     return { culture, jardin };
   }

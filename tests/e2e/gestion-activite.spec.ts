@@ -210,7 +210,7 @@ test("un inscrit voit l'annulation sur sa carte et sur la fiche, sans pouvoir s'
   await page.goto("/activites");
   const carte = page.getByRole("article").filter({ hasText: "Goûter crêpes" });
   await expect(carte).toContainText("Annulée");
-  await expect(carte).not.toContainText("J'y vais");
+  await expect(carte).not.toContainText("Vous participez");
 
   await page.goto(`/activites/${identifiant}`);
   await expect(page.getByRole("main").getByText("Annulée")).toBeVisible();

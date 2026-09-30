@@ -7,7 +7,7 @@ import { FeuilleConfirmation } from "./feuille-confirmation";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-/** Bandeau vert qui rassure sur une inscription : « J'y vais, avec 2 personnes ». */
+/** Bandeau vert qui rassure sur une inscription : « Vous participez, avec 2 personnes ». */
 export function StatutInscription({
   icone = "check_circle",
   children,
@@ -31,7 +31,7 @@ type Props = {
 };
 
 /**
- * Dans la barre de la fiche : « J'y vais » (ou « J'y vais, avec 2 personnes »), avec l'annulation
+ * Dans la barre de la fiche : « Vous participez » (ou « Vous participez, avec 2 personnes »), avec l'annulation
  * derrière une confirmation : la feuille demande « Annuler votre participation ? » avant d'appeler
  * `onAnnuler`.
  */

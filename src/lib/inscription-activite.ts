@@ -53,10 +53,10 @@ export function libelleBoutonInscription(accompagnants: number) {
   return suffixe ? `Je participe, ${suffixe}` : "Je participe";
 }
 
-/** « J'y vais », « J'y vais, avec 2 personnes » : le statut d'un résident déjà inscrit. */
+/** « Vous participez », « Vous participez, avec 2 personnes » : le statut d'un résident déjà inscrit. */
 export function libelleStatutInscription(accompagnants: number) {
   const suffixe = libelleAccompagnants(accompagnants);
-  return suffixe ? `J'y vais, ${suffixe}` : "J'y vais";
+  return suffixe ? `Vous participez, ${suffixe}` : "Vous participez";
 }
 
 /** Où en est une activité par rapport à son minimum de participants ; `null` sans minimum utile. */

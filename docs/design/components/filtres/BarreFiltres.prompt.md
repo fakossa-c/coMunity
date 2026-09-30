@@ -1,4 +1,4 @@
-Rangée de puces **collante** (sticky top 0, fond de page). Règle : toute barre de filtres, actuelle ou future, colle en haut de l'écran. Des onglets qui la précèdent collent avec elle, dans le même bloc, via `avant`.
+Rangée de puces **collante** (sticky top 0, fond de page). Règle : toute barre de filtres, actuelle ou future, colle en haut de l'écran. Des onglets qui la précèdent collent avec elle, dans le même bloc, via `avant`. Variante `accueil` : sur mobile la rangée défile au doigt, sans barre de défilement visible ; sur ordinateur, les puces passent à la ligne et rien ne défile.
 
 ```jsx
 <BarreFiltres>

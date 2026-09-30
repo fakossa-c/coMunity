@@ -62,9 +62,10 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByRole("link", { name: "Accueil" }).last().click();
 
   await expect(titreAccueil(page)).toBeVisible();
-  const catalogue = page.getByRole("region", { name: "Activités à venir" });
-  await expect(catalogue).toContainText(titre);
-  await expect(catalogue).toContainText("Cour intérieure");
+  // Seule activité à venir, elle est dans le bloc « À la une » plutôt que dans la grille.
+  const accueil = page.getByRole("main");
+  await expect(accueil).toContainText(titre);
+  await expect(accueil).toContainText("Cour intérieure");
   await page.screenshot({
     path: test.info().outputPath("catalogue-activite.png"),
     fullPage: true,

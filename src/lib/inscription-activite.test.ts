@@ -77,16 +77,20 @@ describe("libellé du bouton d'inscription", () => {
 });
 
 describe("libellé du statut d'inscription", () => {
-  it("« J'y vais » sans accompagnant", () => {
-    expect(libelleStatutInscription(0)).toBe("J'y vais");
+  it("« Vous participez » sans accompagnant", () => {
+    expect(libelleStatutInscription(0)).toBe("Vous participez");
   });
 
-  it("« J'y vais, avec 2 personnes » avec des accompagnants", () => {
-    expect(libelleStatutInscription(2)).toBe("J'y vais, avec 2 personnes");
+  it("« Vous participez, avec 2 personnes » avec des accompagnants", () => {
+    expect(libelleStatutInscription(2)).toBe(
+      "Vous participez, avec 2 personnes",
+    );
   });
 
-  it("« J'y vais, avec 1 personne » au singulier", () => {
-    expect(libelleStatutInscription(1)).toBe("J'y vais, avec 1 personne");
+  it("« Vous participez, avec 1 personne » au singulier", () => {
+    expect(libelleStatutInscription(1)).toBe(
+      "Vous participez, avec 1 personne",
+    );
   });
 });
 

@@ -10,6 +10,7 @@ import {
 import { PuceFiltre } from "@/components/puce-filtre";
 import { Salutation } from "@/components/salutation";
 import { TitreSection } from "@/components/titre-section";
+import { activiteALaUne } from "@/lib/a-la-une";
 import {
   activitesDeLaSemaine,
   categorieFiltree,
@@ -100,10 +101,13 @@ function Catalogue({
   categorie: CategorieActivite | null;
   aujourdhui: string;
 }) {
+  const visibles = categorie
+    ? activites.filter((activite) => activite.categorie === categorie)
+    : activites;
+  // « À la une » suit le filtre de catégorie, et sa carte ne se répète pas dans la grille.
+  const aLaUne = activiteALaUne(visibles);
   const jours = grouperParJour(
-    categorie
-      ? activites.filter((activite) => activite.categorie === categorie)
-      : activites,
+    visibles.filter((activite) => activite.id !== aLaUne?.id),
     aujourdhui,
   );
 
@@ -125,36 +129,44 @@ function Catalogue({
           </PuceFiltre>
         ))}
       </BarreFiltres>
-      <section
-        aria-label="Activités à venir"
-        className="mt-space-sm flex flex-col gap-space-lg"
-      >
-        {jours.length === 0 ? (
-          <Bientot
-            icone="diversity_3"
-            message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
-          />
-        ) : (
-          jours.map((jour) => (
-            <section
-              key={jour.date}
-              aria-labelledby={`jour-${jour.date}`}
-              className="flex flex-col gap-3.5"
-            >
-              <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
-                {jour.titre}
-              </TitreSection>
-              <ul className="flex flex-col gap-bloc">
-                {jour.activites.map((activite) => (
-                  <li key={activite.id}>
-                    <CarteActivite activite={activite} detailsDepliables />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        )}
-      </section>
+      {aLaUne && (
+        <section aria-label="À la une" className="mt-space-sm">
+          <CarteActivite activite={aLaUne} aLaUne />
+        </section>
+      )}
+      {/* Seule « À la une » reste dans la catégorie : rien à ajouter dessous. */}
+      {(jours.length > 0 || !aLaUne) && (
+        <section
+          aria-label="Activités à venir"
+          className="mt-space-sm flex flex-col gap-space-lg desktop:mt-9"
+        >
+          {jours.length === 0 ? (
+            <Bientot
+              icone="diversity_3"
+              message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
+            />
+          ) : (
+            jours.map((jour) => (
+              <section
+                key={jour.date}
+                aria-labelledby={`jour-${jour.date}`}
+                className="flex flex-col gap-3.5"
+              >
+                <TitreSection id={`jour-${jour.date}`} accent={jour.aujourdhui}>
+                  {jour.titre}
+                </TitreSection>
+                <ul className="grid items-start gap-bloc desktop:grid-cols-3 desktop:gap-x-8 desktop:gap-y-6">
+                  {jour.activites.map((activite) => (
+                    <li key={activite.id}>
+                      <CarteActivite activite={activite} detailsDepliables />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </section>
+      )}
     </>
   );
 }

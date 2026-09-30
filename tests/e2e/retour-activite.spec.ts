@@ -43,7 +43,9 @@ async function inscrireEtSeConnecter(page: Page, email: string) {
   await remplirConnexion(page, email);
   await expect(page).not.toHaveURL(/\/connexion/);
   await page.getByRole("button", { name: "Je participe" }).click();
-  await expect(page.getByText("J'y vais", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Vous participez", { exact: false }),
+  ).toBeVisible();
 }
 
 test("un participant laisse un retour sur une activité passée où il est allé", async ({
