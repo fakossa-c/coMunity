@@ -67,7 +67,7 @@ describe("assistant de création", () => {
           regle: "heure_fin_max",
           bloquant: true,
           message:
-            "L'espace commun « Salle commune » ferme à 21h00 : finissez au plus tard à 21h00.",
+            "L'espace commun « Salle commune » ferme à 21h00 : finissez au plus tard à 21h00.",
         },
       ]);
     });
@@ -93,7 +93,7 @@ describe("assistant de création", () => {
           regle: "capacite_espace",
           bloquant: true,
           message:
-            "L'espace commun « Salle commune » accueille 20 personnes au plus : limitez les places à 20.",
+            "L'espace commun « Salle commune » accueille 20 personnes au plus : limitez les places à 20.",
         },
       ]);
     });
@@ -130,7 +130,7 @@ describe("assistant de création", () => {
           regle: "heure_calme",
           bloquant: false,
           message:
-            "Votre activité finit après 22h00, l'heure de calme de la résidence : pensez aux voisins.",
+            "Votre activité finit après 22h00, l'heure de calme de la résidence : pensez aux voisins.",
         },
       ]);
     });
@@ -174,7 +174,7 @@ describe("assistant de création", () => {
           regle: "chevauchement",
           bloquant: false,
           message:
-            "« Atelier tricot » occupe déjà l'espace commun « Salle commune » ce jour-là, de 17h30 à 19h00.",
+            "« Atelier tricot » occupe déjà l'espace commun « Salle commune » ce jour-là, de 17h30 à 19h00.",
         },
       ]);
     });
@@ -199,7 +199,7 @@ describe("assistant de création", () => {
     });
   });
 
-  describe("lieu libre (« Autre »)", () => {
+  describe("lieu libre (« Autre »)", () => {
     it("n'applique aucune règle d'espace commun, seulement l'heure de calme", async () => {
       const occupee: ReglesResidence = {
         ...regles,
@@ -304,7 +304,7 @@ describe("assistant de création avec Jev", () => {
     it("les signale comme des conseils qui ne bloquent pas, après les règles", async () => {
       const { moteur } = fauxJev({
         informationsManquantes: [
-          "Que faut-il apporter ?",
+          "Que faut-il apporter ?",
           "  ",
           "Le niveau requis n'est pas précisé.",
         ],
@@ -326,7 +326,7 @@ describe("assistant de création avec Jev", () => {
         {
           regle: "information_manquante",
           bloquant: false,
-          message: "Que faut-il apporter ?",
+          message: "Que faut-il apporter ?",
         },
         {
           regle: "information_manquante",
@@ -338,7 +338,7 @@ describe("assistant de création avec Jev", () => {
 
     it("n'en garde que trois", async () => {
       const { moteur } = fauxJev({
-        informationsManquantes: ["a ?", "b ?", "c ?", "d ?", "e ?"],
+        informationsManquantes: ["a ?", "b ?", "c ?", "d ?", "e ?"],
       });
 
       const avis = await analyserProposition(proposition, regles, {
@@ -346,9 +346,9 @@ describe("assistant de création avec Jev", () => {
       });
 
       expect(avis.avertissements.map((a) => a.message)).toEqual([
-        "a ?",
-        "b ?",
-        "c ?",
+        "a ?",
+        "b ?",
+        "c ?",
       ]);
     });
   });

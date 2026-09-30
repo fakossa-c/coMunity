@@ -55,7 +55,7 @@ function rendre(
 }
 
 describe("ChoixLieu", () => {
-  it("sans espace commun : un message en clair, le champ libre, aucune liste", () => {
+  it("sans espace commun : un message en clair, le champ libre, aucune liste", () => {
     const html = rendre([], LIEU_LIBRE);
 
     expect(html).toContain(
@@ -65,7 +65,7 @@ describe("ChoixLieu", () => {
     expect(html).toContain("Nom du lieu");
   });
 
-  it("avec des espaces : la liste « Lieu », les espaces dans l'ordre reçu, puis « Ailleurs… »", () => {
+  it("avec des espaces : la liste « Lieu », les espaces dans l'ordre reçu, puis « Ailleurs… »", () => {
     const html = rendre([SALLE, COUR], "");
 
     expect(html).toMatch(/<label[^>]*>Lieu<\/label>/);
@@ -76,7 +76,7 @@ describe("ChoixLieu", () => {
     expect(html).toContain("Choisir un lieu");
   });
 
-  it("avant tout choix : ni résumé d'espace ni champ libre", () => {
+  it("avant tout choix : ni résumé d'espace ni champ libre", () => {
     const html = rendre([SALLE], "");
 
     expect(html).not.toContain("Laissez la salle propre.");
@@ -101,7 +101,7 @@ describe("ChoixLieu", () => {
     expect(html).not.toContain("Consignes");
   });
 
-  it("« Ailleurs… » ouvre le champ libre, sans résumé d'espace", () => {
+  it("« Ailleurs… » ouvre le champ libre, sans résumé d'espace", () => {
     const html = rendre([SALLE], LIEU_LIBRE, "Chez Danielle");
 
     expect(html).toContain("Nom du lieu");

@@ -32,7 +32,7 @@ describe("formats acceptés", () => {
     expect(estImageAcceptee("image/webp")).toBe(true);
   });
 
-  it("refuse le reste : GIF, SVG, PDF, type inconnu", () => {
+  it("refuse le reste : GIF, SVG, PDF, type inconnu", () => {
     for (const type of ["image/gif", "image/svg+xml", "application/pdf", ""]) {
       expect(estImageAcceptee(type)).toBe(false);
     }
@@ -82,7 +82,7 @@ describe("compression d'une image", () => {
     );
   });
 
-  it("réencode aussi une petite image : la position GPS d'une photo ne part pas", async () => {
+  it("réencode aussi une petite image : la position GPS d'une photo ne part pas", async () => {
     const image = imageFactice(640, 480);
     await compresserImage(PHOTO, async () => image);
     expect(image.encoder).toHaveBeenCalledWith(

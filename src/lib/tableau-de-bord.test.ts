@@ -21,21 +21,21 @@ import { aujourdhui } from "./partage-activite";
 const AUJOURDHUI = "2026-09-29";
 
 describe("periodeDe", () => {
-  it("30 jours : le jour même et les 29 précédents", () => {
+  it("30 jours : le jour même et les 29 précédents", () => {
     expect(periodeDe("30_jours", AUJOURDHUI)).toEqual({
       debut: "2026-08-31",
       fin: "2026-09-29",
     });
   });
 
-  it("3 mois : depuis le 1er du mois d'il y a deux mois, mois en cours compris", () => {
+  it("3 mois : depuis le 1er du mois d'il y a deux mois, mois en cours compris", () => {
     expect(periodeDe("3_mois", AUJOURDHUI)).toEqual({
       debut: "2026-07-01",
       fin: "2026-09-29",
     });
   });
 
-  it("12 mois : douze mois complets au plus, mois en cours compris", () => {
+  it("12 mois : douze mois complets au plus, mois en cours compris", () => {
     expect(periodeDe("12_mois", AUJOURDHUI)).toEqual({
       debut: "2025-10-01",
       fin: "2026-09-29",
@@ -49,7 +49,7 @@ describe("periodeDe", () => {
     });
   });
 
-  it("année : depuis le 1er janvier", () => {
+  it("année : depuis le 1er janvier", () => {
     expect(periodeDe("annee", AUJOURDHUI)).toEqual({
       debut: "2026-01-01",
       fin: "2026-09-29",
@@ -122,7 +122,7 @@ describe("resumeParMois", () => {
         { mois: "2020-03-01", nombre_activites: 4, nombre_participants: 4 },
         { mois: "2020-04-01", nombre_activites: 1, nombre_participants: 1 },
       ]),
-    ).toBe("Le plus de participants distincts : mars 2020, 4 participants.");
+    ).toBe("Le plus de participants distincts : mars 2020, 4 participants.");
   });
 
   it("à égalité, garde le mois le plus ancien", () => {
@@ -131,7 +131,7 @@ describe("resumeParMois", () => {
         { mois: "2020-02-01", nombre_activites: 1, nombre_participants: 3 },
         { mois: "2020-03-01", nombre_activites: 1, nombre_participants: 3 },
       ]),
-    ).toBe("Le plus de participants distincts : février 2020, 3 participants.");
+    ).toBe("Le plus de participants distincts : février 2020, 3 participants.");
   });
 
   it("dit l'absence de participant quand tous les mois sont vides", () => {

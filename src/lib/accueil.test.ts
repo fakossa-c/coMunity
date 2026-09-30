@@ -41,7 +41,7 @@ describe("activités groupées par jour", () => {
     expect(jours[1].activites.map((a) => a.id)).toEqual(["c"]);
   });
 
-  it("le jour même s'intitule « Aujourd’hui », les autres par leur date", () => {
+  it("le jour même s'intitule « Aujourd’hui », les autres par leur date", () => {
     const jours = grouperParJour(
       [activite("a", "2026-10-24"), activite("b", "2026-10-27")],
       AUJOURDHUI,
@@ -120,7 +120,7 @@ describe("filtre par catégorie", () => {
     expect(categorieFiltree("jardin_nature")).toBe("jardin_nature");
   });
 
-  it("revient à « Toutes » pour une valeur absente ou inconnue", () => {
+  it("revient à « Toutes » pour une valeur absente ou inconnue", () => {
     expect(categorieFiltree(undefined)).toBeNull();
     expect(categorieFiltree("inconnue")).toBeNull();
     expect(categorieFiltree("toString")).toBeNull();

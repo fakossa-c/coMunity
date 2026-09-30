@@ -23,7 +23,7 @@ describe("libelleEtage", () => {
     [1, "1er étage"],
     [2, "2e étage"],
     [10, "10e étage"],
-  ])("écrit l'étage %i « %s »", (etage, libelle) => {
+  ])("écrit l'étage %i « %s »", (etage, libelle) => {
     expect(libelleEtage(etage)).toBe(libelle);
   });
 });
@@ -54,7 +54,7 @@ describe("resumeVisibilite", () => {
     expect(resumeVisibilite(rien)).toBe("Les voisins voient votre pseudo.");
   });
 
-  it("ajoute ce qui est rendu visible, avec « et » avant le dernier", () => {
+  it("ajoute ce qui est rendu visible, avec « et » avant le dernier", () => {
     expect(
       resumeVisibilite({
         ...rien,

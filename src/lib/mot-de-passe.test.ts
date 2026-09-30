@@ -31,7 +31,7 @@ describe("refusMotDePasseAuth", () => {
 
   it("traduit un mot de passe jugé trop faible", () => {
     expect(refusMotDePasseAuth("weak_password", "l'ancien")).toEqual({
-      erreur: "Ce mot de passe est trop faible : au moins 6 caractères.",
+      erreur: "Ce mot de passe est trop faible : au moins 6 caractères.",
       champ: "mot-de-passe",
     });
   });

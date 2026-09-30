@@ -28,7 +28,7 @@ describe("mois affiché", () => {
 });
 
 describe("grille du mois", () => {
-  it("commence le lundi : octobre 2026 débute un jeudi, trois cases vides avant le 1er", () => {
+  it("commence le lundi : octobre 2026 débute un jeudi, trois cases vides avant le 1er", () => {
     const semaines = semainesDuMois("2026-10");
     expect(semaines[0]).toEqual([
       null,

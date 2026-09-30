@@ -15,7 +15,7 @@ import {
 const JOUR = "2026-10-20";
 
 const SAISIE: SaisieSondage = {
-  question: "  Quel créneau vous convient le mieux ?  ",
+  question: "  Quel créneau vous convient le mieux ?  ",
   options: ["7h à 21h", " 6h à 23h ", "", "Accès 24h/24"],
   echeance: "2026-10-30",
 };
@@ -38,7 +38,7 @@ describe("vérification de la saisie d'un sondage", () => {
     ).toEqual({ champ: "question", erreur: "200 caractères maximum." });
   });
 
-  it("il faut au moins deux options : les lignes vides ne comptent pas", () => {
+  it("il faut au moins deux options : les lignes vides ne comptent pas", () => {
     expect(
       verifierSondage({ ...SAISIE, options: ["Une seule", "", "  "] }, JOUR),
     ).toEqual({
@@ -81,7 +81,7 @@ describe("vérification de la saisie d'un sondage", () => {
       verifierSondage({ ...SAISIE, echeance: "2026-10-19" }, JOUR),
     ).toEqual({
       champ: "echeance",
-      erreur: "Cette date est déjà passée : personne ne pourrait répondre.",
+      erreur: "Cette date est déjà passée : personne ne pourrait répondre.",
     });
   });
 });
@@ -89,7 +89,7 @@ describe("vérification de la saisie d'un sondage", () => {
 describe("ce que la base enregistre", () => {
   it("la question et les options sont nettoyées, les lignes vides retirées", () => {
     expect(versLigneSondage(SAISIE)).toEqual({
-      question: "Quel créneau vous convient le mieux ?",
+      question: "Quel créneau vous convient le mieux ?",
       options: ["7h à 21h", "6h à 23h", "Accès 24h/24"],
       echeance: "2026-10-30",
     });
@@ -98,12 +98,12 @@ describe("ce que la base enregistre", () => {
   it("une copie garde la question et les options, mais pas la date limite", () => {
     expect(
       saisieSondageCopie({
-        question: "Quel créneau ?",
+        question: "Quel créneau ?",
         options: ["A", "B"],
         echeance: "2026-10-30",
       }),
     ).toEqual({
-      question: "Quel créneau ?",
+      question: "Quel créneau ?",
       options: ["A", "B"],
       echeance: "",
     });
@@ -115,7 +115,7 @@ describe("ce que la base enregistre", () => {
 });
 
 describe("pourcentages", () => {
-  it("arrondit et retombe sur 100 : la plus grande part restante l'emporte", () => {
+  it("arrondit et retombe sur 100 : la plus grande part restante l'emporte", () => {
     expect(pourcentages([1, 1, 1])).toEqual([34, 33, 33]);
     expect(pourcentages([9, 11, 3])).toEqual([39, 48, 13]);
     expect(pourcentages([2, 1])).toEqual([67, 33]);
@@ -150,12 +150,12 @@ describe("échéance et nombre de réponses", () => {
 describe("ce que la personne voit d'un sondage", () => {
   const SONDAGE = {
     id: "s1",
-    question: "Quel créneau ?",
+    question: "Quel créneau ?",
     options: ["A", "B", "C"],
     echeance: "2026-10-30",
   };
 
-  it("un résident validé qui n'a pas répondu, avant la date limite : il vote, sans résultat", () => {
+  it("un résident validé qui n'a pas répondu, avant la date limite : il vote, sans résultat", () => {
     expect(
       affichageSondage({
         sondage: SONDAGE,
@@ -167,7 +167,7 @@ describe("ce que la personne voit d'un sondage", () => {
     ).toEqual({ etat: "vote" });
   });
 
-  it("un résident en attente, avant la date limite : il lit, sans voter ni résultat", () => {
+  it("un résident en attente, avant la date limite : il lit, sans voter ni résultat", () => {
     expect(
       affichageSondage({
         sondage: SONDAGE,

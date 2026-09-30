@@ -65,7 +65,7 @@ describe("couleur d'une catégorie d'activité", () => {
   for (const [lieu, valeurs] of Object.entries(declarations)) {
     describe(lieu, () => {
       it.each(categoriesActiviteListe)(
-        "%s : fond et encre déclarés, contraste d'au moins 4,5:1",
+        "%s : fond et encre déclarés, contraste d'au moins 4,5:1",
         (categorie) => {
           const { fond, encre } = categoriesActivite[categorie].couleur;
           const valeurFond = valeurs[jetonDeClasse(fond)];

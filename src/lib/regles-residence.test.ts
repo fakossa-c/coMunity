@@ -44,10 +44,10 @@ async function borneDesOccupations(maintenant: string) {
   )?.valeur;
 }
 
-describe("lireContexteParcours : jour de référence des occupations", () => {
+describe("lireContexteParcours : jour de référence des occupations", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("l'été à 00h30 à Paris, le jour d'UTC est encore la veille : la borne est le jour de Paris", async () => {
+  it("l'été à 00h30 à Paris, le jour d'UTC est encore la veille : la borne est le jour de Paris", async () => {
     // 2026-06-14 22:30 UTC = 2026-06-15 00:30 à Paris (UTC+2)
     expect(await borneDesOccupations("2026-06-14T22:30:00Z")).toBe(
       "2026-06-15",

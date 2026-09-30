@@ -6,7 +6,7 @@ import { BoutonVisibilite } from "./bouton-visibilite";
 import { EnTeteProfil } from "./en-tete-profil";
 
 describe("BoutonVisibilite", () => {
-  it("dit « Visible » et nomme l'information pour le lecteur d'écran", () => {
+  it("dit « Visible » et nomme l'information pour le lecteur d'écran", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {
         libelle: "Téléphone",
@@ -20,7 +20,7 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("Téléphone");
   });
 
-  it("dit « Masqué » quand l'information ne l'est pas", () => {
+  it("dit « Masqué » quand l'information ne l'est pas", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {
         libelle: "Étage",
@@ -32,7 +32,7 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("Masqué");
   });
 
-  it("porte « Privé » pour l'affichage ordinateur, en plus de « Masqué » pour le mobile", () => {
+  it("porte « Privé » pour l'affichage ordinateur, en plus de « Masqué » pour le mobile", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {
         libelle: "Étage",
@@ -45,7 +45,7 @@ describe("BoutonVisibilite", () => {
     expect(html).toContain("Privé");
   });
 
-  it("n'est pas un bouton quand l'information est verrouillée : cadenas, toujours visible", () => {
+  it("n'est pas un bouton quand l'information est verrouillée : cadenas, toujours visible", () => {
     const html = renderToStaticMarkup(
       createElement(BoutonVisibilite, {
         libelle: "Pseudo",

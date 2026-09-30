@@ -49,14 +49,14 @@ const SAISIE: SaisieAnnonce = {
 };
 
 describe("filtres de la liste", () => {
-  it("chaque filtre garde ses types ; « Travaux et infos » en réunit deux", () => {
+  it("chaque filtre garde ses types ; « Travaux et infos » en réunit deux", () => {
     expect(typesDuFiltre("toutes")).toBeNull();
     expect(typesDuFiltre("assemblees")).toEqual(["assemblee"]);
     expect(typesDuFiltre("sondages")).toEqual(["sondage"]);
     expect(typesDuFiltre("travaux-infos")).toEqual(["travaux", "info"]);
   });
 
-  it("un paramètre inconnu ou absent donne « Toutes »", () => {
+  it("un paramètre inconnu ou absent donne « Toutes »", () => {
     expect(filtreAnnonce("sondages")).toBe("sondages");
     expect(filtreAnnonce("n'importe quoi")).toBe("toutes");
     expect(filtreAnnonce(undefined)).toBe("toutes");
@@ -69,7 +69,7 @@ describe("filtres de la liste", () => {
   });
 });
 
-describe("étiquette « Nouveau »", () => {
+describe("étiquette « Nouveau »", () => {
   const publiee = "2026-10-20T08:30:00+00:00";
 
   it("une annonce est nouvelle pendant les 7 jours qui suivent sa publication", () => {
@@ -132,7 +132,7 @@ describe("carte d'une annonce", () => {
     expect(infosAnnonce({ ...ANNONCE, quand: null, lieu: null })).toEqual([]);
   });
 
-  it("le bouton du PDF s'appelle « Lire la convocation » pour une assemblée", () => {
+  it("le bouton du PDF s'appelle « Lire la convocation » pour une assemblée", () => {
     expect(libelleDocument("assemblee")).toBe("Lire la convocation");
     expect(libelleDocument("travaux")).toBe("Lire le document");
   });
@@ -199,7 +199,7 @@ describe("saisie d'une annonce", () => {
     ).toEqual({
       champ: "expire_le",
       erreur:
-        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
+        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
     });
     expect(
       verifierAnnonce({ ...SAISIE, expire_le: "2026-10-20" }, "2026-10-20"),
@@ -212,11 +212,11 @@ describe("saisie d'une annonce", () => {
     expect(verifierAnnonce(expiree, "2026-10-20", "2026-09-01")).toEqual({
       champ: "expire_le",
       erreur:
-        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
+        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
     });
   });
 
-  it("la saisie devient une ligne : textes nettoyés, vides à null", () => {
+  it("la saisie devient une ligne : textes nettoyés, vides à null", () => {
     expect(versLigneAnnonce(SAISIE)).toEqual({
       type: "travaux",
       titre: "Rénovation du hall",
