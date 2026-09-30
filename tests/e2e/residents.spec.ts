@@ -27,12 +27,11 @@ async function seConnecter(page: Page, email: string) {
 /** Le syndic, connecté sur son propre appareil, ouvre la page des résidents. */
 async function syndicSurLesResidents(
   browser: Browser,
-  affichage: Parameters<typeof reglerAffichage>[1] = {},
+  affichage?: Parameters<typeof reglerAffichage>[1],
 ) {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
-  if (affichage.taille || affichage.theme)
-    await reglerAffichage(syndic.id, affichage);
+  if (affichage) await reglerAffichage(syndic.id, affichage);
   const appareil = await browser.newContext({
     baseURL: test.info().project.use.baseURL,
   });
