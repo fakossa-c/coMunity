@@ -24,7 +24,10 @@ export async function Participants({ identifiant }: { identifiant: string }) {
   );
 
   return (
-    <ul aria-label="Participants" className="flex flex-col gap-space-sm">
+    <ul
+      aria-label="Participants"
+      className="flex flex-col gap-space-sm desktop:grid desktop:grid-cols-2 desktop:gap-x-8"
+    >
       {participants.map((participant, rang) => (
         // Deux voisins peuvent porter le même pseudo : le rang distingue leurs lignes.
         <li key={rang} className="flex items-center gap-space-sm">

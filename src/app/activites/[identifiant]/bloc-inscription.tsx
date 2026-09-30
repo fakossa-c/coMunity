@@ -22,8 +22,10 @@ export type StatutVisiteur = "visiteur" | "en_attente" | "valide";
 type Props = { fiche: FicheActivite; statut: StatutVisiteur };
 
 /**
- * L'action fixée en bas de la fiche : « Je participe » avec son compteur d'accompagnants pour
- * qui n'est pas encore inscrit, le statut « Vous participez » avec l'annulation pour qui l'est déjà.
+ * L'inscription à l'activité : « Je participe » avec son compteur d'accompagnants pour qui n'est
+ * pas encore inscrit, le statut « Vous participez » avec l'annulation pour qui l'est déjà. Sur
+ * mobile, l'action est fixée en bas de la fiche ; sur ordinateur, c'est une carte collante à droite
+ * du texte, qui ajoute « Votre place » et les places restantes.
  */
 export function BlocInscription({ fiche, statut }: Props) {
   const [accompagnants, setAccompagnants] = useState(0);
@@ -52,9 +54,28 @@ export function BlocInscription({ fiche, statut }: Props) {
     });
   }
 
+  const tete = (
+    <div className="hidden desktop:block">
+      <h2 className="font-headline text-headline-md text-on-surface">
+        Votre place
+      </h2>
+      {placesRestantes !== null && (
+        <p className="mt-3 flex items-baseline gap-3">
+          <span className="font-headline text-titre-journal text-texte-date">
+            {Math.max(placesRestantes, 0)}
+          </span>{" "}
+          <span className="text-body-lg text-on-surface-variant">
+            {placesRestantes === 1 ? "place restante" : "places restantes"}
+          </span>
+        </p>
+      )}
+    </div>
+  );
+
   if (inscrit) {
     return (
-      <BarreActionFixe>
+      <BarreActionFixe carte>
+        {tete}
         <StatutInscriptionAnnulable
           accompagnants={fiche.mes_accompagnants!}
           onAnnuler={annuler}
@@ -68,15 +89,21 @@ export function BlocInscription({ fiche, statut }: Props) {
   const desactive = complet || statut === "en_attente" || enCours;
 
   return (
-    <BarreActionFixe>
-      <div className="flex w-full flex-col items-center gap-2">
+    <BarreActionFixe carte>
+      {tete}
+      <div className="flex w-full flex-col items-center gap-2 desktop:items-stretch desktop:gap-5">
         {!complet && statut === "valide" && (
-          <Compteur
-            valeur={accompagnants}
-            onChange={setAccompagnants}
-            max={placesRestantes !== null ? placesRestantes - 1 : undefined}
-            label="Nombre d'accompagnants"
-          />
+          <div className="flex flex-col items-center desktop:flex-row desktop:justify-between">
+            <p className="hidden font-headline text-body-bold text-on-surface desktop:block">
+              Accompagnants
+            </p>
+            <Compteur
+              valeur={accompagnants}
+              onChange={setAccompagnants}
+              max={placesRestantes !== null ? placesRestantes - 1 : undefined}
+              label="Nombre d'accompagnants"
+            />
+          </div>
         )}
         <Bouton
           pleineLargeur
@@ -87,7 +114,7 @@ export function BlocInscription({ fiche, statut }: Props) {
           {complet ? "Complet" : libelleBoutonInscription(accompagnants)}
         </Bouton>
         {statut === "en_attente" && (
-          <p className="text-body-md text-on-surface-variant">
+          <p className="text-body-md text-on-surface-variant desktop:text-center">
             Votre compte doit être validé par le conseil syndical pour vous
             inscrire.
           </p>

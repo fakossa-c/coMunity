@@ -294,14 +294,21 @@ test("sur ordinateur, la carte d'inscription reste visible à droite pendant la 
   await page.goto(`/activites/${identifiant}`);
   const bouton = page.getByRole("button", { name: "Je participe" });
   const texte = page.getByText("Paragraphe 1 :");
-  await expect(bouton).toBeInViewport();
+  const boiteTexte = (await texte.boundingBox())!;
   expect((await bouton.boundingBox())!.x).toBeGreaterThan(
-    (await texte.boundingBox())!.x + (await texte.boundingBox())!.width,
+    boiteTexte.x + boiteTexte.width,
   );
-  await expect(page.getByText("12 places restantes")).toBeVisible();
+  await expect(page.getByText("12 places restantes")).toBeAttached();
 
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect(bouton).toBeInViewport();
+  // Pendant la lecture, du début à la fin du texte, la carte suit et reste à l'écran.
+  for (const position of [0.3, 0.6, 1]) {
+    await page.evaluate(
+      (p) => window.scrollTo(0, (document.body.scrollHeight - innerHeight) * p),
+      position,
+    );
+    await expect(bouton).toBeInViewport();
+    await expect(page.getByText("12 places restantes")).toBeInViewport();
+  }
   expect(await estDansUneBarreFixe(bouton)).toBe(false);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
