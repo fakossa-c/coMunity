@@ -57,3 +57,10 @@ export function fuseauDecale() {
   if (!fuseau) throw new Error("Aucun fuseau décalé par rapport à Paris");
   return fuseau;
 }
+
+/** La requête PostgREST, exécutée dans une session de la base réglée sur `fuseau` (sans `fuseau`, inchangée). */
+export function avecFuseau<
+  T extends { setHeader(nom: string, valeur: string): T },
+>(requete: T, fuseau?: string): T {
+  return fuseau ? requete.setHeader("Prefer", `timezone=${fuseau}`) : requete;
+}

@@ -310,13 +310,19 @@ describe("ses activités", () => {
     expect(await activiteEnBase(enRelecture)).toBeNull();
   });
 
-  it("une activité du jour dont l'heure de fin de Paris est passée reste, celle qui n'est pas terminée est annulée", async () => {
+  it("une activité du jour dont l'heure de fin de Paris est passée reste, celle qui n'est pas terminée est annulée ou supprimée", async () => {
     const createur = await nouveauResident("valide");
     const inscrit = await nouveauResident("valide");
     const terminee = await publier(createur, {
       creneau: creneauFinissantDans(-30),
     });
+    const termineeSansInscrit = await publier(createur, {
+      creneau: creneauFinissantDans(-30),
+    });
     const enCours = await publier(createur, {
+      creneau: creneauFinissantDans(30),
+    });
+    const enCoursSansInscrit = await publier(createur, {
       creneau: creneauFinissantDans(30),
     });
     await inscrire(inscrit, enCours);
@@ -330,7 +336,9 @@ describe("ses activités", () => {
 
     expect(error).toBeNull();
     expect((await activiteEnBase(terminee))?.statut).toBe("publiee");
+    expect((await activiteEnBase(termineeSansInscrit))?.statut).toBe("publiee");
     expect((await activiteEnBase(enCours))?.statut).toBe("annulee");
+    expect(await activiteEnBase(enCoursSansInscrit)).toBeNull();
   });
 
   it("une activité passée reste, sans nom d'organisateur, avec ses photos", async () => {

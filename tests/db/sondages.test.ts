@@ -7,7 +7,7 @@ import {
   type Compte,
   type StatutResident,
 } from "./clients";
-import { fuseauDecale, jourParis } from "./paris";
+import { avecFuseau, fuseauDecale, jourParis } from "./paris";
 
 // Ticket #39 : le sondage à choix unique d'une annonce. Le conseil syndical le crée avec
 // l'annonce ; un résident validé répond une fois avant la date limite ; les résultats ne se
@@ -22,9 +22,6 @@ afterAll(async () => {
 
 /** Un jour `AAAA-MM-JJ`, décalé de `jours` par rapport à aujourd'hui (le jour de Paris). */
 const jour = jourParis;
-
-/** L'en-tête qui place la session de la base dans `fuseau` (voir `fuseauDecale`). */
-const dansFuseau = (fuseau: string) => `timezone=${fuseau}`;
 
 const OPTIONS = ["7h à 21h", "6h à 23h", "Accès 24h/24"];
 
@@ -70,11 +67,13 @@ async function repondre(
   choix: number,
   fuseau?: string,
 ) {
-  const requete = compte.client.rpc("repondre_sondage", {
-    p_sondage: sondage.id,
-    p_choix: choix,
-  });
-  return fuseau ? requete.setHeader("Prefer", dansFuseau(fuseau)) : requete;
+  return avecFuseau(
+    compte.client.rpc("repondre_sondage", {
+      p_sondage: sondage.id,
+      p_choix: choix,
+    }),
+    fuseau,
+  );
 }
 
 /** Les résultats que voit `client`, sous la forme `{ choix: votes }` ; vide quand rien ne se lit. */
@@ -83,12 +82,10 @@ async function resultats(
   sondage: Sondage,
   fuseau?: string,
 ) {
-  const requete = client.rpc("resultats_sondages", {
-    p_sondages: [sondage.id],
-  });
-  const { data, error } = await (fuseau
-    ? requete.setHeader("Prefer", dansFuseau(fuseau))
-    : requete);
+  const { data, error } = await avecFuseau(
+    client.rpc("resultats_sondages", { p_sondages: [sondage.id] }),
+    fuseau,
+  );
   if (error) throw error;
   return Object.fromEntries(
     (data as { choix: number; votes: number }[]).map((ligne) => [
@@ -371,15 +368,15 @@ describe("sondage : la date limite suit le jour de Paris, pas celui du fuseau de
     const aujourdhui = await annonceDeSondage(syndic.client);
     const hier = await annonceDeSondage(syndic.client);
     const sondage = (echeance: string, annonce: string) =>
-      syndic.client
-        .from("sondage")
-        .insert({
+      avecFuseau(
+        syndic.client.from("sondage").insert({
           annonce_id: annonce,
           question: "Question ?",
           options: OPTIONS,
           echeance,
-        })
-        .setHeader("Prefer", dansFuseau(fuseau));
+        }),
+        fuseau,
+      );
 
     const ok = await sondage(jour(0), aujourdhui);
     const refuse = await sondage(jour(-1), hier);

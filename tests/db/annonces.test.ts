@@ -6,7 +6,7 @@ import {
   nouveauSyndic,
   type Compte,
 } from "./clients";
-import { fuseauDecale, jourParis } from "./paris";
+import { avecFuseau, fuseauDecale, jourParis } from "./paris";
 
 // Ticket #13 : les annonces du conseil syndical. Seul le conseil syndical écrit ; un compte qui
 // peut consulter lit ; un visiteur lit une annonce par son lien public, et jamais la liste.
@@ -50,10 +50,10 @@ const jour = jourParis;
 
 /** Les titres que voit `compte` dans la liste du moment, dans l'ordre. */
 async function titresDuMoment(client: Compte["client"], fuseau?: string) {
-  const requete = client.rpc("annonces_du_moment");
-  const { data, error } = await (fuseau
-    ? requete.setHeader("Prefer", `timezone=${fuseau}`)
-    : requete);
+  const { data, error } = await avecFuseau(
+    client.rpc("annonces_du_moment"),
+    fuseau,
+  );
   if (error) throw error;
   return (data as { titre: string }[]).map((annonce) => annonce.titre);
 }
