@@ -14,7 +14,7 @@ type Props = { fiche: FicheActivite };
 /**
  * Invitation à donner son avis sur une activité passée où l'on est allé : note de 1 à 5 et
  * commentaire court. Une fois le retour laissé, affiche une confirmation à la place du
- * formulaire (`mon_retour_note` renseigné). Onglet Activités › Passées (#16, amendement du
+ * formulaire (`mon_retour_note` renseigné). Onglet Activités › Archivées (#16, amendement du
  * 24/09/2026) : composant autonome, branché sur une activité par son identifiant public, sans
  * dépendre de la liste des activités passées elle-même (#15).
  */

@@ -13,7 +13,7 @@ export type Onglet = {
 type Props = {
   onglets: Onglet[];
   actif: string;
-  /** Nom du groupe d'onglets pour le lecteur d'écran (`aria-label` du `tablist`). */
+  /** Nom du groupe d'onglets pour le lecteur d'écran (`aria-label` de la navigation). */
   libelleGroupe: string;
 };
 
@@ -23,13 +23,12 @@ type Props = {
  * son compteur. Sur mobile les trois segments se partagent la largeur, libellé au-dessus du
  * compteur ; sur ordinateur, segments de 212 px avec pictogramme, libellé et compteur côte à côte.
  *
- * Navigation par lien (`href` par onglet), comme `BarreNavigation` : cohérent avec le reste de
- * l'app, en server components, sans état client.
+ * Navigation par lien (`href` par onglet, `aria-current="page"` sur l'actif), comme
+ * `BarreNavigation` : cohérent avec le reste de l'app, en server components, sans état client.
  */
 export function Onglets({ onglets, actif, libelleGroupe }: Props) {
   return (
-    <div
-      role="tablist"
+    <nav
       aria-label={libelleGroupe}
       className="flex gap-1.5 rounded-full bg-surface-container p-1.5 desktop:inline-flex"
     >
@@ -39,8 +38,7 @@ export function Onglets({ onglets, actif, libelleGroupe }: Props) {
           <a
             key={onglet.id}
             href={onglet.href}
-            role="tab"
-            aria-selected={selectionne}
+            aria-current={selectionne ? "page" : undefined}
             className={`flex min-h-ligne min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center font-headline text-label-md transition-colors duration-(--duree-courte) ease-journal desktop:h-[54px] desktop:min-h-0 desktop:w-[212px] desktop:flex-none desktop:flex-row desktop:gap-2.5 desktop:px-4 desktop:text-label-lg desktop:whitespace-nowrap ${
               selectionne
                 ? "bg-fond-action font-extrabold text-texte-action"
@@ -68,6 +66,6 @@ export function Onglets({ onglets, actif, libelleGroupe }: Props) {
           </a>
         );
       })}
-    </div>
+    </nav>
   );
 }

@@ -7,35 +7,46 @@ export type OngletActivites = "je_participe" | "j_organise" | "archivees";
 
 export type CompteursActivites = Record<OngletActivites, number>;
 
+const s = (nombre: number) => (nombre > 1 ? "s" : "");
+
+/** Les trois segments, dans l'ordre : libellé, pictogramme et phrase qui résume le segment ouvert. */
+const SEGMENTS: {
+  id: OngletActivites;
+  libelle: string;
+  icone: NomIcone;
+  resume: (nombre: number) => string;
+}[] = [
+  {
+    id: "je_participe",
+    libelle: "Je participe",
+    icone: "event_available",
+    resume: (n) =>
+      n === 0 ? "Aucune activité à venir" : `${n} activité${s(n)} à venir`,
+  },
+  {
+    id: "j_organise",
+    libelle: "J'organise",
+    icone: "edit",
+    resume: (n) =>
+      n === 0
+        ? "Aucune activité que vous organisez"
+        : `${n} activité${s(n)} que vous organisez`,
+  },
+  {
+    id: "archivees",
+    libelle: "Archivées",
+    icone: "history",
+    resume: (n) =>
+      n === 0
+        ? "Aucune activité archivée"
+        : `${n} activité${s(n)} archivée${s(n)}, organisée${s(n)} ou suivie${s(n)}`,
+  },
+];
+
 /** L'onglet demandé par l'adresse : « Je participe » par défaut, pour toute autre valeur. */
 export function ongletDemande(valeur: string | undefined): OngletActivites {
-  return valeur === "j_organise" || valeur === "archivees"
-    ? valeur
-    : "je_participe";
+  return SEGMENTS.find(({ id }) => id === valeur)?.id ?? "je_participe";
 }
-
-/** « 5 activités à venir », « 1 activité que vous organisez » : la phrase sous les segments. */
-function resume(onglet: OngletActivites, nombre: number) {
-  const s = nombre > 1 ? "s" : "";
-  if (nombre === 0) {
-    return {
-      je_participe: "Aucune activité à venir",
-      j_organise: "Aucune activité que vous organisez",
-      archivees: "Aucune activité archivée",
-    }[onglet];
-  }
-  return {
-    je_participe: `${nombre} activité${s} à venir`,
-    j_organise: `${nombre} activité${s} que vous organisez`,
-    archivees: `${nombre} activité${s} archivée${s}, organisée${s} ou suivie${s}`,
-  }[onglet];
-}
-
-const pictogrammeDuResume: Record<OngletActivites, NomIcone> = {
-  je_participe: "event_available",
-  j_organise: "edit",
-  archivees: "history",
-};
 
 /**
  * Segments « Je participe / J'organise / Archivées » de l'onglet Activités, chacun avec son
@@ -49,6 +60,7 @@ export function SegmentsActivites({
   actif: OngletActivites;
   compteurs: CompteursActivites;
 }) {
+  const segmentActif = SEGMENTS.find(({ id }) => id === actif) ?? SEGMENTS[0];
   return (
     <BarreFiltres
       avant={
@@ -56,33 +68,17 @@ export function SegmentsActivites({
           <Onglets
             libelleGroupe="Mes activités"
             actif={actif}
-            onglets={[
-              {
-                id: "je_participe",
-                libelle: "Je participe",
-                href: "/activites?onglet=je_participe",
-                icone: "event_available",
-                compteur: compteurs.je_participe,
-              },
-              {
-                id: "j_organise",
-                libelle: "J'organise",
-                href: "/activites?onglet=j_organise",
-                icone: "edit",
-                compteur: compteurs.j_organise,
-              },
-              {
-                id: "archivees",
-                libelle: "Archivées",
-                href: "/activites?onglet=archivees",
-                icone: "history",
-                compteur: compteurs.archivees,
-              },
-            ]}
+            onglets={SEGMENTS.map(({ id, libelle, icone }) => ({
+              id,
+              libelle,
+              icone,
+              href: `/activites?onglet=${id}`,
+              compteur: compteurs[id],
+            }))}
           />
           <p className="hidden items-center gap-2 text-body-lg text-on-surface-variant desktop:flex">
-            <Icone nom={pictogrammeDuResume[actif]} taille={24} />
-            {resume(actif, compteurs[actif])}
+            <Icone nom={segmentActif.icone} taille={24} />
+            {segmentActif.resume(compteurs[actif])}
           </p>
         </div>
       }

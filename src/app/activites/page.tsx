@@ -10,7 +10,11 @@ import { LigneArchivee } from "@/components/ligne-archivee";
 import { TitrePage } from "@/components/titre-page";
 import { lireMesActivites } from "@/lib/lecture-mes-activites";
 import { lireSession } from "@/lib/session";
-import { ongletDemande, SegmentsActivites } from "./onglets";
+import {
+  ongletDemande,
+  SegmentsActivites,
+  type OngletActivites,
+} from "./onglets";
 
 export const metadata: Metadata = { title: "Activités" };
 
@@ -57,7 +61,7 @@ async function MesActivites({
   actif,
 }: {
   residentId: string;
-  actif: ReturnType<typeof ongletDemande>;
+  actif: OngletActivites;
 }) {
   const { jeParticipe, jOrganise, archivees } =
     await lireMesActivites(residentId);

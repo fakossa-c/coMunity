@@ -288,7 +288,7 @@ test.describe("couleur d'une catégorie d'activité", () => {
     }
   });
 
-  test("Activités › J'y vais colore la pastille de chaque carte selon sa catégorie", async ({
+  test("Activités › Je participe colore la pastille de chaque carte selon sa catégorie", async ({
     page,
   }) => {
     const { culture, jardin } = await preparer(page);

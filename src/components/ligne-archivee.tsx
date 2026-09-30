@@ -71,11 +71,13 @@ export function LigneArchivee({ activite, role }: Props) {
             >
               <Icone nom="content_copy" taille={24} />
               Dupliquer
+              <span className="sr-only"> {activite.titre}</span>
             </Link>
           </>
         ) : (
           <Link href={fiche} className={classesBouton("contour")}>
             Donner mon avis
+            <span className="sr-only"> sur {activite.titre}</span>
           </Link>
         )}
       </div>

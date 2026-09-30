@@ -1,3 +1,4 @@
+// Props à plat pour le kit ; le composant de l'app reçoit `activite` (les mêmes champs) et `role`.
 export interface LigneArchiveeProps {
   /** organisee : « Organisée par vous », participants et « Dupliquer » · suivie : « Vous y avez participé » et « Donner mon avis » */
   role: "organisee" | "suivie";

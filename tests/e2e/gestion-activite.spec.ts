@@ -264,7 +264,10 @@ test("J'organise liste mes activités à venir, annulées comprises ; les passé
   ).toContainText("Annulée");
   await expect(page.getByText("Vide-grenier passé")).toHaveCount(0);
 
-  await page.getByRole("tab", { name: /^Archivées/ }).click();
+  await page
+    .getByRole("navigation", { name: "Mes activités" })
+    .getByRole("link", { name: /^Archivées/ })
+    .click();
   await expect(page.getByText("Vide-grenier passé")).toBeVisible();
   // Le minimum n'a plus rien à confirmer une fois l'activité passée.
   await expect(page.getByRole("main")).not.toContainText("pour confirmer");

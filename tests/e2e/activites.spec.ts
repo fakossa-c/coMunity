@@ -111,9 +111,9 @@ function dansJours(jours: number) {
 }
 
 const segments = (page: Page) =>
-  page.getByRole("tablist", { name: "Mes activités" });
+  page.getByRole("navigation", { name: "Mes activités" });
 const segment = (page: Page, nom: string) =>
-  segments(page).getByRole("tab", { name: new RegExp(`^${nom}`) });
+  segments(page).getByRole("link", { name: new RegExp(`^${nom}`) });
 const jeParticipe = (page: Page) =>
   page.getByRole("list", { name: "Activités où vous participez" });
 const jOrganise = (page: Page) =>
@@ -170,21 +170,20 @@ test.describe("les segments de l'écran Activités", () => {
     await seConnecter(page, resident.email);
     await page.goto("/activites");
 
-    await expect(segments(page).getByRole("tab")).toHaveText([
+    await expect(segments(page).getByRole("link")).toHaveText([
       /^Je participe\s*2 activités$/,
       /^J'organise\s*1 activité$/,
       /^Archivées\s*3 activités$/,
     ]);
     await expect(segment(page, "Je participe")).toHaveAttribute(
-      "aria-selected",
-      "true",
+      "aria-current",
+      "page",
     );
-    await expect(segment(page, "J'organise")).toHaveAttribute(
-      "aria-selected",
-      "false",
+    await expect(segment(page, "J'organise")).not.toHaveAttribute(
+      "aria-current",
     );
     await expect(page.getByRole("link", { name: /Passées/ })).toHaveCount(0);
-    await expect(page.getByRole("tab", { name: /J'y vais/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /J'y vais/ })).toHaveCount(0);
   });
 
   test("le segment actif est plein pêche, les autres sans fond", async ({
@@ -314,7 +313,7 @@ test.describe("les segments de l'écran Activités", () => {
     await page.goto("/activites?onglet=archivees");
 
     await archivees(page)
-      .getByRole("link", { name: titres.suivieAncienne })
+      .getByRole("link", { name: titres.suivieAncienne, exact: true })
       .click();
     await expect(page).toHaveURL(
       new RegExp(`/activites/${identifiants.suivieAncienne}$`),
@@ -329,7 +328,7 @@ test.describe("les segments de l'écran Activités", () => {
     await seConnecter(page, resident.email);
     await page.goto("/activites");
 
-    await expect(segments(page).getByRole("tab")).toHaveText([
+    await expect(segments(page).getByRole("link")).toHaveText([
       /0 activité$/,
       /0 activité$/,
       /0 activité$/,
@@ -427,7 +426,7 @@ for (const [reglage, valeurs] of [
       ["?onglet=archivees", "Archivées"],
     ]) {
       await page.goto(`/activites${onglet}`);
-      await expect(segment(page, nom)).toHaveAttribute("aria-selected", "true");
+      await expect(segment(page, nom)).toHaveAttribute("aria-current", "page");
       await verifierSansDefilementHorizontal(page);
     }
   });
@@ -442,7 +441,7 @@ test("la préférence de réduction des animations coupe les transitions de l'é
   await page.goto("/activites");
 
   const durees = await segments(page)
-    .getByRole("tab")
+    .getByRole("link")
     .evaluateAll((onglets) =>
       onglets.map((onglet) => getComputedStyle(onglet).transitionDuration),
     );
