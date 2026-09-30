@@ -9,6 +9,7 @@ import {
   reglerAffichage,
   supprimerComptes,
   supprimerSectionsReglement,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #43 : le conseil syndical rédige le règlement intérieur, les résidents le lisent dans Ma
@@ -28,6 +29,13 @@ async function seConnecter(page: Page, email: string) {
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).not.toHaveURL(/connexion/);
+}
+
+/** « Nouvelle section » en tête sur ordinateur, « Ajouter une section » sous la liste sur mobile. */
+function lienAjout(page: Page) {
+  return page.getByRole("link", {
+    name: /^(Nouvelle section|Ajouter une section)$/,
+  });
 }
 
 function enregistrer(page: Page) {
@@ -61,7 +69,7 @@ test("le conseil syndical rédige deux sections, un résident les lit en les dé
   ).toBeVisible();
 
   // Une première section : les erreurs d'abord, puis l'aperçu, puis l'enregistrement.
-  await page.getByRole("link", { name: "Ajouter une section" }).click();
+  await lienAjout(page).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Ajouter une section" }),
   ).toBeVisible();
@@ -95,7 +103,7 @@ test("le conseil syndical rédige deux sections, un résident les lit en les dé
   );
 
   // La seconde, puis la remontée d'un cran : elle passe avant la première.
-  await page.getByRole("link", { name: "Ajouter une section" }).click();
+  await lienAjout(page).click();
   await page.getByLabel("Titre", { exact: true }).fill(dechets);
   await page.getByLabel("Texte", { exact: true }).fill("Triez vos déchets.");
   await enregistrer(page);
@@ -323,3 +331,133 @@ for (const theme of ["clair", "sombre"] as const) {
     });
   });
 }
+
+// Ticket #175 (spec #168) : sur ordinateur, les sections tiennent dans une colonne de 960 px au
+// plus, sous une ligne qui porte « Mis à jour le … » à gauche et « Nouvelle section » à droite ;
+// sur mobile, rien ne change.
+
+/** Un membre du conseil syndical connecté, devant la liste des sections, dont deux à lui. */
+async function listeDesSections(page: Page) {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  for (const titre of ["Bruit", "Déchets"]) {
+    const section = await nouvelleSectionReglement({
+      titre: `${titre} ${randomUUID().slice(0, 6)}`,
+    });
+    titres.push(section.titre);
+  }
+  await seConnecter(page, syndic.email);
+  await page.goto("/syndic/reglement");
+  const liste = page.getByRole("list", {
+    name: "Sections du règlement intérieur",
+  });
+  await expect(liste.getByRole("listitem").first()).toBeVisible();
+  return { syndic, liste };
+}
+
+function lien(page: Page, nom: string) {
+  return page.getByRole("link", { name: nom, exact: true });
+}
+
+test.describe("sur ordinateur, la liste des sections", () => {
+  test.skip(({ isMobile }) => isMobile, "Présentation Journal.");
+
+  for (const largeur of [1600, 1280, 1100]) {
+    test(`à ${largeur} px, tient dans une colonne de 960 px au plus, « Nouvelle section » en tête`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: largeur, height: 900 });
+      const { liste } = await listeDesSections(page);
+
+      const boiteListe = (await liste.boundingBox())!;
+      expect(boiteListe.width).toBeLessThanOrEqual(960);
+      const nouvelle = lien(page, "Nouvelle section");
+      await expect(nouvelle).toHaveCount(1);
+      await expect(lien(page, "Ajouter une section")).toHaveCount(0);
+      // « Nouvelle section » au-dessus de la liste, au bout droit de la colonne, compact ;
+      // « Mis à jour le … » sur la même ligne, à gauche.
+      const boiteAjout = (await nouvelle.boundingBox())!;
+      expect(boiteAjout.y + boiteAjout.height).toBeLessThanOrEqual(
+        boiteListe.y,
+      );
+      expect(
+        Math.abs(
+          boiteAjout.x + boiteAjout.width - (boiteListe.x + boiteListe.width),
+        ),
+      ).toBeLessThanOrEqual(1);
+      expect(boiteAjout.width).toBeLessThan(boiteListe.width / 2);
+      const date = (await page
+        .getByRole("main")
+        .getByText(/^Mis à jour le/)
+        .boundingBox())!;
+      expect(date.x + date.width).toBeLessThan(boiteAjout.x);
+      expect(date.y).toBeLessThan(boiteAjout.y + boiteAjout.height);
+      expect(date.y + date.height).toBeGreaterThan(boiteAjout.y);
+      // Chaque section sur une ligne : son titre, puis « Monter », « Descendre » et « Modifier » à droite.
+      const section = liste.getByRole("listitem").first();
+      const titre = (await section.getByRole("heading").boundingBox())!;
+      for (const action of [
+        section.getByRole("button", { name: /^Monter/ }),
+        section.getByRole("button", { name: /^Descendre/ }),
+        section.getByRole("link", { name: /^Modifier/ }),
+      ]) {
+        const boite = (await action.boundingBox())!;
+        expect(boite.x).toBeGreaterThan(titre.x + titre.width);
+        expect(boite.y).toBeLessThan(titre.y + titre.height);
+      }
+      await verifierSansDefilementHorizontal(page);
+      await page.screenshot({
+        path: test.info().outputPath(`sections-${largeur}.png`),
+        fullPage: true,
+      });
+    });
+  }
+
+  test("« Nouvelle section » mène au formulaire", async ({ page }) => {
+    await listeDesSections(page);
+    await lien(page, "Nouvelle section").click();
+    await expect(page).toHaveURL(/\/syndic\/reglement\/nouvelle$/);
+  });
+
+  for (const theme of ["clair", "sombre"] as const) {
+    test(`en grands caractères et en thème ${theme}, reste sans défilement horizontal`, async ({
+      page,
+    }) => {
+      const { syndic } = await listeDesSections(page);
+      await reglerAffichage(syndic.id, { theme, taille: "grands" });
+      for (const largeur of [1280, 1100]) {
+        await page.setViewportSize({ width: largeur, height: 900 });
+        await page.goto("/syndic/reglement");
+        await expect(page.locator("html")).toHaveAttribute(
+          "data-taille",
+          "grands",
+        );
+        await verifierSansDefilementHorizontal(page);
+        await page.screenshot({
+          path: test
+            .info()
+            .outputPath(`sections-${theme}-grands-${largeur}.png`),
+          fullPage: true,
+        });
+      }
+    });
+  }
+});
+
+test("sur mobile, la liste des sections ne change pas : « Ajouter une section » sous la liste", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "mobile", "Mise en page mobile.");
+  const { liste } = await listeDesSections(page);
+  const ajouter = lien(page, "Ajouter une section");
+  await expect(ajouter).toHaveCount(1);
+  await expect(lien(page, "Nouvelle section")).toHaveCount(0);
+  expect((await ajouter.boundingBox())!.y).toBeGreaterThan(
+    (await liste.boundingBox())!.y,
+  );
+  await verifierSansDefilementHorizontal(page);
+  await page.screenshot({
+    path: info.outputPath("sections-mobile.png"),
+    fullPage: true,
+  });
+});
