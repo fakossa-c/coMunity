@@ -136,7 +136,7 @@ test("le conseil syndical publie un sondage, un résident répond et lit les ré
   await envoyer.click();
 
   await expect(annonce.getByRole("status")).toContainText(
-    "Merci, votre réponse est enregistrée",
+    "Merci, votre réponse est enregistrée.",
   );
   await expect(annonce).toContainText("1 réponse");
   await expect(
@@ -191,7 +191,7 @@ test("un résident en attente voit le sondage sans pouvoir répondre ni lire les
     annonce.getByRole("button", { name: "Envoyer ma réponse" }),
   ).toHaveCount(0);
   await expect(annonce).toContainText(
-    "Vous pourrez répondre quand le conseil syndical aura validé votre compte.",
+    "Vous pourrez répondre dès que le conseil syndical aura validé votre compte.",
   );
   await expect(annonce).not.toContainText("%");
 });
@@ -300,7 +300,7 @@ test("un résident répond depuis le lien public de l'annonce, un visiteur n'y v
   await page.getByRole("button", { name: "Envoyer ma réponse" }).click();
 
   await expect(
-    page.getByText("Merci, votre réponse est enregistrée"),
+    page.getByText("Merci, votre réponse est enregistrée."),
   ).toBeVisible();
   await expect(
     page.getByRole("listitem").filter({ hasText: "Accès 24h/24" }),

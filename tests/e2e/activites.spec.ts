@@ -48,7 +48,7 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
 
   const titre = "Atelier compost du jeudi";
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
   await page
     .getByLabel("Mot d'accueil")
     .fill("On apprend à composter ensemble, dans la cour.");
@@ -286,7 +286,7 @@ test.describe("les segments de l'écran Activités", () => {
     const organisee = archivees(page)
       .getByRole("listitem")
       .filter({ hasText: titres.organiseePassee });
-    await expect(suivie.getByRole("link", { name: "Dupliquer" })).toHaveCount(
+    await expect(suivie.getByRole("link", { name: "Nouvelle date" })).toHaveCount(
       0,
     );
     await expect(
@@ -294,7 +294,7 @@ test.describe("les segments de l'écran Activités", () => {
     ).toHaveCount(0);
 
     await expect(
-      organisee.getByRole("link", { name: "Dupliquer" }),
+      organisee.getByRole("link", { name: "Nouvelle date" }),
     ).toHaveAttribute(
       "href",
       `/proposer?copie=${identifiants.organiseePassee}`,
@@ -365,7 +365,7 @@ test.describe("les segments de l'écran Activités", () => {
       /0 activité$/,
     ]);
     await expect(page.getByRole("main")).toContainText(
-      "Vous n'êtes inscrit à aucune activité à venir",
+      "Aucune inscription à venir",
     );
     await segment(page, "Archivées").click();
     await expect(page.getByRole("main")).toContainText(

@@ -170,7 +170,7 @@ test.describe("aide à l'installation sur Android", () => {
     await proposerInstallation(page);
 
     const encart = aideInstallation(page);
-    const installer = encart.getByRole("button", { name: "Installer l'app" });
+    const installer = encart.getByRole("button", { name: "Installer l'application" });
     await expect(installer).toBeVisible();
     const boite = await installer.boundingBox();
     expect(boite?.height).toBeGreaterThanOrEqual(52);
@@ -200,7 +200,7 @@ test.describe("aide à l'installation sur Android", () => {
       .click();
 
     await expect(
-      aideInstallation(page).getByRole("button", { name: "Installer l'app" }),
+      aideInstallation(page).getByRole("button", { name: "Installer l'application" }),
     ).toBeVisible();
   });
 });
@@ -229,7 +229,7 @@ async function ouvrirAccueil(page: Page) {
 }
 
 function aideInstallation(page: Page) {
-  return page.getByRole("region", { name: "Installer l'app" });
+  return page.getByRole("region", { name: "Installer l'application" });
 }
 
 /** Rejoue l'événement que Chrome émet quand l'app devient installable. */

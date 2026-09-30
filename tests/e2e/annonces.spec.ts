@@ -179,7 +179,7 @@ test("les puces filtrent la liste par type", async ({ page }) => {
   await expect(carte(page, sondage)).toBeVisible();
   await expect(carte(page, assemblee)).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Travaux & infos" }).click();
+  await page.getByRole("link", { name: "Travaux et infos" }).click();
   await expect(carte(page, travaux)).toBeVisible();
   await expect(carte(page, info)).toBeVisible();
   await expect(carte(page, sondage)).toHaveCount(0);

@@ -164,7 +164,7 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
   });
 
   await page.goto(`/activites/${identifiant}`);
-  await page.getByRole("link", { name: "Dupliquer" }).click();
+  await page.getByRole("link", { name: "Nouvelle date" }).click();
 
   await expect(page.getByLabel("Titre de l'activité")).toHaveValue(
     "Goûter crêpes",
@@ -333,7 +333,7 @@ test("un autre résident n'a aucun outil de gestion et ne peut pas ouvrir la mod
   await page.goto(`/activites/${identifiant}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Modifier" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Dupliquer" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Nouvelle date" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Supprimer" })).toHaveCount(0);
 
   const reponse = await page.goto(`/activites/${identifiant}/modifier`);

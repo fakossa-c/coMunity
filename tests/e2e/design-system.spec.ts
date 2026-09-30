@@ -274,8 +274,8 @@ test.describe("couleur d'une catégorie d'activité", () => {
     const { culture, jardin } = await preparer(page);
     const catalogue = page.getByRole("region", { name: "Activités à venir" });
     for (const [activite, libelle, couleur] of [
-      [culture, "Culture & Loisirs", CULTURE],
-      [jardin, "Jardin & Nature", JARDIN],
+      [culture, "Culture et loisirs", CULTURE],
+      [jardin, "Jardin et nature", JARDIN],
     ] as const) {
       const carte = catalogue
         .getByRole("article")

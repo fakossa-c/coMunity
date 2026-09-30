@@ -52,7 +52,7 @@ function continuer(page: Page) {
 async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await etape(page, 1);
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
   await page
     .getByLabel("Mot d'accueil")
     .fill("Venez comme vous êtes, seul ou en famille.");
@@ -120,7 +120,7 @@ test("sur mobile, un résident propose une activité en quatre étapes, sans per
   await page.getByLabel("Titre de l'activité").fill("Atelier");
   await expect(page.getByRole("main")).toContainText("7 / 50");
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
   await page.getByLabel("Mot d'accueil").fill("Venez comme vous êtes.");
   await expect(page.getByRole("main")).toContainText("22 / 300");
   await continuer(page);
@@ -206,7 +206,7 @@ test("sur mobile, un résident propose une activité en quatre étapes, sans per
   await etape(page, 4);
   const recapitulatif = page.getByRole("main");
   await expect(recapitulatif).toContainText(titre);
-  await expect(recapitulatif).toContainText("Jardin & Nature");
+  await expect(recapitulatif).toContainText("Jardin et nature");
   await expect(recapitulatif).toContainText("Venez comme vous êtes.");
   await expect(recapitulatif).toContainText("de 10h00 à 11h30");
   await expect(recapitulatif).toContainText("Cour intérieure");
@@ -591,8 +591,8 @@ test.describe("sur ordinateur : une page unique", () => {
 
     await page
       .getByLabel("Catégorie")
-      .selectOption({ label: "Jardin & Nature" });
-    await expect(apercu(page)).toContainText("Jardin & Nature");
+      .selectOption({ label: "Jardin et nature" });
+    await expect(apercu(page)).toContainText("Jardin et nature");
     await choisirDate(page, dansUnMois());
     await page.getByLabel("Heure de début").selectOption("10:00");
     await page.getByLabel("Heure de fin").selectOption("11:30");
@@ -667,7 +667,7 @@ test.describe("sur ordinateur : une page unique", () => {
     await page.getByLabel("Titre de l'activité").fill(titre);
     await page
       .getByLabel("Catégorie")
-      .selectOption({ label: "Jardin & Nature" });
+      .selectOption({ label: "Jardin et nature" });
     await page.getByLabel("Mot d'accueil").fill("Venez comme vous êtes.");
     await expect(page.getByRole("main")).toContainText("22 / 300");
 
@@ -816,7 +816,7 @@ test("la saisie tient sans barre de défilement horizontale, en clair, en sombre
 });
 
 test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
-  test("600 caractères au plus, enregistré, sur la fiche, repris par Modifier et Dupliquer", async ({
+  test("600 caractères au plus, enregistré, sur la fiche, repris par Modifier et Nouvelle date", async ({
     page,
   }) => {
     await ouvrirProposer(page);
@@ -860,7 +860,7 @@ test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
     await expect(page.getByRole("main")).toContainText(description);
     const fiche = page.url();
 
-    // Modifier reprend la description ; Dupliquer aussi.
+    // Modifier reprend la description ; Nouvelle date aussi.
     await page.goto(`${fiche}/modifier`);
     await expect(champ).toHaveValue(description);
     await page.goto(`/proposer?copie=${fiche.split("/").pop()}`);

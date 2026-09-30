@@ -11,20 +11,20 @@ describe("libelleNoteMoyenne", () => {
   });
 
   it("indique l'absence de retour", () => {
-    expect(libelleNoteMoyenne(null)).toBe("Aucun retour pour le moment");
+    expect(libelleNoteMoyenne(null)).toBe("Aucun avis pour l'instant");
   });
 });
 
 describe("libelleNombreRetours", () => {
   it("accorde au singulier", () => {
-    expect(libelleNombreRetours(1)).toBe("1 retour");
+    expect(libelleNombreRetours(1)).toBe("1 avis");
   });
 
   it("accorde au pluriel", () => {
-    expect(libelleNombreRetours(3)).toBe("3 retours");
+    expect(libelleNombreRetours(3)).toBe("3 avis");
   });
 
   it("indique l'absence de retour", () => {
-    expect(libelleNombreRetours(0)).toBe("Aucun retour");
+    expect(libelleNombreRetours(0)).toBe("Aucun avis");
   });
 });

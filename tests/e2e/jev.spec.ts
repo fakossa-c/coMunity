@@ -155,11 +155,11 @@ test("Jev présélectionne la catégorie et le pictogramme, le créateur les cha
     .getByRole("button", { name: "Garder celui de la catégorie" })
     .click();
   await expect(principal).not.toContainText("Pictogramme suggéré");
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
   await expect(principal).not.toContainText("Suggérée d'après votre titre");
   await continuerProposer(page);
   await etapeProposer(page, 4);
-  await expect(principal).toContainText("Jardin & Nature");
+  await expect(principal).toContainText("Jardin et nature");
   await page.getByRole("button", { name: /^Publier/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
@@ -194,7 +194,7 @@ test("le pictogramme suggéré par Jev est celui de l'activité publiée, et se 
   await commencer(page, titre);
   await continuerProposer(page);
   await jusquAuRecapitulatif(page);
-  await expect(page.getByRole("main")).toContainText("Création & Bricolage");
+  await expect(page.getByRole("main")).toContainText("Création et bricolage");
   await page.getByRole("button", { name: "Publier" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
@@ -231,10 +231,10 @@ test("la catégorie choisie par le créateur n'est pas remplacée", async ({
 }) => {
   const titre = titreDuCas("Bricolage");
   await commencer(page, titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
   await continuerProposer(page);
   await jusquAuRecapitulatif(page);
-  await expect(page.getByRole("main")).toContainText("Jardin & Nature");
+  await expect(page.getByRole("main")).toContainText("Jardin et nature");
   await page.getByRole("button", { name: "Publier" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),

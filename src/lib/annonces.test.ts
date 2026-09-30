@@ -49,7 +49,7 @@ const SAISIE: SaisieAnnonce = {
 };
 
 describe("filtres de la liste", () => {
-  it("chaque filtre garde ses types ; « Travaux & infos » en réunit deux", () => {
+  it("chaque filtre garde ses types ; « Travaux et infos » en réunit deux", () => {
     expect(typesDuFiltre("toutes")).toBeNull();
     expect(typesDuFiltre("assemblees")).toEqual(["assemblee"]);
     expect(typesDuFiltre("sondages")).toEqual(["sondage"]);
