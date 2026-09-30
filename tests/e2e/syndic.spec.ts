@@ -92,6 +92,37 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   await appareilDuCollegue.close();
 });
 
+test("sur ordinateur, la carte d'invitation est à côté de la liste des membres ; sur mobile, au-dessus", async ({
+  page,
+  isMobile,
+}) => {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+
+  await seConnecter(page, syndic.email, MOT_DE_PASSE);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+
+  // Mobile : la largeur du projet ; ordinateur : le rail (1100 px) puis le menu déplié (1440 px).
+  for (const largeur of isMobile ? [null] : [1100, 1440]) {
+    if (largeur) await page.setViewportSize({ width: largeur, height: 900 });
+    await page.goto("/syndic/membres");
+    const liste = (await listeDesMembres(page).boundingBox())!;
+    const carte = (await page
+      .getByRole("region", { name: "Inviter un collègue" })
+      .boundingBox())!;
+    if (isMobile) {
+      expect(carte.y + carte.height).toBeLessThanOrEqual(liste.y);
+    } else {
+      expect(carte.x).toBeGreaterThanOrEqual(liste.x + liste.width);
+      expect(carte.y).toBeLessThan(liste.y + liste.height);
+    }
+    await page.screenshot({
+      path: test.info().outputPath(`membres-${largeur ?? "mobile"}.png`),
+      fullPage: true,
+    });
+  }
+});
+
 test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entrer dans l'espace syndic", async ({
   page,
   browser,

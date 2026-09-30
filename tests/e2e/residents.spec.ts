@@ -1,10 +1,12 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   arriveeDuSyndic,
+  modifierProfil,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
   nouvelEmail,
+  reglerAffichage,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -23,9 +25,14 @@ async function seConnecter(page: Page, email: string) {
 }
 
 /** Le syndic, connecté sur son propre appareil, ouvre la page des résidents. */
-async function syndicSurLesResidents(browser: Browser) {
+async function syndicSurLesResidents(
+  browser: Browser,
+  affichage: Parameters<typeof reglerAffichage>[1] = {},
+) {
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
+  if (affichage.taille || affichage.theme)
+    await reglerAffichage(syndic.id, affichage);
   const appareil = await browser.newContext({
     baseURL: test.info().project.use.baseURL,
   });
@@ -169,6 +176,41 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
   );
   await expect(titreAccueil(page)).toHaveCount(0);
   await expect(navigationPrincipale(page)).toHaveCount(0);
+});
+
+test("une adresse longue reste lisible dans la ligne d'un compte en attente, même en grands caractères", async ({
+  browser,
+}) => {
+  const resident = await nouveauResident("en_attente");
+  emails.push(resident.email);
+  // L'adresse d'origine reste celle du compte, que `supprimerComptes` retrouve.
+  const adresse = nouvelEmail("danielle-martin-du-deuxieme-etage");
+  await modifierProfil(resident.id, { email: adresse });
+
+  const syndic = await syndicSurLesResidents(browser, { taille: "grands" });
+  const enAttente = ligne(syndic.page, "Résidents en attente", adresse);
+
+  // L'adresse tient sur trois lignes au plus : les boutons ne l'écrasent pas, elle ne s'empile
+  // pas lettre par lettre (issue #177). Vrai aussi pendant la confirmation du refus.
+  async function adresseLisible() {
+    const texte = enAttente.getByText(adresse);
+    const interligne = await texte.evaluate((element) =>
+      parseFloat(getComputedStyle(element).lineHeight),
+    );
+    const hauteur = (await texte.boundingBox())!.height;
+    expect(hauteur).toBeLessThanOrEqual(3 * interligne);
+  }
+  await adresseLisible();
+  await syndic.page.screenshot({
+    path: test.info().outputPath("residents-grands-caracteres.png"),
+    fullPage: true,
+  });
+  await enAttente.getByRole("button", { name: "Refuser" }).click();
+  await expect(
+    enAttente.getByRole("button", { name: "Confirmer le refus" }),
+  ).toBeVisible();
+  await adresseLisible();
+  await syndic.appareil.close();
 });
 
 test("l'espace syndic ne propose plus de code de résidence", async ({
