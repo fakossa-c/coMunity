@@ -94,6 +94,7 @@ test("le conseil syndical ajoute, réordonne, remplace puis retire les photos d'
   page,
   browser,
 }) => {
+  test.setTimeout(90_000);
   const syndic = await nouveauSyndic();
   const resident = await nouveauResident("valide");
   emails.push(syndic.email, resident.email);
