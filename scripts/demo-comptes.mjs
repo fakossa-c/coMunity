@@ -10,13 +10,17 @@
 // le Supabase local). Pour viser le distant, les passer devant la commande : l'environnement l'emporte
 // sur .env.local.
 //
-// Chaque compte a pour adresse `fakossa+<username>@gmail.com` et pour mot de passe cette même adresse.
-// Ces comptes sont publics de fait : les retirer avant l'ouverture aux vrais résidents.
+// Chaque compte a pour adresse `fakossa+test-<rôle>-<username>@gmail.com` (par exemple
+// `fakossa+test-resident-danielle@gmail.com`) et pour mot de passe cette même adresse : le `test-` la
+// signale comme compte de test. `demo:retirer` supprime aussi les comptes de l'ancien format
+// `fakossa+<username>@gmail.com`. Ces comptes sont publics de fait : les retirer avant l'ouverture aux
+// vrais résidents.
 import { createClient } from "@supabase/supabase-js";
 
 /** Ce qui distingue les données de démonstration : adresses des comptes et préfixe des identifiants publics. */
 export const MODELE_DEMO = {
   prefixe: "fakossa+",
+  etiquette: "test-",
   domaine: "gmail.com",
   marqueur: "demo",
 };
@@ -87,21 +91,22 @@ export const COMPTES = [
   },
 ];
 
-/** L'adresse (et le mot de passe) du compte de démonstration `username`. */
-export function adresseDemo(username, modele = MODELE_DEMO) {
-  return `${modele.prefixe}${username}@${modele.domaine}`;
+/** L'adresse (et le mot de passe) d'un compte de démonstration : `<préfixe>test-<rôle>-<username>@<domaine>`. */
+export function adresseDemo({ role, username }, modele = MODELE_DEMO) {
+  return `${modele.prefixe}${modele.etiquette}${role}-${username}@${modele.domaine}`;
 }
 
 const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Vrai pour une adresse de démonstration et pour elle seule : jamais pour `fakossa@gmail.com`, la
- * vraie boîte, ni pour une adresse qui contiendrait le motif sans l'être.
+ * vraie boîte, ni pour une adresse qui contiendrait le motif sans l'être. Reconnaît aussi l'ancien
+ * format `<préfixe><username>@<domaine>`, pour que `demo:retirer` supprime ces comptes.
  */
 export function estAdresseDemo(adresse, modele = MODELE_DEMO) {
   if (typeof adresse !== "string") return false;
   const motif = new RegExp(
-    `^${echapper(modele.prefixe)}[a-z0-9]+@${echapper(modele.domaine)}$`,
+    `^${echapper(modele.prefixe)}(?:${echapper(modele.etiquette)}[a-z0-9]+-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
     "i",
   );
   return motif.test(adresse);
@@ -441,7 +446,7 @@ export async function amorcerDemo({
   const existants = await listerComptes(admin);
   const ids = {};
   for (const compte of COMPTES) {
-    const email = adresseDemo(compte.username, modele);
+    const email = adresseDemo(compte, modele);
     const connu = existants.find((c) => c.email?.toLowerCase() === email);
     if (connu) {
       verifier(
@@ -684,7 +689,7 @@ if (process.argv[1]?.endsWith("demo-comptes.mjs")) {
       );
       if (commande === "amorcer") {
         console.log(
-          `Connexion : ${adresseDemo("<username>")} (le mot de passe est l'adresse). Usernames : ${COMPTES.map((c) => c.username).join(", ")}.`,
+          `Connexion : ${adresseDemo({ role: "<rôle>", username: "<username>" })} (le mot de passe est l'adresse). Comptes : ${COMPTES.map((c) => `${c.role}-${c.username}`).join(", ")}.`,
         );
       }
     },

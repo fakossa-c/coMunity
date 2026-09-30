@@ -15,7 +15,10 @@ const modele = {
   domaine: "exemple.fr",
   marqueur: "dmtt",
 };
-const emails = COMPTES.map((c) => adresseDemo(c.username, modele));
+const emails = COMPTES.map((c) => adresseDemo(c, modele));
+
+const compte = (username: string) =>
+  COMPTES.find((c) => c.username === username)!;
 
 // Amorcer ou retirer enchaîne une centaine d'appels : plus que les 5 s par défaut quand la suite tourne en entier.
 const DELAI_LONG = 60_000;
@@ -58,7 +61,7 @@ describe("amorcerDemo : comptes", () => {
     expect(profils).toHaveLength(COMPTES.length);
     for (const compte of COMPTES) {
       const profil = profils.find(
-        (p) => p.email === adresseDemo(compte.username, modele),
+        (p) => p.email === adresseDemo(compte, modele),
       );
       expect(profil, compte.username).toMatchObject({
         role: compte.role,
@@ -148,20 +151,16 @@ describe("amorcerDemo : activités", () => {
   });
 
   it("montre le catalogue à un résident validé, et rien à un résident refusé", async () => {
-    const validé = await connecter(
-      adresseDemo("danielle", modele),
-      adresseDemo("danielle", modele),
-    );
+    const danielle = adresseDemo(compte("danielle"), modele);
+    const validé = await connecter(danielle, danielle);
     const vu = await validé
       .from("activite")
       .select("id")
       .like("identifiant_public", "dmtt%");
     expect(vu.data?.length ?? 0).toBeGreaterThan(3);
 
-    const refuse = await connecter(
-      adresseDemo("refuse", modele),
-      adresseDemo("refuse", modele),
-    );
+    const refusé = adresseDemo(compte("refuse"), modele);
+    const refuse = await connecter(refusé, refusé);
     const rien = await refuse
       .from("activite")
       .select("id")
@@ -240,6 +239,27 @@ describe("retirerDemo", () => {
         .eq("id", autre.data!.id);
       expect(annonceRestante.data).toHaveLength(1);
       await admin.from("annonce").delete().eq("id", autre.data!.id);
+    },
+    DELAI_LONG,
+  );
+
+  it(
+    "supprime aussi un compte à l'ancien format <préfixe><username>",
+    async () => {
+      const admin = clientAdmin();
+      const ancien = `${modele.prefixe}ancien@${modele.domaine}`;
+      const { data, error } = await admin.auth.admin.createUser({
+        email: ancien,
+        password: ancien,
+        email_confirm: true,
+      });
+      if (error) throw error;
+
+      await expect(retirerDemo(parametres())).resolves.toMatchObject({
+        comptes: 1,
+      });
+      const reste = await admin.auth.admin.getUserById(data.user.id);
+      expect(reste.data.user).toBeNull();
     },
     DELAI_LONG,
   );
