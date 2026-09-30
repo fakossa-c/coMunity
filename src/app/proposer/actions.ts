@@ -157,10 +157,11 @@ async function conclurePreModeration(
 }
 
 const messagesPhotos: Record<string, string> = {
-  "42501": "Seuls le créateur et le conseil syndical gèrent les photos.",
+  "42501":
+    "Seuls l'organisateur et le conseil syndical peuvent changer les photos.",
   P0002: "Cette activité n'existe plus.",
   P0009: `Une activité a ${MAX_PHOTOS} photos au plus.`,
-  "22023": "Une photo n'est pas valide.",
+  "22023": "Une photo ne convient pas. Choisissez-en une autre.",
 };
 
 /** Vérifie le nombre et le poids des photos annoncées par le navigateur ; `null` quand elles passent. */
@@ -211,9 +212,10 @@ const reglesEspace: Record<string, string> = {
 
 const messages: Record<string, string> = {
   ...reglesEspace,
-  "42501": "Seuls les comptes validés peuvent publier une activité.",
+  "42501":
+    "Vous pourrez publier dès que le conseil syndical aura validé votre compte.",
   "23514":
-    "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
+    "Une information ne convient pas. Vérifiez le titre, la date, l'horaire, le lieu et le nombre de places.",
   "22P02": "Une étiquette n'est pas reconnue. Cochez à nouveau les étiquettes.",
 };
 
@@ -238,7 +240,10 @@ export async function publier(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { ok: false, message: "Vous devez être connecté pour publier." };
+    return {
+      ok: false,
+      message: "Connectez-vous pour publier votre activité.",
+    };
   }
 
   const { data, error } = await supabase
@@ -347,10 +352,10 @@ export async function definirPhotos(
 const messagesModification: Record<string, string> = {
   ...reglesEspace,
   "23514":
-    "Vérifiez le titre, la date, le créneau, le lieu et le nombre de places : un champ n'est pas valide.",
+    "Une information ne convient pas. Vérifiez le titre, la date, l'horaire, le lieu et le nombre de places.",
   "22P02": "Une étiquette n'est pas reconnue. Cochez à nouveau les étiquettes.",
   P0005:
-    "La capacité ne peut pas passer sous le nombre de personnes déjà inscrites. Corrigez le nombre de places.",
+    "Il y a déjà plus d'inscrits que de places. Augmentez le nombre de places.",
 };
 
 /**
@@ -385,7 +390,7 @@ export async function enregistrer(
     return {
       ok: false,
       message:
-        "Cette activité n'existe plus, ou elle n'est plus modifiable (elle est annulée).",
+        "Cette activité n'existe plus ou a été annulée : elle ne se modifie plus.",
     };
   }
 

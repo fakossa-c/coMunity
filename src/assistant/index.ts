@@ -216,7 +216,7 @@ export const DELAI_JEV_MS = 3000;
 const MAX_INFORMATIONS_MANQUANTES = 3;
 
 const RAISON_PAR_DEFAUT =
-  "Jev juge cette proposition contraire aux règles de bon voisinage.";
+  "L'assistant juge cette proposition contraire aux règles de bon voisinage.";
 
 /** Interroge Jev ; `null` sur erreur, réponse illisible ou dépassement du délai. */
 async function interrogerJev(

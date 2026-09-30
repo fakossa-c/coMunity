@@ -88,7 +88,7 @@ import { useBureau } from "./utiliser-bureau";
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
 type Props = {
-  /** Les espaces communs à proposer à l'étape 2, avant « Autre lieu… ». */
+  /** Les espaces communs à proposer à l'étape 2, avant « Ailleurs… ». */
   espaces: EspaceCommun[];
   /** Les règles de la résidence que l'assistant applique. */
   regles: ReglesResidence;
@@ -376,7 +376,7 @@ export function ParcoursProposition({
         return setResultat({
           ok: false,
           message:
-            "Des photos n'ont pas pu être envoyées. Réessayez : celles qui sont parties ne sont pas renvoyées.",
+            "Des photos ne sont pas parties. Réessayez : celles déjà envoyées ne repartent pas.",
         });
       chemins = envoi.chemins;
     }
@@ -513,7 +513,7 @@ export function ParcoursProposition({
               name="description"
               autoComplete="off"
               rows={5}
-              placeholder="Décrivez le déroulement de l'activité, pour qui elle est faite et comment venir."
+              placeholder="Ce qu'on y fait, pour qui, comment venir."
               value={saisie.description}
               onChange={(e) => poser("description", e.target.value)}
               maxLength={LIMITES.description}
