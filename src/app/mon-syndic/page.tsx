@@ -25,12 +25,12 @@ export default async function MonSyndic() {
       {fiches === null ? (
         <Bientot
           icone="lock"
-          message="Votre compte n'a pas accès à cette rubrique. Si c'est une erreur, adressez-vous à un membre du conseil syndical."
+          message="Votre compte n'a pas accès à cette rubrique. Une erreur ? Parlez-en à un membre du conseil syndical."
         />
       ) : fiches.length === 0 ? (
         <Bientot
           icone="support_agent"
-          message="Personne n'est encore présenté ici. Le conseil syndical ajoutera bientôt les contacts du syndic."
+          message="Aucun contact pour l'instant. Le conseil syndical ajoutera bientôt ceux du syndic."
         />
       ) : (
         <ul
