@@ -46,7 +46,12 @@ export default async function ReglementInterieurSyndic({
       <div className="flex flex-col gap-space-lg desktop:max-w-[60rem]">
         <Annonce message={confirmation} />
         <div
-          className={`${miseAJour ? "" : "hidden"}desktop:flex desktop:items-center desktop:justify-between desktop:gap-8`}
+          // Sans date, la ligne n'existe que sur ordinateur, pour le bouton.
+          className={
+            miseAJour
+              ? "desktop:flex desktop:items-center desktop:justify-between desktop:gap-8"
+              : "hidden desktop:flex desktop:justify-end"
+          }
         >
           {miseAJour && (
             <p className="text-body-md text-on-surface-variant">
