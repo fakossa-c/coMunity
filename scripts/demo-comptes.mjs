@@ -12,8 +12,7 @@
 //
 // Chaque compte a pour adresse `fakossa+test-<rôle>-<username>@gmail.com` (par exemple
 // `fakossa+test-resident-danielle@gmail.com`) et pour mot de passe cette même adresse : le `test-` la
-// signale comme compte de test. `demo:retirer` supprime aussi les comptes de l'ancien format
-// `fakossa+<username>@gmail.com`. Ces comptes sont publics de fait : les retirer avant l'ouverture aux
+// signale comme compte de test. Ces comptes sont publics de fait : les retirer avant l'ouverture aux
 // vrais résidents.
 import { createClient } from "@supabase/supabase-js";
 
@@ -101,14 +100,13 @@ const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /**
  * Vrai pour une adresse de démonstration et pour elle seule : jamais pour `fakossa@gmail.com`, la
  * vraie boîte, ni pour une adresse qui contiendrait le motif sans l'être, ni pour un rôle qu'aucun
- * compte de démonstration n'a. Reconnaît aussi l'ancien format `<préfixe><username>@<domaine>`, pour
- * que `demo:retirer` supprime ces comptes.
+ * compte de démonstration n'a.
  */
 export function estAdresseDemo(adresse, modele = MODELE_DEMO) {
   if (typeof adresse !== "string") return false;
   const roles = [...new Set(COMPTES.map((c) => c.role))].join("|");
   const motif = new RegExp(
-    `^${echapper(modele.prefixe)}(?:${echapper(modele.mentionTest)}(?:${roles})-)?[a-z0-9]+@${echapper(modele.domaine)}$`,
+    `^${echapper(modele.prefixe)}${echapper(modele.mentionTest)}(?:${roles})-[a-z0-9]+@${echapper(modele.domaine)}$`,
     "i",
   );
   return motif.test(adresse);

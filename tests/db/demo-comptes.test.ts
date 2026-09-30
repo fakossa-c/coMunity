@@ -243,25 +243,6 @@ describe("retirerDemo", () => {
     DELAI_LONG,
   );
 
-  it(
-    "supprime aussi un compte à l'ancien format <préfixe><username>",
-    async () => {
-      const admin = clientAdmin();
-      const ancien = `${modele.prefixe}ancien@${modele.domaine}`;
-      const { data, error } = await admin.auth.admin.createUser({
-        email: ancien,
-        password: ancien,
-        email_confirm: true,
-      });
-      if (error) throw error;
-
-      await retirerDemo(parametres());
-      const reste = await admin.auth.admin.getUserById(data.user.id);
-      expect(reste.data.user).toBeNull();
-    },
-    DELAI_LONG,
-  );
-
   it("peut se relancer sans rien à retirer", async () => {
     await expect(retirerDemo(parametres())).resolves.toMatchObject({
       comptes: 0,

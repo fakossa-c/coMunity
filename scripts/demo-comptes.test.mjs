@@ -31,18 +31,16 @@ describe("estAdresseDemo", () => {
     expect(estAdresseDemo("Fakossa+Test-Resident-Marc@Gmail.com")).toBe(true);
   });
 
-  it("reconnaît encore l'ancien format fakossa+<username>, le temps de retirer ces comptes", () => {
-    expect(estAdresseDemo("fakossa+marc@gmail.com")).toBe(true);
-    expect(estAdresseDemo("Fakossa+Marc@Gmail.com")).toBe(true);
+  it("ne reconnaît plus l'ancien format fakossa+<username>", () => {
+    expect(estAdresseDemo("fakossa+marc@gmail.com")).toBe(false);
+    expect(estAdresseDemo("Fakossa+Marc@Gmail.com")).toBe(false);
+    expect(estAdresseDemo("fakossa+moi@gmail.com")).toBe(false);
   });
 
   it("ne reconnaît jamais la vraie boîte ni une autre adresse", () => {
     expect(estAdresseDemo("fakossa@gmail.com")).toBe(false);
     expect(estAdresseDemo("fakossa.conate@gmail.com")).toBe(false);
     expect(estAdresseDemo("marc@gmail.com")).toBe(false);
-    expect(estAdresseDemo("fakossa+marc@gmail.com.autre.fr")).toBe(false);
-    expect(estAdresseDemo("x.fakossa+marc@gmail.com")).toBe(false);
-    expect(estAdresseDemo("fakossa+@gmail.com")).toBe(false);
     expect(
       estAdresseDemo("fakossa+test-resident-marc@gmail.com.autre.fr"),
     ).toBe(false);
@@ -63,11 +61,10 @@ describe("estAdresseDemo", () => {
     expect(estAdresseDemo("essai+test-resident-a@exemple.fr", modele)).toBe(
       true,
     );
-    expect(estAdresseDemo("essai+a@exemple.fr", modele)).toBe(true);
+    expect(estAdresseDemo("essai+a@exemple.fr", modele)).toBe(false);
     expect(estAdresseDemo("fakossa+test-resident-a@gmail.com", modele)).toBe(
       false,
     );
-    expect(estAdresseDemo("fakossa+a@gmail.com", modele)).toBe(false);
   });
 });
 
