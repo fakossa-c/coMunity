@@ -16,7 +16,8 @@ export function GestionResidents({ enAttente, valides }: Props) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
 
   return (
-    <div className="flex flex-col gap-space-lg">
+    // Sur ordinateur, les deux listes l'une sous l'autre dans une colonne de 1000 px au plus.
+    <div className="flex flex-col gap-space-lg desktop:max-w-[62.5rem] desktop:gap-12">
       {/* Un seul bloc : vides, les deux zones n'ajoutent qu'un espacement. */}
       <div>
         <Annonce message={resultat?.ok && resultat.message} />
@@ -108,22 +109,25 @@ function Section({
   return (
     <section>
       <h2 className="mb-space-sm font-headline text-headline-sm">{titre}</h2>
-      <CarteLignes
-        libelle={liste}
-        lignes={residents.map((resident) => ({
-          cle: resident.id,
-          icone,
-          titre: nomComplet(resident),
-          detail: resident.email,
-          fin: (
-            <LigneActions
-              resident={resident}
-              onResultat={onResultat}
-              actions={actions}
-            />
-          ),
-        }))}
-      />
+      {/* Liste vide : le titre le dit (« Aucun résident validé »), sans carte vide dessous. */}
+      {residents.length > 0 && (
+        <CarteLignes
+          libelle={liste}
+          lignes={residents.map((resident) => ({
+            cle: resident.id,
+            icone,
+            titre: nomComplet(resident),
+            detail: resident.email,
+            fin: (
+              <LigneActions
+                resident={resident}
+                onResultat={onResultat}
+                actions={actions}
+              />
+            ),
+          }))}
+        />
+      )}
     </section>
   );
 }

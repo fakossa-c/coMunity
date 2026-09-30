@@ -2,10 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   arriveeDuSyndic,
   lienRecu,
+  modifierProfil,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
   nouvelEmail,
+  reglerAffichage,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -90,6 +92,77 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
     fullPage: true,
   });
   await appareilDuCollegue.close();
+});
+
+test("sur ordinateur, la carte d'invitation est à côté de la liste des membres ; sur mobile, au-dessus", async ({
+  page,
+  isMobile,
+}) => {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+
+  await seConnecter(page, syndic.email, MOT_DE_PASSE);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+
+  // Mobile : la largeur du projet ; ordinateur : le rail (1100 px) puis le menu déplié (1440 px).
+  for (const largeur of isMobile ? [null] : [1100, 1440]) {
+    if (largeur) await page.setViewportSize({ width: largeur, height: 900 });
+    await page.goto("/syndic/membres");
+    const liste = (await listeDesMembres(page).boundingBox())!;
+    const carte = (await page
+      .getByRole("region", { name: "Inviter un collègue" })
+      .boundingBox())!;
+    if (isMobile) {
+      expect(carte.y + carte.height).toBeLessThanOrEqual(liste.y);
+    } else {
+      expect(carte.x).toBeGreaterThanOrEqual(liste.x + liste.width);
+      expect(carte.y).toBeLessThan(liste.y + liste.height);
+    }
+    await page.screenshot({
+      path: test.info().outputPath(`membres-${largeur ?? "mobile"}.png`),
+      fullPage: true,
+    });
+  }
+});
+
+test("l'adresse longue d'un collègue reste lisible à côté de « Retirer l'accès », même en grands caractères", async ({
+  page,
+  isMobile,
+}) => {
+  const [moi, collegue] = [await nouveauSyndic(), await nouveauSyndic()];
+  emails.push(moi.email, collegue.email);
+  // L'adresse d'origine reste celle du compte, que `supprimerComptes` retrouve.
+  const adresse = nouvelEmail("bernard-lefevre-du-conseil-syndical");
+  await modifierProfil(collegue.id, { email: adresse });
+  await reglerAffichage(moi.id, { taille: "grands" });
+
+  await seConnecter(page, moi.email, MOT_DE_PASSE);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+  await page.goto("/syndic/membres");
+  const ligne = listeDesMembres(page)
+    .getByRole("listitem")
+    .filter({ hasText: adresse });
+
+  // L'adresse tient sur trois lignes au plus : le bouton ne l'écrase pas, elle ne s'empile pas
+  // lettre par lettre (issue #180). Vrai aussi pendant la confirmation du retrait.
+  async function adresseLisible() {
+    const texte = ligne.getByText(adresse);
+    const interligne = await texte.evaluate((element) =>
+      parseFloat(getComputedStyle(element).lineHeight),
+    );
+    const hauteur = (await texte.boundingBox())!.height;
+    expect(hauteur).toBeLessThanOrEqual(3 * interligne);
+  }
+  await adresseLisible();
+  await page.screenshot({
+    path: test.info().outputPath("membres-grands-caracteres.png"),
+    fullPage: true,
+  });
+  await ligne.getByRole("button", { name: "Retirer l'accès" }).click();
+  await expect(
+    ligne.getByRole("button", { name: "Confirmer le retrait" }),
+  ).toBeVisible();
+  await adresseLisible();
 });
 
 test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entrer dans l'espace syndic", async ({
