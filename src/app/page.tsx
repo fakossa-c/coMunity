@@ -40,7 +40,8 @@ export default async function Accueil({ searchParams }: Props) {
   const aujourdhui = jourDeReference();
 
   return (
-    <EcranPrincipal onglet="accueil">
+    // Le bandeau d'installation, fixé au bas de l'écran, arrive sans rien déplacer dans la page.
+    <EcranPrincipal onglet="accueil" flottant={<AideInstallation />}>
       <Salutation
         prenom={session?.prenom}
         resume={
@@ -49,7 +50,6 @@ export default async function Accueil({ searchParams }: Props) {
             : undefined
         }
       />
-      <AideInstallation />
       {activites.length === 0 ? (
         <Bientot icone="diversity_3" message={MESSAGE_VIDE} />
       ) : (
