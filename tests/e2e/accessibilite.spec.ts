@@ -40,6 +40,20 @@ async function chaqueEcran(resident: string) {
   ];
 }
 
+test("la barre de places porte le texte de la jauge comme nom", async ({
+  page,
+}) => {
+  const compte = await nouveauResident("valide");
+  emails.push(compte.email);
+  const identifiant = await nouvelleActivite(compte.id, { capacite_max: "3" });
+  await seConnecter(page, compte.email);
+
+  await page.goto(`/activites/${identifiant}`);
+  await expect(
+    page.getByRole("progressbar", { name: "Aucun inscrit sur 3 places" }),
+  ).toBeVisible();
+});
+
 for (const theme of ["clair", "sombre"] as const) {
   test.describe(`en thème ${theme}`, () => {
     test(`aucune violation critique sur les 5 écrans`, async ({ page }) => {
