@@ -413,7 +413,7 @@ test("« À la une » montre la prochaine activité ouverte aux inscriptions, re
     enUne.getByRole("heading", { level: 2, name: titre("Ouverte") }),
   ).toBeVisible();
   await expect(enUne).toContainText("À la une");
-  await expect(enUne).toContainText("De 7h40 à 23h00");
+  await expect(enUne).toContainText("De 7h40 à 23h59");
   await expect(enUne.getByRole("link", { name: "Je participe" })).toBeVisible();
   await expect(
     enUne.getByRole("link", { name: "Voir la fiche" }),
