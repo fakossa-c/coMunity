@@ -67,8 +67,7 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   espaces.push(nom);
 
   await seConnecter(page, syndic.email);
-  await page.goto("/syndic");
-  await page.getByRole("link", { name: /Espaces communs/ }).click();
+  await page.goto("/syndic/espaces-communs");
   await expect(
     page.getByRole("heading", { level: 1, name: "Espaces communs" }),
   ).toBeVisible();

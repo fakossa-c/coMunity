@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { classesBouton } from "@/components/bouton";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
 import { lireReglement } from "@/lib/lecture-reglement";
 import { dateReglement } from "@/lib/reglement";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { ListeSections } from "./liste-sections";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Règlement intérieur" };
 
@@ -28,14 +26,15 @@ export default async function ReglementInterieurSyndic({
   searchParams,
 }: Props) {
   const { refus } = await accesSyndic("/syndic/reglement");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const { sections, misAJourLe } = await lireReglement();
   const confirmation = fait && titre ? CONFIRMATIONS[fait]?.(titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="reglement">
       <TitrePage
         titre="Règlement intérieur"
         sousTitre="Les règles de vie de la résidence, que les résidents lisent dans Ma copro, section par section."
@@ -67,6 +66,6 @@ export default async function ReglementInterieurSyndic({
           Ajouter une section
         </Link>
       </div>
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

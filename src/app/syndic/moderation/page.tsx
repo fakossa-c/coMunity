@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CONFIRMATIONS, estDecision } from "@/lib/decision-moderation";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { EtatActivite } from "@/components/etat-activite";
 import { Annonce as Confirmation } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
@@ -12,10 +12,8 @@ import {
   type ActiviteAModerer,
 } from "@/lib/moderation-activites";
 import { cheminFiche, heure, jourLong } from "@/lib/partage-activite";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { DecisionModeration } from "./decision-moderation";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Modération des activités" };
 
@@ -25,7 +23,8 @@ type Props = {
 
 export default async function ModerationDesActivites({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/moderation");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const activites = await lireActivitesAModerer();
@@ -35,7 +34,7 @@ export default async function ModerationDesActivites({ searchParams }: Props) {
     titre && estDecision(fait) ? CONFIRMATIONS[fait](titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="moderation">
       <TitrePage
         titre="Modération des activités"
         sousTitre="Relisez les activités mises de côté, puis publiez-les ou refusez-les avec un message pour leur créateur. Depuis la fiche d'une activité, vous pouvez aussi la masquer, la modifier ou l'annuler."
@@ -53,7 +52,7 @@ export default async function ModerationDesActivites({ searchParams }: Props) {
           vide="Aucune activité masquée."
         />
       </div>
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }
 

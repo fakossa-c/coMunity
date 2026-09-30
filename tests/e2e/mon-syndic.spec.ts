@@ -63,8 +63,7 @@ test("le conseil syndical ajoute deux fiches et les ordonne, un résident les li
   prenoms.push(nadia, paul);
 
   await seConnecter(page, syndic.email);
-  await page.goto("/syndic");
-  await page.getByRole("link", { name: /^Mon syndic/ }).click();
+  await page.goto("/syndic/mon-syndic");
   await expect(
     page.getByRole("heading", { level: 1, name: "Mon syndic" }),
   ).toBeVisible();

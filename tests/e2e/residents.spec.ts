@@ -34,8 +34,7 @@ async function syndicSurLesResidents(browser: Browser) {
   // Sur mobile, le syndic arrive sur l'accueil : attendre l'arrivée avant d'ouvrir l'espace syndic.
   const mobile = !!test.info().project.use.isMobile;
   await expect(arriveeDuSyndic(page, { mobile })).toBeVisible();
-  await page.goto("/syndic");
-  await page.getByRole("link", { name: /Résidents/ }).click();
+  await page.goto("/syndic/residents");
   await expect(
     page.getByRole("heading", { level: 1, name: "Résidents" }),
   ).toBeVisible();
@@ -181,9 +180,9 @@ test("l'espace syndic ne propose plus de code de résidence", async ({
 
   await seConnecter(page, syndic.email);
   await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
-  await page.goto("/syndic");
+  await page.goto("/syndic/residents");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
+    page.getByRole("heading", { level: 1, name: "Résidents" }),
   ).toBeVisible();
 
   await expect(

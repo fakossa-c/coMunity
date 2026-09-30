@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { lireComptesReliables } from "@/lib/lecture-fiches-syndic";
 import { accesSyndic } from "../../acces";
@@ -14,12 +14,12 @@ export default async function NouvelleFiche() {
   if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSyndic rubrique="mon-syndic" retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Ajouter une fiche"
         sousTitre="Elle prend la dernière place de Mon syndic ; vous pourrez la remonter ensuite."
       />
       <FormulaireFiche comptes={await lireComptesReliables()} />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

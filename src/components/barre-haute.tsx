@@ -17,7 +17,7 @@ type Props = {
 export function BarreHaute({ navigation, actions }: Props) {
   return (
     <header className="relative z-30 hidden desktop:block">
-      <div className="mx-auto grid h-barre-nav w-full max-w-conteneur grid-cols-[1fr_auto_1fr] items-center px-marge-journal">
+      <div className="mx-auto grid h-barre-nav w-full max-w-conteneur grid-cols-[1fr_auto_1fr] items-center gap-x-4 px-marge-journal">
         <Link href="/" className="justify-self-start rounded-md">
           <Logo hauteur={32} />
         </Link>

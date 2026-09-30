@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { GestionMembres } from "./gestion-membres";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Membres du syndic" };
 
 export default async function MembresDuSyndic() {
   const { session, refus } = await accesSyndic("/syndic/membres");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const supabase = await clientSession();
   const { data: membres, error } = await supabase
@@ -23,12 +22,12 @@ export default async function MembresDuSyndic() {
   if (error) throw new Error(`Liste des membres illisible : ${error.message}`);
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="membres">
       <TitrePage
         titre="Membres du syndic"
         sousTitre="Invitez un collègue par email ou retirez l'accès d'un membre qui quitte l'équipe."
       />
       <GestionMembres membres={membres} idMoi={session.id} />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

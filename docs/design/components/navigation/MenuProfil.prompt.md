@@ -5,6 +5,6 @@ Menu du profil, ouvert en touchant l'avatar marine de `EnTeteResidence` ou `Barr
   initiale="D" nom="Danielle" adresse="Bât. B, 2e étage" />
 ```
 
-Rubriques par défaut : `profil` (Profil), `syndic` (Mon syndic), `copro` (Ma copro).
+Rubriques par défaut : `profil` (Profil), `syndic` (Mon syndic), `copro` (Ma copro). Pour tout le monde, membre du conseil syndical compris : l'espace syndic n'y figure pas, l'onglet « Tableau de bord » (« Syndic » sur mobile) de la `BarreNavigation` y mène.
 
 **Sur ordinateur** (cadre Journal), le même menu est un menu déroulant sous l'avatar : carte blanche de 340 px, arrondie à 28 px, ombre flottante, aligné au bord droit de l'avatar à 12 px dessous. Il entre en opacité, translation vers le bas de 10 px et léger agrandissement (0,45 s) et ressort de même (0,35 s). Pas de voile visible : un clic à côté ou Échap le ferme. Pas de poignée ni de « Fermer ». Le focus va à la première rubrique, reste dans le menu, puis revient à l'avatar. Au survol, l'avatar grossit de 7 %.

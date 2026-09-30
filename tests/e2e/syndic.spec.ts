@@ -48,8 +48,7 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   await seConnecter(page, syndic.email, MOT_DE_PASSE);
   await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
 
-  await page.goto("/syndic");
-  await page.getByRole("link", { name: /Membres du syndic/ }).click();
+  await page.goto("/syndic/membres");
   await expect(listeDesMembres(page)).toContainText(syndic.email);
 
   await page.getByLabel("Adresse email du collègue").fill(collegue);

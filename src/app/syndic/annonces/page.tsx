@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { classesBouton } from "@/components/bouton";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { Etiquette } from "@/components/etiquette";
 import { Annonce as Confirmation } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
@@ -17,10 +17,8 @@ import {
   typesAnnonce,
 } from "@/lib/annonces";
 import { lireToutesLesAnnonces } from "@/lib/lecture-annonces";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { ActionsAnnonce } from "./actions-annonce";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Annonces du conseil syndical" };
 
@@ -36,14 +34,15 @@ const CONFIRMATIONS: Record<string, (titre: string) => string> = {
 
 export default async function AnnoncesDuSyndic({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/annonces");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const { fait, titre } = await searchParams;
   const annonces = await lireToutesLesAnnonces();
   const confirmation = fait && titre ? CONFIRMATIONS[fait]?.(titre) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="annonces">
       <TitrePage
         titre="Annonces"
         sousTitre="Les informations du conseil syndical pour les résidents : assemblées, travaux, sondages, informations pratiques."
@@ -134,6 +133,6 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
           </Link>
         </section>
       </div>
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

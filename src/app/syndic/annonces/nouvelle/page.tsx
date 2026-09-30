@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { saisieCopie } from "@/lib/annonces";
 import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
@@ -22,7 +22,7 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
   const sondage = original ? await lireSondageDeLAnnonce(original.id) : null;
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSyndic rubrique="annonces" retour={RETOUR} actionDansLeFormulaire>
       <TitrePage
         titre="Publier une annonce"
         sousTitre={
@@ -41,6 +41,6 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
             : undefined
         }
       />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

@@ -299,14 +299,21 @@ test("un résident n'a pas accès à la modération", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("l'espace syndic annonce les activités à relire", async ({ page }) => {
+test("le menu de l'espace syndic annonce les activités à relire", async ({
+  page,
+  isMobile,
+}) => {
   const { identifiant } = await activiteAModerer(page);
   await mettreEnRelecture(identifiant, "À relire");
 
-  await page.goto("/syndic");
-  const rubrique = page.getByRole("link", { name: /Modération des activités/ });
+  await page.goto("/syndic/tableau-de-bord");
+  if (isMobile) {
+    await page.getByRole("button", { name: "Menu de l'espace syndic" }).click();
+  }
+  const rubrique = page
+    .getByRole("navigation", { name: "Espace syndic" })
+    .getByRole("link", { name: /^Modération, \d+ à relire$/ });
 
-  await expect(rubrique).toContainText(/activités? à relire/);
   await rubrique.click();
   await expect(page).toHaveURL(/\/syndic\/moderation$/);
 });

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { classesBouton } from "@/components/bouton";
 import { ChiffreCle } from "@/components/chiffre-cle";
 import {
@@ -36,9 +36,7 @@ import {
   type LigneClassement,
   type LigneRemplissage,
 } from "@/lib/tableau-de-bord";
-import { accesSyndic } from "../acces";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -46,7 +44,8 @@ type Props = { searchParams: Promise<{ periode?: string }> };
 
 export default async function TableauDeBord({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/tableau-de-bord");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const { periode: demandee } = await searchParams;
   const cle = clePeriode(demandee);
@@ -58,7 +57,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
   const sansActivite = synthese.nombre_activites === 0;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="tableau-de-bord">
       <TitrePage
         titre="Tableau de bord"
         sousTitre="Ce qui fait vivre la résidence, d'après les activités publiées qui ont eu lieu sur la période."
@@ -209,7 +208,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
           )}
         </section>
       </div>
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }
 
