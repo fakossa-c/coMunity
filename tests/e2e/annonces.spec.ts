@@ -53,6 +53,7 @@ function ligneDeGestion(page: Page, titre: string) {
 
 test("le conseil syndical publie une annonce épinglée, un résident la voit en tête", async ({
   page,
+  isMobile,
 }) => {
   const syndic = await nouveauSyndic();
   const resident = await nouveauResident("valide");
@@ -64,7 +65,12 @@ test("le conseil syndical publie une annonce épinglée, un résident la voit en
   await expect(
     page.getByRole("heading", { level: 1, name: "Annonces" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Publier une annonce" }).click();
+  // Ticket #173 : sur ordinateur, le bouton d'ajout est en tête et dit « Nouvelle annonce ».
+  await page
+    .getByRole("link", {
+      name: isMobile ? "Publier une annonce" : "Nouvelle annonce",
+    })
+    .click();
 
   await page.getByRole("button", { name: "Publier", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText(

@@ -37,10 +37,22 @@ export default async function EspacesCommuns({ searchParams }: Props) {
 
   return (
     <EcranSyndic rubrique="espaces-communs">
-      <TitrePage
-        titre="Espaces communs"
-        sousTitre="Les lieux où les voisins se retrouvent, avec leurs règles, et l'heure de calme de la résidence."
-      />
+      <div className="desktop:flex desktop:items-start desktop:justify-between desktop:gap-8">
+        <TitrePage
+          titre="Espaces communs"
+          sousTitre="Les lieux où les voisins se retrouvent, avec leurs règles, et l'heure de calme de la résidence."
+        />
+        {/* Sur ordinateur, le bouton d'ajout est en tête ; sur mobile, il reste sous la liste. */}
+        <div className="hidden shrink-0 desktop:mt-2.5 desktop:block">
+          <Link
+            href="/syndic/espaces-communs/nouveau"
+            className={classesBouton("action")}
+          >
+            <Icone nom="add" taille={24} />
+            Nouvel espace
+          </Link>
+        </div>
+      </div>
       <div className="flex flex-col gap-space-lg">
         <Annonce message={confirmation} />
 
@@ -62,7 +74,7 @@ export default async function EspacesCommuns({ searchParams }: Props) {
           ) : (
             <ul
               aria-label="Espaces communs"
-              className="flex flex-col gap-space-md"
+              className="flex flex-col gap-space-md desktop:grid desktop:grid-cols-3 desktop:gap-6"
             >
               {espaces.map((espace) => (
                 <CarteEspaceCommun
@@ -73,13 +85,15 @@ export default async function EspacesCommuns({ searchParams }: Props) {
               ))}
             </ul>
           )}
-          <Link
-            href="/syndic/espaces-communs/nouveau"
-            className={classesBouton("action", true)}
-          >
-            <Icone nom="add" taille={24} />
-            Ajouter un espace commun
-          </Link>
+          <div className="desktop:hidden">
+            <Link
+              href="/syndic/espaces-communs/nouveau"
+              className={classesBouton("action", true)}
+            >
+              <Icone nom="add" taille={24} />
+              Ajouter un espace commun
+            </Link>
+          </div>
         </section>
       </div>
     </EcranSyndic>

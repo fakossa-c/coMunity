@@ -43,10 +43,22 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
 
   return (
     <EcranSyndic rubrique="annonces">
-      <TitrePage
-        titre="Annonces"
-        sousTitre="Les informations du conseil syndical pour les résidents : assemblées, travaux, sondages, informations pratiques."
-      />
+      <div className="desktop:flex desktop:items-start desktop:justify-between desktop:gap-8">
+        <TitrePage
+          titre="Annonces"
+          sousTitre="Les informations du conseil syndical pour les résidents : assemblées, travaux, sondages, informations pratiques."
+        />
+        {/* Sur ordinateur, le bouton d'ajout est en tête ; sur mobile, il reste sous la liste. */}
+        <div className="hidden shrink-0 desktop:mt-2.5 desktop:block">
+          <Link
+            href="/syndic/annonces/nouvelle"
+            className={classesBouton("action")}
+          >
+            <Icone nom="add" taille={24} />
+            Nouvelle annonce
+          </Link>
+        </div>
+      </div>
       <div className="flex flex-col gap-space-lg">
         <Confirmation message={confirmation} />
 
@@ -66,7 +78,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
           ) : (
             <ul
               aria-label="Annonces publiées"
-              className="flex flex-col gap-space-md"
+              className="flex flex-col gap-space-md desktop:grid desktop:grid-cols-2 desktop:gap-x-8 desktop:gap-y-6"
             >
               {annonces.map((annonce) => {
                 const type = typesAnnonce[annonce.type];
@@ -75,7 +87,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
                 return (
                   <li
                     key={annonce.id}
-                    className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]"
+                    className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:border-transparent desktop:p-8 desktop:shadow-douce"
                   >
                     <div className="flex flex-wrap items-center gap-space-sm">
                       <Etiquette ton={type.ton} icone={type.icone}>
@@ -114,23 +126,27 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
                       Voir la page publique
                       <span className="sr-only"> : {annonce.titre}</span>
                     </Link>
-                    <ActionsAnnonce
-                      id={annonce.id}
-                      titre={annonce.titre}
-                      epinglee={annonce.epinglee}
-                    />
+                    <div className="desktop:mt-auto">
+                      <ActionsAnnonce
+                        id={annonce.id}
+                        titre={annonce.titre}
+                        epinglee={annonce.epinglee}
+                      />
+                    </div>
                   </li>
                 );
               })}
             </ul>
           )}
-          <Link
-            href="/syndic/annonces/nouvelle"
-            className={classesBouton("action", true)}
-          >
-            <Icone nom="add" taille={24} />
-            Publier une annonce
-          </Link>
+          <div className="desktop:hidden">
+            <Link
+              href="/syndic/annonces/nouvelle"
+              className={classesBouton("action", true)}
+            >
+              <Icone nom="add" taille={24} />
+              Publier une annonce
+            </Link>
+          </div>
         </section>
       </div>
     </EcranSyndic>
