@@ -6,6 +6,7 @@ import {
   nouveauSyndic,
   type Compte,
 } from "./clients";
+import { creneauFinissantDans } from "./paris";
 
 // Ticket #17 : le conseil syndical suit ce qui anime la résidence. Les statistiques sont des
 // fonctions SQL réservées à ses membres ; les chiffres se vérifient sur un jeu de données fixe,
@@ -328,6 +329,33 @@ describe("tableau de bord du conseil syndical", () => {
         note: 5,
         commentaire: "Très bonne ambiance",
       });
+    });
+
+    it("compte une activité tenue à son heure de fin de Paris, pas avec 1 à 2 h de retard", async () => {
+      const fin = creneauFinissantDans(-30);
+      const terminee = await activite(
+        resident4,
+        fin.date_activite,
+        fin.heure_debut,
+        fin.heure_fin,
+        "moments_partages",
+      );
+      await inscrire(terminee, resident1);
+      await retour(terminee, resident1, 5, "Terminée il y a une demi-heure");
+
+      const { data, error } = await syndic.client.rpc(
+        "tableau_bord_classement",
+        {
+          p_debut: fin.date_activite,
+          p_fin: fin.date_activite,
+          p_limite: 100,
+        },
+      );
+
+      expect(error).toBeNull();
+      expect((data as Ligne[]).map((l) => l.identifiant_public)).toContain(
+        terminee.identifiant_public,
+      );
     });
 
     it("respecte la limite demandée", async () => {

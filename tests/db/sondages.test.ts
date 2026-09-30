@@ -7,6 +7,7 @@ import {
   type Compte,
   type StatutResident,
 } from "./clients";
+import { avecFuseau, fuseauDecale, jourParis } from "./paris";
 
 // Ticket #39 : le sondage à choix unique d'une annonce. Le conseil syndical le crée avec
 // l'annonce ; un résident validé répond une fois avant la date limite ; les résultats ne se
@@ -19,10 +20,8 @@ afterAll(async () => {
   await clientAdmin().from("annonce").delete().in("id", annoncesCreees);
 });
 
-/** Un jour `AAAA-MM-JJ`, décalé de `jours` par rapport à aujourd'hui (le jour de la base, UTC). */
-function jour(jours: number) {
-  return new Date(Date.now() + jours * 86_400_000).toISOString().slice(0, 10);
-}
+/** Un jour `AAAA-MM-JJ`, décalé de `jours` par rapport à aujourd'hui (le jour de Paris). */
+const jour = jourParis;
 
 const OPTIONS = ["7h à 21h", "6h à 23h", "Accès 24h/24"];
 
@@ -62,18 +61,31 @@ async function publierSondage(
   return data;
 }
 
-async function repondre(compte: Compte, sondage: Sondage, choix: number) {
-  return compte.client.rpc("repondre_sondage", {
-    p_sondage: sondage.id,
-    p_choix: choix,
-  });
+async function repondre(
+  compte: Compte,
+  sondage: Sondage,
+  choix: number,
+  fuseau?: string,
+) {
+  return avecFuseau(
+    compte.client.rpc("repondre_sondage", {
+      p_sondage: sondage.id,
+      p_choix: choix,
+    }),
+    fuseau,
+  );
 }
 
 /** Les résultats que voit `client`, sous la forme `{ choix: votes }` ; vide quand rien ne se lit. */
-async function resultats(client: Compte["client"], sondage: Sondage) {
-  const { data, error } = await client.rpc("resultats_sondages", {
-    p_sondages: [sondage.id],
-  });
+async function resultats(
+  client: Compte["client"],
+  sondage: Sondage,
+  fuseau?: string,
+) {
+  const { data, error } = await avecFuseau(
+    client.rpc("resultats_sondages", { p_sondages: [sondage.id] }),
+    fuseau,
+  );
   if (error) throw error;
   return Object.fromEntries(
     (data as { choix: number; votes: number }[]).map((ligne) => [
@@ -344,6 +356,63 @@ describe("sondage : qui répond, une seule fois, avant la date limite", () => {
     });
 
     expect(error).not.toBeNull();
+  });
+});
+
+describe("sondage : la date limite suit le jour de Paris, pas celui du fuseau de la session", () => {
+  // La nuit, la session de la base (UTC) est encore la veille de Paris : `fuseauDecale` la
+  // reproduit à toute heure.
+  it("le conseil syndical joint un sondage qui expire aujourd'hui à Paris, pas hier", async () => {
+    const syndic = await nouveauSyndic();
+    const fuseau = fuseauDecale();
+    const aujourdhui = await annonceDeSondage(syndic.client);
+    const hier = await annonceDeSondage(syndic.client);
+    const sondage = (echeance: string, annonce: string) =>
+      avecFuseau(
+        syndic.client.from("sondage").insert({
+          annonce_id: annonce,
+          question: "Question ?",
+          options: OPTIONS,
+          echeance,
+        }),
+        fuseau,
+      );
+
+    const ok = await sondage(jour(0), aujourdhui);
+    const refuse = await sondage(jour(-1), hier);
+
+    expect(ok.error).toBeNull();
+    expect(refuse.error).not.toBeNull();
+  });
+
+  it("le jour même on répond, le lendemain non", async () => {
+    const syndic = await nouveauSyndic();
+    const fuseau = fuseauDecale();
+    const residentLeJour = await nouveauResident("valide");
+    const residentApres = await nouveauResident("valide");
+    const jourMeme = await publierSondage(syndic, { echeance: jour(0) });
+    const depasse = await publierSondage(syndic, { echeance: jour(-1) });
+
+    const leJour = await repondre(residentLeJour, jourMeme, 1, fuseau);
+    const apres = await repondre(residentApres, depasse, 1, fuseau);
+
+    expect(leJour.error).toBeNull();
+    expect(apres.error?.code).toBe("23514");
+  });
+
+  it("les résultats restent fermés le jour même de la date limite, ouverts le lendemain", async () => {
+    const syndic = await nouveauSyndic();
+    const fuseau = fuseauDecale();
+    const curieux = await nouveauResident("valide");
+    const ouvert = await publierSondage(syndic, { echeance: jour(0) });
+    const echu = await publierSondage(syndic, { echeance: jour(-1) });
+
+    expect(await resultats(curieux.client, ouvert, fuseau)).toEqual({});
+    expect(await resultats(curieux.client, echu, fuseau)).toEqual({
+      1: 0,
+      2: 0,
+      3: 0,
+    });
   });
 });
 

@@ -6,6 +6,7 @@ import {
   nouveauSyndic,
   type Compte,
 } from "./clients";
+import { avecFuseau, fuseauDecale, jourParis } from "./paris";
 
 // Ticket #13 : les annonces du conseil syndical. Seul le conseil syndical écrit ; un compte qui
 // peut consulter lit ; un visiteur lit une annonce par son lien public, et jamais la liste.
@@ -44,14 +45,15 @@ async function publier(syndic: Compte, champs: object = {}) {
   };
 }
 
-/** Un jour `AAAA-MM-JJ`, décalé de `jours` par rapport à aujourd'hui (le jour de la base, UTC). */
-function jour(jours: number) {
-  return new Date(Date.now() + jours * 86_400_000).toISOString().slice(0, 10);
-}
+/** Un jour `AAAA-MM-JJ`, décalé de `jours` par rapport à aujourd'hui (le jour de Paris). */
+const jour = jourParis;
 
 /** Les titres que voit `compte` dans la liste du moment, dans l'ordre. */
-async function titresDuMoment(client: Compte["client"]) {
-  const { data, error } = await client.rpc("annonces_du_moment");
+async function titresDuMoment(client: Compte["client"], fuseau?: string) {
+  const { data, error } = await avecFuseau(
+    client.rpc("annonces_du_moment"),
+    fuseau,
+  );
   if (error) throw error;
   return (data as { titre: string }[]).map((annonce) => annonce.titre);
 }
@@ -232,6 +234,20 @@ describe("annonces du moment", () => {
     expect(titres).not.toContain("Hier, expirée");
     expect(titres).toContain("Aujourd'hui, encore là");
     expect(titres).toContain("Sans échéance");
+  });
+
+  it("l'expiration suit le jour de Paris, pas celui du fuseau de la session (la nuit, UTC est encore la veille)", async () => {
+    const syndic = await nouveauSyndic();
+    await publier(syndic, { titre: "Nuit, hier expirée", expire_le: jour(-1) });
+    await publier(syndic, {
+      titre: "Nuit, aujourd'hui encore là",
+      expire_le: jour(0),
+    });
+
+    const titres = await titresDuMoment(syndic.client, fuseauDecale());
+
+    expect(titres).not.toContain("Nuit, hier expirée");
+    expect(titres).toContain("Nuit, aujourd'hui encore là");
   });
 
   it("les annonces épinglées passent en tête, puis les plus récentes", async () => {

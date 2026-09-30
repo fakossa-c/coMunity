@@ -11,6 +11,7 @@ import {
   type Compte,
   publierApresJev,
 } from "./clients";
+import { creneauFinissantDans } from "./paris";
 
 // Ticket #41 : un résident supprime son compte. Ses informations, ses inscriptions et ses
 // réponses aux sondages sont effacées ; ses activités à venir avec des inscrits sont annulées,
@@ -50,7 +51,17 @@ type ActivitePubliee = { id: string; identifiant: string };
 /** Publie une activité au nom de `organisateur` : à venir par défaut, passée avec `passee`. */
 async function publier(
   organisateur: Compte,
-  { passee = false, titre = ACTIVITE.titre, date = "2020-01-04" } = {},
+  {
+    passee = false,
+    titre = ACTIVITE.titre,
+    date = "2020-01-04",
+    creneau = {},
+  }: {
+    passee?: boolean;
+    titre?: string;
+    date?: string;
+    creneau?: object;
+  } = {},
 ): Promise<ActivitePubliee> {
   const { data, error } = await organisateur.client
     .from("activite")
@@ -58,6 +69,7 @@ async function publier(
       ...ACTIVITE,
       titre,
       ...(passee ? { date_activite: date } : {}),
+      ...creneau,
       organisateur: organisateur.id,
     })
     .select("id, identifiant_public")
@@ -296,6 +308,37 @@ describe("ses activités", () => {
     await supprimerCompte(createur);
 
     expect(await activiteEnBase(enRelecture)).toBeNull();
+  });
+
+  it("une activité du jour dont l'heure de fin de Paris est passée reste, celle qui n'est pas terminée est annulée ou supprimée", async () => {
+    const createur = await nouveauResident("valide");
+    const inscrit = await nouveauResident("valide");
+    const terminee = await publier(createur, {
+      creneau: creneauFinissantDans(-30),
+    });
+    const termineeSansInscrit = await publier(createur, {
+      creneau: creneauFinissantDans(-30),
+    });
+    const enCours = await publier(createur, {
+      creneau: creneauFinissantDans(30),
+    });
+    const enCoursSansInscrit = await publier(createur, {
+      creneau: creneauFinissantDans(30),
+    });
+    await inscrire(inscrit, enCours);
+    // Une activité terminée n'accepte plus d'inscription : la base l'écrit directement.
+    const { error: erreurInscription } = await clientAdmin()
+      .from("inscription_activite")
+      .insert({ activite_id: terminee.id, resident_id: inscrit.id });
+    if (erreurInscription) throw erreurInscription;
+
+    const { error } = await supprimerCompte(createur);
+
+    expect(error).toBeNull();
+    expect((await activiteEnBase(terminee))?.statut).toBe("publiee");
+    expect((await activiteEnBase(termineeSansInscrit))?.statut).toBe("publiee");
+    expect((await activiteEnBase(enCours))?.statut).toBe("annulee");
+    expect(await activiteEnBase(enCoursSansInscrit)).toBeNull();
   });
 
   it("une activité passée reste, sans nom d'organisateur, avec ses photos", async () => {
