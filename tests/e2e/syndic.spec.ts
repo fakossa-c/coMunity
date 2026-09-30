@@ -2,10 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   arriveeDuSyndic,
   lienRecu,
+  modifierProfil,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
   nouvelEmail,
+  reglerAffichage,
   supprimerComptes,
   titreAccueil,
 } from "./outils";
@@ -121,6 +123,46 @@ test("sur ordinateur, la carte d'invitation est à côté de la liste des membre
       fullPage: true,
     });
   }
+});
+
+test("l'adresse longue d'un collègue reste lisible à côté de « Retirer l'accès », même en grands caractères", async ({
+  page,
+  isMobile,
+}) => {
+  const [moi, collegue] = [await nouveauSyndic(), await nouveauSyndic()];
+  emails.push(moi.email, collegue.email);
+  // L'adresse d'origine reste celle du compte, que `supprimerComptes` retrouve.
+  const adresse = nouvelEmail("bernard-lefevre-du-conseil-syndical");
+  await modifierProfil(collegue.id, { email: adresse });
+  await reglerAffichage(moi.id, { taille: "grands" });
+
+  await seConnecter(page, moi.email, MOT_DE_PASSE);
+  await expect(arriveeDuSyndic(page, { mobile: isMobile })).toBeVisible();
+  await page.goto("/syndic/membres");
+  const ligne = listeDesMembres(page)
+    .getByRole("listitem")
+    .filter({ hasText: adresse });
+
+  // L'adresse tient sur trois lignes au plus : le bouton ne l'écrase pas, elle ne s'empile pas
+  // lettre par lettre (issue #180). Vrai aussi pendant la confirmation du retrait.
+  async function adresseLisible() {
+    const texte = ligne.getByText(adresse);
+    const interligne = await texte.evaluate((element) =>
+      parseFloat(getComputedStyle(element).lineHeight),
+    );
+    const hauteur = (await texte.boundingBox())!.height;
+    expect(hauteur).toBeLessThanOrEqual(3 * interligne);
+  }
+  await adresseLisible();
+  await page.screenshot({
+    path: test.info().outputPath("membres-grands-caracteres.png"),
+    fullPage: true,
+  });
+  await ligne.getByRole("button", { name: "Retirer l'accès" }).click();
+  await expect(
+    ligne.getByRole("button", { name: "Confirmer le retrait" }),
+  ).toBeVisible();
+  await adresseLisible();
 });
 
 test("un membre du syndic retire l'accès d'un collègue, qui ne peut plus entrer dans l'espace syndic", async ({
