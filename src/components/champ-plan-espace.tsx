@@ -65,7 +65,7 @@ export function ChampPlanEspace({ plan, nom, onChoisir, onRetirer }: Props) {
       <p
         ref={etat}
         tabIndex={-1}
-        role="status"
+        aria-live="polite"
         className="font-headline text-body-bold outline-none"
       >
         {enCours

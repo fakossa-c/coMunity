@@ -118,12 +118,8 @@ export function ChampPhotoEspace({
           : photos.length === 0
             ? "Aucune photo pour l'instant."
             : `${libellePhotos(photos.length)} sur ${MAX_PHOTOS_ESPACE}`}
+        {deplacement && <span className="sr-only"> · {deplacement}</span>}
       </p>
-      {deplacement && (
-        <p role="status" className="sr-only">
-          {deplacement}
-        </p>
-      )}
       {photos.length > 0 && (
         <ul className="flex flex-col gap-bloc">
           {photos.map((photo, index) => {

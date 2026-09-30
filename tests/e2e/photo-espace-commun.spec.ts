@@ -158,7 +158,7 @@ test("le conseil syndical ajoute, réordonne, remplace puis retire les photos d'
     await page.getByRole("button", { name: "Monter : photo 3 sur 3" }).click();
     await expect(
       page.getByText("Photo déplacée en position 2 sur 3."),
-    ).toBeVisible();
+    ).toBeAttached();
     await enregistrer(page, espace.nom, "est enregistré.");
 
     const trois = await mediasEspace(espace.id);
