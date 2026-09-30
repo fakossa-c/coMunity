@@ -3,10 +3,11 @@
 - Branche d'intégration : `develop` (branche par défaut sur GitHub). Worktrees et PRs de tickets partent de `develop` et y reviennent.
 - `main` = production. La fusion `develop` → `main` est décidée par l'utilisateur.
 - Hors-produit (l'agent fusionne lui-même) : PR qui ne touche que `CLAUDE.md`, `docs/` ou l'outillage (CI, hooks, config de lint et de test).
+- Utilisateurs réels : aucun, jusqu'à l'ouverture aux résidents. D'ici là, l'agent fusionne aussi les PR de tickets et pousse les migrations distantes sans confirmation.
 
 ## Supabase distant
 
-- Les previews Vercel et la production partagent un seul projet Supabase Cloud, durablement (plan gratuit, pas de projet dédié aux previews) : toute écriture sur son schéma ou ses données touche la production. Chacune attend l'accord de l'utilisateur.
+- Les previews Vercel et la production partagent un seul projet Supabase Cloud, durablement (plan gratuit, pas de projet dédié aux previews) : toute écriture sur son schéma ou ses données touche la production.
 - Une migration part en distant après la fusion de sa PR dans `develop`, depuis le checkout principal sur `develop` à jour : `npm run db:pousser` vérifie l'historique et liste ce qui partirait, puis `npm run db:pousser -- --appliquer` pousse. Un hook du projet bloque tout `supabase db push` direct.
 - Avant la fusion, une PR à migration se vérifie sur le Supabase local (`npm test`) ; sa preview reste en erreur sur les écrans concernés jusqu'au push, puis se vérifie sur la preview de `develop`.
 - Le code de `main` tourne sur cette base avant de recevoir `develop` : une migration ajoute sans retirer. Supprimer ou renommer une colonne, une table ou ce qu'une fonction renvoie, quand `main` s'en sert, attend la fusion `develop` → `main` ; `db:pousser` signale ces lignes.
@@ -25,13 +26,14 @@
 - Worktree : juste après sa création, dans son dossier, `node scripts/isoler-supabase-worktree.mjs` (conteneur Docker et ports propres, Studio coupé, `config.toml` masqué pour git, lien Vercel recopié), puis `npx supabase start` et `npm run env:local`. Sans cette isolation, tous les checkouts pilotent le même conteneur, et un hook du projet bloque `supabase start`, `stop` et `db reset`.
 - Chaque Supabase local démarré occupe environ 300 Mo : `npx supabase stop` dans le worktree dès sa PR ouverte.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
-- `npm test` : suite complète (format Prettier, unitaires, base de données, navigateur mobile et desktop ; un écart de format se corrige avec `npm run format`). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucune CI ne rejoue les tests avant octobre 2026 (quota GitHub Actions du plan gratuit).
+- `npm test` : suite complète (format Prettier, unitaires, base de données, navigateur mobile et desktop ; un écart de format se corrige avec `npm run format`). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucun workflow GitHub ne lance les tests.
+- Preview : `vercel curl` avec le lien `.vercel/project.json` (recopié par l'isolation du worktree ; absent, `vercel link --yes --project comunity`, sinon un projet fantôme est créé au nom du dossier). Sous Windows, depuis PowerShell : Git Bash convertit le chemin `/` en chemin Windows.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
 - Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
 - `npm run syndic:amorcer -- <email> <mot-de-passe> <prénom> <nom>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.
-- `npm run demo:amorcer` : comptes de test `fakossa+<username>@gmail.com` (syndic, résidents validés, en attente, refusé, retiré), avec activités dans chaque état, annonces et sondages ; relançable sans doublon. Sur le Supabase local par défaut ; pour le distant, passer `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SECRET_KEY` devant la commande et ajouter `-- --distant` (accord de l'utilisateur).
+- `npm run demo:amorcer` : comptes de test `fakossa+<username>@gmail.com` (syndic, résidents validés, en attente, refusé, retiré), avec activités dans chaque état, annonces et sondages ; relançable sans doublon. Sur le Supabase local par défaut ; pour le distant, passer `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SECRET_KEY` devant la commande et ajouter `-- --distant`.
 - `npm run demo:retirer` : supprime ces comptes et leurs données, eux seuls. À lancer avant l'ouverture aux vrais résidents : leur mot de passe se devine.
 
 ## Design system
