@@ -11,7 +11,7 @@ export type ActivitePartagee = {
 };
 
 /** Le fuseau du jour de référence : celui de la résidence, fixe pour toute l'application. */
-export const FUSEAU_REFERENCE = "Europe/Paris";
+const FUSEAU_REFERENCE = "Europe/Paris";
 
 const HORLOGE_REFERENCE = new Intl.DateTimeFormat("sv-SE", {
   timeZone: FUSEAU_REFERENCE,

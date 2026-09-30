@@ -49,10 +49,10 @@ export async function lireMesActivites(residentId: string) {
 
   // Une activité du jour est dans les deux lectures tant qu'elle n'est pas terminée : le
   // catalogue, plus complet, l'emporte.
-  const deja = new Set(inscriptionsAVenir.map((activite) => activite.id));
+  const dejaLues = new Set(inscriptionsAVenir.map((activite) => activite.id));
   const inscriptions = [
     ...inscriptionsAVenir,
-    ...inscriptionsPassees.filter((activite) => !deja.has(activite.id)),
+    ...inscriptionsPassees.filter((activite) => !dejaLues.has(activite.id)),
   ];
 
   return classerMesActivites({

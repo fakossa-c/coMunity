@@ -53,6 +53,10 @@ _Avoid_ : autre lieu
 Un moment proposé par un résident ou le conseil syndical, à une date et dans un lieu, auquel les résidents s'inscrivent. C'est la raison d'être de coMunity. Une activité du conseil syndical se présente comme celle d'un voisin.
 _Avoid_ : événement, atelier (qui n'est qu'un genre d'activité)
 
+**Jour de référence** :
+Le jour de la résidence, celui d'Europe/Paris, fixe pour toute l'application : c'est « Aujourd'hui » à l'Accueil et la date à laquelle on compare les activités, la nuit comprise. Une activité du jour reste à venir jusqu'à son heure de fin, puis passe dans Archivées.
+_Avoid_ : date du serveur, jour UTC
+
 **Description** :
 Le texte qui présente une activité : ce qu'on y fait, pour qui, comment venir. 600 caractères au plus ; c'est le bloc « Description » de la fiche et le texte de l'aperçu dans Proposer. Distincte du mot d'accueil.
 _Avoid_ : détails, présentation
