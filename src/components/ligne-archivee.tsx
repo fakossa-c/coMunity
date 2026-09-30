@@ -7,7 +7,11 @@ import { Etiquette } from "./etiquette";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-type Props = { activite: Activite; role: RoleArchive };
+type Props = {
+  /** `mon_retour_note` : la note de l'avis déjà donné ; absente ou `null`, l'avis reste à donner. */
+  activite: Activite & { mon_retour_note?: number | null };
+  role: RoleArchive;
+};
 
 /** « 9 participants », accompagnants compris. */
 function libelleParticipants(nombre: number) {
@@ -15,11 +19,27 @@ function libelleParticipants(nombre: number) {
   return nombre === 1 ? "1 participant" : `${nombre} participants`;
 }
 
+/** Cinq étoiles dont `note` pleines, dites « Votre avis : 4 sur 5 » au lecteur d'écran. */
+function NoteDonnee({ note }: { note: number }) {
+  return (
+    <p className="text-body-md">
+      <span
+        aria-hidden="true"
+        className="text-headline-sm tracking-widest text-tertiary-container"
+      >
+        {"★".repeat(note)}
+        <span className="text-outline-variant">{"★".repeat(5 - note)}</span>
+      </span>
+      <span className="sr-only">Votre avis : {note} sur 5</span>
+    </p>
+  );
+}
+
 /**
  * Une activité passée dans « Archivées » : pictogramme, titre (lien vers la fiche), jour et lieu,
  * puis le rôle du résident : « Organisée par vous » avec le nombre de participants et
  * « Dupliquer », ou « Vous y avez participé » avec « Donner mon avis » (le formulaire d'avis est
- * sur la fiche). Une activité organisée puis annulée le dit à la place du nombre de participants.
+ * sur la fiche), ou, l'avis déjà donné, les étoiles données à la place du bouton. Une activité organisée puis annulée le dit à la place du nombre de participants.
  */
 export function LigneArchivee({ activite, role }: Props) {
   const organisee = role === "organisee";
@@ -74,6 +94,8 @@ export function LigneArchivee({ activite, role }: Props) {
               <span className="sr-only"> {activite.titre}</span>
             </Link>
           </>
+        ) : activite.mon_retour_note != null ? (
+          <NoteDonnee note={activite.mon_retour_note} />
         ) : (
           <Link href={fiche} className={classesBouton("contour")}>
             Donner mon avis

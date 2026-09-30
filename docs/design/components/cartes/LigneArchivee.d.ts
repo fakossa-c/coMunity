@@ -9,6 +9,8 @@ export interface LigneArchiveeProps {
   pictogramme: string;
   /** Rôle organisee : nombre de participants, accompagnants compris */
   participants?: number;
+  /** Rôle suivie : la note (1 à 5) de l'avis déjà donné, en étoiles à la place de « Donner mon avis » ; absente, l'avis reste à donner */
+  note?: number;
   /** Rôle organisee : ajoute « Annulée » à la place du nombre de participants */
   annulee?: boolean;
 }
