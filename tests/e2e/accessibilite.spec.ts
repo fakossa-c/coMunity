@@ -46,11 +46,21 @@ test("la barre de places porte le texte de la jauge comme nom", async ({
   const compte = await nouveauResident("valide");
   emails.push(compte.email);
   const identifiant = await nouvelleActivite(compte.id, { capacite_max: "3" });
+  await nouvelleActivite(compte.id, { capacite_max: "5" });
   await seConnecter(page, compte.email);
 
   await page.goto(`/activites/${identifiant}`);
   await expect(
     page.getByRole("progressbar", { name: "Aucun inscrit sur 3 places" }),
+  ).toBeVisible();
+
+  // Deux cartes sur la même page : chaque barre garde le texte de sa propre jauge.
+  await page.goto("/activites?onglet=j_organise");
+  await expect(
+    page.getByRole("progressbar", { name: "Aucun inscrit sur 3 places" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "Aucun inscrit sur 5 places" }),
   ).toBeVisible();
 });
 
