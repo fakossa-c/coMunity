@@ -26,62 +26,67 @@ export function GestionMembres({ membres, idMoi }: Props) {
       <Annonce message={resultat?.ok && resultat.message} />
       <Annonce message={resultat?.ok === false && resultat.message} erreur />
 
-      <section
-        aria-labelledby="titre-inviter"
-        className="rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]"
-      >
-        <h2
-          id="titre-inviter"
-          className="mb-space-sm font-headline text-headline-sm"
+      {/* Sur ordinateur, la liste à gauche et la carte d'invitation à côté ; sur mobile, la carte
+          d'abord. */}
+      <div className="flex flex-col gap-space-lg desktop:grid desktop:grid-cols-[minmax(0,1fr)_24.5rem] desktop:items-start desktop:gap-x-8">
+        <section
+          aria-labelledby="titre-inviter"
+          className="rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:col-start-2 desktop:row-start-1 desktop:border-transparent desktop:p-8 desktop:shadow-douce"
         >
-          Inviter un collègue
-        </h2>
-        <form
-          action={inviter}
-          className="flex flex-col gap-space-md desktop:flex-row desktop:items-end"
-        >
-          <Champ
-            libelle="Adresse email du collègue"
-            aide="Votre collègue recevra un lien pour choisir son mot de passe."
-            name="email"
-            type="email"
-            autoComplete="off"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1"
-          />
-          <BoutonEnvoi enCours="Envoi…" className="desktop:mb-[34px]">
-            <Icone nom="person_add" className="size-6" />
-            Envoyer l&apos;invitation
-          </BoutonEnvoi>
-        </form>
-      </section>
+          <h2
+            id="titre-inviter"
+            className="mb-space-sm font-headline text-headline-sm"
+          >
+            Inviter un collègue
+          </h2>
+          <form action={inviter} className="flex flex-col gap-space-md">
+            <Champ
+              libelle="Adresse email du collègue"
+              aide="Votre collègue recevra un lien pour choisir son mot de passe."
+              name="email"
+              type="email"
+              autoComplete="off"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1"
+            />
+            <BoutonEnvoi enCours="Envoi…">
+              <Icone nom="person_add" className="size-6" />
+              Envoyer l&apos;invitation
+            </BoutonEnvoi>
+          </form>
+        </section>
 
-      <section aria-labelledby="titre-liste">
-        <h2
-          id="titre-liste"
-          className="mb-space-sm font-headline text-headline-sm"
+        <section
+          aria-labelledby="titre-liste"
+          className="desktop:col-start-1 desktop:row-start-1"
         >
-          {membres.length === 1 ? "1 membre" : `${membres.length} membres`}
-        </h2>
-        <CarteLignes
-          libelle="Membres du conseil syndical"
-          lignes={membres.map((membre) => ({
-            cle: membre.id,
-            icone: "shield_person",
-            titre: membre.id === idMoi ? "Vous" : "Membre du conseil syndical",
-            detail: membre.email,
-            fin: (
-              <LigneMembre
-                membre={membre}
-                estMoi={membre.id === idMoi}
-                onResultat={setResultat}
-              />
-            ),
-          }))}
-        />
-      </section>
+          <h2
+            id="titre-liste"
+            className="mb-space-sm font-headline text-headline-sm"
+          >
+            {membres.length === 1 ? "1 membre" : `${membres.length} membres`}
+          </h2>
+          <CarteLignes
+            libelle="Membres du conseil syndical"
+            lignes={membres.map((membre) => ({
+              cle: membre.id,
+              icone: "shield_person",
+              titre:
+                membre.id === idMoi ? "Vous" : "Membre du conseil syndical",
+              detail: membre.email,
+              fin: (
+                <LigneMembre
+                  membre={membre}
+                  estMoi={membre.id === idMoi}
+                  onResultat={setResultat}
+                />
+              ),
+            }))}
+          />
+        </section>
+      </div>
     </div>
   );
 }

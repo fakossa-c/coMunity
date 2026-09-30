@@ -108,22 +108,27 @@ function Section({
   return (
     <section>
       <h2 className="mb-space-sm font-headline text-headline-sm">{titre}</h2>
-      <CarteLignes
-        libelle={liste}
-        lignes={residents.map((resident) => ({
-          cle: resident.id,
-          icone,
-          titre: nomComplet(resident),
-          detail: resident.email,
-          fin: (
-            <LigneActions
-              resident={resident}
-              onResultat={onResultat}
-              actions={actions}
-            />
-          ),
-        }))}
-      />
+      {/* Sur mobile, les actions passent sous le nom et l'adresse : dans la même rangée, elles
+          écrasaient la colonne du texte, et une adresse longue s'empilait lettre par lettre
+          (issue #177). Sur ordinateur, elles restent au bout de la ligne. */}
+      <div className="max-desktop:[&_li]:flex-wrap">
+        <CarteLignes
+          libelle={liste}
+          lignes={residents.map((resident) => ({
+            cle: resident.id,
+            icone,
+            titre: nomComplet(resident),
+            detail: resident.email,
+            fin: (
+              <LigneActions
+                resident={resident}
+                onResultat={onResultat}
+                actions={actions}
+              />
+            ),
+          }))}
+        />
+      </div>
     </section>
   );
 }
@@ -148,7 +153,10 @@ function LigneActions({
   }
 
   return (
-    <span aria-busy={enCours} className="flex flex-wrap gap-space-sm">
+    <span
+      aria-busy={enCours}
+      className="flex flex-wrap gap-space-sm max-desktop:basis-full max-desktop:pl-[calc(24px+var(--spacing-space-sm))]"
+    >
       {actions(resident, executer, enCours)}
     </span>
   );
