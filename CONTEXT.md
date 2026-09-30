@@ -53,6 +53,14 @@ _Avoid_ : autre lieu
 Un moment proposé par un résident ou le conseil syndical, à une date et dans un lieu, auquel les résidents s'inscrivent. C'est la raison d'être de coMunity. Une activité du conseil syndical se présente comme celle d'un voisin.
 _Avoid_ : événement, atelier (qui n'est qu'un genre d'activité)
 
+**Description** :
+Le texte qui présente une activité : ce qu'on y fait, pour qui, comment venir. 600 caractères au plus ; c'est le bloc « Description » de la fiche et le texte de l'aperçu dans Proposer. Distincte du mot d'accueil.
+_Avoid_ : détails, présentation
+
+**Mot d'accueil** :
+Le mot personnel de l'organisateur à ses voisins, en encart en tête de la fiche d'une activité. 300 caractères au plus. Distinct de la description.
+_Avoid_ : message d'accueil, introduction
+
 **Annonce** :
 Une information publiée pour les résidents par le conseil syndical ou l'équipe coMunity, sans inscription, qui dit « il y a du nouveau » et vieillit.
 _Avoid_ : actualité, post, message

@@ -824,6 +824,10 @@ test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
     await expect(page.getByRole("main")).toContainText(
       `${description.length} / 600 caractères`,
     );
+    await page.screenshot({
+      path: test.info().outputPath("description.png"),
+      fullPage: true,
+    });
     await continuerProposer(page);
     await etapeProposer(page, 2);
     await choisirDate(page, dansUnMois());
