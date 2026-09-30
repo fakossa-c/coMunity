@@ -90,6 +90,11 @@ function sectionsDe(
           detail: categorie.libelle,
         },
         {
+          icone: "menu_book",
+          titre: "Description",
+          detail: saisie.description || "Aucune",
+        },
+        {
           icone: "waving_hand",
           titre: "Mot d'accueil",
           detail: saisie.mot_accueil || "Aucun",

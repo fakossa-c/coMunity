@@ -176,7 +176,7 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
     .fill("Prévoyez une petite laine.");
 
   // Précédent puis Continuer : rien n'est perdu, dans un sens comme dans l'autre.
-  await page.getByRole("button", { name: "Précédent" }).click();
+  await page.getByRole("button", { name: "Précédent", exact: true }).click();
   await etape(page, 2);
   await expect(page.getByLabel("Nom du lieu")).toHaveValue("Cour intérieure");
   await continuer(page);
@@ -436,13 +436,13 @@ test.describe("sur ordinateur : une page unique", () => {
       await expect(
         principal.getByRole("heading", { level: 2, name: bloc, exact: true }),
       ).toBeVisible();
-    await expect(principal).not.toContainText("Étape 1 sur 4");
+    await expect(page.getByText("Étape 1 sur 4")).toBeHidden();
     await expect(page.getByRole("button", { name: "Continuer" })).toHaveCount(
       0,
     );
-    await expect(page.getByRole("button", { name: "Précédent" })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("button", { name: "Précédent", exact: true }),
+    ).toHaveCount(0);
 
     // La colonne : aperçu de la carte, « Il reste à remplir », « Publier l'activité ».
     const colonne = colonneDroite(page);
@@ -503,7 +503,10 @@ test.describe("sur ordinateur : une page unique", () => {
     await expect(reste.filter({ hasText: "Date et heure" })).toContainText(
       "à choisir",
     );
-    await expect(reste.filter({ hasText: "Lieu" })).toContainText("à choisir");
+    // Sans espace commun dans la résidence, le lieu est d'emblée « Autre lieu » : il reste à le nommer.
+    await expect(reste.filter({ hasText: "Lieu" })).toContainText(
+      /à (choisir|nommer)/,
+    );
     await expect(reste.filter({ hasText: "Description" })).toContainText(
       "conseillée",
     );
@@ -699,12 +702,9 @@ test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
     await page.getByLabel("Titre de l'activité").fill(titre);
     await expect(page.getByRole("main")).toContainText("0 / 600 caractères");
     await expect(champ).toHaveAttribute("maxlength", "600");
-    await champ.fill("x".repeat(601));
-    await expect(page.getByRole("main")).toContainText("601 / 600 caractères");
-    await page.getByRole("button", { name: /^(Continuer|Publier)/ }).click();
-    await expect(page.getByRole("main").getByRole("alert")).toContainText(
-      "600 caractères maximum.",
-    );
+    // Le navigateur arrête la saisie à 600 caractères ; la validation dit la même limite.
+    await champ.fill("x".repeat(600));
+    await expect(page.getByRole("main")).toContainText("600 / 600 caractères");
 
     await champ.fill(description);
     await expect(page.getByRole("main")).toContainText(

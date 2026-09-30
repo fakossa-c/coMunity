@@ -11,6 +11,7 @@ import {
   type CategorieActivite,
 } from "./categories-activite";
 import type { EtiquetteActivite } from "./etiquettes-activite";
+import { horaire, jourLong } from "./partage-activite";
 import type { ErreurFormulaire } from "./resultat";
 
 /** Longueurs maximales des textes courts, les mêmes que les contraintes en base. */
@@ -319,6 +320,44 @@ export function espaceDeLAdresse(
   espace: string | undefined,
 ) {
   return espace && espaces.some(({ id }) => id === espace) ? espace : "";
+}
+
+/** « 1 h 30 », « 45 min », « 2 h » ; `""` sans les deux heures ou quand la fin n'est pas après le début. */
+export function dureeDe(debut: string, fin: string) {
+  if (!debut || !fin || fin <= debut) return "";
+  const minutes = (valeur: string) => {
+    const [h, m] = valeur.split(":");
+    return Number(h) * 60 + Number(m);
+  };
+  const total = minutes(fin) - minutes(debut);
+  const heures = Math.floor(total / 60);
+  const reste = total % 60;
+  if (heures === 0) return `${reste} min`;
+  return reste === 0
+    ? `${heures} h`
+    : `${heures} h ${String(reste).padStart(2, "0")}`;
+}
+
+/** Le jour et l'horaire de l'aperçu : « Samedi 24 octobre · De 16h00 à 18h30 », ou ce qui reste à choisir. */
+export function resumeCreneau(saisie: SaisieActivite) {
+  if (!saisie.date_activite) return "Date et heure à choisir";
+  const jour = jourLong(saisie.date_activite);
+  return saisie.heure_debut && saisie.heure_fin
+    ? `${jour} · ${horaire(saisie.heure_debut, saisie.heure_fin)}`
+    : jour;
+}
+
+/** Les places de l'aperçu : « Jusqu'à 12 personnes · confirmée dès 4 », « Sans limite de places »… */
+export function resumePlaces(saisie: SaisieActivite) {
+  const max = capaciteMaxDe(saisie);
+  if (saisie.places === "limitees" && max === null)
+    return "Nombre de places à indiquer";
+  const base =
+    max === null
+      ? "Sans limite de places"
+      : `Jusqu'à ${max} ${max === 1 ? "personne" : "personnes"}`;
+  const min = nombre(saisie.capacite_min);
+  return min !== null && min > 1 ? `${base} · confirmée dès ${min}` : base;
 }
 
 /** Le pictogramme de l'activité : celui qu'on lui a donné, à défaut celui de sa catégorie. */

@@ -29,6 +29,11 @@ type Props = {
   onAjouter: (nouvelles: PhotoSaisie[]) => void;
   onRetirer: (index: number) => void;
   onMettreEnPremiere: (index: number) => void;
+  /**
+   * Sur ordinateur, le bloc « Photos » de la page unique porte déjà le titre : la légende reste
+   * pour le lecteur d'écran seulement.
+   */
+  legendeMasqueeSurBureau?: boolean;
 };
 
 /**
@@ -42,6 +47,7 @@ export function ChampPhotos({
   onAjouter,
   onRetirer,
   onMettreEnPremiere,
+  legendeMasqueeSurBureau = false,
 }: Props) {
   const id = useId();
   // Changer la clé vide le sélecteur : rechoisir la même photo après l'avoir retirée déclenche `onChange`.
@@ -86,7 +92,11 @@ export function ChampPhotos({
 
   return (
     <fieldset className="flex flex-col gap-space-sm">
-      <legend className="font-headline text-label-lg">Photos</legend>
+      <legend
+        className={`font-headline text-label-lg ${legendeMasqueeSurBureau ? "desktop:sr-only" : ""}`}
+      >
+        Photos
+      </legend>
       <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
         Facultatif, {MAX_PHOTOS} photos au plus. La première illustre votre
         activité dans la liste et dans l&apos;aperçu du lien.
@@ -104,7 +114,9 @@ export function ChampPhotos({
             : `${libellePhotos(photos.length)} sur ${MAX_PHOTOS}`}
       </p>
       {photos.length > 0 && (
-        <ul className="flex flex-col gap-bloc">
+        <ul
+          className={`flex flex-col gap-bloc ${legendeMasqueeSurBureau ? "desktop:grid desktop:grid-cols-4 desktop:items-start desktop:gap-3" : ""}`}
+        >
           {photos.map((photo, index) => (
             <li key={photo.cle} className="flex flex-col gap-space-sm">
               <EmplacementPhoto
@@ -116,6 +128,9 @@ export function ChampPhotos({
                     : undefined
                 }
                 arrondi
+                className={
+                  legendeMasqueeSurBureau ? "desktop:h-[104px]!" : undefined
+                }
               />
               <div className="flex flex-wrap gap-space-sm">
                 {index > 0 && (
