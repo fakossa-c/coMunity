@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranConnexion } from "@/components/cadre";
 import { EncartPastel } from "@/components/encart-pastel";
 import { Logo } from "@/components/logo";
 import { TitrePage } from "@/components/titre-page";
@@ -17,38 +17,35 @@ export default async function Connexion({
   const { suivant, lien } = await searchParams;
 
   return (
-    <EcranSecondaire
+    <EcranConnexion
       retour={{ href: "/", destination: "Accueil" }}
-      avecCompte={false}
+      sousLaCarte={
+        <EncartPastel titre="Nouveau dans la résidence ?">
+          <Link
+            href="/inscription"
+            className="inline-flex min-h-cible items-center rounded-md font-headline text-label-lg underline underline-offset-4"
+          >
+            Créer mon compte
+          </Link>
+        </EncartPastel>
+      }
     >
-      <div className="flex max-w-md flex-col">
-        {/* Sur ordinateur, la barre du haut du cadre porte déjà le logo. */}
-        <div className="mb-space-lg desktop:hidden">
-          <Logo hauteur={40} />
-        </div>
-        <TitrePage
-          titre="Connexion"
-          sousTitre="Accédez à votre espace avec votre email et votre mot de passe."
-        />
-        <FormulaireConnexion
-          suivant={cheminInterne(typeof suivant === "string" ? suivant : null)}
-          messageInitial={
-            lien === "invalide"
-              ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Demandez un nouveau lien avec « Mot de passe oublié ? »."
-              : null
-          }
-        />
-        <div className="mt-space-lg">
-          <EncartPastel titre="Nouveau dans la résidence ?">
-            <Link
-              href="/inscription"
-              className="inline-flex min-h-cible items-center rounded-md font-headline text-label-lg underline underline-offset-4"
-            >
-              Créer mon compte
-            </Link>
-          </EncartPastel>
-        </div>
+      {/* Sur ordinateur, la barre du haut du cadre porte déjà le logo. */}
+      <div className="mb-space-lg desktop:hidden">
+        <Logo hauteur={40} />
       </div>
-    </EcranSecondaire>
+      <TitrePage
+        titre="Connexion"
+        sousTitre="Accédez à votre espace avec votre email et votre mot de passe."
+      />
+      <FormulaireConnexion
+        suivant={cheminInterne(typeof suivant === "string" ? suivant : null)}
+        messageInitial={
+          lien === "invalide"
+            ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Demandez un nouveau lien avec « Mot de passe oublié ? »."
+            : null
+        }
+      />
+    </EcranConnexion>
   );
 }

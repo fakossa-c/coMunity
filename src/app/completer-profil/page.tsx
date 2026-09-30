@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranConnexion } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { cheminInterne } from "@/lib/chemin-interne";
 import {
@@ -35,17 +35,16 @@ export default async function CompleterProfil({
   }
 
   return (
-    <EcranSecondaire
+    <EcranConnexion
       retour={{ href: "/", destination: "Accueil" }}
+      avecCompte
       completionExigee={false}
     >
-      <div className="max-w-md">
-        <TitrePage
-          titre="Présentez-vous à vos voisins"
-          sousTitre="Membre du conseil syndical, vous êtes aussi un résident. Votre prénom et votre nom ne servent qu'au conseil syndical : vos voisins vous reconnaîtront à votre pseudo, « Prénom N. » au départ, que vous changerez dans Profil."
-        />
-        <FormulaireCompletion suivant={destination} />
-      </div>
-    </EcranSecondaire>
+      <TitrePage
+        titre="Présentez-vous à vos voisins"
+        sousTitre="Membre du conseil syndical, vous êtes aussi un résident. Votre prénom et votre nom ne servent qu'au conseil syndical : vos voisins vous reconnaîtront à votre pseudo, « Prénom N. » au départ, que vous changerez dans Profil."
+      />
+      <FormulaireCompletion suivant={destination} />
+    </EcranConnexion>
   );
 }

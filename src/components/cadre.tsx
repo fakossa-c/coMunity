@@ -72,17 +72,10 @@ async function Compte({ compact = false }: { compact?: boolean }) {
 
 /**
  * Barre du haut du cadre Journal (ordinateur) : logo, onglets, « Proposer » et compte. Les
- * écrans de connexion n'ont que le logo ; un compte refusé ou retiré n'a ni onglets ni « Proposer ».
- * Un membre actif du conseil syndical a l'onglet « Tableau de bord ».
+ * écrans de connexion n'ont que le logo (`EcranConnexion`) ; un compte refusé ou retiré n'a ni
+ * onglets ni « Proposer ». Un membre actif du conseil syndical a l'onglet « Tableau de bord ».
  */
-async function BarreDuHaut({
-  onglet,
-  avecCompte = true,
-}: {
-  onglet?: IdOnglet;
-  avecCompte?: boolean;
-}) {
-  if (!avecCompte) return <BarreHaute />;
+async function BarreDuHaut({ onglet }: { onglet?: IdOnglet }) {
   const session = await lireSession();
   return (
     <BarreHaute
@@ -162,8 +155,6 @@ export async function EcranPrincipal({
 
 type PropsSecondaire = {
   retour: { href: string; destination: string };
-  /** Faux sur les écrans de connexion, où l'avatar n'a pas lieu d'être. */
-  avecCompte?: boolean;
   /** Bouton « Partager » d'une fiche, dans la barre de retour. */
   partager?: ReactNode;
   /** BarreActionFixe de l'écran. */
@@ -173,8 +164,6 @@ type PropsSecondaire = {
    * d'envoi suive l'envoi en cours : l'écran lui réserve alors la place en bas.
    */
   actionDansLeFormulaire?: boolean;
-  /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
-  completionExigee?: boolean;
   children: ReactNode;
 };
 
@@ -184,11 +173,9 @@ type PropsSecondaire = {
  */
 export function EcranSecondaire({
   retour,
-  avecCompte = true,
   partager,
   action,
   actionDansLeFormulaire = false,
-  completionExigee,
   children,
 }: PropsSecondaire) {
   const partageable = partager && <SiCompteOuvert>{partager}</SiCompteOuvert>;
@@ -200,9 +187,9 @@ export function EcranSecondaire({
             href={retour.href}
             destination={retour.destination}
             partager={partageable}
-            compte={avecCompte && <Compte compact={Boolean(partager)} />}
+            compte={<Compte compact={Boolean(partager)} />}
           />
-          <BarreDuHaut avecCompte={avecCompte} />
+          <BarreDuHaut />
         </>
       }
       barreBas={action && <SiCompteOuvert>{action}</SiCompteOuvert>}
@@ -213,7 +200,67 @@ export function EcranSecondaire({
         destination={retour.destination}
         partager={partageable}
       />
-      <GardeCompte completionExigee={completionExigee}>{children}</GardeCompte>
+      <GardeCompte>{children}</GardeCompte>
+    </Ecran>
+  );
+}
+
+type PropsConnexion = {
+  retour: { href: string; destination: string };
+  /**
+   * Vrai pour une personne connectée : sur mobile, son avatar reste dans la barre de retour. Sur
+   * ordinateur, la barre du haut n'a jamais que le logo.
+   */
+  avecCompte?: boolean;
+  /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
+  completionExigee?: boolean;
+  /** Ce qui suit la carte : l'encart « Nouveau dans la résidence ? » de la connexion. */
+  sousLaCarte?: ReactNode;
+  children: ReactNode;
+};
+
+/**
+ * Écran de connexion (connexion, inscription, mot de passe oublié, nouveau mot de passe,
+ * « Présentez-vous à vos voisins »). Sur ordinateur, la barre du haut réduite au logo, même pour
+ * une personne connectée, et le contenu dans une carte centrée de 544 px, « Retour » au-dessus ;
+ * le titre y prend `headline-xl` au lieu du très grand titre. Sur mobile, c'est un écran
+ * secondaire : barre de retour, contenu en colonne de 28 rem, sans carte.
+ */
+export function EcranConnexion({
+  retour,
+  avecCompte = false,
+  completionExigee,
+  sousLaCarte,
+  children,
+}: PropsConnexion) {
+  return (
+    <Ecran
+      haut={
+        <>
+          <BarreRetour
+            href={retour.href}
+            destination={retour.destination}
+            compte={avecCompte && <Compte />}
+          />
+          <BarreHaute />
+        </>
+      }
+    >
+      <div className="desktop:mx-auto desktop:max-w-[34rem]">
+        <LienRetour href={retour.href} destination={retour.destination} />
+        <div className="desktop:rounded-lg desktop:bg-fond-carte desktop:p-10 desktop:shadow-douce desktop:[--text-titre-journal--line-height:var(--text-headline-xl--line-height)] desktop:[--text-titre-journal:var(--text-headline-xl)]">
+          <GardeCompte completionExigee={completionExigee}>
+            <div className="max-w-md desktop:max-w-none">{children}</div>
+          </GardeCompte>
+        </div>
+        {sousLaCarte && (
+          <SiCompteOuvert>
+            <div className="mt-space-lg max-w-md desktop:max-w-none">
+              {sousLaCarte}
+            </div>
+          </SiCompteOuvert>
+        )}
+      </div>
     </Ecran>
   );
 }
