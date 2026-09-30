@@ -48,9 +48,12 @@ const MISES_EN_PAGE = {
     nav: undefined,
     liste: "flex gap-1.5",
     item: undefined,
-    lien: "flex min-h-12 items-center rounded-full px-6 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal",
+    lien: "flex min-h-12 items-center rounded-full font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal",
   },
 };
+
+/** Quatre onglets tiennent avec « Proposer » et l'avatar dès 64 rem, grands caractères compris. */
+const MARGE_HAUT_QUATRE_ONGLETS = "px-3.5 grand:px-6";
 
 const LIEN_ACTIF_HAUT = "bg-fond-action font-extrabold text-texte-action";
 const LIEN_INACTIF_HAUT =
@@ -90,7 +93,7 @@ export function BarreNavigation({
               <Link
                 href={href}
                 aria-current={estActif ? "page" : undefined}
-                className={`${mise.lien} ${bas ? "" : estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT}`}
+                className={`${mise.lien} ${bas ? "" : `${estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT} ${syndic ? MARGE_HAUT_QUATRE_ONGLETS : "px-6"}`}`}
               >
                 {bas ? (
                   <>
