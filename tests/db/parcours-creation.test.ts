@@ -95,6 +95,25 @@ describe("champs du parcours de création", () => {
     expect(error).not.toBeNull();
   });
 
+  it("la description est limitée à 600 caractères, à la création comme à la modification", async () => {
+    const resident = await nouveauResident("valide");
+
+    const { data, error: accepte } = await publier(resident, {
+      description: "x".repeat(600),
+    });
+    const { error: refusee } = await publier(resident, {
+      description: "x".repeat(601),
+    });
+    const { error: modification } = await resident.client
+      .from("activite")
+      .update({ description: "x".repeat(601) })
+      .eq("identifiant_public", data!.identifiant_public);
+
+    expect(accepte).toBeNull();
+    expect(refusee).not.toBeNull();
+    expect(modification).not.toBeNull();
+  });
+
   it("la précision d'accès est limitée à 120 caractères", async () => {
     const resident = await nouveauResident("valide");
 
