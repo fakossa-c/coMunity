@@ -144,7 +144,7 @@ function CadreRubrique({ id, retour, ouvrirMenu, children }) {
   const r = RUBRIQUES_PROFIL.find((x) => x.id === id);
   return (
     <Ecran barreEtat="9:41" paddingBas={40}>
-      <BarreRetour libelleRetour="Profil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Profil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)", display: "flex", flexDirection: "column", gap: 20 }}>
         <TitrePage titre={r.titre} sousTitre={r.detail} />
         {children}
@@ -246,7 +246,7 @@ function CadreModif({ titre, sousTitre, retour, ouvrirMenu, children }) {
   return (
     <Ecran barreEtat="9:41" paddingBas={170} barreBas={
       <BarreActionFixe><Bouton pleineLargeur style={{ fontSize: "var(--text-body-lg)" }} onClick={retour}>Enregistrer</Bouton></BarreActionFixe>}>
-      <BarreRetour libelleRetour="Annuler" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Mes informations" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)", display: "flex", flexDirection: "column", gap: 20 }}>
         <TitrePage titre={titre} sousTitre={sousTitre} />
         {children}
