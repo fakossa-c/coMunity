@@ -10,11 +10,14 @@ import {
   blocageDeLEtape,
   changerCategorie,
   descriptionPourAssistant,
+  dureeDe,
   entreeJevDe,
   espaceDeLAdresse,
   pictogrammeDeLaSaisie,
   propositionDe,
   resteARemplir,
+  resumeCreneau,
+  resumePlaces,
   saisieDeCopie,
   saisieDepuisActivite,
   verifierEtape,
@@ -758,5 +761,59 @@ describe("paramètre d'adresse `espace`", () => {
     expect(espaceDeLAdresse(ESPACES, "")).toBe("");
     expect(espaceDeLAdresse(ESPACES, undefined)).toBe("");
     expect(espaceDeLAdresse([], "jardin")).toBe("");
+  });
+});
+
+describe("résumés de l'aperçu de la carte", () => {
+  it("la durée se lit en heures et minutes", () => {
+    expect(dureeDe("10:00", "11:30")).toBe("1 h 30");
+    expect(dureeDe("10:00", "12:00")).toBe("2 h");
+    expect(dureeDe("10:00", "10:45")).toBe("45 min");
+  });
+
+  it("sans les deux heures, ou une fin qui n'est pas après le début, pas de durée", () => {
+    expect(dureeDe("", "11:30")).toBe("");
+    expect(dureeDe("10:00", "")).toBe("");
+    expect(dureeDe("12:00", "10:00")).toBe("");
+    expect(dureeDe("10:00", "10:00")).toBe("");
+  });
+
+  it("le créneau dit le jour et l'horaire", () => {
+    expect(resumeCreneau(COMPLETE)).toBe(
+      "Samedi 24 octobre · De 16h00 à 18h30",
+    );
+  });
+
+  it("le créneau incomplet dit ce qui reste à choisir", () => {
+    expect(resumeCreneau({ ...COMPLETE, heure_fin: "" })).toBe(
+      "Samedi 24 octobre",
+    );
+    expect(resumeCreneau({ ...COMPLETE, date_activite: "" })).toBe(
+      "Date et heure à choisir",
+    );
+  });
+
+  it("les places disent le maximum et le minimum de confirmation", () => {
+    expect(resumePlaces(COMPLETE)).toBe(
+      "Jusqu'à 12 personnes · confirmée dès 4",
+    );
+    expect(resumePlaces({ ...COMPLETE, capacite_min: "1" })).toBe(
+      "Jusqu'à 12 personnes",
+    );
+    expect(
+      resumePlaces({ ...COMPLETE, capacite_max: "1", capacite_min: "" }),
+    ).toBe("Jusqu'à 1 personne");
+  });
+
+  it("sans limite de places, ou sans nombre encore saisi", () => {
+    expect(resumePlaces({ ...COMPLETE, places: "sans_limite" })).toBe(
+      "Sans limite de places · confirmée dès 4",
+    );
+    expect(
+      resumePlaces({ ...COMPLETE, places: "sans_limite", capacite_min: "" }),
+    ).toBe("Sans limite de places");
+    expect(resumePlaces({ ...COMPLETE, capacite_max: "" })).toBe(
+      "Nombre de places à indiquer",
+    );
   });
 });
