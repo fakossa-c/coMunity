@@ -5,6 +5,7 @@ import { TitrePage } from "@/components/titre-page";
 import { saisieDepuisAnnonce } from "@/lib/annonces";
 import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireAnnonce } from "../formulaire-annonce";
 
 const RETOUR = { href: "/syndic/annonces", destination: "Annonces" };
@@ -24,14 +25,16 @@ export default async function ModifierUneAnnonce({ params }: Props) {
 
   return (
     <EcranSyndic rubrique="annonces" retour={RETOUR} actionDansLeFormulaire>
-      <TitrePage titre="Modifier une annonce" sousTitre={annonce.titre} />
-      <FormulaireAnnonce
-        annonce={{
-          id: annonce.id,
-          saisie: saisieDepuisAnnonce(annonce),
-          sondagePublie: sondage ?? undefined,
-        }}
-      />
+      <ColonneFormulaire>
+        <TitrePage titre="Modifier une annonce" sousTitre={annonce.titre} />
+        <FormulaireAnnonce
+          annonce={{
+            id: annonce.id,
+            saisie: saisieDepuisAnnonce(annonce),
+            sondagePublie: sondage ?? undefined,
+          }}
+        />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }

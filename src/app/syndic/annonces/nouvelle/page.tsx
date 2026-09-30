@@ -5,6 +5,7 @@ import { saisieCopie } from "@/lib/annonces";
 import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
 import { saisieSondageCopie } from "@/lib/sondages";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireAnnonce } from "../formulaire-annonce";
 
 const RETOUR = { href: "/syndic/annonces", destination: "Annonces" };
@@ -23,24 +24,26 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
 
   return (
     <EcranSyndic rubrique="annonces" retour={RETOUR} actionDansLeFormulaire>
-      <TitrePage
-        titre="Publier une annonce"
-        sousTitre={
-          original
-            ? `Copie de « ${original.titre} » : ajustez ce qui change, puis publiez.`
-            : "Les résidents la liront dans l'onglet Annonces, et vous pourrez partager son lien."
-        }
-      />
-      <FormulaireAnnonce
-        annonce={
-          original
-            ? {
-                saisie: saisieCopie(original),
-                sondage: sondage ? saisieSondageCopie(sondage) : undefined,
-              }
-            : undefined
-        }
-      />
+      <ColonneFormulaire>
+        <TitrePage
+          titre="Publier une annonce"
+          sousTitre={
+            original
+              ? `Copie de « ${original.titre} » : ajustez ce qui change, puis publiez.`
+              : "Les résidents la liront dans l'onglet Annonces, et vous pourrez partager son lien."
+          }
+        />
+        <FormulaireAnnonce
+          annonce={
+            original
+              ? {
+                  saisie: saisieCopie(original),
+                  sondage: sondage ? saisieSondageCopie(sondage) : undefined,
+                }
+              : undefined
+          }
+        />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }

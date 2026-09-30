@@ -58,7 +58,12 @@ const FORMULAIRES: Formulaire[] = [
     adresse: async () => "/syndic/annonces/nouvelle",
     action: "Publier",
     deplier: (page) =>
-      page.getByLabel("Type").selectOption({ label: "Sondage" }).then(),
+      expect(async () => {
+        await page.getByLabel("Type").selectOption("sondage");
+        await expect(page.getByLabel("Question", { exact: true })).toBeVisible({
+          timeout: 1000,
+        });
+      }).toPass(),
   },
   {
     nom: "une annonce modifiée",
@@ -97,7 +102,14 @@ const FORMULAIRES: Formulaire[] = [
     },
     action: "Enregistrer",
     deplier: (page) =>
-      page.getByRole("button", { name: "Voir l'aperçu" }).click(),
+      expect(async () => {
+        // Une fois ouvert, le bouton devient « Masquer l'aperçu » : pas de second clic.
+        const voir = page.getByRole("button", { name: "Voir l'aperçu" });
+        if (await voir.isVisible()) await voir.click();
+        await expect(
+          page.getByRole("region", { name: "Aperçu de la section" }),
+        ).toBeVisible({ timeout: 1000 });
+      }).toPass(),
   },
   {
     nom: "une nouvelle fiche de Mon syndic",

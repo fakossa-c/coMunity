@@ -17,7 +17,10 @@ type Props = {
   erreur: ErreurFormulaire<ChampSondage>;
 };
 
-/** Le bloc sondage du formulaire d'annonce : la question, de 2 à 6 options et la date limite des réponses. */
+/**
+ * Le bloc sondage du formulaire d'annonce : la question, de 2 à 6 options et la date limite des
+ * réponses. Sur ordinateur, la carte du formulaire remplace son contour.
+ */
 export function FormulaireSondage({ saisie, onChange, erreur }: Props) {
   const { options } = saisie;
   const erreurOptions = erreurDuChamp(erreur, "options");
@@ -30,8 +33,8 @@ export function FormulaireSondage({ saisie, onChange, erreur }: Props) {
   }
 
   return (
-    <fieldset className="flex flex-col gap-bloc rounded-lg border-[1.5px] border-border-distinct/20 p-space-md">
-      <legend className="px-space-xs font-headline text-headline-sm">
+    <fieldset className="flex flex-col gap-bloc rounded-lg border-[1.5px] border-border-distinct/20 p-space-md desktop:border-0 desktop:p-0">
+      <legend className="px-space-xs font-headline text-headline-sm desktop:mb-bloc desktop:px-0">
         Sondage
       </legend>
       <Champ
@@ -104,7 +107,7 @@ export function SondagePublie({ sondage }: { sondage: Sondage }) {
   return (
     <section
       aria-label="Sondage"
-      className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 p-space-md"
+      className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 p-space-md desktop:border-0 desktop:p-0"
     >
       <h2 className="font-headline text-headline-sm">Sondage</h2>
       <p className="font-headline text-body-bold">{sondage.question}</p>

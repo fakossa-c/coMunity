@@ -33,6 +33,7 @@ import {
   type Resultat,
 } from "@/lib/resultat";
 import { clientNavigateur } from "@/lib/supabase/navigateur";
+import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import { enregistrerAnnonce, preparerDepot } from "./actions";
 import { FormulaireSondage, SondagePublie } from "./formulaire-sondage";
 
@@ -183,7 +184,7 @@ export function FormulaireAnnonce({ annonce }: Props) {
         e.preventDefault();
         enregistrer();
       }}
-      className="flex flex-col gap-bloc"
+      className={CLASSES_FORMULAIRE}
     >
       <Message
         message={
@@ -191,77 +192,95 @@ export function FormulaireAnnonce({ annonce }: Props) {
         }
         erreur
       />
-      <ChampListe
-        libelle="Type"
-        name="type"
-        value={saisie.type}
-        onChange={(e) => poser("type", e.target.value as SaisieAnnonce["type"])}
-        disabled={Boolean(sondagePublie)}
-        aide={
-          sondagePublie
-            ? "Le type d'une annonce qui porte un sondage ne change pas."
-            : "Le type fixe la pastille, la couleur et le pictogramme de l'annonce."
-        }
-      >
-        {typesAnnonceListe.map((cle) => (
-          <option key={cle} value={cle}>
-            {typesAnnonce[cle].libelle}
-          </option>
-        ))}
-      </ChampListe>
-      <Champ {...texte("titre", "Titre")} required />
+      <BlocFormulaire>
+        <ChampListe
+          libelle="Type"
+          name="type"
+          value={saisie.type}
+          onChange={(e) =>
+            poser("type", e.target.value as SaisieAnnonce["type"])
+          }
+          disabled={Boolean(sondagePublie)}
+          aide={
+            sondagePublie
+              ? "Le type d'une annonce qui porte un sondage ne change pas."
+              : "Le type fixe la pastille, la couleur et le pictogramme de l'annonce."
+          }
+        >
+          {typesAnnonceListe.map((cle) => (
+            <option key={cle} value={cle}>
+              {typesAnnonce[cle].libelle}
+            </option>
+          ))}
+        </ChampListe>
+        <Champ {...texte("titre", "Titre")} required />
+      </BlocFormulaire>
       {saisieSondage && (
-        <FormulaireSondage
-          saisie={sondage}
-          onChange={setSondage}
-          erreur={erreurSondage}
-        />
+        <BlocFormulaire>
+          <FormulaireSondage
+            saisie={sondage}
+            onChange={setSondage}
+            erreur={erreurSondage}
+          />
+        </BlocFormulaire>
       )}
-      {sondagePublie && <SondagePublie sondage={sondagePublie} />}
-      <ChampTexte {...texte("texte", "Texte")} rows={5} />
-      <Champ
-        {...texte("quand", "Date ou période")}
-        placeholder="Jeudi 12 novembre à 18h30"
-      />
-      <Champ {...texte("lieu", "Lieu")} placeholder="Salle commune" />
-      <ChoixPastilles
-        titre="Mise en avant"
-        options={OPTIONS_EPINGLE}
-        valeurs={saisie.epinglee ? ["epinglee"] : []}
-        onChange={(valeurs) => poser("epinglee", valeurs.includes("epinglee"))}
-      />
-      <Champ
-        libelle="Expire le"
-        name="expire_le"
-        type="date"
-        autoComplete="off"
-        value={saisie.expire_le}
-        onChange={(e) => poser("expire_le", e.target.value)}
-        erreur={erreurDe("expire_le")}
-        aide="Facultatif. Passé ce jour, l'annonce quitte la liste ; son lien public reste lisible."
-      />
-      <ChampFichier
-        libelle="Photo"
-        accept="image/jpeg,image/png,image/webp"
-        aide="Facultatif. Elle illustre la page de l'annonce et son aperçu dans WhatsApp. JPEG, PNG ou WebP, 5 Mo au plus."
-        fichier={fichiers.photo}
-        nomActuel={nomDuFichier(saisie.photo_chemin)}
-        erreur={erreurFichier.photo}
-        onChoisir={(f) => choisir("photo", f)}
-        onRetirer={() => retirer("photo")}
-      />
-      <ChampFichier
-        libelle="Document PDF"
-        accept="application/pdf"
-        aide="Facultatif : la convocation, le plan des travaux. 5 Mo au plus, sans donnée personnelle."
-        fichier={fichiers.document}
-        nomActuel={nomDuFichier(saisie.document_chemin)}
-        erreur={erreurFichier.document}
-        onChoisir={(f) => choisir("document", f)}
-        onRetirer={() => retirer("document")}
-      />
+      {sondagePublie && (
+        <BlocFormulaire>
+          <SondagePublie sondage={sondagePublie} />
+        </BlocFormulaire>
+      )}
+      <BlocFormulaire>
+        <ChampTexte {...texte("texte", "Texte")} rows={5} />
+        <Champ
+          {...texte("quand", "Date ou période")}
+          placeholder="Jeudi 12 novembre à 18h30"
+        />
+        <Champ {...texte("lieu", "Lieu")} placeholder="Salle commune" />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <ChoixPastilles
+          titre="Mise en avant"
+          options={OPTIONS_EPINGLE}
+          valeurs={saisie.epinglee ? ["epinglee"] : []}
+          onChange={(valeurs) =>
+            poser("epinglee", valeurs.includes("epinglee"))
+          }
+        />
+        <Champ
+          libelle="Expire le"
+          name="expire_le"
+          type="date"
+          autoComplete="off"
+          value={saisie.expire_le}
+          onChange={(e) => poser("expire_le", e.target.value)}
+          erreur={erreurDe("expire_le")}
+          aide="Facultatif. Passé ce jour, l'annonce quitte la liste ; son lien public reste lisible."
+        />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <ChampFichier
+          libelle="Photo"
+          accept="image/jpeg,image/png,image/webp"
+          aide="Facultatif. Elle illustre la page de l'annonce et son aperçu dans WhatsApp. JPEG, PNG ou WebP, 5 Mo au plus."
+          fichier={fichiers.photo}
+          nomActuel={nomDuFichier(saisie.photo_chemin)}
+          erreur={erreurFichier.photo}
+          onChoisir={(f) => choisir("photo", f)}
+          onRetirer={() => retirer("photo")}
+        />
+        <ChampFichier
+          libelle="Document PDF"
+          accept="application/pdf"
+          aide="Facultatif : la convocation, le plan des travaux. 5 Mo au plus, sans donnée personnelle."
+          fichier={fichiers.document}
+          nomActuel={nomDuFichier(saisie.document_chemin)}
+          erreur={erreurFichier.document}
+          onChoisir={(f) => choisir("document", f)}
+          onRetirer={() => retirer("document")}
+        />
+      </BlocFormulaire>
 
-      <BarreActionFixe>
+      <BarreActionFixe colonne>
         <Bouton
           type="submit"
           pleineLargeur
