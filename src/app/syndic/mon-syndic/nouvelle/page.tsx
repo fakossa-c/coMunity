@@ -19,7 +19,7 @@ export default async function NouvelleFiche() {
       <ColonneFormulaire>
         <TitrePage
           titre="Ajouter une fiche"
-          sousTitre="Elle prend la dernière place de Mon syndic ; vous pourrez la remonter ensuite."
+          sousTitre="Elle prend la dernière place de Mon syndic ; vous pourrez la remonter ensuite."
         />
         <FormulaireFiche comptes={await lireComptesReliables()} />
       </ColonneFormulaire>

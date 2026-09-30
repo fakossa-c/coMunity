@@ -60,7 +60,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
     <EcranSyndic rubrique="tableau-de-bord">
       <TitrePage
         titre="Tableau de bord"
-        sousTitre="Ce qui fait vivre la résidence : les activités qui ont eu lieu sur la période."
+        sousTitre="Ce qui fait vivre la résidence : les activités qui ont eu lieu sur la période."
       />
 
       <div className="flex flex-col gap-space-lg">
@@ -248,7 +248,7 @@ function GraphiqueRemplissage({
       titre={titre}
       resume={
         meilleure
-          ? `Meilleur remplissage moyen : ${meilleure.libelle}, ${libelleTaux(meilleure.taux)}.`
+          ? `Meilleur remplissage moyen : ${meilleure.libelle}, ${libelleTaux(meilleure.taux)}.`
           : "Aucune activité à places limitées sur la période."
       }
       maximum={100}
@@ -299,7 +299,7 @@ function ActiviteClassee({
           {ligne.commentaires.map((retour, i) => (
             <li key={i} className="text-body-md text-on-surface">
               <span className="font-bold">{retour.note} / 5</span>
-              {" : "}
+              {" : "}
               {retour.commentaire}
             </li>
           ))}

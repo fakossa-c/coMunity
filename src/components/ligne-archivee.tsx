@@ -30,7 +30,7 @@ function NoteDonnee({ note }: { note: number }) {
         {"★".repeat(note)}
         <span className="text-outline-variant">{"★".repeat(5 - note)}</span>
       </span>
-      <span className="sr-only">Votre avis : {note} sur 5</span>
+      <span className="sr-only">Votre avis : {note} sur 5</span>
     </p>
   );
 }

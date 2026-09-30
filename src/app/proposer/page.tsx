@@ -39,7 +39,7 @@ export default async function Proposer({ searchParams }: Props) {
         titre="Proposer"
         sousTitre={
           copiee
-            ? `Une nouvelle date pour « ${copiee.titre} »`
+            ? `Une nouvelle date pour « ${copiee.titre} »`
             : "Lancez une activité avec vos voisins"
         }
       />

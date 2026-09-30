@@ -67,7 +67,7 @@ export function ChoixLieu({
             <EquipementsEspace equipements={espace.equipements} />
             {espace.consignes && (
               <p>
-                <strong className="font-headline">Consignes : </strong>
+                <strong className="font-headline">Consignes : </strong>
                 {espace.consignes}
               </p>
             )}
@@ -82,7 +82,7 @@ export function ChoixLieu({
           value={lieu}
           onChange={(e) => onLieuChange(e.target.value)}
           erreur={erreurLieu}
-          aide="Par exemple : chez vous, 2e étage."
+          aide="Par exemple : chez vous, 2e étage."
           required
         />
       )}

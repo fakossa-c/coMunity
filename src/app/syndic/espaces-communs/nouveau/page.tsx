@@ -25,7 +25,7 @@ export default async function NouvelEspaceCommun() {
       <ColonneFormulaire>
         <TitrePage
           titre="Ajouter un espace commun"
-          sousTitre="Seul le nom est obligatoire ; le reste aide les voisins et l'assistant."
+          sousTitre="Seul le nom est obligatoire ; le reste aide les voisins et l'assistant."
         />
         <FormulaireEspace />
       </ColonneFormulaire>

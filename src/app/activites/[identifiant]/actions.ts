@@ -13,7 +13,7 @@ const messages: Record<string, string> = {
   "23514": "Indiquez un nombre d'accompagnants de 0 ou plus.",
   P0002: "Cette activité n'existe plus.",
   P0003: "Il ne reste pas assez de places.",
-  P0004: "Cette activité est annulée : les inscriptions sont fermées.",
+  P0004: "Cette activité est annulée : les inscriptions sont fermées.",
 };
 
 const messagesCreateur: Record<string, string> = {
@@ -21,9 +21,9 @@ const messagesCreateur: Record<string, string> = {
     "Seuls l'organisateur et le conseil syndical peuvent gérer cette activité.",
   P0002: "Cette activité n'existe plus.",
   P0011:
-    "Une activité en relecture ou masquée ne s'annule pas : elle doit d'abord être publiée.",
+    "Une activité en relecture ou masquée ne s'annule pas : elle doit d'abord être publiée.",
   P0006:
-    "Des personnes viennent de s'inscrire : annulez l'activité plutôt que de la supprimer.",
+    "Des personnes viennent de s'inscrire : annulez l'activité plutôt que de la supprimer.",
 };
 
 /** Inscrit la personne connectée à l'activité, avec `accompagnants` personnes en plus. */

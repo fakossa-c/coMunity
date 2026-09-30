@@ -67,7 +67,7 @@ export function ActionsAnnonce({ id, titre, epinglee }: Props) {
       </div>
       <FeuilleConfirmation
         ouverte={suppression}
-        titre="Supprimer cette annonce ?"
+        titre="Supprimer cette annonce ?"
         libelleGarder="Garder l'annonce"
         libelleConfirmer={enCours ? "Suppression…" : "Supprimer"}
         onFermer={() => setSuppression(false)}

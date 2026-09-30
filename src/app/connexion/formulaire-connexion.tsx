@@ -42,7 +42,7 @@ export function FormulaireConnexion({ suivant, messageInitial }: Props) {
         href="/mot-de-passe-oublie"
         className="flex min-h-cible items-center self-start rounded-md font-headline text-label-lg text-primary underline underline-offset-4"
       >
-        Mot de passe oublié ?
+        Mot de passe oublié ?
       </Link>
     </form>
   );

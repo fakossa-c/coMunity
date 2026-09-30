@@ -42,7 +42,7 @@ export function EncartAssistant({ avis, incomplete = false }: Props) {
               <Icone nom={bloquant ? "block" : "lightbulb"} taille={22} />
               <span>
                 {bloquant && (
-                  <strong className="font-headline">À corriger : </strong>
+                  <strong className="font-headline">À corriger : </strong>
                 )}
                 {message}
               </span>
@@ -55,7 +55,7 @@ export function EncartAssistant({ avis, incomplete = false }: Props) {
             ? "L'assistant relit votre proposition…"
             : incomplete
               ? "Rien à signaler pour l'instant. L'assistant relira votre proposition quand le titre, la date, l'heure et le lieu seront remplis."
-              : "Rien à signaler : votre proposition est prête à être publiée."}
+              : "Rien à signaler : votre proposition est prête à être publiée."}
         </p>
       )}
     </EncartPastel>

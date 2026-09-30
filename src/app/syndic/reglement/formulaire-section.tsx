@@ -28,7 +28,7 @@ type Props = {
 };
 
 const AIDE_TEXTE =
-  "Séparez les paragraphes par une ligne vide. Commencez une ligne par « - » pour une puce. Entourez des mots de deux étoiles pour les mettre en **gras**.";
+  "Séparez les paragraphes par une ligne vide. Commencez une ligne par « - » pour une puce. Entourez des mots de deux étoiles pour les mettre en **gras**.";
 
 /**
  * Ajouter ou modifier une section du règlement intérieur, avec un aperçu tel que les résidents
@@ -156,7 +156,7 @@ export function FormulaireSection({ section }: Props) {
           </Bouton>
           <FeuilleConfirmation
             ouverte={suppression}
-            titre="Supprimer cette section ?"
+            titre="Supprimer cette section ?"
             libelleGarder="Garder la section"
             libelleConfirmer={enCours ? "Suppression…" : "Supprimer"}
             onFermer={() => setSuppression(false)}

@@ -99,7 +99,7 @@ async function MesActivites({
           libelle="Activités que vous organisez"
           activites={jOrganise}
           colonnes={2}
-          messageVide="Vous n'organisez aucune activité à venir. Lancez-en une avec « Proposer »."
+          messageVide="Vous n'organisez aucune activité à venir. Lancez-en une avec « Proposer »."
         />
       ) : (
         <ListeActivites

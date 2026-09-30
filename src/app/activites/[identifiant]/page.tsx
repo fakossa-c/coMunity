@@ -87,7 +87,7 @@ function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
     return (
       <BarreActionFixe carte>
         <p className="w-full text-center font-headline text-body-lg text-on-surface-variant desktop:text-left">
-          Cette activité n&apos;est pas publiée : les inscriptions sont fermées.
+          Cette activité n&apos;est pas publiée : les inscriptions sont fermées.
         </p>
       </BarreActionFixe>
     );

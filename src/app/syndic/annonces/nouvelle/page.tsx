@@ -29,7 +29,7 @@ export default async function PublierUneAnnonce({ searchParams }: Props) {
           titre="Publier une annonce"
           sousTitre={
             original
-              ? `Copie de « ${original.titre} » : ajustez ce qui change, puis publiez.`
+              ? `Copie de « ${original.titre} » : ajustez ce qui change, puis publiez.`
               : "Les résidents la liront dans l'onglet Annonces, et vous pourrez partager son lien."
           }
         />

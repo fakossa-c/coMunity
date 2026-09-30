@@ -58,7 +58,7 @@ export async function enregistrerMotDePasse(
   if (error) {
     return refus({
       erreur:
-        "Le mot de passe n'a pas pu être enregistré. Redemandez un lien depuis « Mot de passe oublié ? ».",
+        "Le mot de passe n'a pas pu être enregistré. Redemandez un lien depuis « Mot de passe oublié ? ».",
     });
   }
 

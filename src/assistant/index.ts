@@ -124,7 +124,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "heure_fin_max",
       bloquant: true,
-      message: `L'espace commun « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
+      message: `L'espace commun « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
     });
   }
 
@@ -136,7 +136,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "capacite_espace",
       bloquant: true,
-      message: `L'espace commun « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
+      message: `L'espace commun « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
     });
   }
 
@@ -152,7 +152,7 @@ function appliquerRegles(
         avertissements.push({
           regle: "chevauchement",
           bloquant: false,
-          message: `« ${autre.titre} » occupe déjà l'espace commun « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
+          message: `« ${autre.titre} » occupe déjà l'espace commun « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
         });
       }
     }
@@ -162,7 +162,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "heure_calme",
       bloquant: false,
-      message: `Votre activité finit après ${heure(regles.heureCalme)}, l'heure de calme de la résidence : pensez aux voisins.`,
+      message: `Votre activité finit après ${heure(regles.heureCalme)}, l'heure de calme de la résidence : pensez aux voisins.`,
     });
   }
 

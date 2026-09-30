@@ -33,7 +33,7 @@ export async function accesSyndic(
           icone="lock"
           message={
             estSyndicRetire(session)
-              ? "Votre accès à l'espace syndic a été retiré. Une erreur ? Parlez-en à un membre du conseil syndical."
+              ? "Votre accès à l'espace syndic a été retiré. Une erreur ? Parlez-en à un membre du conseil syndical."
               : "Cet espace est réservé aux membres du conseil syndical."
           }
         />

@@ -15,7 +15,7 @@ const SALLE: EspaceCommun = {
   heure_fin_max: "21:00:00",
   consignes: "Laissez la salle propre.",
   horaires_acces: "Tous les jours de 9h à 21h",
-  contact: "Colette, gardienne : 06 12 34 56 78",
+  contact: "Colette, gardienne : 06 12 34 56 78",
   photo_chemin: "0b9d5a52-8c1e-4f3a-9d1b-2f6c7a8e9b10.jpg",
   photos: ["0b9d5a52-8c1e-4f3a-9d1b-2f6c7a8e9b10.jpg"],
   longueur_m: null,

@@ -78,7 +78,7 @@ export function verifierSondage(
   if (saisie.echeance < jour)
     return {
       champ: "echeance",
-      erreur: "Cette date est déjà passée : personne ne pourrait répondre.",
+      erreur: "Cette date est déjà passée : personne ne pourrait répondre.",
     };
   return {};
 }

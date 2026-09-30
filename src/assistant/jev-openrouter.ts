@@ -17,15 +17,15 @@ const SEUIL_INFORMATION_MANQUANTE = 0.6;
 
 const CATEGORIES: Record<CategorieActivite, string> = {
   moments_partages:
-    "Rencontres et moments conviviaux : goûter, apéritif, repas de quartier, jeux de société, soirée entre voisins.",
+    "Rencontres et moments conviviaux : goûter, apéritif, repas de quartier, jeux de société, soirée entre voisins.",
   creation_bricolage:
-    "Faire ou réparer quelque chose de ses mains : bricolage, couture, tricot, cuisine créative, atelier de réparation.",
+    "Faire ou réparer quelque chose de ses mains : bricolage, couture, tricot, cuisine créative, atelier de réparation.",
   culture_loisirs:
-    "Culture et loisirs : lecture, cinéma, musique, sport, sortie, conférence, jeux.",
+    "Culture et loisirs : lecture, cinéma, musique, sport, sortie, conférence, jeux.",
   entraide_partage:
-    "Rendre service ou partager : troc, prêt de matériel, covoiturage, aide aux devoirs, don, coup de main.",
+    "Rendre service ou partager : troc, prêt de matériel, covoiturage, aide aux devoirs, don, coup de main.",
   jardin_nature:
-    "Jardin et nature : plantation, potager, compost, balade, entretien des espaces verts.",
+    "Jardin et nature : plantation, potager, compost, balade, entretien des espaces verts.",
 };
 
 const PICTOGRAMMES: Record<PictogrammeActivite, string> = {
@@ -51,13 +51,13 @@ const PICTOGRAMMES: Record<PictogrammeActivite, string> = {
 const NON_CONFORMITES: Record<string, { critere: string; raison: string }> = {
   nuisance_sonore: {
     critere:
-      "Nuisances sonores : musique forte, fête tardive, bruit qui gênerait les voisins.",
-    raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
+      "Nuisances sonores : musique forte, fête tardive, bruit qui gênerait les voisins.",
+    raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
   },
   commerce: {
     critere:
-      "Commerce ou démarchage : vente, prospection, publicité pour une activité professionnelle.",
-    raison: "Commerce ou démarchage : l'activité semble vendre ou démarcher.",
+      "Commerce ou démarchage : vente, prospection, publicité pour une activité professionnelle.",
+    raison: "Commerce ou démarchage : l'activité semble vendre ou démarcher.",
   },
   propos_discriminatoires: {
     critere:
@@ -67,7 +67,7 @@ const NON_CONFORMITES: Record<string, { critere: string; raison: string }> = {
   },
   danger: {
     critere:
-      "Danger pour les personnes : pratique risquée, consommation excessive, mise en danger d'enfants.",
+      "Danger pour les personnes : pratique risquée, consommation excessive, mise en danger d'enfants.",
     raison: "Danger possible pour les personnes.",
   },
   degradation: {
@@ -86,18 +86,18 @@ const NON_CONFORMITES: Record<string, { critere: string; raison: string }> = {
 const INFORMATIONS = {
   manque_materiel: {
     question:
-      "Cette activité demande-t-elle du matériel, des ingrédients ou des affaires à apporter, sans que `description` dise qui les fournit ?",
+      "Cette activité demande-t-elle du matériel, des ingrédients ou des affaires à apporter, sans que `description` dise qui les fournit ?",
     phrase: "Précisez ce que chacun doit apporter, ou ce que vous fournissez.",
   },
   manque_public: {
     question:
-      "Cette activité convient-elle mal à certains publics (enfants, débutants, personnes à mobilité réduite) sans que `titre` ou `description` dise à qui elle s'adresse ?",
+      "Cette activité convient-elle mal à certains publics (enfants, débutants, personnes à mobilité réduite) sans que `titre` ou `description` dise à qui elle s'adresse ?",
     phrase:
-      "Précisez à qui s'adresse l'activité : enfants, débutants, tous les âges.",
+      "Précisez à qui s'adresse l'activité : enfants, débutants, tous les âges.",
   },
   manque_deroulement: {
     question:
-      "Le titre et la description laissent-ils incompréhensible ce que l'on fait pendant l'activité ?",
+      "Le titre et la description laissent-ils incompréhensible ce que l'on fait pendant l'activité ?",
     phrase: "Dites en une phrase ce que l'on y fait.",
   },
 } as const;
@@ -110,7 +110,7 @@ function questions() {
   return {
     categorie: {
       type: "choice",
-      instructions: `${CONTEXTE} Dans quelle catégorie ranger cette activité ? Se fonder sur \`titre\` et \`description\`.`,
+      instructions: `${CONTEXTE} Dans quelle catégorie ranger cette activité ? Se fonder sur \`titre\` et \`description\`.`,
       criteria: {
         ...CATEGORIES,
         aucune: "Aucune catégorie ne convient clairement.",
@@ -118,7 +118,7 @@ function questions() {
     },
     pictogramme: {
       type: "choice",
-      instructions: `${CONTEXTE} Quel pictogramme illustre le mieux cette activité ? Se fonder sur \`titre\` et \`description\`.`,
+      instructions: `${CONTEXTE} Quel pictogramme illustre le mieux cette activité ? Se fonder sur \`titre\` et \`description\`.`,
       criteria: {
         ...PICTOGRAMMES,
         aucun: "Aucun pictogramme ne convient clairement.",
@@ -126,7 +126,7 @@ function questions() {
     },
     conformite: {
       type: "choice",
-      instructions: `${CONTEXTE} Cette proposition respecte-t-elle les règles de bon voisinage ? Choisir « conforme » sauf manquement évident.`,
+      instructions: `${CONTEXTE} Cette proposition respecte-t-elle les règles de bon voisinage ? Choisir « conforme » sauf manquement évident.`,
       criteria: {
         conforme: "Rien ne contrevient aux règles de bon voisinage.",
         ...Object.fromEntries(

@@ -144,7 +144,7 @@ export function FormulaireAnnonce({ annonce }: Props) {
         if (error)
           return setResultat({
             ok: false,
-            message: `Le fichier « ${fichier.name} » n'a pas pu être envoyé. Réessayez dans un instant.`,
+            message: `Le fichier « ${fichier.name} » n'a pas pu être envoyé. Réessayez dans un instant.`,
           });
         // Un fichier déposé n'est pas renvoyé à l'essai suivant : il garde son chemin.
         aEnregistrer = { ...aEnregistrer, [CHAMP_CHEMIN[genre]]: depot.chemin };
@@ -271,7 +271,7 @@ export function FormulaireAnnonce({ annonce }: Props) {
         <ChampFichier
           libelle="Document PDF"
           accept="application/pdf"
-          aide="Facultatif : la convocation, le plan des travaux. 5 Mo au plus, sans donnée personnelle."
+          aide="Facultatif : la convocation, le plan des travaux. 5 Mo au plus, sans donnée personnelle."
           fichier={fichiers.document}
           nomActuel={nomDuFichier(saisie.document_chemin)}
           erreur={erreurFichier.document}

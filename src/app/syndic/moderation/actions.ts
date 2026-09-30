@@ -15,7 +15,7 @@ const messages: Record<string, string> = {
     "Écrivez un message pour expliquer votre décision à l'organisateur (500 caractères au plus).",
   P0002: "Cette activité n'existe plus.",
   P0011:
-    "Cette activité a été annulée entre-temps : il n'y a plus rien à décider.",
+    "Cette activité a été annulée entre-temps : il n'y a plus rien à décider.",
 };
 
 /**

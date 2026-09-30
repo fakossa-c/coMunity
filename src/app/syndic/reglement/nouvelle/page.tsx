@@ -21,7 +21,7 @@ export default async function NouvelleSection() {
       <ColonneFormulaire>
         <TitrePage
           titre="Ajouter une section"
-          sousTitre="Elle prend la dernière place du règlement ; vous pourrez la remonter ensuite."
+          sousTitre="Elle prend la dernière place du règlement ; vous pourrez la remonter ensuite."
         />
         <FormulaireSection />
       </ColonneFormulaire>

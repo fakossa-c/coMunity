@@ -61,7 +61,7 @@ export default async function MaCopro() {
       ) : (
         <Bientot
           icone="lock"
-          message="Votre compte n'a pas accès à cette rubrique. Une erreur ? Parlez-en à un membre du conseil syndical."
+          message="Votre compte n'a pas accès à cette rubrique. Une erreur ? Parlez-en à un membre du conseil syndical."
         />
       )}
     </EcranSecondaire>

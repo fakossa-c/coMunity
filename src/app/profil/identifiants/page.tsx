@@ -65,7 +65,7 @@ export default async function MesIdentifiants({
         <Annonce
           message={
             lien === "invalide"
-              ? "Ce lien a déjà servi ou a expiré. Refaites la demande avec « Modifier » sur la ligne Email."
+              ? "Ce lien a déjà servi ou a expiré. Refaites la demande avec « Modifier » sur la ligne Email."
               : null
           }
           erreur

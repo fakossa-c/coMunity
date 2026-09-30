@@ -95,7 +95,7 @@ export default async function MesInformations({
               </p>
             </section>
             <p className="text-body-md text-on-surface-variant">
-              Votre pseudo est toujours visible : c&apos;est ainsi que vos
+              Votre pseudo est toujours visible : c&apos;est ainsi que vos
               voisins vous reconnaissent. Le conseil syndical voit toutes vos
               informations.
             </p>

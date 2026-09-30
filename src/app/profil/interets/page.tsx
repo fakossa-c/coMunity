@@ -24,7 +24,7 @@ export default async function PageMesInterets() {
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
           titre="Mes intérêts"
-          sousTitre="Ce qui vous plaît, en quelques mots : jardinage, jeux de société, cuisine…"
+          sousTitre="Ce qui vous plaît, en quelques mots : jardinage, jeux de société, cuisine…"
         />
         <MesInterets interets={(data ?? []) as CentreInteret[]} />
       </div>

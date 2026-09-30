@@ -194,7 +194,7 @@ export function FormulaireEspace({ espace }: Props) {
       />
       <BlocFormulaire>
         <Champ
-          {...texte("nom", "Nom", "Par exemple : Salle commune, Cour, Jardin.")}
+          {...texte("nom", "Nom", "Par exemple : Salle commune, Cour, Jardin.")}
           required
         />
         <Champ {...texte("batiment", "Bâtiment", "Facultatif.")} />
@@ -202,7 +202,7 @@ export function FormulaireEspace({ espace }: Props) {
           {...texte(
             "localisation",
             "Localisation",
-            "Comment le trouver : étage, entrée, repère.",
+            "Comment le trouver : étage, entrée, repère.",
           )}
         />
         <ChampTexte {...texte("description", "Description")} rows={3} />
@@ -233,7 +233,7 @@ export function FormulaireEspace({ espace }: Props) {
           value={saisie.longueur}
           onChange={(e) => poser("longueur", e.target.value)}
           erreur={erreurDe("longueur")}
-          aide="De 0,5 à 100 m, par exemple 8,5. Vide : pas de dimensions."
+          aide="De 0,5 à 100 m, par exemple 8,5. Vide : pas de dimensions."
         />
         <Champ
           libelle="Largeur (en mètres)"
@@ -253,7 +253,7 @@ export function FormulaireEspace({ espace }: Props) {
           value={saisie.hauteur_plafond}
           onChange={(e) => poser("hauteur_plafond", e.target.value)}
           erreur={erreurDe("hauteur_plafond")}
-          aide="De 1 à 15 m, par exemple 2,7. Vide : pas de hauteur."
+          aide="De 1 à 15 m, par exemple 2,7. Vide : pas de hauteur."
         />
         <Champ
           libelle="Capacité"
@@ -265,7 +265,7 @@ export function FormulaireEspace({ espace }: Props) {
           value={saisie.capacite}
           onChange={(e) => poser("capacite", e.target.value)}
           erreur={erreurDe("capacite")}
-          aide="Le nombre de personnes au plus. Vide : pas de limite."
+          aide="Le nombre de personnes au plus. Vide : pas de limite."
         />
       </BlocFormulaire>
       <BlocFormulaire>
@@ -283,7 +283,7 @@ export function FormulaireEspace({ espace }: Props) {
           value={saisie.heure_fin_max}
           onChange={(e) => poser("heure_fin_max", e.target.value)}
           erreur={erreurDe("heure_fin_max")}
-          aide="Aucune activité ne finit plus tard. Vide : pas d'heure limite."
+          aide="Aucune activité ne finit plus tard. Vide : pas d'heure limite."
         />
       </BlocFormulaire>
       <BlocFormulaire>
@@ -299,7 +299,7 @@ export function FormulaireEspace({ espace }: Props) {
           {...texte(
             "horaires_acces",
             "Horaires d'accès",
-            "Par exemple : tous les jours de 9h à 21h.",
+            "Par exemple : tous les jours de 9h à 21h.",
           )}
         />
         <Champ
@@ -324,7 +324,7 @@ export function FormulaireEspace({ espace }: Props) {
           </Bouton>
           <FeuilleConfirmation
             ouverte={suppression}
-            titre="Supprimer cet espace commun ?"
+            titre="Supprimer cet espace commun ?"
             libelleGarder="Garder l'espace"
             libelleConfirmer={enCours ? "Suppression…" : "Supprimer"}
             onFermer={() => setSuppression(false)}

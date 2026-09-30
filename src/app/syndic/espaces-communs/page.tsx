@@ -18,9 +18,9 @@ type Props = {
 };
 
 const CONFIRMATIONS: Record<string, (nom: string) => string> = {
-  ajoute: (nom) => `« ${nom} » est ajouté aux espaces communs.`,
-  enregistre: (nom) => `« ${nom} » est enregistré.`,
-  supprime: (nom) => `« ${nom} » est supprimé.`,
+  ajoute: (nom) => `« ${nom} » est ajouté aux espaces communs.`,
+  enregistre: (nom) => `« ${nom} » est enregistré.`,
+  supprime: (nom) => `« ${nom} » est supprimé.`,
 };
 
 export default async function EspacesCommuns({ searchParams }: Props) {
@@ -68,7 +68,7 @@ export default async function EspacesCommuns({ searchParams }: Props) {
           </TitreSection>
           {espaces.length === 0 ? (
             <p className="text-body-lg text-on-surface-variant">
-              Ajoutez la salle commune, la cour ou le jardin : les voisins les
+              Ajoutez la salle commune, la cour ou le jardin : les voisins les
               choisiront en proposant une activité.
             </p>
           ) : (

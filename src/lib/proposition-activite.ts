@@ -194,7 +194,7 @@ export function verifierEtape(
     if (max !== null && max < placesPrises)
       return erreur(
         "capacite_max",
-        `Indiquez au moins ${placesPrises} ${placesPrises === 1 ? "place" : "places"} : elles sont déjà prises.`,
+        `Indiquez au moins ${placesPrises} ${placesPrises === 1 ? "place" : "places"} : elles sont déjà prises.`,
       );
     const min = nombre(saisie.capacite_min);
     if (saisie.capacite_min.trim() !== "" && (min === null || min < 1))

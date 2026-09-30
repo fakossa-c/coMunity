@@ -26,7 +26,7 @@ const messages: Record<string, string> = {
   "42501": "Seul le conseil syndical peut gérer les espaces communs.",
   "23514":
     "Une information ne convient pas. Vérifiez les textes, la capacité, les mesures et les photos.",
-  "23505": "Un espace commun porte déjà ce nom : choisissez-en un autre.",
+  "23505": "Un espace commun porte déjà ce nom : choisissez-en un autre.",
 };
 
 function echec(code: string | undefined, parDefaut: string): Resultat {
@@ -221,6 +221,6 @@ export async function reglerHeureCalme(heureCalme: string): Promise<Resultat> {
   revalidatePath("/proposer");
   return {
     ok: true,
-    message: `Heure de calme enregistrée : ${heure(heureCalme)}.`,
+    message: `Heure de calme enregistrée : ${heure(heureCalme)}.`,
   };
 }

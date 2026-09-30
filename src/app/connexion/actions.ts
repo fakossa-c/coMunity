@@ -36,7 +36,7 @@ export async function seConnecter(
     return {
       erreur:
         error.code === "invalid_credentials"
-          ? "Email ou mot de passe incorrect. Vérifiez-les, ou choisissez « Mot de passe oublié ? »."
+          ? "Email ou mot de passe incorrect. Vérifiez-les, ou choisissez « Mot de passe oublié ? »."
           : "La connexion a échoué. Réessayez dans un instant.",
       email,
     };

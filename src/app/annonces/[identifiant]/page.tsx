@@ -83,7 +83,7 @@ export default async function PageAnnonce({ params }: Props) {
             // eslint-disable-next-line @next/next/no-img-element -- photo du bucket public, servie telle quelle
             <img
               src={urlFichierAnnonce(annonce.photo_chemin)}
-              alt={`Photo de l'annonce : ${annonce.titre}`}
+              alt={`Photo de l'annonce : ${annonce.titre}`}
               className="max-h-[360px] w-full rounded-lg object-cover desktop:max-h-[440px]"
             />
           )}
@@ -103,7 +103,7 @@ export default async function PageAnnonce({ params }: Props) {
           </h1>
           {expiree && (
             <EncartPastel>
-              Cette annonce n&apos;est plus d&apos;actualité : elle
+              Cette annonce n&apos;est plus d&apos;actualité : elle
               n&apos;apparaît plus dans la liste.
             </EncartPastel>
           )}

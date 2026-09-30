@@ -390,7 +390,7 @@ export async function enregistrer(
     return {
       ok: false,
       message:
-        "Cette activité n'existe plus ou a été annulée : elle ne se modifie plus.",
+        "Cette activité n'existe plus ou a été annulée : elle ne se modifie plus.",
     };
   }
 

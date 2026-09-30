@@ -25,13 +25,13 @@ const RETRAIT = {
   supprimer: {
     icone: "delete",
     libelle: "Supprimer",
-    titre: "Supprimer cette activité ?",
+    titre: "Supprimer cette activité ?",
     effet: "Cette action est définitive.",
   },
   annuler: {
     icone: "event_busy",
     libelle: "Annuler l'activité",
-    titre: "Annuler cette activité ?",
+    titre: "Annuler cette activité ?",
     effet:
       "Les inscrits verront que vous avez annulé l'activité. Cette action est définitive.",
   },

@@ -210,7 +210,7 @@ function Resultats({
               {choisi && (
                 <span className="text-primary">
                   <Icone nom="check_circle" plein taille={24} />
-                  <span className="sr-only">Votre choix : </span>
+                  <span className="sr-only">Votre choix : </span>
                 </span>
               )}
               {libelle}

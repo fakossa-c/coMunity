@@ -19,7 +19,7 @@ export default async function Inscription() {
       />
       <FormulaireInscription />
       <p className="mt-space-lg text-body-lg">
-        Déjà un compte ?{" "}
+        Déjà un compte ?{" "}
         <Link
           href="/connexion"
           className="inline-flex min-h-[52px] items-center rounded-md font-headline text-label-lg text-primary underline underline-offset-4"

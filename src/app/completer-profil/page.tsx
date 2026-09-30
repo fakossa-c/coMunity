@@ -42,7 +42,7 @@ export default async function CompleterProfil({
     >
       <TitrePage
         titre="Présentez-vous à vos voisins"
-        sousTitre="Membre du conseil syndical, vous êtes aussi un résident. Votre prénom et votre nom restent entre membres du conseil syndical. Vos voisins voient votre pseudo (« Danielle M. »), modifiable dans Profil."
+        sousTitre="Membre du conseil syndical, vous êtes aussi un résident. Votre prénom et votre nom restent entre membres du conseil syndical. Vos voisins voient votre pseudo (« Danielle M. »), modifiable dans Profil."
       />
       <FormulaireCompletion suivant={destination} />
     </EcranConnexion>

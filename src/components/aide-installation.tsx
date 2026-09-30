@@ -63,7 +63,7 @@ export function AideInstallation() {
         ) : (
           <>
             <p className="mt-1 text-body-lg text-on-surface-variant">
-              Ajoutez-la à l&apos;écran d&apos;accueil de votre iPhone :
+              Ajoutez-la à l&apos;écran d&apos;accueil de votre iPhone :
             </p>
             <ol className="mt-space-xs flex flex-col gap-space-xs text-body-lg text-on-surface">
               <li className="flex items-center gap-space-xs">

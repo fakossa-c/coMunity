@@ -51,7 +51,7 @@ export async function ajouterInteret(libelle: string): Promise<Resultat> {
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${saisi} » est ajouté.` };
+  return { ok: true, message: `« ${saisi} » est ajouté.` };
 }
 
 /** Change le libellé d'un centre d'intérêt de la personne connectée. */
@@ -84,7 +84,7 @@ export async function modifierInteret(
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${saisi} » est enregistré.` };
+  return { ok: true, message: `« ${saisi} » est enregistré.` };
 }
 
 /** Retire un centre d'intérêt de la personne connectée. */
@@ -108,6 +108,6 @@ export async function supprimerInteret(id: string): Promise<Resultat> {
   revalidatePath(INTERETS);
   return {
     ok: true,
-    message: data[0] ? `« ${data[0].libelle} » est retiré.` : "Déjà retiré.",
+    message: data[0] ? `« ${data[0].libelle} » est retiré.` : "Déjà retiré.",
   };
 }

@@ -57,7 +57,7 @@ export function BoutonCopier({ texte, libelle, confirmation }: Props) {
         )}
         {echec && (
           <p className="text-center text-body-md text-error">
-            La copie n&apos;a pas fonctionné : sélectionnez le texte et
+            La copie n&apos;a pas fonctionné : sélectionnez le texte et
             copiez-le à la main.
           </p>
         )}

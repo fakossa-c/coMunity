@@ -51,7 +51,7 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
         </div>
         {fiches.length === 0 ? (
           <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
-            Aucune fiche pour le moment : ajoutez la première, les résidents la
+            Aucune fiche pour le moment : ajoutez la première, les résidents la
             liront dans Mon syndic.
           </p>
         ) : (

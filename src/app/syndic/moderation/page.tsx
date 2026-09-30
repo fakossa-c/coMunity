@@ -112,11 +112,11 @@ function CarteModeration({ activite }: { activite: ActiviteAModerer }) {
       </p>
       {enRelecture ? (
         <p className="text-body-lg text-on-surface">
-          Raison : {activite.raison_relecture ?? "non précisée"}
+          Raison : {activite.raison_relecture ?? "non précisée"}
         </p>
       ) : (
         <p className="text-body-lg text-on-surface">
-          Message à l&apos;organisateur :{" "}
+          Message à l&apos;organisateur :{" "}
           {activite.message_moderation ?? "aucun"}
         </p>
       )}

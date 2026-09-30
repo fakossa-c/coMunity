@@ -78,7 +78,7 @@ export function ChampPhotos({
       }
     }
     if (fichiers.length > restantes)
-      echec ||= `Vous pouvez ajouter ${restantes} ${restantes === 1 ? "photo" : "photos"} de plus : ${MAX_PHOTOS} au plus.`;
+      echec ||= `Vous pouvez ajouter ${restantes} ${restantes === 1 ? "photo" : "photos"} de plus : ${MAX_PHOTOS} au plus.`;
     if (nouvelles.length > 0) onAjouter(nouvelles);
     setErreur(echec);
     setCleSelecteur((cle) => cle + 1);

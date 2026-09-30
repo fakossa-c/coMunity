@@ -175,7 +175,7 @@ export async function enregistrerAnnonce(
       return echec(
         erreurSondage.code,
         annulation
-          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée incomplète : ouvrez-la pour la corriger."
+          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée incomplète : ouvrez-la pour la corriger."
           : "Le sondage n'a pas pu être enregistré. Réessayez dans un instant.",
       );
     }

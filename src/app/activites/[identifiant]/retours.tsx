@@ -43,7 +43,7 @@ export async function Retours({ identifiant }: { identifiant: string }) {
             // pour rester anonymisée à la lecture. La liste est réaffichée en entier à chaque
             // rendu, jamais réordonnée localement.
             <li key={index} className="text-body-md text-on-surface">
-              « {retour.commentaire} » — {retour.note} / 5
+              « {retour.commentaire} » — {retour.note} / 5
             </li>
           ))}
         </ul>

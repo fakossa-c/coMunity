@@ -38,7 +38,7 @@ export async function inviterCollegue(email: string): Promise<Resultat> {
       ok: false,
       message:
         error.code === "email_exists"
-          ? `${adresse} a déjà un compte coMunity : invitez une autre adresse.`
+          ? `${adresse} a déjà un compte coMunity : invitez une autre adresse.`
           : "L'email d'invitation n'a pas pu partir. Réessayez dans un instant.",
     };
   }

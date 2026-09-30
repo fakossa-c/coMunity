@@ -16,7 +16,7 @@ export type Decision = "valide" | "refuse" | "retire";
 
 const reussites: Record<Decision, (nom: string) => string> = {
   valide: (nom) =>
-    `Compte de ${nom} validé : ${nom} peut maintenant participer aux activités.`,
+    `Compte de ${nom} validé : ${nom} peut maintenant participer aux activités.`,
   refuse: (nom) => `Compte de ${nom} refusé.`,
   retire: (nom) => `Accès retiré à ${nom}.`,
 };

@@ -27,9 +27,9 @@ type Props = {
 };
 
 const CONFIRMATIONS: Record<string, (titre: string) => string> = {
-  publiee: (titre) => `« ${titre} » est publiée.`,
-  enregistree: (titre) => `« ${titre} » est enregistrée.`,
-  supprimee: (titre) => `« ${titre} » est supprimée.`,
+  publiee: (titre) => `« ${titre} » est publiée.`,
+  enregistree: (titre) => `« ${titre} » est enregistrée.`,
+  supprimee: (titre) => `« ${titre} » est supprimée.`,
 };
 
 export default async function AnnoncesDuSyndic({ searchParams }: Props) {
@@ -72,7 +72,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
           </TitreSection>
           {annonces.length === 0 ? (
             <p className="text-body-lg text-on-surface-variant">
-              Publiez une première annonce : les résidents la liront dans
+              Publiez une première annonce : les résidents la liront dans
               l&apos;onglet Annonces.
             </p>
           ) : (
