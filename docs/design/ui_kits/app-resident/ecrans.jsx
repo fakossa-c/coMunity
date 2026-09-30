@@ -27,7 +27,7 @@ function EcranAccueil({ aller, inscrit, ouvrirMenu }) {
     <Ecran barreEtat="9:41" barreBas={<BarreNavigation actif="accueil" onChange={aller} />}>
       <EnTeteResidence residence={RESIDENCE} initiale="D" onProfil={ouvrirMenu} />
       <Salutation prenom="Danielle" adresse="Bât. B, 2e étage." resume="4 activités prévues cette semaine" />
-      <BarreFiltres>{P("toutes", null, "Toutes")}{P("moments", "celebration", "Moments partagés")}{P("jardin", "potted_plant", "Jardin & Nature")}</BarreFiltres>
+      <BarreFiltres>{P("toutes", null, "Toutes")}{P("moments", "celebration", "Moments partagés")}{P("jardin", "potted_plant", "Jardin et nature")}</BarreFiltres>
       <div style={{ display: "flex", flexDirection: "column", gap: 28, padding: "0 var(--spacing-margin)" }}>
         {jours.map((j) => (
           <section key={j.jour} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -97,7 +97,7 @@ function EcranAnnonces({ aller, ouvrirMenu }) {
     <Ecran barreEtat="9:41" barreBas={<BarreNavigation actif="annonces" onChange={aller} />}>
       <EnTeteResidence residence={RESIDENCE} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)" }}><TitrePage titre="Annonces" sousTitre="Les informations du syndic" /></div>
-      <BarreFiltres>{P("toutes", null, "Toutes")}{P("ag", "groups", "Assemblées")}{P("sondage", "how_to_vote", "Sondages")}{P("travaux", "construction", "Travaux & infos")}</BarreFiltres>
+      <BarreFiltres>{P("toutes", null, "Toutes")}{P("ag", "groups", "Assemblées")}{P("sondage", "how_to_vote", "Sondages")}{P("travaux", "construction", "Travaux et infos")}</BarreFiltres>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "0 var(--spacing-margin)" }}>
         {voir("ag") && <CarteAnnonce type="ag" nouvelle publiee="Publiée le 20 oct. par le syndic" titre="Assemblée générale annuelle"
           texte="L’ordre du jour et les documents sont disponibles. Si vous ne pouvez pas venir, vous pouvez donner pouvoir à un voisin."
@@ -133,8 +133,8 @@ function EcranRubrique({ ecran, retour, ouvrirMenu }) {
 }
 
 const RUBRIQUES_PROFIL = [
-  { id: "identifiants", icone: "key", titre: "Mes identifiants" },
-  { id: "informations", icone: "badge", titre: "Mes informations", detail: "Contrôlez les informations partagées" },
+  { id: "identifiants", icone: "key", titre: "Mon compte" },
+  { id: "informations", icone: "badge", titre: "Mes informations", detail: "Ce que vos voisins voient de vous" },
   { id: "interets", icone: "interests", titre: "Mes intérêts", detail: "Partagez vos intérêts avec les résidents" },
   { id: "reglages", icone: "tune", titre: "Mes réglages", detail: "Adaptez l’application à votre usage" },
 ];
@@ -258,7 +258,7 @@ function CadreModif({ titre, sousTitre, destination, retour, ouvrirMenu, childre
 function EcranModifierEmail(props) {
   const { Champ } = window.DS;
   return (
-    <CadreModif titre="Modifier l’e-mail" destination="Mes identifiants" {...props}>
+    <CadreModif titre="Modifier l’email" destination="Mon compte" {...props}>
       <Champ libelle="E-mail actuel" valeur="danielle.m@exemple.fr" type="email" />
       <Champ libelle="Nouvel e-mail" type="email" autoComplete="email" aide="Vous recevrez un lien de confirmation à cette adresse." />
       <Champ libelle="Mot de passe" secret autoComplete="current-password" aide="Pour confirmer que c’est bien vous." />
@@ -269,7 +269,7 @@ function EcranModifierEmail(props) {
 function EcranModifierMotDePasse(props) {
   const { Champ } = window.DS;
   return (
-    <CadreModif titre="Modifier le mot de passe" destination="Mes identifiants" {...props}>
+    <CadreModif titre="Modifier le mot de passe" destination="Mon compte" {...props}>
       <Champ libelle="Mot de passe actuel" secret autoComplete="current-password" />
       <Champ libelle="Nouveau mot de passe" secret autoComplete="new-password" aide="8 caractères minimum." />
       <Champ libelle="Confirmer le nouveau mot de passe" secret autoComplete="new-password" />
