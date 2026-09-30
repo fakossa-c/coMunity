@@ -52,6 +52,32 @@ export async function lireUrlsPhotosEspaces(
   return urls;
 }
 
+/**
+ * Les adresses signées des photos (dans l'ordre) et du plan de situation d'un espace commun, pour
+ * sa fiche, en une seule demande de signature. Un fichier dont l'adresse n'a pas pu être signée
+ * manque simplement : la fiche s'affiche sans.
+ */
+export async function lireUrlsMediasEspace(
+  espace: Pick<EspaceCommun, "photos" | "plan_chemin">,
+): Promise<{ photos: string[]; plan?: string }> {
+  const chemins = [
+    ...espace.photos,
+    ...(espace.plan_chemin ? [espace.plan_chemin] : []),
+  ];
+  if (chemins.length === 0) return { photos: [] };
+
+  const supabase = await clientSession();
+  const { data } = await supabase.storage
+    .from(BUCKET_PHOTOS_ESPACES)
+    .createSignedUrls(chemins, VALIDITE_PHOTO_SECONDES);
+  const adresses = chemins.map((_, i) => data?.[i]?.signedUrl || undefined);
+  const photos = adresses
+    .slice(0, espace.photos.length)
+    .filter((url): url is string => !!url);
+  const plan = espace.plan_chemin ? adresses[espace.photos.length] : undefined;
+  return { photos, plan };
+}
+
 /** L'heure de calme de la résidence (« 22:00:00 »), ou `null` si la résidence n'en a pas. */
 export async function lireHeureCalme(): Promise<string | null> {
   const supabase = await clientSession();

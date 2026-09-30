@@ -5,7 +5,7 @@ import { EcranSecondaire } from "@/components/cadre";
 import { FicheEspaceCommun } from "@/components/fiche-espace-commun";
 import {
   lireEspacesCommuns,
-  lireUrlsPhotosEspaces,
+  lireUrlsMediasEspace,
 } from "@/lib/regles-residence";
 import { estSyndicActif, lireSession, statutResident } from "@/lib/session";
 
@@ -28,14 +28,15 @@ export default async function PageFicheEspace({ params }: Props) {
   const espace = espaces?.find((e) => e.id === identifiant);
   if (peutLire && !espace) notFound();
 
-  const photos = espace ? await lireUrlsPhotosEspaces([espace]) : {};
+  const medias = espace ? await lireUrlsMediasEspace(espace) : null;
 
   return (
     <EcranSecondaire retour={{ href: "/ma-copro", libelle: "Ma copro" }}>
       {espace && espaces ? (
         <FicheEspaceCommun
           espace={espace}
-          photo={photos[espace.id]}
+          photos={medias?.photos}
+          plan={medias?.plan}
           autres={espaces.filter((e) => e.id !== espace.id)}
         />
       ) : (

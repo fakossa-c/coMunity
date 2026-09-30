@@ -3,24 +3,29 @@ import {
   decouperConsignes,
   emplacementEspace,
   libelleCapacite,
+  libelleDimensions,
+  libelleHauteur,
   lienFicheEspace,
   lienProposerIci,
   type EspaceCommun,
 } from "@/lib/espaces-communs";
 import { heure } from "@/lib/partage-activite";
-import { texteAlternatifEspace } from "@/lib/photo-espace-commun";
+import { texteAlternatifPlan } from "@/lib/photo-espace-commun";
 import { classesBouton } from "./bouton";
 import { ConsignesRepliables } from "./consignes-repliables";
 import { EmplacementPhoto } from "./emplacement-photo";
 import { EquipementsEspace } from "./equipements-espace";
+import { GaleriePhotos } from "./galerie-photos";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 import { TitreSection } from "./titre-section";
 
 type Props = {
   espace: EspaceCommun;
-  /** L'adresse de la photo, signée ; absente, la fiche n'a pas d'image. */
-  photo?: string;
+  /** Les adresses signées des photos, dans l'ordre ; vide, la fiche n'a pas d'image en tête. */
+  photos?: string[];
+  /** L'adresse signée du plan de situation ; absente, la fiche n'a pas de plan. */
+  plan?: string;
   /** Les autres espaces de la résidence, proposés sous la fiche. */
   autres?: EspaceCommun[];
 };
@@ -31,15 +36,33 @@ const CARTE =
   "rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-space-md desktop:p-8";
 
 /**
- * Fiche d'un espace commun, sous Ma copro : photo en tête, nom et emplacement, ses
- * caractéristiques et ses consignes repliables, et à côté (sous la fiche sur mobile, collante sur
- * ordinateur) la carte « Utiliser cet espace » avec « Proposer une activité ici ». Un champ non
- * renseigné n'a ni ligne ni carte.
+ * Fiche d'un espace commun, sous Ma copro : galerie de photos en tête (vignettes à droite sur
+ * ordinateur), nom et emplacement, ses caractéristiques (dimensions, hauteur sous plafond,
+ * capacité, horaires, équipements) et ses consignes repliables, et à côté (sous la fiche sur
+ * mobile, collante sur ordinateur) la carte « Utiliser cet espace » avec « Proposer une activité
+ * ici » puis le plan de situation. Un champ non renseigné n'a ni ligne ni carte.
  */
-export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
+export function FicheEspaceCommun({
+  espace,
+  photos = [],
+  plan,
+  autres = [],
+}: Props) {
   const lieu = emplacementEspace(espace);
   const consignes = decouperConsignes(espace.consignes);
+  const dimensions = libelleDimensions(espace.longueur_m, espace.largeur_m);
+  const hauteur = libelleHauteur(espace.hauteur_plafond_m);
   const caracteristiques = [
+    dimensions !== null && {
+      icone: "straighten",
+      libelle: "Dimensions",
+      valeur: dimensions,
+    },
+    hauteur !== null && {
+      icone: "height",
+      libelle: "Hauteur sous plafond",
+      valeur: hauteur,
+    },
     espace.capacite !== null && {
       icone: "groups",
       libelle: "Capacité",
@@ -55,15 +78,13 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
 
   return (
     <article className="flex flex-col gap-space-lg">
-      {photo && (
-        <EmplacementPhoto
-          src={photo}
-          alt={texteAlternatifEspace(espace.nom)}
-          arrondi
-          immediate
-          className="h-[220px]! desktop:h-[380px]! desktop:rounded-flottante!"
-        />
-      )}
+      <GaleriePhotos
+        photos={photos}
+        titre={espace.nom}
+        sujet="espace"
+        vignettes
+        className="h-[220px]! desktop:h-[420px]! desktop:rounded-flottante!"
+      />
 
       <header className="flex flex-col gap-space-sm">
         <h1 className="font-headline text-headline-xl-mobile [overflow-wrap:anywhere] text-on-surface desktop:text-titre-journal">
@@ -149,6 +170,30 @@ export function FicheEspaceCommun({ espace, photo, autres = [] }: Props) {
             <Icone nom="add" taille={24} />
             Proposer une activité ici
           </Link>
+          {plan && (
+            <figure className="mt-space-xs flex flex-col gap-space-xs">
+              <EmplacementPhoto
+                src={plan}
+                alt={texteAlternatifPlan(espace.nom)}
+                className="h-[170px]! rounded-lg!"
+              />
+              <figcaption className="flex items-center justify-between gap-space-sm text-body-md text-on-surface-variant">
+                Plan de situation
+                <a
+                  href={plan}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-headline text-label-lg text-texte-action underline underline-offset-4"
+                >
+                  Agrandir le plan
+                  <span className="sr-only">
+                    {" "}
+                    (s&apos;ouvre dans un nouvel onglet)
+                  </span>
+                </a>
+              </figcaption>
+            </figure>
+          )}
         </aside>
       </div>
 
