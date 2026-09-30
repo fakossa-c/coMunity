@@ -9,7 +9,7 @@ Panneau blanc fixé en bas des fiches (remplace la barre de navigation), ombre p
 
 Sur ordinateur (cadre Journal), elle reste collée au bas de la fenêtre mais suit le conteneur de 1280 px aux marges de 64 px, comme le contenu ; dans l'espace syndic, elle laisse libre la largeur du menu de gauche. Un écran dont l'action passe dans une carte ou une colonne visible (Proposer) peut la retirer sur ordinateur.
 
-Avec `colonne`, la barre des formulaires de l'espace syndic (annonce, espace commun, section du règlement, fiche de Mon syndic) : sur mobile, la même barre pleine largeur ; sur ordinateur, toujours fixée en bas de l'écran, mais sa carte blanche (ombre portée vers le haut, rayon 16 en haut, marge intérieure de 32 px sur les côtés) prend la largeur de la colonne de 720 px du formulaire et son bord gauche, à droite du menu de l'espace syndic, en suivant le contenu centré. Le reste de la bande est transparent et laisse passer les clics.
+Avec `colonne`, la barre des formulaires de l'espace syndic (annonce, espace commun, section du règlement, fiche de Mon syndic) : sur mobile, la même barre pleine largeur ; sur ordinateur, toujours fixée en bas de l'écran, mais sa carte blanche (ombre portée vers le haut, rayon 24 en haut, marge intérieure de 32 px sur les côtés) prend la largeur de la colonne de 720 px du formulaire et son bord gauche, à droite du menu de l'espace syndic, en suivant le contenu centré. Le reste de la bande est transparent et laisse passer les clics. Le menu de l'espace syndic, déplié par-dessus le contenu de 64 à 80 rem, passe devant elle.
 
 ```jsx
 <BarreActionFixe colonne>

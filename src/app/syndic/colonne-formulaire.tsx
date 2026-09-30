@@ -10,11 +10,12 @@ export function ColonneFormulaire({ children }: { children: ReactNode }) {
 
 /**
  * Un bloc de champs d'un formulaire de l'espace syndic : sur ordinateur, une carte sans contour
- * (ombre douce, rayon 28) ; sur mobile, les champs restent empilés comme avant.
+ * (ombre douce, rayon 28, marge de 36 px sur 28, comme les blocs de Proposer) ; sur mobile, les
+ * champs restent empilés comme avant.
  */
 export function BlocFormulaire({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-bloc desktop:rounded-flottante desktop:bg-fond-carte desktop:px-8 desktop:py-7 desktop:shadow-douce">
+    <div className="flex flex-col gap-bloc desktop:rounded-flottante desktop:bg-fond-carte desktop:px-9 desktop:py-7 desktop:shadow-douce">
       {children}
     </div>
   );

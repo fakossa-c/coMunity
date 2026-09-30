@@ -131,7 +131,7 @@ export function FormulaireSection({ section }: Props) {
           role="region"
           aria-label="Aperçu de la section"
           hidden={!apercu}
-          className="rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4"
+          className="rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4 desktop:shadow-none"
         >
           <p className="mb-space-sm text-body-md text-on-surface-variant">
             Voici comment les résidents liront cette section une fois dépliée.
