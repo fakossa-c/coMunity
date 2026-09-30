@@ -41,7 +41,6 @@ export async function lireMesActivites(residentId: string) {
     throw new Error(
       `Vos activités passées sont illisibles : ${passees.error.message}`,
     );
-
   if (retours.error)
     throw new Error(`Vos avis sont illisibles : ${retours.error.message}`);
 

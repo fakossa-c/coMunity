@@ -39,7 +39,8 @@ function NoteDonnee({ note }: { note: number }) {
  * Une activité passée dans « Archivées » : pictogramme, titre (lien vers la fiche), jour et lieu,
  * puis le rôle du résident : « Organisée par vous » avec le nombre de participants et
  * « Dupliquer », ou « Vous y avez participé » avec « Donner mon avis » (le formulaire d'avis est
- * sur la fiche), ou, l'avis déjà donné, les étoiles données à la place du bouton. Une activité organisée puis annulée le dit à la place du nombre de participants.
+ * sur la fiche), ou, l'avis déjà donné, les étoiles données à la place du bouton. Une activité
+ * organisée puis annulée le dit à la place du nombre de participants.
  */
 export function LigneArchivee({ activite, role }: Props) {
   const organisee = role === "organisee";
