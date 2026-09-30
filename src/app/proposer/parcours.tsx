@@ -88,7 +88,7 @@ import { useBureau } from "./utiliser-bureau";
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
 type Props = {
-  /** Les espaces communs à proposer à l'étape 2, avant « Autre lieu… ». */
+  /** Les espaces communs à proposer à l'étape 2, avant « Ailleurs… ». */
   espaces: EspaceCommun[];
   /** Les règles de la résidence que l'assistant applique. */
   regles: ReglesResidence;
@@ -376,7 +376,7 @@ export function ParcoursProposition({
         return setResultat({
           ok: false,
           message:
-            "Des photos n'ont pas pu être envoyées. Réessayez : celles qui sont parties ne sont pas renvoyées.",
+            "Des photos ne sont pas parties. Réessayez : celles déjà envoyées ne repartent pas.",
         });
       chemins = envoi.chemins;
     }
@@ -513,7 +513,7 @@ export function ParcoursProposition({
               name="description"
               autoComplete="off"
               rows={5}
-              placeholder="Décrivez le déroulement de l'activité, pour qui elle est faite et comment venir."
+              placeholder="Ce qu'on y fait, pour qui, comment venir."
               value={saisie.description}
               onChange={(e) => poser("description", e.target.value)}
               maxLength={LIMITES.description}
@@ -697,7 +697,7 @@ export function ParcoursProposition({
                 {pageUnique && duree && (
                   <p className="hidden items-center gap-space-xs text-body-lg text-on-surface-variant desktop:flex">
                     <Icone nom="schedule" taille={22} />
-                    Durée : {duree}
+                    Durée : {duree}
                   </p>
                 )}
               </div>
@@ -795,7 +795,7 @@ export function ParcoursProposition({
                 value={saisie.capacite_min}
                 onChange={(e) => poser("capacite_min", e.target.value)}
                 erreur={erreurDe("capacite_min")}
-                aide="Facultatif : en dessous, l'activité n'a pas lieu."
+                aide="Facultatif : en dessous, l'activité n'a pas lieu."
               />
             </div>
             <ChoixEtiquettes
@@ -909,7 +909,7 @@ export function ParcoursProposition({
 
       <FeuilleConfirmation
         ouverte={sortie !== null}
-        titre="Abandonner la proposition ?"
+        titre="Abandonner la proposition ?"
         libelleGarder="Continuer la saisie"
         libelleConfirmer="Abandonner"
         onFermer={() => setSortie(null)}

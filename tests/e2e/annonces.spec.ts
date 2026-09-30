@@ -179,7 +179,7 @@ test("les puces filtrent la liste par type", async ({ page }) => {
   await expect(carte(page, sondage)).toBeVisible();
   await expect(carte(page, assemblee)).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Travaux & infos" }).click();
+  await page.getByRole("link", { name: "Travaux et infos" }).click();
   await expect(carte(page, travaux)).toBeVisible();
   await expect(carte(page, info)).toBeVisible();
   await expect(carte(page, sondage)).toHaveCount(0);
@@ -189,7 +189,7 @@ test("les puces filtrent la liste par type", async ({ page }) => {
   await expect(carte(page, sondage)).toBeVisible();
 });
 
-test("une annonce expirée quitte la liste, mais son lien public reste lisible", async ({
+test("une annonce expirée quitte la liste, mais son lien s'ouvre toujours", async ({
   page,
 }) => {
   const resident = await nouveauResident("valide");
@@ -298,7 +298,7 @@ test("le conseil syndical modifie, épingle, duplique puis supprime une annonce"
   );
 
   await ligneDeGestion(page, modifie)
-    .getByRole("link", { name: /^Dupliquer/ })
+    .getByRole("link", { name: /^Réutiliser/ })
     .click();
   await expect(page.getByLabel("Titre")).toHaveValue(modifie);
   await expect(page.getByLabel("Date ou période")).toHaveValue(
@@ -322,9 +322,7 @@ test("le conseil syndical modifie, épingle, duplique puis supprime une annonce"
   const feuille = page.getByRole("dialog", {
     name: "Supprimer cette annonce ?",
   });
-  await expect(feuille).toContainText(
-    "Son lien public ne mènera plus nulle part",
-  );
+  await expect(feuille).toContainText("son lien ne s'ouvrira plus");
   await feuille.getByRole("button", { name: "Supprimer" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `« ${copie} » est supprimée.`,
@@ -421,7 +419,7 @@ test("une photo jointe illustre la page publique et son aperçu dans WhatsApp", 
   await page
     .getByRole("listitem")
     .filter({ hasText: titre })
-    .getByRole("link", { name: /Voir la page publique/ })
+    .getByRole("link", { name: /Voir l'annonce/ })
     .click();
   const photo = page.getByRole("img", {
     name: `Photo de l'annonce : ${titre}`,

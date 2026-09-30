@@ -34,7 +34,7 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
     <EcranSyndic rubrique="mon-syndic">
       <TitrePage
         titre="Mon syndic"
-        sousTitre="Les personnes du syndic que les résidents voient dans Mon syndic, avec leur photo, leur téléphone et leur e-mail."
+        sousTitre="Les contacts du syndic que les résidents retrouvent dans Mon syndic."
       />
       {/* Sur ordinateur, une colonne de 960 px au plus, « Nouvelle fiche » en tête, à droite ; sur
           mobile, « Ajouter une fiche » reste sous la liste. */}
@@ -51,7 +51,7 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
         </div>
         {fiches.length === 0 ? (
           <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
-            Aucune fiche pour le moment : ajoutez la première, les résidents la
+            Aucune fiche pour le moment : ajoutez la première, les résidents la
             liront dans Mon syndic.
           </p>
         ) : (

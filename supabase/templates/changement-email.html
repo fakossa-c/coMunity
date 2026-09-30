@@ -8,10 +8,7 @@
   "
 >
   <h1 style="font-size: 24px">Confirmez votre nouvelle adresse</h1>
-  <p>
-    Vous avez demandé à utiliser {{ .NewEmail }} pour vous connecter à votre
-    résidence.
-  </p>
+  <p>Vous voulez désormais vous connecter à coMunity avec {{ .NewEmail }}.</p>
   <p>
     <a
       href="{{ .SiteURL }}/auth/confirmer?token_hash={{ .TokenHash }}&type=email_change"
@@ -29,7 +26,7 @@
   </p>
   <p style="font-size: 16px; color: #594139">
     Votre adresse ne change qu'une fois ce lien ouvert. Si vous n'avez rien
-    demandé, ignorez cet email : vous continuez à vous connecter avec {{ .Email
-    }}.
+    demandé, ignorez cet email&nbsp;: vous continuez à vous connecter avec {{
+    .Email }}.
   </p>
 </div>

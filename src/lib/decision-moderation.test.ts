@@ -7,10 +7,10 @@ import {
 
 describe("décisions de modération", () => {
   it("annonce chaque décision par une phrase accordée avec l'activité", () => {
-    expect(CONFIRMATIONS.publier("Goûter")).toBe("« Goûter » est publiée.");
-    expect(CONFIRMATIONS.refuser("Goûter")).toBe("« Goûter » est refusée.");
-    expect(CONFIRMATIONS.masquer("Goûter")).toBe("« Goûter » est masquée.");
-    expect(CONFIRMATIONS.retablir("Goûter")).toBe("« Goûter » est rétablie.");
+    expect(CONFIRMATIONS.publier("Goûter")).toBe("« Goûter » est publiée.");
+    expect(CONFIRMATIONS.refuser("Goûter")).toBe("« Goûter » est refusée.");
+    expect(CONFIRMATIONS.masquer("Goûter")).toBe("« Goûter » est masquée.");
+    expect(CONFIRMATIONS.retablir("Goûter")).toBe("« Goûter » est rétablie.");
   });
 
   it("ne reconnaît que les quatre décisions, jamais un nom hérité de l'objet", () => {

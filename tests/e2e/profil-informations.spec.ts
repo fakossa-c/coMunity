@@ -64,7 +64,7 @@ test("le Profil mène à Mes informations et à Mes intérêts", async ({
 
   await expect(
     page.getByRole("navigation", { name: "Rubriques du profil" }),
-  ).toContainText("Mes identifiants");
+  ).toContainText("Mon compte");
   await page.getByRole("link", { name: /Mes informations/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Mes informations" }),

@@ -71,19 +71,19 @@ describe("vérification d'une étape", () => {
     expect(verifierEtape(3, COMPLETE)).toEqual({});
   });
 
-  it("étape 1 : le titre est obligatoire", () => {
+  it("étape 1 : le titre est obligatoire", () => {
     expect(verifierEtape(1, { ...COMPLETE, titre: "   " })).toMatchObject({
       champ: "titre",
     });
   });
 
-  it("étape 1 : le titre tient en 50 caractères", () => {
+  it("étape 1 : le titre tient en 50 caractères", () => {
     expect(
       verifierEtape(1, { ...COMPLETE, titre: "x".repeat(51) }),
     ).toMatchObject({ champ: "titre" });
   });
 
-  it("étape 1 : la description tient en 600 caractères, 600 passent", () => {
+  it("étape 1 : la description tient en 600 caractères, 600 passent", () => {
     expect(
       verifierEtape(1, { ...COMPLETE, description: "x".repeat(600) }),
     ).toEqual({});
@@ -92,17 +92,17 @@ describe("vérification d'une étape", () => {
     ).toEqual({ champ: "description", erreur: "600 caractères maximum." });
   });
 
-  it("étape 1 : une description vide est permise", () => {
+  it("étape 1 : une description vide est permise", () => {
     expect(verifierEtape(1, { ...COMPLETE, description: "" })).toEqual({});
   });
 
-  it("étape 1 : le mot d'accueil tient en 300 caractères", () => {
+  it("étape 1 : le mot d'accueil tient en 300 caractères", () => {
     expect(
       verifierEtape(1, { ...COMPLETE, mot_accueil: "x".repeat(301) }),
     ).toMatchObject({ champ: "mot_accueil" });
   });
 
-  it("étape 2 : date, heures et lieu sont obligatoires", () => {
+  it("étape 2 : date, heures et lieu sont obligatoires", () => {
     expect(verifierEtape(2, { ...COMPLETE, date_activite: "" })).toMatchObject({
       champ: "date_activite",
     });
@@ -114,7 +114,7 @@ describe("vérification d'une étape", () => {
     });
   });
 
-  it("étape 2 : l'heure de fin suit l'heure de début", () => {
+  it("étape 2 : l'heure de fin suit l'heure de début", () => {
     expect(
       verifierEtape(2, {
         ...COMPLETE,
@@ -127,13 +127,13 @@ describe("vérification d'une étape", () => {
     });
   });
 
-  it("étape 2 : la précision d'accès tient en 120 caractères", () => {
+  it("étape 2 : la précision d'accès tient en 120 caractères", () => {
     expect(
       verifierEtape(2, { ...COMPLETE, precision_acces: "x".repeat(121) }),
     ).toMatchObject({ champ: "precision_acces" });
   });
 
-  it("étape 3 : des places limitées demandent un nombre", () => {
+  it("étape 3 : des places limitées demandent un nombre", () => {
     expect(verifierEtape(3, { ...COMPLETE, capacite_max: "" })).toMatchObject({
       champ: "capacite_max",
     });
@@ -142,13 +142,13 @@ describe("vérification d'une étape", () => {
     });
   });
 
-  it("étape 3 : le minimum ne dépasse pas la capacité", () => {
+  it("étape 3 : le minimum ne dépasse pas la capacité", () => {
     expect(
       verifierEtape(3, { ...COMPLETE, capacite_max: "5", capacite_min: "10" }),
     ).toMatchObject({ champ: "capacite_min" });
   });
 
-  it("étape 3 : sans limite de places, le nombre saisi est ignoré et le minimum reste libre", () => {
+  it("étape 3 : sans limite de places, le nombre saisi est ignoré et le minimum reste libre", () => {
     expect(
       verifierEtape(3, {
         ...COMPLETE,
@@ -257,7 +257,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
     });
   });
 
-  it("sans capacité ni minimum : places sans limite et champs vides", () => {
+  it("sans capacité ni minimum : places sans limite et champs vides", () => {
     const saisie = saisieDepuisActivite({
       ...EXISTANTE,
       capacite_max: null,
@@ -308,11 +308,11 @@ describe("capacité et personnes déjà inscrites", () => {
   it("refuse une capacité sous les personnes inscrites, sous le champ concerné", () => {
     expect(verifierEtape(3, limitees("4"), { placesPrises: 5 })).toEqual({
       champ: "capacite_max",
-      erreur: "Indiquez au moins 5 places : elles sont déjà prises.",
+      erreur: "Indiquez au moins 5 places : elles sont déjà prises.",
     });
   });
 
-  it("une seule personne inscrite : la capacité minimale est 1", () => {
+  it("une seule personne inscrite : la capacité minimale est 1", () => {
     expect(verifierEtape(3, limitees("1"), { placesPrises: 1 })).toEqual({});
   });
 
@@ -331,7 +331,7 @@ describe("capacité et personnes déjà inscrites", () => {
   });
 });
 
-describe("lieu : espace commun ou lieu libre", () => {
+describe("lieu : espace commun ou lieu libre", () => {
   const SALLE = { id: "salle", nom: "Salle commune" };
   const dansLaSalle: SaisieActivite = {
     ...COMPLETE,
@@ -339,14 +339,14 @@ describe("lieu : espace commun ou lieu libre", () => {
     lieu: "",
   };
 
-  it("étape 2 : il faut choisir un espace commun ou « Autre »", () => {
+  it("étape 2 : il faut choisir un espace commun ou « Autre »", () => {
     expect(verifierEtape(2, { ...COMPLETE, espace_commun: "" })).toEqual({
       champ: "espace_commun",
       erreur: "Choisissez où se tient l'activité.",
     });
   });
 
-  it("étape 2 : un espace commun choisi n'a pas besoin de lieu libre", () => {
+  it("étape 2 : un espace commun choisi n'a pas besoin de lieu libre", () => {
     expect(verifierEtape(2, dansLaSalle)).toEqual({});
   });
 
@@ -357,7 +357,7 @@ describe("lieu : espace commun ou lieu libre", () => {
     });
   });
 
-  it("« Autre » publie le lieu libre, sans espace commun", () => {
+  it("« Autre » publie le lieu libre, sans espace commun", () => {
     expect(versNouvelleActivite(COMPLETE, [SALLE])).toMatchObject({
       espace_commun_id: null,
       lieu: "Jardin partagé",
@@ -410,26 +410,26 @@ describe("règles bloquantes de l'assistant dans le parcours", () => {
     message: "Pensez aux voisins.",
   };
 
-  it("étape 2 : l'heure limite de l'espace s'affiche sous l'heure de fin", () => {
+  it("étape 2 : l'heure limite de l'espace s'affiche sous l'heure de fin", () => {
     expect(
       blocageDeLEtape(2, [calme, heureLimite, capacite], COMPLETE),
     ).toEqual({ champ: "heure_fin", erreur: "L'espace ferme à 21h00." });
   });
 
-  it("étape 3 : la capacité de l'espace s'affiche sous le nombre de places", () => {
+  it("étape 3 : la capacité de l'espace s'affiche sous le nombre de places", () => {
     expect(blocageDeLEtape(3, [heureLimite, capacite], COMPLETE)).toEqual({
       champ: "capacite_max",
       erreur: "L'espace accueille 20 personnes au plus.",
     });
   });
 
-  it("étape 3 : sans limite de places, elle s'affiche en tête de l'étape", () => {
+  it("étape 3 : sans limite de places, elle s'affiche en tête de l'étape", () => {
     expect(
       blocageDeLEtape(3, [capacite], { ...COMPLETE, places: "sans_limite" }),
     ).toEqual({ erreur: "L'espace accueille 20 personnes au plus." });
   });
 
-  it("récapitulatif : toute règle bloquante empêche de publier", () => {
+  it("récapitulatif : toute règle bloquante empêche de publier", () => {
     expect(blocageDeLEtape(4, [calme, capacite], COMPLETE)).toEqual({
       erreur: "L'espace accueille 20 personnes au plus.",
     });
@@ -604,7 +604,7 @@ describe("description et mot d'accueil pour l'assistant", () => {
     ).toBe("");
   });
 
-  it("Jev reçoit les deux textes, sans les couper : la borne les contient au plus longs", () => {
+  it("Jev reçoit les deux textes, sans les couper : la borne les contient au plus longs", () => {
     expect(entreeJevDe(COMPLETE).description).toBe(
       descriptionPourAssistant(COMPLETE),
     );
@@ -655,10 +655,10 @@ describe("vérification de la page entière", () => {
   });
 });
 
-describe("« Il reste à remplir »", () => {
+describe("« Il reste à remplir »", () => {
   const vide = SAISIE_VIDE;
 
-  it("une nouvelle activité a tout à remplir : titre, date et heure, lieu, puis la description conseillée", () => {
+  it("une nouvelle activité a tout à remplir : titre, date et heure, lieu, puis la description conseillée", () => {
     expect(resteARemplir(vide)).toEqual([
       {
         cle: "titre",
@@ -701,7 +701,7 @@ describe("« Il reste à remplir »", () => {
     expect(points.map((point) => point.etat)).toEqual(["", "", "", ""]);
   });
 
-  it("« Autre lieu » sans nom demande de le nommer", () => {
+  it("« Ailleurs… » sans nom demande de le nommer", () => {
     const lieu = resteARemplir({
       ...COMPLETE,
       espace_commun: LIEU_LIBRE,

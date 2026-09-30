@@ -10,7 +10,7 @@ import {
 
 // Spec #168, ticket #176 : sur ordinateur, les écrans de connexion tiennent dans une carte centrée
 // de 520 à 560 px, sous une barre du haut réduite au logo, même pour une personne connectée ; sous
-// celle de la connexion, l'encart « Nouveau dans la résidence ? ». Sur mobile, rien ne change.
+// celle de la connexion, l'encart « Pas encore de compte ? ». Sur mobile, rien ne change.
 
 const emails: string[] = [];
 
@@ -179,7 +179,7 @@ for (const largeur of [1440, 1100]) {
   });
 }
 
-test("sur ordinateur, l'encart « Nouveau dans la résidence ? » suit la carte de la connexion, à sa largeur", async ({
+test("sur ordinateur, l'encart « Pas encore de compte ? » suit la carte de la connexion, à sa largeur", async ({
   page,
   isMobile,
 }) => {
@@ -189,7 +189,7 @@ test("sur ordinateur, l'encart « Nouveau dans la résidence ? » suit la carte 
 
   const carte = (await boiteCarte(page, CONNEXION))!;
   const encart = (await page
-    .getByText("Nouveau dans la résidence ?")
+    .getByText("Pas encore de compte ?")
     .locator("..")
     .boundingBox())!;
   expect(encart.y).toBeGreaterThanOrEqual(carte.y + carte.height);

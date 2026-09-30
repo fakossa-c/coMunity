@@ -25,7 +25,7 @@ export async function Retours({ identifiant }: { identifiant: string }) {
         id="retours-titre"
         className="font-headline text-headline-sm text-on-surface"
       >
-        Retours des participants
+        Avis des participants
       </h2>
       <p className="text-body-lg text-on-surface">
         {libelleNoteMoyenne(data.note_moyenne)}
@@ -43,7 +43,7 @@ export async function Retours({ identifiant }: { identifiant: string }) {
             // pour rester anonymisée à la lecture. La liste est réaffichée en entier à chaque
             // rendu, jamais réordonnée localement.
             <li key={index} className="text-body-md text-on-surface">
-              « {retour.commentaire} » — {retour.note} / 5
+              « {retour.commentaire} » — {retour.note} / 5
             </li>
           ))}
         </ul>

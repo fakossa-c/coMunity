@@ -46,7 +46,7 @@ describe("destinationArrivee", () => {
     expect(destinationArrivee(resident, "/annonces")).toBe("/annonces");
   });
 
-  it("fait passer d'abord par « Présentez-vous à vos voisins » un membre sans prénom ni nom", () => {
+  it("fait passer d'abord par « Présentez-vous à vos voisins » un membre sans prénom ni nom", () => {
     const incomplet = { ...syndic, prenom: null, nom: null };
 
     expect(destinationArrivee(incomplet)).toBe(

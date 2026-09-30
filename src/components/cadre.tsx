@@ -26,7 +26,7 @@ const RUBRIQUES: Rubrique[] = [
     href: "/profil",
     icone: "person",
     titre: "Profil",
-    detail: "Identifiants, informations, réglages",
+    detail: "Compte, informations, réglages",
   },
   {
     href: "/mon-syndic",
@@ -214,7 +214,7 @@ type PropsConnexion = {
   avecCompte?: boolean;
   /** Faux sur les écrans où un membre du conseil syndical saisit son prénom et son nom. */
   completionExigee?: boolean;
-  /** Ce qui suit la carte : l'encart « Nouveau dans la résidence ? » de la connexion. */
+  /** Ce qui suit la carte : l'encart « Pas encore de compte ? » de la connexion. */
   sousLaCarte?: ReactNode;
   children: ReactNode;
 };

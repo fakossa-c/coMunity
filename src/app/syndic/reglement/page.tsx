@@ -17,9 +17,9 @@ type Props = {
 };
 
 const CONFIRMATIONS: Record<string, (titre: string) => string> = {
-  ajoutee: (titre) => `« ${titre} » est ajoutée au règlement intérieur.`,
-  enregistree: (titre) => `« ${titre} » est enregistrée.`,
-  supprimee: (titre) => `« ${titre} » est supprimée.`,
+  ajoutee: (titre) => `« ${titre} » est ajoutée au règlement intérieur.`,
+  enregistree: (titre) => `« ${titre} » est enregistrée.`,
+  supprimee: (titre) => `« ${titre} » est supprimée.`,
 };
 
 export default async function ReglementInterieurSyndic({
@@ -70,7 +70,7 @@ export default async function ReglementInterieurSyndic({
         </div>
         {sections.length === 0 ? (
           <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
-            Aucune section pour le moment : ajoutez la première, les résidents
+            Aucune section pour le moment : ajoutez la première, les résidents
             la liront dans Ma copro.
           </p>
         ) : (

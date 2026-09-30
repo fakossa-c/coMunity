@@ -155,7 +155,7 @@ describe("moteur Jev par OpenRouter (API systemone)", () => {
         expect(question.instructions.length).toBeGreaterThan(20);
     });
 
-    it("offre chaque catégorie et chaque pictogramme connus, plus « aucune » et « aucun »", async () => {
+    it("offre chaque catégorie et chaque pictogramme connus, plus « aucune » et « aucun »", async () => {
       const { interroger, corps } = moteurAvec(() =>
         reponseSystemOne(reponseSure),
       );
@@ -213,7 +213,7 @@ describe("moteur Jev par OpenRouter (API systemone)", () => {
 
       expect(conformite).toEqual({
         conforme: false,
-        raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
+        raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
         confiance: 0.95,
       });
     });
@@ -235,7 +235,7 @@ describe("moteur Jev par OpenRouter (API systemone)", () => {
       expect(conformite?.conforme).toBe(false);
       expect(conformite?.confiance).toBeCloseTo(0.9);
       expect(conformite?.raison).toBe(
-        "Nuisances sonores : l'activité risque de gêner le voisinage.",
+        "Nuisances sonores : l'activité risque de gêner le voisinage.",
       );
     });
 

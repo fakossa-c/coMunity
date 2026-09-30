@@ -22,12 +22,13 @@ type Props = {
 };
 
 const ETATS: Record<StatutActivite, string> = {
-  publiee: "Publiée : visible de toute la résidence.",
+  publiee: "Publiée : visible de toute la résidence.",
   en_relecture:
-    "Visible de son créateur et du conseil syndical seulement, jusqu'à votre décision. Publiez-la pour pouvoir l'annuler.",
+    "Seuls son organisateur et le conseil syndical la voient, jusqu'à votre décision. Publiez-la pour pouvoir l'annuler.",
   masquee:
-    "Visible de son créateur et du conseil syndical seulement. Rétablissez-la pour pouvoir l'annuler.",
-  annulee: "Annulée : ses inscrits en sont informés, elle ne se modère plus.",
+    "Seuls son organisateur et le conseil syndical la voient. Rétablissez-la pour pouvoir l'annuler.",
+  annulee:
+    "Annulée : ses inscrits le voient sur sa fiche, il n'y a plus rien à décider.",
 };
 
 /**
@@ -76,7 +77,7 @@ export function ModerationConseil({
       <p className="text-body-lg text-on-surface-variant">{ETATS[statut]}</p>
       {statut === "en_relecture" && (
         <p className="text-body-lg text-on-surface">
-          Raison de la mise en relecture : {raison ?? "non précisée"}
+          Raison de la mise en relecture : {raison ?? "non précisée"}
         </p>
       )}
       <DecisionModeration
@@ -107,7 +108,7 @@ export function ModerationConseil({
       )}
       <FeuilleConfirmation
         ouverte={annulation}
-        titre="Annuler cette activité ?"
+        titre="Annuler cette activité ?"
         libelleGarder="Garder l'activité"
         libelleConfirmer="Annuler l'activité"
         onFermer={() => setAnnulation(false)}

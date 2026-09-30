@@ -1,7 +1,7 @@
 /** Aligné sur `minimum_password_length` de Supabase Auth (supabase/config.toml). */
 export const LONGUEUR_MINIMALE_MOT_DE_PASSE = 6;
 
-export const MOT_DE_PASSE_TROP_FAIBLE = `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`;
+export const MOT_DE_PASSE_TROP_FAIBLE = `Ce mot de passe est trop faible : au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`;
 
 type RefusMotDePasse = {
   erreur: string;

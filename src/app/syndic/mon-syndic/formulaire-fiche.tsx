@@ -207,7 +207,7 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
           </div>
           <ChampFichier
             libelle="Photo"
-            aide="Facultatif. JPEG, PNG ou WebP : elle est réduite avant d'être envoyée."
+            aide="Facultatif. JPEG, PNG ou WebP : elle est réduite avant d'être envoyée."
             accept="image/jpeg,image/png,image/webp"
             fichier={choisie?.fichier ?? null}
             nomActuel={photoChemin && !choisie ? "Photo actuelle" : null}
@@ -224,7 +224,7 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
           name="compteId"
           value={saisie.compteId}
           onChange={(e) => poser("compteId", e.target.value)}
-          aide="Si cette personne a un compte dans l'espace syndic, reliez-le : la fiche porte alors la mention « Sur coMunity »."
+          aide="Si cette personne a un compte dans l'espace syndic, reliez-le : la fiche porte alors la mention « Sur coMunity »."
         >
           <option value="">Aucun compte</option>
           {comptes.map(({ id, libelle }) => (
@@ -248,7 +248,7 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
           </Bouton>
           <FeuilleConfirmation
             ouverte={suppression}
-            titre="Supprimer cette fiche ?"
+            titre="Supprimer cette fiche ?"
             libelleGarder="Garder la fiche"
             libelleConfirmer={enCours ? "Suppression…" : "Supprimer"}
             onFermer={() => setSuppression(false)}

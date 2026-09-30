@@ -82,7 +82,7 @@ test("la liste « À relire » donne la raison, et publier avec un message infor
     name: "Publier cette activité ?",
   });
   await feuille
-    .getByLabel("Message pour le créateur (facultatif)")
+    .getByLabel("Message pour l'organisateur (facultatif)")
     .fill("C'est bon, merci d'avoir précisé le lieu.");
   await feuille.getByRole("button", { name: "Publier", exact: true }).click();
 
@@ -117,12 +117,12 @@ test("refuser demande un message, masque l'activité et le créateur lit la déc
   await feuille.getByRole("button", { name: "Refuser", exact: true }).click();
   await expect(
     feuille.getByText(
-      "Écrivez un message pour expliquer votre décision au créateur.",
+      "Écrivez un message pour expliquer votre décision à l'organisateur.",
     ),
   ).toBeVisible();
 
   await feuille
-    .getByLabel("Message pour le créateur")
+    .getByLabel("Message pour l'organisateur")
     .fill("Les ventes ne sont pas des activités de voisinage.");
   await feuille.getByRole("button", { name: "Refuser", exact: true }).click();
 
@@ -162,7 +162,7 @@ test("une activité en relecture ou masquée n'est visible ni des voisins ni d'u
   );
   await expect(pageCreateur.getByText("En relecture").first()).toBeVisible();
   await expect(
-    pageCreateur.getByText("Le conseil syndical relit votre activité"),
+    pageCreateur.getByText("Le conseil syndical la relit avant de la publier"),
   ).toBeVisible();
 
   // Le membre du conseil syndical voit l'activité en relecture.
@@ -215,7 +215,7 @@ test("le conseil syndical masque puis rétablit une activité depuis sa fiche, a
     name: "Masquer cette activité ?",
   });
   await feuille
-    .getByLabel("Message pour le créateur")
+    .getByLabel("Message pour l'organisateur")
     .fill("Un voisin l'a signalée, nous vérifions.");
   await feuille.getByRole("button", { name: "Masquer", exact: true }).click();
 
@@ -312,7 +312,7 @@ test("le menu de l'espace syndic annonce les activités à relire", async ({
   }
   const rubrique = page
     .getByRole("navigation", { name: "Espace syndic" })
-    .getByRole("link", { name: /^Modération, \d+ à relire$/ });
+    .getByRole("link", { name: /^Modération \d+ à relire$/ });
 
   await rubrique.click();
   await expect(page).toHaveURL(/\/syndic\/moderation$/);

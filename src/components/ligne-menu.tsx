@@ -5,7 +5,7 @@ import type { NomIcone } from "./icones";
 type Props = {
   icone: NomIcone;
   titre: string;
-  /** Une ligne qui dit ce qu'on trouve derrière : « Contrôlez les informations partagées » */
+  /** Une ligne qui dit ce qu'on trouve derrière : « Ce que vos voisins voient de vous » */
   detail?: string;
   /** carte : page Profil (72 px, blanc bordé) · feuille : dans le menu du profil (64 px, bleu très clair) */
   variante?: "carte" | "feuille";

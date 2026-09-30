@@ -1,10 +1,10 @@
 Menu « Espace syndic », sur **toutes** les pages de l'espace syndic, pour un membre actif du conseil syndical (spec #168). Une seule liste de rubriques sert au menu déplié, au rail et au tiroir, en trois groupes :
 
 - **Suivi** : Tableau de bord (`monitoring`).
-- **Résidence** : Résidents (`group`, avec le nombre de comptes en attente), Membres du syndic (`shield_person`), Modération (`visibility_off`, avec le nombre d'activités à relire).
+- **Résidence** : Résidents (`group`, avec le nombre de comptes en attente), Conseil syndical (`shield_person`), Modération (`visibility_off`, avec le nombre d'activités à relire).
 - **Contenus** : Annonces (`campaign`), Espaces communs (`meeting_room`), Règlement intérieur (`menu_book`), Mon syndic (`support_agent`).
 
-Ligne de rubrique : pilule de 52 px, pictogramme de 24 et libellé 17 px en 700, `on-surface-variant` ; survol `surface-container`. Rubrique courante : pilule pêche `--color-primary-fixed`, pictogramme plein, libellé en 800, `aria-current="page"` ; sur un formulaire, c'est la rubrique de sa liste. Compteur : pastille marine (`fond-syndic`, `texte-syndic`) au bout de la ligne, seulement s'il n'est pas nul ; le nom de la ligne le dit (« Résidents, 3 en attente », « Modération, 2 à relire »). Titre du groupe en `label-sm`, `on-surface-variant`.
+Ligne de rubrique : pilule de 52 px, pictogramme de 24 et libellé 17 px en 700, `on-surface-variant` ; survol `surface-container`. Rubrique courante : pilule pêche `--color-primary-fixed`, pictogramme plein, libellé en 800, `aria-current="page"` ; sur un formulaire, c'est la rubrique de sa liste. Compteur : pastille marine (`fond-syndic`, `texte-syndic`) au bout de la ligne, seulement s'il n'est pas nul ; le nom de la ligne le dit en commençant par le texte visible, sans ponctuation entre le libellé et le nombre (« Résidents 3 en attente », « Modération 2 à relire ») : la commande vocale « cliquer sur Résidents » le retrouve. Titre du groupe en `label-sm`, `on-surface-variant`.
 
 **Trois états**, selon la largeur :
 

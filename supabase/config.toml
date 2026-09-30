@@ -250,7 +250,7 @@ otp_expiry = 3600
 # « Choisissez votre mot de passe » (invitation, récupération) ou Mes identifiants (changement
 # d'adresse). En production, reporter ces modèles dans le tableau de bord.
 [auth.email.template.invite]
-subject = "Vous êtes invité à rejoindre l'espace syndic"
+subject = "Rejoignez l'espace syndic de coMunity"
 content_path = "./supabase/templates/invitation.html"
 
 [auth.email.template.recovery]

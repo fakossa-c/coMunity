@@ -175,7 +175,7 @@ test("un visiteur sur Activités est invité à se connecter pour voir ses inscr
     page.getByRole("heading", { level: 1, name: "Activités" }),
   ).toBeVisible();
   await expect(page.getByRole("main")).toContainText(
-    "Connectez-vous pour voir les activités où vous êtes inscrit.",
+    "Connectez-vous pour retrouver vos inscriptions.",
   );
 });
 

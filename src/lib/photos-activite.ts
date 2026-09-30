@@ -72,5 +72,5 @@ export function messagePhotosIncompletes(
       : echecs === 1
         ? ["une photo n'a pas pu être envoyée", false]
         : [`${echecs} photos n'ont pas pu être envoyées`, true];
-  return `Votre activité est publiée, mais ${cause}. Ouvrez l'activité puis « Modifier » pour ${pluriel ? "les " : "l'"}ajouter.`;
+  return `Votre activité est publiée, mais ${cause}. Ouvrez l'activité puis « Modifier » pour ${pluriel ? "les " : "l'"}ajouter.`;
 }

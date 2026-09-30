@@ -17,7 +17,7 @@ function activite(
   return { id, date_activite, heure_debut: "10:00:00", ...extras };
 }
 
-describe("l'activité « À la une »", () => {
+describe("l'activité « À la une »", () => {
   it("est la première activité à venir, jour puis heure de début", () => {
     const activites = [
       activite("lundi-soir", "2026-10-26", { heure_debut: "20:00:00" }),

@@ -37,14 +37,14 @@ export default async function ModerationDesActivites({ searchParams }: Props) {
     <EcranSyndic rubrique="moderation">
       <TitrePage
         titre="Modération des activités"
-        sousTitre="Relisez les activités mises de côté, puis publiez-les ou refusez-les avec un message pour leur créateur. Depuis la fiche d'une activité, vous pouvez aussi la masquer, la modifier ou l'annuler."
+        sousTitre="Publiez ou refusez les activités mises de côté. Depuis leur fiche, vous pouvez aussi les masquer, les modifier ou les annuler."
       />
       <div className="flex flex-col gap-space-lg">
         <Confirmation message={confirmation} />
         <Rubrique
           titre="À relire"
           activites={aRelire}
-          vide="Aucune activité à relire pour le moment. Les activités sont publiées dès que leur créateur les propose."
+          vide="Aucune activité à relire. Les activités sont publiées dès que leur organisateur les propose."
         />
         <Rubrique
           titre="Masquées"
@@ -112,11 +112,12 @@ function CarteModeration({ activite }: { activite: ActiviteAModerer }) {
       </p>
       {enRelecture ? (
         <p className="text-body-lg text-on-surface">
-          Raison : {activite.raison_relecture ?? "non précisée"}
+          Raison : {activite.raison_relecture ?? "non précisée"}
         </p>
       ) : (
         <p className="text-body-lg text-on-surface">
-          Message au créateur : {activite.message_moderation ?? "aucun"}
+          Message à l&apos;organisateur :{" "}
+          {activite.message_moderation ?? "aucun"}
         </p>
       )}
       <Link

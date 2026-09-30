@@ -35,11 +35,11 @@ Dans tout ce guide, `<URL-PROD>` désigne l'URL de production du projet Vercel (
    nouvelle adresse), longueur minimale du mot de passe 6.
 6. **Authentication > Emails > Templates**, recopier sujet et contenu depuis le dépôt :
 
-   | Modèle               | Sujet                                        | Contenu                                    |
-   | -------------------- | -------------------------------------------- | ------------------------------------------ |
-   | Invite user          | Vous êtes invité à rejoindre l'espace syndic | `supabase/templates/invitation.html`       |
-   | Reset password       | Choisissez un nouveau mot de passe           | `supabase/templates/recuperation.html`     |
-   | Change email address | Confirmez votre nouvelle adresse             | `supabase/templates/changement-email.html` |
+   | Modèle               | Sujet                                 | Contenu                                    |
+   | -------------------- | ------------------------------------- | ------------------------------------------ |
+   | Invite user          | Rejoignez l'espace syndic de coMunity | `supabase/templates/invitation.html`       |
+   | Reset password       | Choisissez un nouveau mot de passe    | `supabase/templates/recuperation.html`     |
+   | Change email address | Confirmez votre nouvelle adresse      | `supabase/templates/changement-email.html` |
 
    Les modèles par défaut ne passent pas par `/auth/confirmer` : leurs liens n'ouvrent pas la session.
 

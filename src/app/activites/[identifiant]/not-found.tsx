@@ -12,7 +12,7 @@ export default function ActiviteIntrouvable() {
       />
       <Bientot
         icone="event_busy"
-        message="Cette activité n'existe pas ou n'est plus visible : elle a peut-être été retirée. Retrouvez les activités de la résidence depuis l'accueil."
+        message="Elle a peut-être été retirée. Retrouvez les activités de la résidence depuis l'Accueil."
       />
     </EcranSecondaire>
   );

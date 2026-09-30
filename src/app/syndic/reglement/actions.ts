@@ -13,10 +13,9 @@ import { clientSession } from "@/lib/supabase/serveur";
 const LISTE = "/syndic/reglement";
 
 const messages: Record<string, string> = {
-  "42501":
-    "Seuls les membres du conseil syndical rédigent le règlement intérieur.",
-  "22023": "Cette section n'existe plus : rechargez la page.",
-  "23514": "Un champ n'est pas valide : vérifiez les longueurs.",
+  "42501": "Seul le conseil syndical peut rédiger le règlement intérieur.",
+  "22023": "Cette section a été supprimée entre-temps : revenez à la liste.",
+  "23514": "Un texte est trop long. Raccourcissez-le, puis enregistrez.",
 };
 
 function echec(code: string | undefined, parDefaut: string): Resultat {
@@ -66,8 +65,7 @@ export async function enregistrerSection(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cette section n'existe plus, ou vous n'avez plus le droit de la modifier.",
+      message: "Cette section n'existe plus, ou votre accès a été retiré.",
     };
 
   return retourALaListe(id ? "enregistree" : "ajoutee", section.titre);
@@ -92,8 +90,7 @@ export async function supprimerSection(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cette section n'existe plus, ou vous n'avez plus le droit de la supprimer.",
+      message: "Cette section n'existe plus, ou votre accès a été retiré.",
     };
 
   return retourALaListe("supprimee", titre);

@@ -36,7 +36,11 @@ async function enregistrer(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: "Vous devez être connecté." };
+  if (!user)
+    return {
+      ok: false,
+      message: "Connectez-vous pour enregistrer vos réglages.",
+    };
 
   const { error } = await supabase
     .from("profil")

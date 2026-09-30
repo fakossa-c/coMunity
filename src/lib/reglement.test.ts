@@ -33,9 +33,9 @@ describe("decouperTexte", () => {
   });
 
   it("enchaîne un paragraphe et sa liste sans ligne vide entre les deux", () => {
-    expect(decouperTexte("Après 22h :\n- silence\n- portes doucement")).toEqual(
+    expect(decouperTexte("Après 22h :\n- silence\n- portes doucement")).toEqual(
       [
-        { type: "paragraphe", morceaux: [simple("Après 22h :")] },
+        { type: "paragraphe", morceaux: [simple("Après 22h :")] },
         {
           type: "liste",
           elements: [[simple("silence")], [simple("portes doucement")]],
@@ -78,7 +78,7 @@ describe("decouperTexte", () => {
     ]);
   });
 
-  it("ne traite jamais le HTML : il reste du texte", () => {
+  it("ne traite jamais le HTML : il reste du texte", () => {
     expect(decouperTexte('<script>alert("x")</script> **<b>y</b>**')).toEqual([
       {
         type: "paragraphe",

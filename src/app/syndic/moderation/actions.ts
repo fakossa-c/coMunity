@@ -10,12 +10,12 @@ import { clientSession } from "@/lib/supabase/serveur";
 const LISTE = "/syndic/moderation";
 
 const messages: Record<string, string> = {
-  "42501": "Seuls les membres du conseil syndical modèrent les activités.",
+  "42501": "Seul le conseil syndical peut modérer les activités.",
   "23514":
-    "Écrivez un message pour expliquer votre décision au créateur (500 caractères au plus).",
+    "Écrivez un message pour expliquer votre décision à l'organisateur (500 caractères au plus).",
   P0002: "Cette activité n'existe plus.",
   P0011:
-    "Cette activité a été annulée entre-temps : elle ne se modère plus. La liste est à jour.",
+    "Cette activité a été annulée entre-temps : il n'y a plus rien à décider.",
 };
 
 /**

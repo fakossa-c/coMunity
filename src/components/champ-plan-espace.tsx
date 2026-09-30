@@ -60,7 +60,7 @@ export function ChampPlanEspace({ plan, nom, onChoisir, onRetirer }: Props) {
       <legend className="font-headline text-label-lg">Plan de situation</legend>
       <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
         Facultatif. Une image du plan qui montre où se trouve l&apos;espace
-        commun : les voisins la voient sur sa fiche, dans Ma copro.
+        commun : les voisins la voient sur sa fiche, dans Ma copro.
       </p>
       <p
         ref={etat}

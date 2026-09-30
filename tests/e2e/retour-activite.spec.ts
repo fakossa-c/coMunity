@@ -111,10 +111,10 @@ test("l'organisateur voit la note moyenne et les commentaires des participants",
   await page.goto(`/activites/${identifiant}`);
 
   const retours = page.getByRole("region", {
-    name: "Retours des participants",
+    name: "Avis des participants",
   });
   await expect(retours).toBeVisible();
-  await expect(retours).toContainText("5 / 5 · 1 retour");
+  await expect(retours).toContainText("5 / 5 · 1 avis");
   await expect(retours).toContainText("« Parfait, à refaire. » — 5 / 5");
 });
 
@@ -139,10 +139,10 @@ test("le conseil syndical voit la note moyenne d'une activité qu'il n'organise 
   await page.goto(`/activites/${identifiant}`);
 
   const retours = page.getByRole("region", {
-    name: "Retours des participants",
+    name: "Avis des participants",
   });
   await expect(retours).toBeVisible();
-  await expect(retours).toContainText("3 / 5 · 1 retour");
+  await expect(retours).toContainText("3 / 5 · 1 avis");
 });
 
 test("un simple participant ne voit pas le bloc des retours", async ({
@@ -165,5 +165,5 @@ test("un simple participant ne voit pas le bloc des retours", async ({
   await page.goto(`/activites/${identifiant}`);
   await inscrireEtSeConnecter(page, second.email);
 
-  await expect(page.getByText("Retours des participants")).not.toBeVisible();
+  await expect(page.getByText("Avis des participants")).not.toBeVisible();
 });

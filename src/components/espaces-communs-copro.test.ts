@@ -98,7 +98,7 @@ describe("EspacesCommunsCopro", () => {
     expect(html).not.toContain("Ascenseur");
   });
 
-  it("n'affiche rien d'un champ non renseigné : ni libellé, ni ligne vide", () => {
+  it("n'affiche rien d'un champ non renseigné : ni libellé, ni ligne vide", () => {
     const html = rendre([COUR]);
 
     expect(html).toContain("Cour");

@@ -7,11 +7,11 @@ const PUCES: { id: FiltreAnnonce; libelle: string; icone?: NomIcone }[] = [
   { id: "toutes", libelle: "Toutes" },
   { id: "assemblees", libelle: "Assemblées", icone: "groups" },
   { id: "sondages", libelle: "Sondages", icone: "how_to_vote" },
-  { id: "travaux-infos", libelle: "Travaux & infos", icone: "construction" },
+  { id: "travaux-infos", libelle: "Travaux et infos", icone: "construction" },
 ];
 
 /**
- * Les puces de l'onglet Annonces, collées en haut de l'écran : Toutes, Assemblées, Sondages, Travaux & infos.
+ * Les puces de l'onglet Annonces, collées en haut de l'écran : Toutes, Assemblées, Sondages, Travaux et infos.
  * Sur ordinateur, la rangée passe à la ligne faute de place : elle ne défile jamais.
  */
 export function Filtres({ filtre }: { filtre: FiltreAnnonce }) {

@@ -297,10 +297,10 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   await seConnecter(page, resident.email);
   await commencerProposition(page, titre);
 
-  // Le lieu se choisit dans une liste : espaces de la résidence puis « Autre lieu… ». Sous l'espace
+  // Le lieu se choisit dans une liste : espaces de la résidence puis « Ailleurs… ». Sous l'espace
   // choisi : sa capacité, ses badges et ses consignes.
   const lieu = page.getByLabel("Lieu", { exact: true });
-  await expect(lieu.locator("option").last()).toHaveText("Autre lieu…");
+  await expect(lieu.locator("option").last()).toHaveText("Ailleurs…");
   await expect(page.getByRole("main")).not.toContainText(
     "Laissez la salle propre et fermez les fenêtres.",
   );

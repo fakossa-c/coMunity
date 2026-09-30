@@ -75,7 +75,7 @@ export function ChampPhotoEspace({
       }
     }
     if (fichiers.length > restantes)
-      echec ||= `Vous pouvez ajouter ${restantes} ${restantes === 1 ? "photo" : "photos"} de plus : ${MAX_PHOTOS_ESPACE} au plus.`;
+      echec ||= `Vous pouvez ajouter ${restantes} ${restantes === 1 ? "photo" : "photos"} de plus : ${MAX_PHOTOS_ESPACE} au plus.`;
     if (nouvelles.length > 0) {
       setDeplacement("");
       onAjouter(nouvelles);
@@ -93,7 +93,7 @@ export function ChampPhotoEspace({
 
   function deplacer(index: number, decalage: -1 | 1) {
     setDeplacement(
-      `Photo déplacée en position ${compteurPhoto(index + decalage + 1, photos.length)}.`,
+      `Photo déplacée : maintenant ${compteurPhoto(index + decalage + 1, photos.length)}.`,
     );
     onDeplacer(index, decalage);
     resume.current?.focus();
@@ -104,7 +104,7 @@ export function ChampPhotoEspace({
       <legend className="font-headline text-label-lg">Photos</legend>
       <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
         Facultatif, {MAX_PHOTOS_ESPACE} photos au plus. La première illustre
-        l&apos;espace commun dans Ma copro ; les voisins voient toutes les
+        l&apos;espace commun dans Ma copro ; les voisins voient toutes les
         photos sur sa fiche.
       </p>
       <p

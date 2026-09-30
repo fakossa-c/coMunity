@@ -124,7 +124,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "heure_fin_max",
       bloquant: true,
-      message: `L'espace commun « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
+      message: `L'espace commun « ${espace.nom} » ferme à ${limite} : finissez au plus tard à ${limite}.`,
     });
   }
 
@@ -136,7 +136,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "capacite_espace",
       bloquant: true,
-      message: `L'espace commun « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
+      message: `L'espace commun « ${espace.nom} » accueille ${espace.capacite} personnes au plus : limitez les places à ${espace.capacite}.`,
     });
   }
 
@@ -152,7 +152,7 @@ function appliquerRegles(
         avertissements.push({
           regle: "chevauchement",
           bloquant: false,
-          message: `« ${autre.titre} » occupe déjà l'espace commun « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
+          message: `« ${autre.titre} » occupe déjà l'espace commun « ${espace.nom} » ce jour-là, ${creneau(autre.heureDebut, autre.heureFin)}.`,
         });
       }
     }
@@ -162,7 +162,7 @@ function appliquerRegles(
     avertissements.push({
       regle: "heure_calme",
       bloquant: false,
-      message: `Votre activité finit après ${heure(regles.heureCalme)}, l'heure de calme de la résidence : pensez aux voisins.`,
+      message: `Votre activité finit après ${heure(regles.heureCalme)}, l'heure de calme de la résidence : pensez aux voisins.`,
     });
   }
 
@@ -210,13 +210,13 @@ export const SEUIL_SUGGESTION = 0.6;
 /** Confiance minimale pour mettre une proposition en relecture, ou la dire conforme. */
 export const SEUIL_MODERATION = 0.8;
 
-/** Au-delà de ce délai, l'assistant renonce à Jev plutôt que de faire attendre le créateur. */
+/** Au-delà de ce délai, l'assistant renonce à Jev plutôt que de faire attendre l'organisateur. */
 export const DELAI_JEV_MS = 3000;
 
 const MAX_INFORMATIONS_MANQUANTES = 3;
 
 const RAISON_PAR_DEFAUT =
-  "Jev juge cette proposition contraire aux règles de bon voisinage.";
+  "L'assistant juge cette proposition contraire aux règles de bon voisinage.";
 
 /** Interroge Jev ; `null` sur erreur, réponse illisible ou dépassement du délai. */
 async function interrogerJev(

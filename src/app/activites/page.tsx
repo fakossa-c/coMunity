@@ -48,7 +48,7 @@ export default async function Activites({ searchParams }: Props) {
       ) : (
         <Bientot
           icone="diversity_3"
-          message="Connectez-vous pour voir les activités où vous êtes inscrit."
+          message="Connectez-vous pour retrouver vos inscriptions."
         />
       )}
     </EcranPrincipal>
@@ -99,14 +99,14 @@ async function MesActivites({
           libelle="Activités que vous organisez"
           activites={jOrganise}
           colonnes={2}
-          messageVide="Vous n'organisez aucune activité à venir. Lancez-en une avec le bouton « Proposer »."
+          messageVide="Vous n'organisez aucune activité à venir. Lancez-en une avec « Proposer »."
         />
       ) : (
         <ListeActivites
           libelle="Activités où vous participez"
           activites={jeParticipe}
           colonnes={3}
-          messageVide="Vous n'êtes inscrit à aucune activité à venir. Direction l'Accueil pour en découvrir."
+          messageVide="Aucune inscription à venir. Découvrez les activités depuis l'Accueil."
         />
       )}
     </>

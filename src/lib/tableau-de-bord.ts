@@ -238,5 +238,5 @@ export function resumeParMois(parMois: LigneMois[]) {
     null,
   );
   if (!meilleur) return "Aucun participant sur la période.";
-  return `Le plus de participants distincts : ${libelleMois(meilleur.mois)}, ${libelleNombreParticipants(meilleur.nombre_participants).toLowerCase()}.`;
+  return `Le plus de participants distincts : ${libelleMois(meilleur.mois)}, ${libelleNombreParticipants(meilleur.nombre_participants).toLowerCase()}.`;
 }

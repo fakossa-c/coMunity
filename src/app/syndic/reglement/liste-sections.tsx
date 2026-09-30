@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Bouton, classesBouton } from "@/components/bouton";
 import { Annonce } from "@/components/formulaire";
 import { deplacerSection } from "./actions";
+import { rangOrdinal } from "@/lib/rang";
 
 type Props = { sections: { id: string; titre: string }[] };
 
@@ -30,7 +31,7 @@ export function ListeSections({ sections }: Props) {
       const resultat = await deplacerSection(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `« ${titre} » passe en position ${arrivee + 1} sur ${sections.length}.`,
+          `« ${titre} » est maintenant ${rangOrdinal(arrivee + 1)} sur ${sections.length}.`,
         );
       else setErreur(resultat.message);
     });
@@ -58,7 +59,7 @@ export function ListeSections({ sections }: Props) {
                 icone="expand_less"
                 aria-disabled={rang === 0}
                 className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-                aria-label={`Monter : ${section.titre}`}
+                aria-label={`Monter : ${section.titre}`}
                 onClick={() => deplacer(rang, true)}
               >
                 Monter
@@ -68,14 +69,14 @@ export function ListeSections({ sections }: Props) {
                 icone="expand_more"
                 aria-disabled={rang === sections.length - 1}
                 className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-                aria-label={`Descendre : ${section.titre}`}
+                aria-label={`Descendre : ${section.titre}`}
                 onClick={() => deplacer(rang, false)}
               >
                 Descendre
               </Bouton>
               <Link
                 href={`/syndic/reglement/${section.id}`}
-                aria-label={`Modifier : ${section.titre}`}
+                aria-label={`Modifier : ${section.titre}`}
                 className={classesBouton("action")}
               >
                 Modifier

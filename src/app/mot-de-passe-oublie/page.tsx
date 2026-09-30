@@ -10,7 +10,7 @@ export default function MotDePasseOublie() {
     <EcranConnexion retour={{ href: "/connexion", destination: "Connexion" }}>
       <TitrePage
         titre="Mot de passe oublié"
-        sousTitre="Saisissez votre email : vous recevrez un lien pour choisir un nouveau mot de passe."
+        sousTitre="Saisissez votre email : vous recevrez un lien pour choisir un nouveau mot de passe."
       />
       <FormulaireMotDePasseOublie />
     </EcranConnexion>

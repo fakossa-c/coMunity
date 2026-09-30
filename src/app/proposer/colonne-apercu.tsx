@@ -33,7 +33,7 @@ function noteDePublication(points: PointARemplir[]) {
     .map((point) => point.libelle.toLowerCase());
   if (manque.length === 0)
     return "Vos voisins la voient dès qu'elle est publiée.";
-  return `Il manque : ${manque.join(", ")}.`;
+  return `Il manque : ${manque.join(", ")}.`;
 }
 
 /**

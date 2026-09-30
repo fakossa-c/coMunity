@@ -55,7 +55,7 @@ export function FormulaireRetour({ fiche }: Props) {
           Merci pour votre avis
         </p>
         <p className="text-body-md text-on-surface-variant">
-          Vous avez donné {note} / 5 : « {commentaire} »
+          Vous avez donné {note} / 5 : « {commentaire} »
         </p>
       </div>
     );
@@ -64,7 +64,7 @@ export function FormulaireRetour({ fiche }: Props) {
   return (
     <div className="flex flex-col gap-space-sm">
       <p className="font-headline text-label-lg text-on-surface">
-        Comment était cette activité ?
+        Comment était cette activité ?
       </p>
       <Notation
         libelle="Note sur 5"

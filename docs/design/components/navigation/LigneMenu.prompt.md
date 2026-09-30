@@ -2,7 +2,7 @@ Entrée de menu qui mène à une sous-page : pastille pêche, titre 17 px 700, d
 
 ```jsx
 <nav style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-  <LigneMenu icone="key" titre="Mes identifiants" onClick={…} />
-  <LigneMenu icone="badge" titre="Mes informations" detail="Contrôlez les informations partagées" onClick={…} />
+  <LigneMenu icone="key" titre="Mon compte" onClick={…} />
+  <LigneMenu icone="badge" titre="Mes informations" detail="Ce que vos voisins voient de vous" onClick={…} />
 </nav>
 ```

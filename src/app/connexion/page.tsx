@@ -20,7 +20,7 @@ export default async function Connexion({
     <EcranConnexion
       retour={{ href: "/", destination: "Accueil" }}
       sousLaCarte={
-        <EncartPastel titre="Nouveau dans la résidence ?">
+        <EncartPastel titre="Pas encore de compte ?">
           <Link
             href="/inscription"
             className="inline-flex min-h-cible items-center rounded-md font-headline text-label-lg underline underline-offset-4"
@@ -36,13 +36,13 @@ export default async function Connexion({
       </div>
       <TitrePage
         titre="Connexion"
-        sousTitre="Accédez à votre espace avec votre email et votre mot de passe."
+        sousTitre="Retrouvez les activités et les annonces de votre résidence."
       />
       <FormulaireConnexion
         suivant={cheminInterne(typeof suivant === "string" ? suivant : null)}
         messageInitial={
           lien === "invalide"
-            ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Demandez un nouveau lien avec « Mot de passe oublié ? »."
+            ? "Ce lien a déjà servi ou a expiré. Demandez-en un autre avec « Mot de passe oublié ? »."
             : null
         }
       />

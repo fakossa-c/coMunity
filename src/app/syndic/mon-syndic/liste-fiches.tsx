@@ -9,6 +9,7 @@ import { Annonce } from "@/components/formulaire";
 import { initialeFiche, nomFiche } from "@/lib/fiche-syndic";
 import type { FicheAvecPhoto } from "@/lib/lecture-fiches-syndic";
 import { deplacerFiche } from "./actions";
+import { rangOrdinal } from "@/lib/rang";
 
 type Fiche = Pick<
   FicheAvecPhoto,
@@ -37,7 +38,7 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
       const resultat = await deplacerFiche(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `${nomFiche(fiche)} passe en position ${arrivee + 1} sur ${fiches.length}.`,
+          `${nomFiche(fiche)} est maintenant ${rangOrdinal(arrivee + 1)} sur ${fiches.length}.`,
         );
       else setErreur(resultat.message);
     });
@@ -81,7 +82,7 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
                   icone="expand_less"
                   aria-disabled={rang === 0}
                   className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-                  aria-label={`Monter : ${nom}`}
+                  aria-label={`Monter : ${nom}`}
                   onClick={() => deplacer(rang, true)}
                 >
                   Monter
@@ -91,14 +92,14 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
                   icone="expand_more"
                   aria-disabled={rang === fiches.length - 1}
                   className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-                  aria-label={`Descendre : ${nom}`}
+                  aria-label={`Descendre : ${nom}`}
                   onClick={() => deplacer(rang, false)}
                 >
                   Descendre
                 </Bouton>
                 <Link
                   href={`/syndic/mon-syndic/${fiche.id}`}
-                  aria-label={`Modifier : ${nom}`}
+                  aria-label={`Modifier : ${nom}`}
                   className={classesBouton("action")}
                 >
                   Modifier

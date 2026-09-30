@@ -20,7 +20,10 @@ import { clientSession } from "@/lib/supabase/serveur";
 
 const INFORMATIONS = "/profil/informations";
 
-const NON_CONNECTE = { ok: false, message: "Vous devez être connecté." };
+const NON_CONNECTE = {
+  ok: false,
+  message: "Connectez-vous pour enregistrer vos informations.",
+};
 
 /** Le champ de visibilité de chaque information qui peut être rendue visible aux voisins. */
 const colonnesVisibilite = {
@@ -115,7 +118,10 @@ export async function enregistrerInformations(
   const { supabase, user } = await personneConnectee();
   if (!user) return NON_CONNECTE;
   if (photoChemin !== null && !estCheminPhotoProfil(photoChemin, user.id)) {
-    return { ok: false, message: "La photo n'est pas valide." };
+    return {
+      ok: false,
+      message: "Cette photo ne convient pas. Choisissez-en une autre.",
+    };
   }
 
   const { data: avant } = await supabase

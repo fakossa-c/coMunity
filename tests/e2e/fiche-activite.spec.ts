@@ -140,7 +140,7 @@ test("une activité du syndic s'affiche comme celle d'un voisin", async ({
   await page.goto(`/activites/${identifiant}`);
 
   await expect(page.getByRole("main")).toContainText(
-    "Jardin & Nature · Initiative de résident",
+    "Jardin et nature · Initiative de résident",
   );
   await expect(page.getByRole("main")).not.toContainText("syndic");
 });
@@ -176,7 +176,7 @@ test("une adresse d'activité inconnue affiche une page claire", async ({
     page.getByRole("heading", { level: 1, name: "Activité introuvable" }),
   ).toBeVisible();
   await expect(page.getByRole("main")).toContainText(
-    "n'existe pas ou n'est plus visible",
+    "Elle a peut-être été retirée",
   );
 });
 
@@ -207,7 +207,9 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await seConnecter(page, resident.email);
   await page.goto("/proposer");
   await page.getByLabel("Titre de l'activité").fill("Atelier compost");
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await continuerProposer(page);
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()

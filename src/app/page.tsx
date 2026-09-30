@@ -27,7 +27,7 @@ import { lireSession } from "@/lib/session";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const MESSAGE_VIDE =
-  "Aucune activité n'est prévue pour le moment. Les prochaines propositions des voisins et du conseil syndical apparaîtront ici.";
+  "Aucune activité prévue pour l'instant. Lancez la première avec « Proposer ».";
 
 type Props = { searchParams: Promise<{ categorie?: string }> };
 
@@ -123,7 +123,7 @@ function Catalogue({
           {jours.length === 0 ? (
             <Bientot
               icone="diversity_3"
-              message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
+              message="Aucune activité à venir dans cette catégorie. Choisissez « Toutes » pour voir les autres."
             />
           ) : (
             jours.map((jour) => (

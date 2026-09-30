@@ -64,7 +64,7 @@ describe("texteAlternatifPlan", () => {
 });
 
 describe("MAX_PHOTOS_ESPACE", () => {
-  it("est la limite de la base : 5 photos par espace", () => {
+  it("est la limite de la base : 5 photos par espace", () => {
     expect(MAX_PHOTOS_ESPACE).toBe(5);
   });
 });

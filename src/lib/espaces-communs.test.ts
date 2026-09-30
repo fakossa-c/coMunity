@@ -83,7 +83,7 @@ describe("saisie d'un espace commun", () => {
     });
   });
 
-  it("devient la ligne à enregistrer : texte nettoyé, champs vides à null", () => {
+  it("devient la ligne à enregistrer : texte nettoyé, champs vides à null", () => {
     expect(versEspaceCommun(SAISIE)).toEqual({
       nom: "Salle commune",
       batiment: "Bâtiment B",
@@ -124,7 +124,7 @@ describe("saisie d'un espace commun", () => {
     ).toMatchObject({ longueur_m: 8, largeur_m: 6.5, hauteur_plafond_m: 2.7 });
   });
 
-  it("la longueur et la largeur vont ensemble : l'une sans l'autre est refusée", () => {
+  it("la longueur et la largeur vont ensemble : l'une sans l'autre est refusée", () => {
     expect(verifierEspace({ ...SAISIE, longueur: "8" })).toEqual({
       champ: "largeur",
       erreur: "Indiquez aussi la largeur, ou videz la longueur.",
@@ -201,7 +201,7 @@ describe("affichage", () => {
     expect(libelleCapacite(null)).toBe("Sans limite de places");
   });
 
-  it("résume un espace en une ligne : bâtiment, capacité, heure limite", () => {
+  it("résume un espace en une ligne : bâtiment, capacité, heure limite", () => {
     expect(resumeEspace(ESPACE)).toBe(
       "Bâtiment B · Jusqu'à 20 personnes · Ferme à 21h00",
     );

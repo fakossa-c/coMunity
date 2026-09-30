@@ -7,7 +7,10 @@ import { clientSession } from "@/lib/supabase/serveur";
 
 const INTERETS = "/profil/interets";
 
-const NON_CONNECTE = { ok: false, message: "Vous devez être connecté." };
+const NON_CONNECTE = {
+  ok: false,
+  message: "Connectez-vous pour gérer vos centres d'intérêt.",
+};
 const DEJA_DECLARE = "Vous avez déjà déclaré ce centre d'intérêt.";
 
 async function personneConnectee() {
@@ -48,7 +51,7 @@ export async function ajouterInteret(libelle: string): Promise<Resultat> {
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${saisi} » est ajouté.` };
+  return { ok: true, message: `« ${saisi} » est ajouté.` };
 }
 
 /** Change le libellé d'un centre d'intérêt de la personne connectée. */
@@ -81,7 +84,7 @@ export async function modifierInteret(
   }
 
   revalidatePath(INTERETS);
-  return { ok: true, message: `« ${saisi} » est enregistré.` };
+  return { ok: true, message: `« ${saisi} » est enregistré.` };
 }
 
 /** Retire un centre d'intérêt de la personne connectée. */
@@ -105,6 +108,6 @@ export async function supprimerInteret(id: string): Promise<Resultat> {
   revalidatePath(INTERETS);
   return {
     ok: true,
-    message: data[0] ? `« ${data[0].libelle} » est retiré.` : "Déjà retiré.",
+    message: data[0] ? `« ${data[0].libelle} » est retiré.` : "Déjà retiré.",
   };
 }

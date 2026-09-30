@@ -25,7 +25,7 @@ export type EtatInscription = ErreurFormulaire<ChampInscription> & {
 };
 
 const MESSAGE_DEJA_INSCRIT =
-  "Un compte existe déjà avec cette adresse. Connectez-vous, ou choisissez « Mot de passe oublié ? » sur la page de connexion.";
+  "Cette adresse a déjà un compte. Connectez-vous, ou choisissez « Mot de passe oublié ? » sur la page de connexion.";
 
 const messagesAuth: Record<
   string,

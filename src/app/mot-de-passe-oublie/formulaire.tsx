@@ -15,7 +15,7 @@ export function FormulaireMotDePasseOublie() {
       <Annonce
         message={
           etat.envoye &&
-          "Si un compte existe pour cette adresse, un email vient de vous être envoyé. Ouvrez le lien qu'il contient pour choisir un nouveau mot de passe."
+          "Si cette adresse a un compte, un email vient de partir. Ouvrez son lien pour choisir un nouveau mot de passe."
         }
       />
       <Champ

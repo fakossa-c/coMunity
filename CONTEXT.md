@@ -46,7 +46,7 @@ Un lieu de la résidence défini par le conseil syndical (salle commune, cour, j
 _Avoid_ : salle, salle partagée, espace copro, bien commun (hors de ces deux libellés)
 
 **Lieu libre** :
-Le lieu d'une activité qui se tient hors des espaces communs, saisi par son créateur (« chez Danielle, 2e étage »).
+Le lieu d'une activité qui se tient hors des espaces communs, saisi par son organisateur (« chez Danielle, 2e étage »).
 _Avoid_ : autre lieu
 
 **Activité** :

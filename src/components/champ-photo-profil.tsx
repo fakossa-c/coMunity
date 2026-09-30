@@ -63,7 +63,7 @@ export function ChampPhotoProfil({
     <fieldset className="flex flex-col gap-space-sm">
       <legend className="font-headline text-label-lg">Photo</legend>
       <p id={`${id}-aide`} className="text-body-md text-on-surface-variant">
-        Facultative. Vous et le conseil syndical la voyez ; vos voisins voient
+        Facultative. Vous et le conseil syndical la voyez ; vos voisins voient
         l&apos;initiale de votre pseudo.
       </p>
       <div className="flex items-center gap-space-md">

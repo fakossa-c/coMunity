@@ -3,7 +3,7 @@ Rangée de puces **collante** (sticky top 0, fond de page). Règle : toute barre
 ```jsx
 <BarreFiltres>
   <PuceFiltre categorie selectionnee>Toutes</PuceFiltre>
-  <PuceFiltre categorie icone="potted_plant">Jardin & Nature</PuceFiltre>
+  <PuceFiltre categorie icone="potted_plant">Jardin et nature</PuceFiltre>
 </BarreFiltres>
 
 <BarreFiltres avant={<Onglets libelleGroupe="Mes activités" actif="je_participe" onglets={…} />} />

@@ -32,7 +32,7 @@ export default async function MaCopro() {
     <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Ma copro"
-        sousTitre="Les espaces communs, puis le règlement de la résidence"
+        sousTitre="Les lieux où se retrouver et les règles de vie commune"
       />
       {reglement && espaces ? (
         <div className="flex flex-col gap-space-lg desktop:gap-16">
@@ -61,7 +61,7 @@ export default async function MaCopro() {
       ) : (
         <Bientot
           icone="lock"
-          message="Votre compte n'a pas accès à cette rubrique. Si c'est une erreur, adressez-vous à un membre du conseil syndical."
+          message="Votre compte n'a pas accès à cette rubrique. Une erreur ? Parlez-en à un membre du conseil syndical."
         />
       )}
     </EcranSecondaire>

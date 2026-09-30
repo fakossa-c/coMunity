@@ -52,12 +52,12 @@ const NON_CONFORMITES: Record<string, { critere: string; raison: string }> = {
   nuisance_sonore: {
     critere:
       "Nuisances sonores : musique forte, fête tardive, bruit qui gênerait les voisins.",
-    raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
+    raison: "Nuisances sonores : l'activité risque de gêner le voisinage.",
   },
   commerce: {
     critere:
       "Commerce ou démarchage : vente, prospection, publicité pour une activité professionnelle.",
-    raison: "Commerce ou démarchage : l'activité semble vendre ou démarcher.",
+    raison: "Commerce ou démarchage : l'activité semble vendre ou démarcher.",
   },
   propos_discriminatoires: {
     critere:
@@ -93,7 +93,7 @@ const INFORMATIONS = {
     question:
       "Cette activité convient-elle mal à certains publics (enfants, débutants, personnes à mobilité réduite) sans que `titre` ou `description` dise à qui elle s'adresse ?",
     phrase:
-      "Précisez à qui s'adresse l'activité : enfants, débutants, tous les âges.",
+      "Précisez à qui s'adresse l'activité : enfants, débutants, tous les âges.",
   },
   manque_deroulement: {
     question:

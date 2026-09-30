@@ -15,7 +15,7 @@ export default async function ModifierMotDePasse() {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/profil/identifiants", destination: "Mes identifiants" }}
+      retour={{ href: "/profil/identifiants", destination: "Mon compte" }}
       actionDansLeFormulaire
     >
       <TitrePage titre="Modifier le mot de passe" />

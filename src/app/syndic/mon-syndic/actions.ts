@@ -18,11 +18,11 @@ import { clientSession } from "@/lib/supabase/serveur";
 const LISTE = "/syndic/mon-syndic";
 
 const messages: Record<string, string> = {
-  "42501": "Seuls les membres du conseil syndical tiennent Mon syndic.",
+  "42501": "Seul le conseil syndical peut modifier Mon syndic.",
   "22023":
     "Une fiche ne se relie qu'à un compte de l'espace syndic encore actif.",
   "23505": "Ce compte est déjà relié à une autre fiche.",
-  "23514": "Un champ n'est pas valide : vérifiez les longueurs.",
+  "23514": "Un texte est trop long. Raccourcissez-le, puis enregistrez.",
 };
 
 function echec(code: string | undefined, parDefaut: string): Resultat {
@@ -61,7 +61,7 @@ export async function preparerDepotPhoto(): Promise<Depot> {
     return {
       ok: false,
       message:
-        "La photo n'a pas pu être envoyée. Vous n'avez peut-être plus le droit de modifier Mon syndic.",
+        "La photo n'a pas pu être envoyée. Votre accès à l'espace syndic a peut-être été retiré.",
     };
   return { ok: true, chemin, token: data.token };
 }
@@ -89,7 +89,10 @@ export async function enregistrerFiche(
   const verdict = verifierFiche(saisie);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };
   if (photoChemin !== null && !estCheminPhotoSyndic(photoChemin))
-    return { ok: false, message: "Cette photo n'est pas valide." };
+    return {
+      ok: false,
+      message: "Cette photo ne convient pas. Choisissez-en une autre.",
+    };
 
   const supabase = await clientSession();
   let ancienne: string | null = null;
@@ -122,8 +125,7 @@ export async function enregistrerFiche(
       );
     return {
       ok: false,
-      message:
-        "Cette fiche n'existe plus, ou vous n'avez plus le droit de la modifier.",
+      message: "Cette fiche n'existe plus, ou votre accès a été retiré.",
     };
   }
   if (ancienne !== photoChemin) await retirerPhotos([ancienne]);
@@ -150,8 +152,7 @@ export async function supprimerFiche(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cette fiche n'existe plus, ou vous n'avez plus le droit de la supprimer.",
+      message: "Cette fiche n'existe plus, ou votre accès a été retiré.",
     };
 
   await retirerPhotos(data.map((fiche) => fiche.photo_chemin));

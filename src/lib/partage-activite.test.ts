@@ -99,12 +99,12 @@ describe("message WhatsApp", () => {
 });
 
 describe("jour de référence", () => {
-  it("est celui d'Europe/Paris, pas celui d'UTC : la nuit d'été, Paris a déjà changé de jour", () => {
+  it("est celui d'Europe/Paris, pas celui d'UTC : la nuit d'été, Paris a déjà changé de jour", () => {
     expect(aujourdhui(new Date("2026-10-20T21:59:00Z"))).toBe("2026-10-20");
     expect(aujourdhui(new Date("2026-10-20T22:00:00Z"))).toBe("2026-10-21");
   });
 
-  it("suit l'heure d'hiver : Paris change de jour à 23h UTC", () => {
+  it("suit l'heure d'hiver : Paris change de jour à 23h UTC", () => {
     expect(aujourdhui(new Date("2026-12-10T22:59:00Z"))).toBe("2026-12-10");
     expect(aujourdhui(new Date("2026-12-10T23:00:00Z"))).toBe("2026-12-11");
   });
@@ -118,7 +118,7 @@ describe("activité passée", () => {
     expect(estPassee(activite, new Date("2026-10-20T16:01:00Z"))).toBe(true);
   });
 
-  it("compte l'heure de fin à l'heure de Paris : à 00h30 à Paris, celle de 23h la veille est finie", () => {
+  it("compte l'heure de fin à l'heure de Paris : à 00h30 à Paris, celle de 23h la veille est finie", () => {
     const nuit = new Date("2026-10-20T22:30:00Z");
     expect(estPassee({ ...activite, heure_fin: "23:00:00" }, nuit)).toBe(true);
   });

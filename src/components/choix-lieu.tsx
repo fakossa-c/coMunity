@@ -6,9 +6,9 @@ import { LIEU_LIBRE } from "@/lib/proposition-activite";
 
 type Props = {
   espaces: EspaceCommun[];
-  /** L'identifiant de l'espace choisi, `LIEU_LIBRE` pour « Autre lieu… », `""` avant tout choix. */
+  /** L'identifiant de l'espace choisi, `LIEU_LIBRE` pour « Ailleurs… », `""` avant tout choix. */
   espaceCommun: string;
-  /** Le lieu saisi à la main, pour « Autre lieu… ». */
+  /** Le lieu saisi à la main, pour « Ailleurs… ». */
   lieu: string;
   onEspaceChange: (valeur: string) => void;
   onLieuChange: (valeur: string) => void;
@@ -18,8 +18,8 @@ type Props = {
 
 /**
  * Le lieu d'une activité : une liste déroulante avec les espaces communs de la résidence puis
- * « Autre lieu… ». L'espace choisi montre dessous son résumé, ses badges et ses consignes ;
- * « Autre lieu… » ouvre le champ libre. Sans espace commun enregistré, pas de liste : un message
+ * « Ailleurs… ». L'espace choisi montre dessous son résumé, ses badges et ses consignes ;
+ * « Ailleurs… » ouvre le champ libre. Sans espace commun enregistré, pas de liste : un message
  * au-dessus du champ libre.
  */
 export function ChoixLieu({
@@ -57,7 +57,7 @@ export function ChoixLieu({
               {nom}
             </option>
           ))}
-          <option value={LIEU_LIBRE}>Autre lieu…</option>
+          <option value={LIEU_LIBRE}>Ailleurs…</option>
         </ChampListe>
       )}
       {espace && (
@@ -67,7 +67,7 @@ export function ChoixLieu({
             <EquipementsEspace equipements={espace.equipements} />
             {espace.consignes && (
               <p>
-                <strong className="font-headline">Consignes : </strong>
+                <strong className="font-headline">Consignes : </strong>
                 {espace.consignes}
               </p>
             )}
@@ -82,7 +82,7 @@ export function ChoixLieu({
           value={lieu}
           onChange={(e) => onLieuChange(e.target.value)}
           erreur={erreurLieu}
-          aide="Par exemple : chez vous, 2e étage."
+          aide="Par exemple : chez vous, 2e étage."
           required
         />
       )}

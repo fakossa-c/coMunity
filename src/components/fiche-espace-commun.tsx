@@ -154,7 +154,7 @@ export function FicheEspaceCommun({
             </LigneUtilisation>
           )}
           <LigneUtilisation icone="event_available">
-            Pour utiliser cet espace, proposez une activité : vous choisirez la
+            Pour utiliser cet espace, proposez une activité : vous choisirez la
             date et l&apos;heure.
           </LigneUtilisation>
           {espace.heure_fin_max && (

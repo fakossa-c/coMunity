@@ -162,14 +162,14 @@ test("les puces filtrent par catégorie, au clavier, et restent collées en haut
     "true",
   );
 
-  const puce = filtres.getByRole("link", { name: "Jardin & Nature" });
+  const puce = filtres.getByRole("link", { name: "Jardin et nature" });
   await puce.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/categorie=jardin_nature/);
   await expect(
     page
       .getByRole("navigation", { name: "Catégories" })
-      .getByRole("link", { name: "Jardin & Nature" }),
+      .getByRole("link", { name: "Jardin et nature" }),
   ).toHaveAttribute("aria-current", "true");
   await expect(carte(page, jardin)).toBeVisible();
   await expect(carte(page, gouter)).toHaveCount(0);

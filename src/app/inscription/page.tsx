@@ -15,11 +15,11 @@ export default async function Inscription() {
     <EcranConnexion retour={{ href: "/connexion", destination: "Connexion" }}>
       <TitrePage
         titre="Créer mon compte"
-        sousTitre="Rejoignez la vie de votre résidence. Le conseil syndical validera votre compte, puis vous pourrez participer aux activités."
+        sousTitre="Rejoignez vos voisins. Une fois votre compte validé par le conseil syndical, vous participez aux activités."
       />
       <FormulaireInscription />
       <p className="mt-space-lg text-body-lg">
-        Déjà un compte ?{" "}
+        Déjà un compte ?{" "}
         <Link
           href="/connexion"
           className="inline-flex min-h-[52px] items-center rounded-md font-headline text-label-lg text-primary underline underline-offset-4"

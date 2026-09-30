@@ -45,7 +45,7 @@ export function FormulaireSondage({ saisie, onChange, erreur }: Props) {
         onChange={(e) => onChange({ ...saisie, question: e.target.value })}
         maxLength={LIMITES_SONDAGE.question}
         erreur={erreurDuChamp(erreur, "question")}
-        placeholder="Quel créneau vous convient le mieux ?"
+        placeholder="Quel créneau vous convient le mieux ?"
       />
       <div className="flex flex-col gap-space-sm">
         {options.map((libelle, rang) => (
@@ -118,7 +118,7 @@ export function SondagePublie({ sondage }: { sondage: Sondage }) {
       </ul>
       <p className="text-body-md text-on-surface-variant">
         Réponses jusqu&apos;au {libelleEcheance(sondage.echeance)}. Un sondage
-        publié ne se modifie plus : supprimez l&apos;annonce pour en publier un
+        publié ne se modifie plus : supprimez l&apos;annonce pour en publier un
         autre.
       </p>
     </section>

@@ -101,7 +101,7 @@ describe("FicheEspaceCommun", () => {
     expect(html).not.toContain("Vignettes");
   });
 
-  it("avec plusieurs photos, montre la galerie : la première en grand, le compteur et une vignette par photo", () => {
+  it("avec plusieurs photos, montre la galerie : la première en grand, le compteur et une vignette par photo", () => {
     const html = rendre(SALLE, {
       photos: [
         "https://exemple.test/a.jpg",
@@ -154,7 +154,7 @@ describe("FicheEspaceCommun", () => {
     expect(dimensionsSeules).not.toContain("Hauteur sous plafond");
   });
 
-  it("montre le plan de situation dans « Utiliser cet espace », avec un lien pour l'agrandir", () => {
+  it("montre le plan de situation dans « Utiliser cet espace », avec un lien pour l'agrandir", () => {
     const html = rendre(SALLE, { plan: "https://exemple.test/plan.jpg" });
 
     expect(html).toContain('src="https://exemple.test/plan.jpg"');
@@ -174,7 +174,7 @@ describe("FicheEspaceCommun", () => {
     expect(html).not.toContain("Agrandir le plan");
   });
 
-  it("propose « Proposer une activité ici » vers Proposer avec le lieu choisi", () => {
+  it("propose « Proposer une activité ici » vers Proposer avec le lieu choisi", () => {
     const html = rendre(SALLE);
 
     expect(html).toMatch(
@@ -182,7 +182,7 @@ describe("FicheEspaceCommun", () => {
     );
   });
 
-  it("donne le contact et l'heure de fin dans « Utiliser cet espace »", () => {
+  it("donne le contact et l'heure de fin dans « Utiliser cet espace »", () => {
     const html = rendre(SALLE);
 
     expect(html).toContain("Utiliser cet espace");
@@ -220,7 +220,7 @@ describe("FicheEspaceCommun", () => {
     expect(html).not.toContain("depliage");
   });
 
-  it("n'affiche rien d'un champ non renseigné : ni libellé, ni carte vide", () => {
+  it("n'affiche rien d'un champ non renseigné : ni libellé, ni carte vide", () => {
     const html = rendre(COUR);
 
     expect(html).toMatch(/<h1[^>]*>Cour<\/h1>/);

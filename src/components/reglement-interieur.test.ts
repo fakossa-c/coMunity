@@ -48,7 +48,7 @@ describe("ReglementInterieur", () => {
     expect(html).not.toContain("<h2");
   });
 
-  it("propose « Tout déplier » et la date de dernière mise à jour", () => {
+  it("propose « Tout déplier » et la date de dernière mise à jour", () => {
     const html = rendre();
 
     expect(html).toContain("Tout déplier");
@@ -69,7 +69,7 @@ describe("ReglementInterieur", () => {
       {
         id: "piege",
         titre: "<img src=x onerror=alert(1)>",
-        texte: '<script>alert("x")</script>\n\n- <b>gras ?</b>',
+        texte: '<script>alert("x")</script>\n\n- <b>gras ?</b>',
       },
     ]);
 
@@ -90,7 +90,7 @@ describe("ReglementInterieur", () => {
     expect(html).not.toContain("Mis à jour");
   });
 
-  it("porte un sommaire nommé, réservé à l'ordinateur : lien vers les espaces communs d'abord, puis les sections dans l'ordre", () => {
+  it("porte un sommaire nommé, réservé à l'ordinateur : lien vers les espaces communs d'abord, puis les sections dans l'ordre", () => {
     const html = rendre();
 
     const sommaire =

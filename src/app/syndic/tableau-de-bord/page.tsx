@@ -60,7 +60,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
     <EcranSyndic rubrique="tableau-de-bord">
       <TitrePage
         titre="Tableau de bord"
-        sousTitre="Ce qui fait vivre la résidence, d'après les activités publiées qui ont eu lieu sur la période."
+        sousTitre="Ce qui fait vivre la résidence : les activités qui ont eu lieu sur la période."
       />
 
       <div className="flex flex-col gap-space-lg">
@@ -166,10 +166,8 @@ export default async function TableauDeBord({ searchParams }: Props) {
               Ce qui remplit le mieux
             </TitreSection>
             <p className="max-w-[65ch] text-body-md text-on-surface-variant">
-              Le remplissage d&apos;une activité est la part de ses places
-              prises, accompagnants compris. Une activité sans limite de places
-              n&apos;en a pas : elle compte dans le nombre d&apos;activités, pas
-              dans le taux.
+              La part des places prises, accompagnants compris. Les activités
+              sans limite de places n&apos;entrent pas dans ce calcul.
             </p>
             <div className="grid gap-space-md desktop:grid-cols-3">
               <GraphiqueRemplissage
@@ -201,7 +199,7 @@ export default async function TableauDeBord({ searchParams }: Props) {
               <p className="text-body-lg text-on-surface-variant">
                 {sansActivite
                   ? "Aucune activité n'a eu lieu sur la période."
-                  : "Aucune activité de la période n'a reçu de retour pour le moment."}
+                  : "Aucune activité de la période n'a encore reçu d'avis."}
               </p>
             ) : (
               <ol className="grid gap-space-md">
@@ -250,7 +248,7 @@ function GraphiqueRemplissage({
       titre={titre}
       resume={
         meilleure
-          ? `Meilleur remplissage moyen : ${meilleure.libelle}, ${libelleTaux(meilleure.taux)}.`
+          ? `Meilleur remplissage moyen : ${meilleure.libelle}, ${libelleTaux(meilleure.taux)}.`
           : "Aucune activité à places limitées sur la période."
       }
       maximum={100}
@@ -295,13 +293,13 @@ function ActiviteClassee({
       </div>
       <details className="rounded-md bg-surface-container-low px-space-sm">
         <summary className="min-h-cible cursor-pointer py-3 font-headline text-label-lg text-on-surface">
-          Lire {ligne.nombre_retours === 1 ? "le retour" : "les retours"}
+          Lire {ligne.nombre_retours === 1 ? "l'avis" : "les avis"}
         </summary>
         <ul className="flex flex-col gap-space-sm pb-space-sm">
           {ligne.commentaires.map((retour, i) => (
             <li key={i} className="text-body-md text-on-surface">
               <span className="font-bold">{retour.note} / 5</span>
-              {" : "}
+              {" : "}
               {retour.commentaire}
             </li>
           ))}

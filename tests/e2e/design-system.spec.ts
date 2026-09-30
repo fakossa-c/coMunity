@@ -85,7 +85,7 @@ test.describe("grands caractères", () => {
     await page.goto("/connexion");
     const texte = page
       .getByRole("main")
-      .getByText("Accédez à votre espace avec votre email");
+      .getByText("Retrouvez les activités et les annonces de votre résidence");
     expect(await styleCalcule(texte, "font-size")).toBe("18px");
 
     await poserSurLaRacine(page, "data-taille", "grands");
@@ -199,7 +199,7 @@ async function ouvrirLeLienDuNouveauMotDePasse(page: Page) {
   await page.getByLabel("Adresse email").fill(resident.email);
   await page.getByRole("button", { name: "Recevoir un lien" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
-    "un email vient de vous être envoyé",
+    "un email vient de partir",
   );
   await page.goto(await lienRecu(resident.email));
   await expect(page.getByLabel("Nouveau mot de passe")).toBeVisible();
@@ -274,8 +274,8 @@ test.describe("couleur d'une catégorie d'activité", () => {
     const { culture, jardin } = await preparer(page);
     const catalogue = page.getByRole("region", { name: "Activités à venir" });
     for (const [activite, libelle, couleur] of [
-      [culture, "Culture & Loisirs", CULTURE],
-      [jardin, "Jardin & Nature", JARDIN],
+      [culture, "Culture et loisirs", CULTURE],
+      [jardin, "Jardin et nature", JARDIN],
     ] as const) {
       const carte = catalogue
         .getByRole("article")

@@ -12,7 +12,7 @@ export default function AnnonceIntrouvable() {
       />
       <Bientot
         icone="event_busy"
-        message="Cette annonce n'existe pas ou a été supprimée par le conseil syndical. Retrouvez les informations de la résidence depuis l'accueil."
+        message="Le conseil syndical l'a peut-être supprimée. Retrouvez les autres depuis l'onglet Annonces."
       />
     </EcranSecondaire>
   );

@@ -200,7 +200,7 @@ export function verifierAnnonce(
     return {
       champ: "expire_le",
       erreur:
-        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
+        "Cette date est déjà passée : l'annonce n'apparaîtrait nulle part.",
     };
   return {};
 }

@@ -62,7 +62,7 @@ export function StatutInscriptionAnnulable({
       </Bouton>
       <FeuilleConfirmation
         ouverte={ouverte}
-        titre="Annuler votre participation ?"
+        titre="Annuler votre participation ?"
         libelleGarder="Garder ma place"
         libelleConfirmer="Annuler"
         onFermer={() => setOuverte(false)}

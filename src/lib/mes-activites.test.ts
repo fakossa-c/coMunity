@@ -51,12 +51,12 @@ describe("Je participe", () => {
     ]);
   });
 
-  it("laisse partir de « Je participe » l'activité du jour à son heure de fin", () => {
+  it("laisse partir de « Je participe » l'activité du jour à son heure de fin", () => {
     const { jeParticipe } = classer([activite("ce-matin", JOUR)]);
     expect(jeParticipe).toEqual([]);
   });
 
-  it("garde une activité annulée par son créateur : on doit pouvoir le lire", () => {
+  it("garde une activité annulée par son créateur : on doit pouvoir le lire", () => {
     const { jeParticipe } = classer([
       activite("annulee", "2026-10-25", { statut: "annulee" }),
     ]);
@@ -105,7 +105,7 @@ describe("Archivées", () => {
     ]);
   });
 
-  it("marque chaque ligne de son rôle : organisée ou suivie", () => {
+  it("marque chaque ligne de son rôle : organisée ou suivie", () => {
     const { archivees } = classer(
       [activite("suivie", "2026-10-15")],
       [activite("organisee", "2026-10-02")],
@@ -116,13 +116,13 @@ describe("Archivées", () => {
     ]);
   });
 
-  it("ne compte qu'une fois une activité organisée où l'on était aussi inscrit : le rôle d'organisateur l'emporte", () => {
+  it("ne compte qu'une fois une activité organisée où l'on était aussi inscrit : le rôle d'organisateur l'emporte", () => {
     const mienne = activite("mienne", "2026-10-10");
     const { archivees } = classer([mienne], [mienne]);
     expect(archivees).toEqual([{ activite: mienne, role: "organisee" }]);
   });
 
-  it("écarte une activité suivie que son créateur a annulée : on n'y est pas allé", () => {
+  it("écarte une activité suivie que son créateur a annulée : on n'y est pas allé", () => {
     const { archivees } = classer([
       activite("annulee", "2026-10-15", { statut: "annulee" }),
       activite("tenue", "2026-10-14"),
@@ -130,7 +130,7 @@ describe("Archivées", () => {
     expect(archivees.map((a) => a.activite.id)).toEqual(["tenue"]);
   });
 
-  it("garde une activité organisée puis annulée : son organisateur la retrouve", () => {
+  it("garde une activité organisée puis annulée : son organisateur la retrouve", () => {
     const { archivees } = classer(
       [],
       [activite("annulee", "2026-10-15", { statut: "annulee" })],
@@ -150,7 +150,7 @@ describe("Archivées", () => {
     expect(jeParticipe.map((a) => a.id)).toEqual(["ce-soir"]);
   });
 
-  it("y range l'activité du jour terminée que l'on organise, et la retire de « J'organise »", () => {
+  it("y range l'activité du jour terminée que l'on organise, et la retire de « J'organise »", () => {
     const { archivees, jOrganise } = classer([], [activite("ce-matin", JOUR)]);
     expect(jOrganise).toEqual([]);
     expect(archivees.map((a) => [a.activite.id, a.role])).toEqual([

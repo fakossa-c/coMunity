@@ -55,8 +55,8 @@ async function ListeAnnonces({
         icone="campaign"
         message={
           filtre === "toutes"
-            ? "Aucune annonce pour le moment. Les informations du conseil syndical apparaîtront ici."
-            : "Aucune annonce de ce type pour le moment."
+            ? "Aucune annonce pour l'instant. Les nouvelles du conseil syndical arriveront ici."
+            : "Aucune annonce de ce type pour l'instant."
         }
       />
     );
