@@ -15,9 +15,10 @@ import {
   resumeParMois,
   type LigneRemplissage,
 } from "./tableau-de-bord";
+import { aujourdhui } from "./partage-activite";
 
 // Le 29 septembre 2026 est un mardi.
-const AUJOURDHUI = new Date(2026, 8, 29, 14, 30);
+const AUJOURDHUI = "2026-09-29";
 
 describe("periodeDe", () => {
   it("30 jours : le jour même et les 29 précédents", () => {
@@ -42,7 +43,7 @@ describe("periodeDe", () => {
   });
 
   it("3 mois en début d'année remonte sur l'année précédente", () => {
-    expect(periodeDe("3_mois", new Date(2026, 0, 5))).toEqual({
+    expect(periodeDe("3_mois", "2026-01-05")).toEqual({
       debut: "2025-11-01",
       fin: "2026-01-05",
     });
@@ -53,6 +54,44 @@ describe("periodeDe", () => {
       debut: "2026-01-01",
       fin: "2026-09-29",
     });
+  });
+});
+
+describe("periodeDe autour de minuit, à Paris", () => {
+  // 22h30 UTC le 29 septembre 2026 : minuit et demi le 30 à Paris (UTC+2, heure d'été).
+  const nuitEte = aujourdhui(new Date("2026-09-29T22:30:00Z"));
+  // 23h30 UTC le 30 novembre 2026 : minuit et demi le 1er décembre à Paris (UTC+1, heure d'hiver).
+  const nuitHiver = aujourdhui(new Date("2026-11-30T23:30:00Z"));
+
+  it("la borne de fin est le jour de Paris, pas celui d'UTC", () => {
+    expect(periodeDe("30_jours", nuitEte)).toEqual({
+      debut: "2026-09-01",
+      fin: "2026-09-30",
+    });
+  });
+
+  it("le premier jour d'un mois après minuit, les périodes en mois commencent dans ce mois", () => {
+    expect(periodeDe("3_mois", nuitHiver)).toEqual({
+      debut: "2026-10-01",
+      fin: "2026-12-01",
+    });
+    expect(periodeDe("12_mois", nuitHiver)).toEqual({
+      debut: "2026-01-01",
+      fin: "2026-12-01",
+    });
+  });
+
+  it("le premier janvier après minuit, l'année est la nouvelle", () => {
+    expect(
+      periodeDe("annee", aujourdhui(new Date("2026-12-31T23:30:00Z"))),
+    ).toEqual({ debut: "2027-01-01", fin: "2027-01-01" });
+  });
+
+  it("le jour de Paris est celui de la base, quel que soit le fuseau du serveur", () => {
+    // 21h30 UTC en été : encore le 29 à Paris (23h30).
+    expect(
+      periodeDe("30_jours", aujourdhui(new Date("2026-09-29T21:30:00Z"))).fin,
+    ).toBe("2026-09-29");
   });
 });
 
