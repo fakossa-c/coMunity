@@ -173,7 +173,7 @@ test("une information visible mais non renseignée n'est pas promise aux voisins
   );
 });
 
-test("« Annuler » ne modifie rien ; « Enregistrer » change le pseudo et l'adresse partout", async ({
+test("« Retour » ne modifie rien ; « Enregistrer » change le pseudo et l'adresse partout", async ({
   page,
 }) => {
   const compte = await resident();

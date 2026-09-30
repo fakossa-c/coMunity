@@ -1,7 +1,7 @@
 Barre du haut des pages secondaires (fiche, Profil et ses rubriques, formulaires), **collante** (sticky top 0, fond de page) : bouton fantôme de retour à gauche ; « Partager » et l'avatar profil à droite. Avec `initiale`, les boutons se resserrent pour tenir sur 390 px.
 
 ```jsx
-<BarreRetour onRetour={retour} onPartager={partager} initiale="D" onProfil={ouvrirMenu} />   {/* fiche */}
+<BarreRetour destination="Accueil" onRetour={retour} onPartager={partager} initiale="D" onProfil={ouvrirMenu} />   {/* fiche */}
 <BarreRetour destination="Profil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} /> {/* rubrique, formulaire */}
 ```
 

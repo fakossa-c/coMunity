@@ -1,6 +1,6 @@
 export interface BarreRetourProps {
   /** Où mène « Retour » : dite aux lecteurs d'écran (« Retour : Profil »), jamais affichée. Le libellé visible est toujours « Retour ». */
-  destination?: string;
+  destination: string;
   onRetour?: () => void;
   /** null pour masquer « Partager » */
   onPartager?: (() => void) | null;
