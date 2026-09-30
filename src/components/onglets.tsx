@@ -54,7 +54,7 @@ export function Onglets({ onglets, actif, libelleGroupe }: Props) {
             {onglet.libelle}
             <span
               className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-fond-carte px-2 font-headline text-label-md desktop:h-7 desktop:min-w-7 ${
-                selectionne ? "text-texte-action" : "text-on-surface-variant"
+                selectionne ? "text-on-surface" : "text-on-surface-variant"
               }`}
             >
               {onglet.compteur}

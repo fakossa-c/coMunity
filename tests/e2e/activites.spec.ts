@@ -449,19 +449,26 @@ test("la préférence de réduction des animations coupe les transitions de l'é
   expect(new Set(durees)).toEqual(new Set(["0s"]));
 });
 
-test("les captures de l'écran Activités", async ({ page }) => {
-  const { resident } = await residentAvecActivites();
-  await seConnecter(page, resident.email);
-  for (const [nom, onglet] of [
-    ["je-participe", ""],
-    ["j-organise", "?onglet=j_organise"],
-    ["archivees", "?onglet=archivees"],
-  ]) {
-    await page.goto(`/activites${onglet}`);
-    await expect(segments(page)).toBeVisible();
-    await page.screenshot({
-      path: test.info().outputPath(`activites-${nom}.png`),
-      fullPage: true,
-    });
-  }
-});
+for (const [reglage, valeurs] of [
+  ["clair", { theme: "clair", taille: "standard" }],
+  ["sombre", { theme: "sombre", taille: "standard" }],
+  ["grands-caracteres", { theme: "clair", taille: "grands" }],
+] as const) {
+  test(`les captures de l'écran Activités, en ${reglage}`, async ({ page }) => {
+    const { resident } = await residentAvecActivites();
+    await reglerAffichage(resident.id, valeurs);
+    await seConnecter(page, resident.email);
+    for (const [nom, onglet] of [
+      ["je-participe", ""],
+      ["j-organise", "?onglet=j_organise"],
+      ["archivees", "?onglet=archivees"],
+    ]) {
+      await page.goto(`/activites${onglet}`);
+      await expect(segments(page)).toBeVisible();
+      await page.screenshot({
+        path: test.info().outputPath(`activites-${nom}-${reglage}.png`),
+        fullPage: true,
+      });
+    }
+  });
+}

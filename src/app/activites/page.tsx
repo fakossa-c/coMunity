@@ -48,7 +48,7 @@ export default async function Activites({ searchParams }: Props) {
       ) : (
         <Bientot
           icone="diversity_3"
-          message="Connectez-vous pour retrouver vos activités."
+          message="Connectez-vous pour voir les activités où vous êtes inscrit."
         />
       )}
     </EcranPrincipal>
