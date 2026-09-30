@@ -31,6 +31,13 @@ async function seConnecter(page: Page, email: string) {
   await expect(page).not.toHaveURL(/connexion/);
 }
 
+/** « Nouvelle fiche » en tête sur ordinateur, « Ajouter une fiche » sous la liste sur mobile. */
+function lienAjout(page: Page) {
+  return page.getByRole("link", {
+    name: /^(Nouvelle fiche|Ajouter une fiche)$/,
+  });
+}
+
 function enregistrer(page: Page) {
   return page.getByRole("button", { name: "Enregistrer", exact: true }).click();
 }
@@ -69,7 +76,7 @@ test("le conseil syndical ajoute deux fiches et les ordonne, un résident les li
   ).toBeVisible();
 
   // Une première fiche complète : les erreurs d'abord, puis la photo, puis l'enregistrement.
-  await page.getByRole("link", { name: "Ajouter une fiche" }).click();
+  await lienAjout(page).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Ajouter une fiche" }),
   ).toBeVisible();
@@ -113,7 +120,7 @@ test("le conseil syndical ajoute deux fiches et les ordonne, un résident les li
   );
 
   // La seconde, sans coordonnées, reliée au compte du conseil syndical connecté.
-  await page.getByRole("link", { name: "Ajouter une fiche" }).click();
+  await lienAjout(page).click();
   await page.getByLabel("Prénom", { exact: true }).fill(paul);
   await page.getByLabel("Nom", { exact: true }).fill("Moreau");
   await page
@@ -466,3 +473,118 @@ for (const theme of ["clair", "sombre"] as const) {
     });
   });
 }
+
+// Ticket #175 (spec #168) : sur ordinateur, les fiches tiennent dans une colonne de 960 px au
+// plus, sous « Nouvelle fiche » aligné à droite ; sur mobile, rien ne change.
+
+/** Un membre du conseil syndical connecté, devant la liste des fiches, dont deux à lui. */
+async function listeDesFiches(page: Page) {
+  const syndic = await nouveauSyndic();
+  emails.push(syndic.email);
+  for (const nom of ["Moreau", "Lefèvre"]) {
+    const fiche = await nouvelleFicheSyndic({ nom });
+    prenoms.push(fiche.prenom);
+  }
+  await seConnecter(page, syndic.email);
+  await page.goto("/syndic/mon-syndic");
+  const liste = page.getByRole("list", { name: "Fiches de Mon syndic" });
+  await expect(liste.getByRole("listitem").first()).toBeVisible();
+  return { syndic, liste };
+}
+
+function lien(page: Page, nom: string) {
+  return page.getByRole("link", { name: nom, exact: true });
+}
+
+test.describe("sur ordinateur, la liste des fiches", () => {
+  test.skip(({ isMobile }) => isMobile, "Présentation Journal.");
+
+  for (const largeur of [1600, 1280, 1100]) {
+    test(`à ${largeur} px, tient dans une colonne de 960 px au plus, « Nouvelle fiche » en tête`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: largeur, height: 900 });
+      const { liste } = await listeDesFiches(page);
+
+      const boiteListe = (await liste.boundingBox())!;
+      expect(boiteListe.width).toBeLessThanOrEqual(960);
+      const nouvelle = lien(page, "Nouvelle fiche");
+      await expect(nouvelle).toHaveCount(1);
+      await expect(lien(page, "Ajouter une fiche")).toHaveCount(0);
+      // « Nouvelle fiche » au-dessus de la liste, au bout droit de la colonne, compact.
+      const boiteAjout = (await nouvelle.boundingBox())!;
+      expect(boiteAjout.y + boiteAjout.height).toBeLessThanOrEqual(
+        boiteListe.y,
+      );
+      expect(
+        Math.abs(
+          boiteAjout.x + boiteAjout.width - (boiteListe.x + boiteListe.width),
+        ),
+      ).toBeLessThanOrEqual(1);
+      expect(boiteAjout.width).toBeLessThan(boiteListe.width / 2);
+      // Chaque fiche sur une ligne : photo et nom, puis « Monter », « Descendre » et « Modifier » à droite.
+      const fiche = liste.getByRole("listitem").first();
+      const nom = (await fiche.getByRole("heading").boundingBox())!;
+      for (const action of [
+        fiche.getByRole("button", { name: /^Monter/ }),
+        fiche.getByRole("button", { name: /^Descendre/ }),
+        fiche.getByRole("link", { name: /^Modifier/ }),
+      ]) {
+        const boite = (await action.boundingBox())!;
+        expect(boite.x).toBeGreaterThan(nom.x + nom.width);
+        expect(boite.y).toBeLessThan(nom.y + nom.height);
+      }
+      await verifierSansDefilementHorizontal(page);
+      await page.screenshot({
+        path: test.info().outputPath(`fiches-${largeur}.png`),
+        fullPage: true,
+      });
+    });
+  }
+
+  test("« Nouvelle fiche » mène au formulaire", async ({ page }) => {
+    await listeDesFiches(page);
+    await lien(page, "Nouvelle fiche").click();
+    await expect(page).toHaveURL(/\/syndic\/mon-syndic\/nouvelle$/);
+  });
+
+  for (const theme of ["clair", "sombre"] as const) {
+    test(`en grands caractères et en thème ${theme}, reste sans défilement horizontal`, async ({
+      page,
+    }) => {
+      const { syndic } = await listeDesFiches(page);
+      await reglerAffichage(syndic.id, { theme, taille: "grands" });
+      for (const largeur of [1280, 1100]) {
+        await page.setViewportSize({ width: largeur, height: 900 });
+        await page.goto("/syndic/mon-syndic");
+        await expect(page.locator("html")).toHaveAttribute(
+          "data-taille",
+          "grands",
+        );
+        await verifierSansDefilementHorizontal(page);
+        await page.screenshot({
+          path: test.info().outputPath(`fiches-${theme}-grands-${largeur}.png`),
+          fullPage: true,
+        });
+      }
+    });
+  }
+});
+
+test("sur mobile, la liste des fiches ne change pas : « Ajouter une fiche » sous la liste", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "mobile", "Mise en page mobile.");
+  const { liste } = await listeDesFiches(page);
+  const ajouter = lien(page, "Ajouter une fiche");
+  await expect(ajouter).toHaveCount(1);
+  await expect(lien(page, "Nouvelle fiche")).toHaveCount(0);
+  expect((await ajouter.boundingBox())!.y).toBeGreaterThan(
+    (await liste.boundingBox())!.y,
+  );
+  await verifierSansDefilementHorizontal(page);
+  await page.screenshot({
+    path: info.outputPath("fiches-mobile.png"),
+    fullPage: true,
+  });
+});

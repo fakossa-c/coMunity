@@ -36,8 +36,19 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
         titre="Mon syndic"
         sousTitre="Les personnes du syndic que les résidents voient dans Mon syndic, avec leur photo, leur téléphone et leur e-mail."
       />
-      <div className="flex flex-col gap-space-lg">
+      {/* Sur ordinateur, une colonne de 960 px au plus, « Nouvelle fiche » en tête, à droite ; sur
+          mobile, « Ajouter une fiche » reste sous la liste. */}
+      <div className="flex flex-col gap-space-lg desktop:max-w-[60rem]">
         <Annonce message={confirmation} />
+        <div className="hidden desktop:flex desktop:justify-end">
+          <Link
+            href="/syndic/mon-syndic/nouvelle"
+            className={classesBouton("action")}
+          >
+            <Icone nom="add" taille={24} />
+            Nouvelle fiche
+          </Link>
+        </div>
         {fiches.length === 0 ? (
           <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
             Aucune fiche pour le moment : ajoutez la première, les résidents la
@@ -56,13 +67,15 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
             )}
           />
         )}
-        <Link
-          href="/syndic/mon-syndic/nouvelle"
-          className={classesBouton("action", true)}
-        >
-          <Icone nom="add" taille={24} />
-          Ajouter une fiche
-        </Link>
+        <div className="desktop:hidden">
+          <Link
+            href="/syndic/mon-syndic/nouvelle"
+            className={classesBouton("action", true)}
+          >
+            <Icone nom="add" taille={24} />
+            Ajouter une fiche
+          </Link>
+        </div>
       </div>
     </EcranSyndic>
   );

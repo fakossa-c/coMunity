@@ -15,7 +15,11 @@ type Fiche = Pick<
   "id" | "prenom" | "nom" | "photo_url" | "sur_comunity"
 >;
 
-/** Les fiches de Mon syndic dans l'ordre, chacune avec ses boutons Monter, Descendre et Modifier. */
+/**
+ * Les fiches de Mon syndic dans l'ordre, chacune avec ses boutons Monter, Descendre et Modifier.
+ * Sur ordinateur, une ligne par fiche : la photo et le nom à gauche, les boutons à droite, qui
+ * passent à la ligne quand ils ne tiennent pas à côté de 18 rem de photo et de nom.
+ */
 export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
@@ -45,16 +49,16 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
       <Annonce message={confirmation} />
       <ul
         aria-label="Fiches de Mon syndic"
-        className="flex flex-col gap-space-sm"
+        className="flex flex-col gap-space-sm desktop:gap-4"
       >
         {fiches.map((fiche, rang) => {
           const nom = nomFiche(fiche);
           return (
             <li
               key={fiche.id}
-              className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4"
+              className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4 desktop:flex-row desktop:flex-wrap desktop:items-center desktop:gap-x-6 desktop:px-8 desktop:py-5"
             >
-              <div className="flex items-center gap-space-sm">
+              <div className="flex items-center gap-space-sm desktop:min-w-0 desktop:flex-1 desktop:basis-72">
                 <Avatar
                   initiale={initialeFiche(fiche)}
                   taille={52}
@@ -71,7 +75,7 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
                   )}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-space-sm">
+              <div className="flex flex-wrap gap-space-sm desktop:ml-auto">
                 <Bouton
                   variante="contour"
                   icone="expand_less"
