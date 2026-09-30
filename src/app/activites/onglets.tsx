@@ -1,56 +1,87 @@
 import { BarreFiltres } from "@/components/barre-filtres";
-import { Onglets as OngletsDS } from "@/components/onglets";
-import { PuceFiltre } from "@/components/puce-filtre";
+import { Icone } from "@/components/icone";
+import type { NomIcone } from "@/components/icones";
+import { Onglets } from "@/components/onglets";
+
+export type OngletActivites = "je_participe" | "j_organise" | "archivees";
+
+export type CompteursActivites = Record<OngletActivites, number>;
+
+const s = (nombre: number) => (nombre > 1 ? "s" : "");
+
+/** Les trois segments, dans l'ordre : libellé, pictogramme et phrase qui résume le segment ouvert. */
+const SEGMENTS: {
+  id: OngletActivites;
+  libelle: string;
+  icone: NomIcone;
+  resume: (nombre: number) => string;
+}[] = [
+  {
+    id: "je_participe",
+    libelle: "Je participe",
+    icone: "event_available",
+    resume: (n) =>
+      n === 0 ? "Aucune activité à venir" : `${n} activité${s(n)} à venir`,
+  },
+  {
+    id: "j_organise",
+    libelle: "J'organise",
+    icone: "edit",
+    resume: (n) =>
+      n === 0
+        ? "Aucune activité que vous organisez"
+        : `${n} activité${s(n)} que vous organisez`,
+  },
+  {
+    id: "archivees",
+    libelle: "Archivées",
+    icone: "history",
+    resume: (n) =>
+      n === 0
+        ? "Aucune activité archivée"
+        : `${n} activité${s(n)} archivée${s(n)}, organisée${s(n)} ou suivie${s(n)}`,
+  },
+];
+
+/** L'onglet demandé par l'adresse : « Je participe » par défaut, pour toute autre valeur. */
+export function ongletDemande(valeur: string | undefined): OngletActivites {
+  return SEGMENTS.find(({ id }) => id === valeur)?.id ?? "je_participe";
+}
 
 /**
- * Onglets « J'y vais / J'organise » et puces « À venir / Passées » de l'onglet Activités.
- * « J'y vais » à venir (#8) et passées (#15), « J'organise » à venir et passées (#12).
- * Conformes au design system (#74) : soulignement terre cuite pour l'onglet actif, puces pêche
- * pleines avec pictogramme et coche, le tout collé en haut de l'écran.
+ * Segments « Je participe / J'organise / Archivées » de l'onglet Activités, chacun avec son
+ * compteur, collés en haut de l'écran. Sur ordinateur, une phrase à droite résume le segment
+ * ouvert. Ils remplacent les onglets « J'y vais / J'organise » et les puces « À venir / Passées ».
  */
-export function Onglets({
-  onglet,
-  puce,
+export function SegmentsActivites({
+  actif,
+  compteurs,
 }: {
-  onglet: "j_y_vais" | "j_organise";
-  puce: "a_venir" | "passees";
+  actif: OngletActivites;
+  compteurs: CompteursActivites;
 }) {
+  const segmentActif = SEGMENTS.find(({ id }) => id === actif) ?? SEGMENTS[0];
   return (
     <BarreFiltres
-      variante="liste"
       avant={
-        <OngletsDS
-          libelleGroupe="Mes activités"
-          actif={onglet}
-          onglets={[
-            {
-              id: "j_y_vais",
-              libelle: "J'y vais",
-              href: "/activites?onglet=j_y_vais",
-            },
-            {
-              id: "j_organise",
-              libelle: "J'organise",
-              href: "/activites?onglet=j_organise",
-            },
-          ]}
-        />
+        <div className="flex flex-wrap items-center justify-between gap-x-space-md gap-y-space-sm">
+          <Onglets
+            libelleGroupe="Mes activités"
+            actif={actif}
+            onglets={SEGMENTS.map(({ id, libelle, icone }) => ({
+              id,
+              libelle,
+              icone,
+              href: `/activites?onglet=${id}`,
+              compteur: compteurs[id],
+            }))}
+          />
+          <p className="hidden items-center gap-2 text-body-lg text-on-surface-variant desktop:flex">
+            <Icone nom={segmentActif.icone} taille={24} />
+            {segmentActif.resume(compteurs[actif])}
+          </p>
+        </div>
       }
-    >
-      <PuceFiltre
-        selectionnee={puce === "a_venir"}
-        icone="event"
-        href={`/activites?onglet=${onglet}&puce=a_venir`}
-      >
-        À venir
-      </PuceFiltre>
-      <PuceFiltre
-        selectionnee={puce === "passees"}
-        icone="history"
-        href={`/activites?onglet=${onglet}&puce=passees`}
-      >
-        Passées
-      </PuceFiltre>
-    </BarreFiltres>
+    />
   );
 }

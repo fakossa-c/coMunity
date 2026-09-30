@@ -107,7 +107,7 @@ test("la suppression déconnecte, ferme le compte, annule l'activité à venir d
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page.getByText("Email ou mot de passe incorrect")).toBeVisible();
 
-  // L'inscrit voit l'activité annulée dans « J'y vais », l'autre a disparu.
+  // L'inscrit voit l'activité annulée dans « Je participe », l'autre a disparu.
   const contexte = await browser.newContext();
   const pageInscrit = await contexte.newPage();
   await seConnecter(pageInscrit, inscrit.email);

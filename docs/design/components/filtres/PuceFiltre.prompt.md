@@ -3,5 +3,5 @@ Puce de filtre en pilule, 52 px. Sélectionnée : fond pêche et coche. Non sél
 ```jsx
 <PuceFiltre selectionnee>Toutes</PuceFiltre>
 <PuceFiltre categorie icone="celebration">Moments partagés</PuceFiltre>
-<PuceFiltre icone="history">Passées</PuceFiltre>
+<PuceFiltre icone="event">Cette semaine</PuceFiltre>
 ```

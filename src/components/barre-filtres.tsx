@@ -10,7 +10,8 @@ type Props = {
   variante?: "accueil" | "liste";
   /** Nom de la barre, qui devient alors une navigation (« Catégories » sur l'Accueil). */
   libelle?: string;
-  children: ReactNode;
+  /** Sans puces (Activités : des segments seuls), la barre ne colle que ce qui la précède. */
+  children?: ReactNode;
 };
 
 /**
@@ -30,15 +31,17 @@ export function BarreFiltres({
       className="sticky top-0 z-20 -mx-margin flex flex-col gap-space-sm bg-fond-page px-margin pt-[env(safe-area-inset-top)] pb-space-sm"
     >
       {avant}
-      <div
-        className={
-          variante === "liste"
-            ? "flex gap-4"
-            : "flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 desktop:flex-wrap desktop:overflow-visible [&::-webkit-scrollbar]:hidden"
-        }
-      >
-        {children}
-      </div>
+      {children && (
+        <div
+          className={
+            variante === "liste"
+              ? "flex gap-4"
+              : "flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 desktop:flex-wrap desktop:overflow-visible [&::-webkit-scrollbar]:hidden"
+          }
+        >
+          {children}
+        </div>
+      )}
     </Conteneur>
   );
 }
