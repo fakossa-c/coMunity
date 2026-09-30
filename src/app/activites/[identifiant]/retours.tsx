@@ -25,7 +25,7 @@ export async function Retours({ identifiant }: { identifiant: string }) {
         id="retours-titre"
         className="font-headline text-headline-sm text-on-surface"
       >
-        Retours des participants
+        Avis des participants
       </h2>
       <p className="text-body-lg text-on-surface">
         {libelleNoteMoyenne(data.note_moyenne)}

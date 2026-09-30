@@ -44,20 +44,20 @@ export function AideInstallation() {
           id="aide-installation-titre"
           className="pt-2.5 font-headline text-headline-sm text-on-surface"
         >
-          Installer l&apos;app
+          Installer l&apos;application
         </h2>
         {affichage === "android" ? (
           <>
             <p className="mt-1 text-body-lg text-on-surface-variant">
               Retrouvez la résidence sur l&apos;écran d&apos;accueil de votre
-              téléphone, comme une application.
+              téléphone, en un geste.
             </p>
             <button
               type="button"
               onClick={installerApp}
               className="mt-space-sm min-h-14 rounded-lg border-[1.5px] border-border-distinct bg-inverse-surface px-space-md font-headline text-body-bold text-inverse-on-surface active:translate-y-[2px]"
             >
-              Installer l&apos;app
+              Installer l&apos;application
             </button>
           </>
         ) : (

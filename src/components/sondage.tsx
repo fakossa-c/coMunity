@@ -85,8 +85,8 @@ export function Sondage({
           )}
           {affichage.etat === "lecture" && (
             <p className="text-body-md text-on-surface-variant">
-              Vous pourrez répondre quand le conseil syndical aura validé votre
-              compte.
+              Vous pourrez répondre dès que le conseil syndical aura validé
+              votre compte.
             </p>
           )}
           {affichage.etat === "resultats" && affichage.peutVoter && (

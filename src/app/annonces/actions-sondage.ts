@@ -5,10 +5,10 @@ import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const messages: Record<string, string> = {
-  "42501": "Seul un résident validé peut répondre à un sondage.",
+  "42501":
+    "Vous pourrez répondre dès que le conseil syndical aura validé votre compte.",
   "23505": "Vous avez déjà répondu à ce sondage.",
-  "23514":
-    "Ce sondage n'accepte plus de réponse : la date limite est passée, ou ce choix n'existe pas.",
+  "23514": "Ce sondage est clos, ou ce choix n'existe plus.",
   P0002: "Ce sondage n'existe plus.",
 };
 
@@ -35,5 +35,5 @@ export async function repondreSondage(
 
   // La liste et la page de chaque annonce : le sondage se répond sur l'une comme sur l'autre.
   revalidatePath("/annonces", "layout");
-  return { ok: true, message: "Merci, votre réponse est enregistrée" };
+  return { ok: true, message: "Merci, votre réponse est enregistrée." };
 }

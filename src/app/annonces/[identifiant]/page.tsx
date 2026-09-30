@@ -103,8 +103,8 @@ export default async function PageAnnonce({ params }: Props) {
           </h1>
           {expiree && (
             <EncartPastel>
-              Cette annonce n&apos;est plus d&apos;actualité : elle a quitté la
-              liste des annonces, mais son lien reste lisible.
+              Cette annonce n&apos;est plus d&apos;actualité : elle
+              n&apos;apparaît plus dans la liste.
             </EncartPastel>
           )}
         </div>

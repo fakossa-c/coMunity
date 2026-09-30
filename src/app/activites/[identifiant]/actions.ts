@@ -8,19 +8,20 @@ import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
 const messages: Record<string, string> = {
-  "42501": "Seul un résident validé peut s'inscrire.",
-  "23514": "Le nombre d'accompagnants n'est pas valide.",
+  "42501":
+    "Vous pourrez vous inscrire dès que le conseil syndical aura validé votre compte.",
+  "23514": "Indiquez un nombre d'accompagnants de 0 ou plus.",
   P0002: "Cette activité n'existe plus.",
   P0003: "Il ne reste pas assez de places.",
-  P0004: "Cette activité est annulée : on ne peut plus s'y inscrire.",
+  P0004: "Cette activité est annulée : les inscriptions sont fermées.",
 };
 
 const messagesCreateur: Record<string, string> = {
   "42501":
-    "Seuls le créateur de l'activité et le conseil syndical peuvent faire cela.",
+    "Seuls l'organisateur et le conseil syndical peuvent gérer cette activité.",
   P0002: "Cette activité n'existe plus.",
   P0011:
-    "Cette activité est en relecture ou masquée : elle s'annule après sa publication.",
+    "Une activité en relecture ou masquée ne s'annule pas : elle doit d'abord être publiée.",
   P0006:
     "Des personnes viennent de s'inscrire : annulez l'activité plutôt que de la supprimer.",
 };
@@ -142,10 +143,10 @@ export async function supprimerActivite(
 }
 
 const messagesRetour: Record<string, string> = {
-  "42501": "Seul un participant inscrit peut laisser un retour.",
-  "23514": "La note doit être comprise entre 1 et 5.",
+  "42501": "Seuls les participants inscrits peuvent donner leur avis.",
+  "23514": "Choisissez une note de 1 à 5.",
   P0002: "Cette activité n'existe plus.",
-  P0003: "L'activité n'est pas encore terminée.",
+  P0003: "Vous pourrez donner votre avis une fois l'activité terminée.",
 };
 
 /** Dépose ou remplace le retour de la personne connectée sur l'activité. */
@@ -165,10 +166,10 @@ export async function laisserRetour(
       ok: false,
       message:
         messagesRetour[error.code ?? ""] ??
-        "Votre retour n'a pas pu être enregistré. Réessayez dans un instant.",
+        "Votre avis n'a pas pu être enregistré. Réessayez dans un instant.",
     };
   }
 
   revalidatePath(cheminFiche(identifiant));
-  return { ok: true, message: "Merci pour votre retour." };
+  return { ok: true, message: "Merci pour votre avis." };
 }

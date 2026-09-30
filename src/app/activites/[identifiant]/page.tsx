@@ -119,8 +119,8 @@ function DecisionDuConseil({
     <>
       {statut === "en_relecture" && (
         <EncartPastel titre="Pas encore publiée">
-          Le conseil syndical relit votre activité avant de la publier. Vous et
-          lui êtes les seuls à la voir pour l&apos;instant.
+          Le conseil syndical la relit avant de la publier. D&apos;ici là, vos
+          voisins ne la voient pas.
         </EncartPastel>
       )}
       {statut === "masquee" && (

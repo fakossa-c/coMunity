@@ -14,7 +14,7 @@ export const categoriesActivite = {
     },
   },
   creation_bricolage: {
-    libelle: "Création & Bricolage",
+    libelle: "Création et bricolage",
     pictogramme: "handyman",
     couleur: {
       fond: "bg-categorie-creation-bricolage",
@@ -22,7 +22,7 @@ export const categoriesActivite = {
     },
   },
   culture_loisirs: {
-    libelle: "Culture & Loisirs",
+    libelle: "Culture et loisirs",
     pictogramme: "menu_book",
     couleur: {
       fond: "bg-categorie-culture-loisirs",
@@ -30,7 +30,7 @@ export const categoriesActivite = {
     },
   },
   entraide_partage: {
-    libelle: "Entraide & Partage",
+    libelle: "Entraide et partage",
     pictogramme: "handshake",
     couleur: {
       fond: "bg-categorie-entraide-partage",
@@ -38,7 +38,7 @@ export const categoriesActivite = {
     },
   },
   jardin_nature: {
-    libelle: "Jardin & Nature",
+    libelle: "Jardin et nature",
     pictogramme: "potted_plant",
     couleur: {
       fond: "bg-categorie-jardin-nature",

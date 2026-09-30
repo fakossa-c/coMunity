@@ -10,13 +10,13 @@ export type RetoursActivite = {
 
 /** « 3,5 / 5 », « 4 / 5 » sans décimale superflue, ou l'absence de retour. */
 export function libelleNoteMoyenne(moyenne: number | null) {
-  if (moyenne === null) return "Aucun retour pour le moment";
+  if (moyenne === null) return "Aucun avis pour l'instant";
   const arrondie = Math.round(moyenne * 10) / 10;
   return `${arrondie.toString().replace(".", ",")} / 5`;
 }
 
-/** « Aucun retour », « 1 retour », « 3 retours ». */
+/** « Aucun avis », « 1 avis », « 3 avis ». */
 export function libelleNombreRetours(nombre: number) {
-  if (nombre === 0) return "Aucun retour";
-  return nombre === 1 ? "1 retour" : `${nombre} retours`;
+  if (nombre === 0) return "Aucun avis";
+  return `${nombre} avis`;
 }

@@ -85,7 +85,7 @@ export function GestionActivite({
         className={classesBouton("contour", true)}
       >
         <Icone nom="content_copy" taille={24} />
-        Dupliquer
+        Nouvelle date
       </Link>
       {retirable && (
         <>
