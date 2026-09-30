@@ -221,7 +221,7 @@ test("mot de passe oublié, déconnexion et reconnexion", async ({
   await page.getByLabel("Adresse email").fill(syndic.email);
   await page.getByRole("button", { name: "Recevoir un lien" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
-    "un email vient de vous être envoyé",
+    "un email vient de partir",
   );
 
   await page.goto(await lienRecu(syndic.email));

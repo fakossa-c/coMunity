@@ -199,7 +199,7 @@ async function ouvrirLeLienDuNouveauMotDePasse(page: Page) {
   await page.getByLabel("Adresse email").fill(resident.email);
   await page.getByRole("button", { name: "Recevoir un lien" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
-    "un email vient de vous être envoyé",
+    "un email vient de partir",
   );
   await page.goto(await lienRecu(resident.email));
   await expect(page.getByLabel("Nouveau mot de passe")).toBeVisible();

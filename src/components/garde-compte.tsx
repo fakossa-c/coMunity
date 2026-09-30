@@ -13,13 +13,13 @@ const etatsBloques = {
     titre: "Compte non accepté",
     sousTitre: "Votre inscription n'a pas été retenue.",
     message:
-      "Votre compte n'a pas été accepté par le conseil syndical de la résidence. Si vous pensez qu'il s'agit d'une erreur, contactez le conseil syndical.",
+      "Le conseil syndical n'a pas validé votre compte. Une erreur ? Parlez-en au conseil syndical.",
   },
   retire: {
     titre: "Accès retiré",
     sousTitre: "Votre compte n'a plus accès à la résidence.",
     message:
-      "Votre accès à la résidence a été retiré par le conseil syndical, par exemple après un déménagement. Si vous pensez qu'il s'agit d'une erreur, contactez le conseil syndical.",
+      "Le conseil syndical a retiré votre accès, par exemple après un déménagement. Une erreur ? Parlez-en au conseil syndical.",
   },
 };
 

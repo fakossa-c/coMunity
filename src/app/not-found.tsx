@@ -10,11 +10,11 @@ export default function PageIntrouvable() {
     <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Page introuvable"
-        sousTitre="Cette adresse ne mène à aucune page de l'app."
+        sousTitre="Cette page n'existe pas."
       />
       <Bientot
         icone="home"
-        message="La page a peut-être été déplacée. Retrouvez les activités et les annonces depuis l'accueil."
+        message="Elle a peut-être été déplacée. Retrouvez les activités et les annonces depuis l'Accueil."
       />
     </EcranSecondaire>
   );

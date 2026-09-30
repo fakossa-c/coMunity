@@ -61,7 +61,7 @@ export function FormulaireInscription() {
       />
       <Champ
         libelle="Nom"
-        aide="Le conseil syndical s'en sert pour vérifier que vous habitez la résidence. Vos voisins ne voient que votre pseudo : votre prénom et l'initiale de votre nom, que vous pourrez changer."
+        aide="Pour que le conseil syndical vous reconnaisse. Vos voisins ne voient que votre pseudo (« Danielle M. »), modifiable ensuite."
         name="nom"
         autoComplete="family-name"
         maxLength={LONGUEUR_MAXIMALE_NOM}
