@@ -7,6 +7,7 @@ import {
   type EspaceCommun,
   type OccupationEspace,
 } from "./espaces-communs";
+import { aujourdhui } from "./partage-activite";
 import { clientSession } from "./supabase/serveur";
 
 /** Les espaces communs de la résidence, par nom. Vide pour un compte qui ne peut pas les lire. */
@@ -109,7 +110,7 @@ export async function lireContexteParcours(identifiantExclu?: string): Promise<{
     .select("titre, espace_commun_id, date_activite, heure_debut, heure_fin")
     .not("espace_commun_id", "is", null)
     .eq("statut", "publiee")
-    .gte("date_activite", new Date().toISOString().slice(0, 10));
+    .gte("date_activite", aujourdhui());
   if (identifiantExclu)
     occupations = occupations.neq("identifiant_public", identifiantExclu);
 
