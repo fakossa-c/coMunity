@@ -243,7 +243,7 @@ test("la fiche dit « confirmée » ou combien de participants manquent", async 
   await expect(page.getByRole("main").getByText("Confirmée")).toBeVisible();
 });
 
-test("J'organise liste mes activités à venir, annulées comprises, puis les passées", async ({
+test("J'organise liste mes activités à venir, annulées comprises ; les passées sont dans Archivées", async ({
   page,
 }) => {
   const { createur } = await createurAvecActivite(page, {
@@ -264,7 +264,7 @@ test("J'organise liste mes activités à venir, annulées comprises, puis les pa
   ).toContainText("Annulée");
   await expect(page.getByText("Vide-grenier passé")).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Passées" }).click();
+  await page.getByRole("tab", { name: /^Archivées/ }).click();
   await expect(page.getByText("Vide-grenier passé")).toBeVisible();
   // Le minimum n'a plus rien à confirmer une fois l'activité passée.
   await expect(page.getByRole("main")).not.toContainText("pour confirmer");

@@ -311,48 +311,6 @@ test("une activité du conseil syndical se présente et s'inscrit comme celle d'
   await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
 });
 
-test("Activités › J'y vais › Passées montre les activités passées où j'étais inscrit", async ({
-  page,
-}) => {
-  const organisateur = await nouveauResident("valide");
-  const resident = await nouveauResident("valide");
-  emails.push(organisateur.email, resident.email);
-  const suffixe = Date.now();
-  const allee = `Loto de la rentrée ${suffixe}`;
-  const recente = `Pique-nique ${suffixe}`;
-  const annulee = `Brocante annulée ${suffixe}`;
-  const pasInscrit = `Yoga ${suffixe}`;
-  const aVenir = `Concert ${suffixe}`;
-  for (const [titre, jours] of [
-    [allee, -3],
-    [annulee, -2],
-    [recente, -1],
-    [pasInscrit, -1],
-    [aVenir, 5],
-  ] as const) {
-    const identifiant = await nouvelleActivite(organisateur.id, {
-      titre,
-      date_activite: dansJours(jours),
-    });
-    if (titre !== pasInscrit) await inscrireResident(identifiant, resident.id);
-    if (titre === annulee) await annulerActivite(identifiant);
-  }
-
-  await seConnecter(page, resident.email);
-  await page.goto("/activites?onglet=j_y_vais&puce=passees");
-
-  const liste = page.getByRole("list", { name: "Vos activités passées" });
-  // La plus récente d'abord.
-  const titres = await liste
-    .getByRole("heading")
-    .filter({ hasText: String(suffixe) })
-    .allTextContents();
-  expect(titres).toEqual([recente, allee]);
-  await expect(liste).not.toContainText(annulee);
-  await expect(liste).not.toContainText(pasInscrit);
-  await expect(liste).not.toContainText(aVenir);
-});
-
 test.describe("captures de l'Accueil", () => {
   // Mêmes titres d'une capture à l'autre : une à la fois, pour ne pas mêler leurs cartes.
   test.describe.configure({ mode: "serial" });
