@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { libelleJour } from "../../src/lib/calendrier";
 import {
   choisirDate,
+  continuerProposer,
   MOT_DE_PASSE,
   annulerActivite,
   inscrireResident,
@@ -137,7 +138,7 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
   await expect(page.getByLabel("Titre de l'activité")).toHaveValue(
     "Goûter crêpes",
   );
-  await continuer(page);
+  await continuerProposer(page);
   await expect(
     page
       .getByRole("group", { name: "Date", exact: true })
@@ -145,10 +146,10 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
   ).toHaveCount(0);
   await expect(page.getByLabel("Heure de début")).toHaveValue("16:00");
   await choisirDate(page, il(20));
-  await continuer(page);
+  await continuerProposer(page);
   await expect(page.getByLabel("Nombre de places")).toHaveValue("12");
-  await continuer(page);
-  await page.getByRole("button", { name: "Publier" }).click();
+  await continuerProposer(page);
+  await page.getByRole("button", { name: /^Publier/ }).click();
 
   await expect(page).toHaveURL(/\/activites\/[^/]+\/publiee$/);
   expect(page.url()).not.toContain(identifiant);

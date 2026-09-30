@@ -4,6 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
 import {
   choisirDate,
+  continuerProposer,
+  etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
   nouvelleActivite,
@@ -68,20 +70,26 @@ async function saisirJusquAuRecapitulatif(
       `${photos.length} ${photos.length === 1 ? "photo" : "photos"} sur 5`,
     );
   }
-  await continuer(page, 2);
+  await continuerLaProposition(page, 2);
 
   await choisirDate(page, dansUnMois());
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
-  await continuer(page, 3);
-  await continuer(page, 4);
+  await continuerLaProposition(page, 3);
+  await continuerLaProposition(page, 4);
 }
 
-/** « Continuer », puis attend l'étape `numero`. */
+/** « Continuer », puis attend l'étape `numero` : le parcours de Modifier garde ses étapes sur ordinateur. */
 async function continuer(page: Page, numero: number) {
   await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByRole("main")).toContainText(`Étape ${numero} sur 4`);
+}
+
+/** Comme `continuer` pour Proposer ; sur ordinateur, la page unique n'a pas d'étapes. */
+async function continuerLaProposition(page: Page, numero: number) {
+  await continuerProposer(page);
+  await etapeProposer(page, numero);
 }
 
 test("le créateur ajoute des photos compressées, la fiche les montre en galerie", async ({

@@ -23,9 +23,9 @@ import { libelleMinimum } from "@/lib/inscription-activite";
 import { creneau, jourLong } from "@/lib/partage-activite";
 import { libellePhotos } from "@/lib/photos-activite";
 import {
-  avertissementsApplicables,
   capaciteMaxDe,
   entreeJevDe,
+  fusionnerAvis,
   pictogrammeDeLaSaisie,
   propositionDe,
   TITRES_ETAPES,
@@ -88,6 +88,11 @@ function sectionsDe(
           icone: pictogrammeDeLaSaisie(saisie),
           titre: "Catégorie",
           detail: categorie.libelle,
+        },
+        {
+          icone: "menu_book",
+          titre: "Description",
+          detail: saisie.description || "Aucune",
         },
         {
           icone: "waving_hand",
@@ -190,16 +195,7 @@ export function Recapitulatif({
       analyserProposition(proposition, regles),
       avecJev ? avisJev(entreeJevDe(saisie)).catch(() => null) : null,
     ]).then(([resultat, jev]) => {
-      if (actif)
-        setAvis({
-          ...resultat,
-          avertissements: avertissementsApplicables(
-            [...resultat.avertissements, ...(jev?.avertissements ?? [])],
-            saisie,
-            reference,
-          ),
-          moderation: jev?.moderation ?? resultat.moderation,
-        });
+      if (actif) setAvis(fusionnerAvis(resultat, jev, saisie, reference));
     });
     return () => {
       actif = false;

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { clientAdmin, nouveauResident, type Compte } from "./clients";
+import {
+  clientAdmin,
+  nouveauResident,
+  publierApresJev,
+  type Compte,
+} from "./clients";
 
 // Ticket #9 : les champs que le parcours de création en 4 étapes ajoute à une activité.
 
@@ -93,6 +98,26 @@ describe("champs du parcours de création", () => {
     });
 
     expect(error).not.toBeNull();
+  });
+
+  it("la description est limitée à 600 caractères, à la création comme à la modification", async () => {
+    const resident = await nouveauResident("valide");
+
+    const { data, error: accepte } = await publier(resident, {
+      description: "x".repeat(600),
+    });
+    const { error: refusee } = await publier(resident, {
+      description: "x".repeat(601),
+    });
+    await publierApresJev(data!.identifiant_public);
+    const { error: modification } = await resident.client
+      .from("activite")
+      .update({ description: "x".repeat(601) })
+      .eq("identifiant_public", data!.identifiant_public);
+
+    expect(accepte).toBeNull();
+    expect(refusee).not.toBeNull();
+    expect(modification).not.toBeNull();
   });
 
   it("la précision d'accès est limitée à 120 caractères", async () => {

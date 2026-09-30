@@ -4,6 +4,7 @@ Calendrier du mois affiché **dans la page** (jamais la fenêtre du navigateur) 
 - **Clavier** : un seul jour reçoit le focus à la fois (Tab entre dans la grille, puis sort) ; flèches gauche et droite = jour, haut et bas = semaine, **Début** = lundi de la semaine, **Fin** = dimanche, d'un mois sur l'autre. Jamais avant aujourd'hui. Entrée ou Espace choisit.
 - **Lecteur d'écran** : chaque jour se lit en toutes lettres (« samedi 24 octobre 2026, aujourd'hui »), le jour choisi est « appuyé », le changement de mois et le jour choisi sont annoncés (« samedi 24 octobre 2026 sélectionné »). Erreur (« Choisissez une date. ») en dessous, annoncée, bordure `error`.
 - **Thèmes** : uniquement des tokens, donc thème sombre et grands caractères (`--text-*` × 1,25) sans réglage ; les jours restent des cibles de 44 px au moins.
+- **Sur ordinateur, dans la page unique de Proposer**, la carte se range à gauche dans une colonne de 376 px et le reste du bloc « Date et heure » à sa droite : le jour choisi en toutes lettres (terre cuite, 22/30), les deux heures l'une sous l'autre puis la durée (« Durée : 1 h 30 »). Sur mobile, tout s'empile.
 - Les heures qui vont avec ne se tapent pas : deux `ChampListe`, « Heure de début » et « Heure de fin », par pas de 15 minutes, affichées « 14h30 ».
 
 ```jsx

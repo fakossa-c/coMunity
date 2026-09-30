@@ -12,6 +12,8 @@ import { ChampPhotos, type PhotoSaisie } from "@/components/champ-photos";
 import { ChoixLieu } from "@/components/choix-lieu";
 import { ChoixEtiquettes } from "@/components/choix-etiquettes";
 import { ChoixSegmente } from "@/components/choix-segmente";
+import { EncartAssistant } from "@/components/encart-assistant";
+import { FeuilleConfirmation } from "@/components/feuille-confirmation";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitreSection } from "@/components/titre-section";
@@ -38,10 +40,14 @@ import {
   avertissementsApplicables,
   blocageDeLEtape,
   changerCategorie,
+  dureeDe,
   entreeJevDe,
   pictogrammeDeLaSaisie,
   propositionDe,
+  resteARemplir,
+  type PointARemplir,
   verifierEtape,
+  verifierPage,
   versNouvelleActivite,
   type ChampSaisie,
   type Etape,
@@ -54,7 +60,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { aujourdhui, cheminFiche } from "@/lib/partage-activite";
+import { aujourdhui, cheminFiche, jourLong } from "@/lib/partage-activite";
 import {
   MAX_PHOTOS,
   messagePhotosIncompletes,
@@ -69,7 +75,15 @@ import {
   preparerDepotsPhotos,
   publier,
 } from "./actions";
+import { useAvisAssistant } from "./avis-assistant";
+import { BlocSaisie } from "./bloc-saisie";
+import { ColonneApercu } from "./colonne-apercu";
+import {
+  useConfirmationDeSortie,
+  useDefilementVersLErreur,
+} from "./garde-de-page";
 import { Recapitulatif } from "./recapitulatif";
+import { useBureau } from "./utiliser-bureau";
 
 type Erreur = ErreurFormulaire<ChampSaisie>;
 
@@ -87,6 +101,14 @@ type Props = {
   modification?: { identifiant: string; placesPrises: number };
   /** En modification, les photos déjà enregistrées, dans l'ordre : leur chemin et leur adresse publique. */
   photosInitiales?: { chemin: string; url: string }[];
+  /**
+   * Vrai pour Proposer : sur ordinateur, le parcours devient une page unique de six blocs avec, à
+   * droite, l'aperçu vivant de la carte. Le mobile garde ses étapes. Faux pour Modifier, qui
+   * garde ses étapes partout.
+   */
+  pageUnique?: boolean;
+  /** L'espace commun que l'adresse `?espace=` préchoisit, quand l'activité n'est pas déjà remplie. */
+  espaceInitial?: string;
 };
 
 /** Les photos déjà envoyées gardent leur chemin ; les autres n'ont que leur fichier compressé. */
@@ -97,6 +119,8 @@ function cheminsDe(photos: PhotoSaisie[]) {
 /**
  * Le parcours de création en 4 étapes : la saisie reste en mémoire d'une étape à l'autre. Il sert
  * aussi à modifier une activité (pré-rempli) et à en dupliquer une (pré-rempli sans la date).
+ * Tous les champs sont dans la page, ceux des étapes qui ne sont pas courantes masqués : sur
+ * ordinateur, `pageUnique` les montre tous, en six blocs, à côté de l'aperçu de la carte.
  */
 export function ParcoursProposition({
   espaces,
@@ -104,17 +128,30 @@ export function ParcoursProposition({
   initial = SAISIE_VIDE,
   modification,
   photosInitiales = [],
+  pageUnique = false,
+  espaceInitial = "",
 }: Props) {
   const router = useRouter();
+  const bureau = useBureau();
+  // Vrai quand la page unique est celle qu'on voit : ce qu'elle fait en plus (l'assistant qui relit
+  // en continu, la confirmation en quittant) ne concerne ni le mobile ni Modifier.
+  const modeUnique = pageUnique && bureau;
   const [etape, setEtape] = useState<Etape>(1);
   // Vrai après « Modifier » depuis le récapitulatif : « Continuer » y ramène directement.
   const [retourRecapitulatif, setRetourRecapitulatif] = useState(false);
-  // Sans espace commun dans la résidence, le lieu est d'emblée un lieu libre.
-  const [saisie, setSaisie] = useState<SaisieActivite>(
-    espaces.length === 0 && initial.espace_commun === ""
-      ? { ...initial, espace_commun: LIEU_LIBRE }
-      : initial,
-  );
+  // Sans espace commun dans la résidence, le lieu est d'emblée un lieu libre ; `?espace=` préchoisit
+  // l'espace d'où l'on vient.
+  const [saisie, setSaisie] = useState<SaisieActivite>(() => {
+    const depart =
+      espaceInitial && initial.espace_commun === ""
+        ? { ...initial, espace_commun: espaceInitial }
+        : initial;
+    return espaces.length === 0 && depart.espace_commun === ""
+      ? { ...depart, espace_commun: LIEU_LIBRE }
+      : depart;
+  });
+  // La saisie de départ : « quelque chose a été saisi » veut dire qu'elle a changé.
+  const [depart] = useState(() => JSON.stringify(saisie));
   const [photos, setPhotos] = useState<PhotoSaisie[]>(() =>
     photosInitiales.map(({ chemin, url }) => ({
       cle: chemin,
@@ -195,9 +232,13 @@ export function ParcoursProposition({
   const reference = modification ? initial : undefined;
 
   async function verifier(cible: Etape) {
-    const verdict = verifierEtape(cible, saisie, {
-      placesPrises: modification?.placesPrises,
-    });
+    // Sur la page unique, toutes les étapes se vérifient d'un coup, dans le même ordre.
+    const verdict =
+      cible === NOMBRE_ETAPES && modeUnique
+        ? verifierPage(saisie, { placesPrises: modification?.placesPrises })
+        : verifierEtape(cible, saisie, {
+            placesPrises: modification?.placesPrises,
+          });
     if (verdict.erreur) return verdict;
     const avis = await analyserProposition(propositionDe(saisie), regles);
     return blocageDeLEtape(
@@ -227,6 +268,16 @@ export function ParcoursProposition({
     } catch {
       // Jev ne bloque jamais le parcours.
     }
+  }
+
+  // Sur la page unique, il n'y a pas de fin d'étape 1 : Jev présélectionne la catégorie et le
+  // pictogramme la première fois que le créateur quitte le titre.
+  const suggestionFaite = useRef(false);
+  function surSortieDuTitre() {
+    if (!modeUnique || modification || suggestionFaite.current) return;
+    if (saisie.titre.trim() === "") return;
+    suggestionFaite.current = true;
+    void suggerer();
   }
 
   function continuer() {
@@ -351,6 +402,21 @@ export function ParcoursProposition({
     });
   }
 
+  // L'assistant de la page unique relit en continu ; au mobile, c'est le récapitulatif qui le fait.
+  const avis = useAvisAssistant({
+    saisie,
+    regles,
+    reference,
+    avecJev: !modification,
+    actif: modeUnique,
+  });
+
+  // Une publication dont des photos n'ont pas pu partir a déjà créé l'activité : rien à perdre.
+  const modifiee =
+    !apresEchec && (photos.length > 0 || JSON.stringify(saisie) !== depart);
+  const [sortie, setSortie] = useConfirmationDeSortie(modeUnique, modifiee);
+  useDefilementVersLErreur(modeUnique, erreur);
+
   const erreurDe = (champ: ChampSaisie) => erreurDuChamp(erreur, champ);
   const espaceChoisi = espaces.find((e) => e.id === saisie.espace_commun);
   const messageGeneral =
@@ -358,17 +424,34 @@ export function ParcoursProposition({
     erreurGenerale(erreur) ??
     (resultat?.ok === false && resultat.message);
 
+  const points = resteARemplir(saisie);
+  // Un point absent de la liste (les places d'une activité sans limite) n'a rien à remplir.
+  const fait = (cle: PointARemplir["cle"]) =>
+    points.find((p) => p.cle === cle)?.fait ?? true;
+  const lieuApercu =
+    espaceChoisi?.nom ??
+    (saisie.espace_commun === LIEU_LIBRE ? saisie.lieu.trim() : "");
+  // Une étape du mobile est masquée quand ce n'est pas la sienne ; l'ordinateur voit toute la page.
+  const masque = (numero: Etape) => etape !== numero;
+  const duree = dureeDe(saisie.heure_debut, saisie.heure_fin);
+  // Classes qui ne valent qu'à partir de l'ordinateur et seulement pour la page unique.
+  const seulementSurMobile = pageUnique ? "desktop:hidden" : "";
+
   return (
     <form
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
+        // Sur la page unique, seul « Publier l'activité » publie : « Entrée » dans un champ ne le fait pas.
+        if (modeUnique) return;
         if (etape === NOMBRE_ETAPES) publierMaintenant();
         else continuer();
       }}
-      className="flex flex-col gap-bloc"
+      // Sur la page unique, pas de barre d'action fixe à dégager en bas : la réserve de l'écran est
+      // ramenée à 2,5 rem, pour que la colonne collante finisse sa course à l'écran.
+      className={`flex flex-col gap-bloc ${pageUnique ? "desktop:mb-[calc((var(--reserve-bas-bureau)-2.5rem)*-1)]" : ""}`}
     >
-      <div>
+      <div className={seulementSurMobile}>
         <p className="font-headline text-label-lg text-on-surface-variant">
           Étape {etape} sur {NOMBRE_ETAPES}
         </p>
@@ -381,307 +464,470 @@ export function ParcoursProposition({
         </h2>
       </div>
 
-      <Annonce message={messageGeneral} erreur />
+      <div className={seulementSurMobile}>
+        <Annonce message={messageGeneral} erreur />
+      </div>
 
-      {etape === 1 && (
-        <>
-          <Champ
-            libelle="Titre de l'activité"
-            name="titre"
-            autoComplete="off"
-            value={saisie.titre}
-            onChange={(e) => poser("titre", e.target.value)}
-            maxLength={LIMITES.titre}
-            compteur={{ longueur: saisie.titre.length, max: LIMITES.titre }}
-            erreur={erreurDe("titre")}
-            required
+      {pageUnique && (
+        <div className="hidden desktop:block">
+          <EncartAssistant
+            avis={avis}
+            incomplete={points.some((p) => p.obligatoire && !p.fait)}
           />
-          <ChampListe
-            libelle="Catégorie"
-            name="categorie"
-            value={saisie.categorie}
-            onChange={(e) => {
-              choixDuCreateur.current.categorie = true;
-              setCategorieSuggeree(false);
-              setSaisie((s) =>
-                changerCategorie(s, e.target.value as CategorieActivite),
-              );
-            }}
-            aide={
-              categorieSuggeree
-                ? "Suggérée d'après votre titre. Changez-la si elle ne convient pas."
-                : undefined
-            }
+        </div>
+      )}
+
+      <div
+        className={`flex flex-col gap-bloc ${
+          pageUnique
+            ? "desktop:grid desktop:grid-cols-[minmax(0,1fr)_24.5rem] desktop:items-start desktop:gap-8"
+            : ""
+        }`}
+      >
+        <div
+          className={`flex min-w-0 flex-col gap-bloc ${pageUnique ? "desktop:gap-4" : ""}`}
+        >
+          <BlocSaisie
+            bloc="titre-description"
+            numero={1}
+            titre="Titre et description"
+            aide="Vos voisins lisent d'abord le titre, puis la description."
+            fait={fait("titre")}
+            masqueSurMobile={masque(1)}
+            pageUnique={pageUnique}
           >
-            {categoriesActiviteListe.map((clef) => (
-              <option key={clef} value={clef}>
-                {categoriesActivite[clef].libelle}
-              </option>
-            ))}
-          </ChampListe>
-          {saisie.pictogramme !== "" && (
-            <div className="flex flex-wrap items-center gap-space-sm">
-              <Icone nom={pictogrammeDeLaSaisie(saisie)} taille={28} />
-              <span className="text-body-md text-on-surface-variant">
-                Pictogramme suggéré d&apos;après votre titre.
-              </span>
-              <Bouton
-                type="button"
-                variante="fantome"
-                onClick={() => {
-                  choixDuCreateur.current.pictogramme = true;
-                  poser("pictogramme", "");
-                  // La ligne disparaît : le focus revient au champ voisin, pas au corps de la page.
-                  document
-                    .querySelector<HTMLSelectElement>(
-                      'select[name="categorie"]',
-                    )
-                    ?.focus();
-                }}
-              >
-                Garder celui de la catégorie
-              </Bouton>
+            <Champ
+              libelle="Titre de l'activité"
+              name="titre"
+              autoComplete="off"
+              value={saisie.titre}
+              onChange={(e) => poser("titre", e.target.value)}
+              onBlur={surSortieDuTitre}
+              maxLength={LIMITES.titre}
+              compteur={{ longueur: saisie.titre.length, max: LIMITES.titre }}
+              erreur={erreurDe("titre")}
+              required
+            />
+            <ChampTexte
+              libelle="Description"
+              name="description"
+              autoComplete="off"
+              rows={5}
+              placeholder="Décrivez le déroulement de l'activité, pour qui elle est faite et comment venir."
+              value={saisie.description}
+              onChange={(e) => poser("description", e.target.value)}
+              maxLength={LIMITES.description}
+              compteur={{
+                longueur: saisie.description.length,
+                max: LIMITES.description,
+              }}
+              erreur={erreurDe("description")}
+            />
+            <ChampTexte
+              libelle="Mot d'accueil"
+              name="mot_accueil"
+              autoComplete="off"
+              rows={4}
+              value={saisie.mot_accueil}
+              onChange={(e) => poser("mot_accueil", e.target.value)}
+              maxLength={LIMITES.mot_accueil}
+              compteur={{
+                longueur: saisie.mot_accueil.length,
+                max: LIMITES.mot_accueil,
+              }}
+              erreur={erreurDe("mot_accueil")}
+            />
+          </BlocSaisie>
+
+          <BlocSaisie
+            bloc="categorie"
+            numero={2}
+            titre="Catégorie"
+            aide="Elle donne sa couleur à la carte de votre activité."
+            fait
+            masqueSurMobile={masque(1)}
+            pageUnique={pageUnique}
+          >
+            <ChampListe
+              libelle="Catégorie"
+              name="categorie"
+              value={saisie.categorie}
+              onChange={(e) => {
+                choixDuCreateur.current.categorie = true;
+                setCategorieSuggeree(false);
+                setSaisie((s) =>
+                  changerCategorie(s, e.target.value as CategorieActivite),
+                );
+              }}
+              aide={
+                categorieSuggeree
+                  ? "Suggérée d'après votre titre. Changez-la si elle ne convient pas."
+                  : undefined
+              }
+            >
+              {categoriesActiviteListe.map((clef) => (
+                <option key={clef} value={clef}>
+                  {categoriesActivite[clef].libelle}
+                </option>
+              ))}
+            </ChampListe>
+            {saisie.pictogramme !== "" && (
+              <div className="flex flex-wrap items-center gap-space-sm">
+                <Icone nom={pictogrammeDeLaSaisie(saisie)} taille={28} />
+                <span className="text-body-md text-on-surface-variant">
+                  Pictogramme suggéré d&apos;après votre titre.
+                </span>
+                <Bouton
+                  type="button"
+                  variante="fantome"
+                  onClick={() => {
+                    choixDuCreateur.current.pictogramme = true;
+                    poser("pictogramme", "");
+                    // La ligne disparaît : le focus revient au champ voisin, pas au corps de la page.
+                    document
+                      .querySelector<HTMLSelectElement>(
+                        'select[name="categorie"]',
+                      )
+                      ?.focus();
+                  }}
+                >
+                  Garder celui de la catégorie
+                </Bouton>
+              </div>
+            )}
+          </BlocSaisie>
+
+          <BlocSaisie
+            bloc="photos"
+            numero={3}
+            titre="Photos"
+            fait={photos.length > 0}
+            masqueSurMobile={masque(1)}
+            pageUnique={pageUnique}
+          >
+            <ChampPhotos
+              photos={photos}
+              titre={saisie.titre}
+              legendeMasqueeSurBureau={pageUnique}
+              onAjouter={(nouvelles) =>
+                setPhotos((actuelles) =>
+                  [...actuelles, ...nouvelles].slice(0, MAX_PHOTOS),
+                )
+              }
+              onRetirer={retirer}
+              onMettreEnPremiere={(index) =>
+                setPhotos((actuelles) => mettreEnPremier(actuelles, index))
+              }
+            />
+          </BlocSaisie>
+
+          <BlocSaisie
+            bloc="date-heure"
+            numero={4}
+            titre="Date et heure"
+            aide="Un jour, une heure de début et une heure de fin."
+            fait={fait("date_heure")}
+            masqueSurMobile={masque(2)}
+            pageUnique={pageUnique}
+          >
+            <div
+              className={`flex flex-col gap-bloc ${
+                pageUnique
+                  ? "desktop:grid desktop:grid-cols-[minmax(0,23.5rem)_minmax(0,1fr)] desktop:items-start desktop:gap-7"
+                  : ""
+              }`}
+            >
+              <Calendrier
+                libelle="Date"
+                valeur={saisie.date_activite}
+                onChange={(date) => poser("date_activite", date)}
+                aujourdhui={jourDeReference}
+                erreur={erreurDe("date_activite")}
+              />
+              <div className="flex flex-col gap-bloc">
+                {pageUnique && (
+                  <p className="hidden font-headline text-headline-md text-texte-date desktop:block">
+                    {saisie.date_activite
+                      ? jourLong(saisie.date_activite)
+                      : "Choisissez un jour"}
+                  </p>
+                )}
+                <div
+                  className={`flex flex-col gap-bloc ${pageUnique ? "" : "desktop:flex-row"}`}
+                >
+                  <ChampListe
+                    libelle="Heure de début"
+                    name="heure_debut"
+                    value={saisie.heure_debut}
+                    onChange={(e) => changerDebut(e.target.value)}
+                    erreur={erreurDe("heure_debut")}
+                    required
+                    className="flex-1"
+                  >
+                    <option value="" disabled>
+                      Choisir l&apos;heure
+                    </option>
+                    {optionsDebut(saisie.heure_debut).map((heure) => (
+                      <option key={heure} value={heure}>
+                        {libelleHeure(heure)}
+                      </option>
+                    ))}
+                  </ChampListe>
+                  <ChampListe
+                    libelle="Heure de fin"
+                    name="heure_fin"
+                    value={saisie.heure_fin}
+                    onChange={(e) => changerFin(e.target.value)}
+                    erreur={erreurDe("heure_fin")}
+                    required
+                    className="flex-1"
+                  >
+                    <option value="" disabled>
+                      Choisir l&apos;heure
+                    </option>
+                    {optionsFin(saisie.heure_debut, saisie.heure_fin).map(
+                      (heure) => (
+                        <option key={heure} value={heure}>
+                          {libelleHeure(heure)}
+                        </option>
+                      ),
+                    )}
+                  </ChampListe>
+                </div>
+                {pageUnique && duree && (
+                  <p className="hidden items-center gap-space-xs text-body-lg text-on-surface-variant desktop:flex">
+                    <Icone nom="schedule" taille={22} />
+                    Durée : {duree}
+                  </p>
+                )}
+              </div>
+            </div>
+          </BlocSaisie>
+
+          <BlocSaisie
+            bloc="lieu"
+            numero={5}
+            titre="Lieu"
+            aide="Un espace commun de la résidence, ou un autre endroit."
+            fait={fait("lieu")}
+            masqueSurMobile={masque(2)}
+            pageUnique={pageUnique}
+          >
+            <ChoixLieu
+              espaces={espaces}
+              espaceCommun={saisie.espace_commun}
+              lieu={saisie.lieu}
+              onEspaceChange={(valeur) => poser("espace_commun", valeur)}
+              onLieuChange={(lieu) => poser("lieu", lieu)}
+              erreurEspace={erreurDe("espace_commun")}
+              erreurLieu={erreurDe("lieu")}
+            />
+            <Champ
+              libelle="Précision d'accès"
+              name="precision_acces"
+              autoComplete="off"
+              value={saisie.precision_acces}
+              onChange={(e) => poser("precision_acces", e.target.value)}
+              maxLength={LIMITES.precision_acces}
+              compteur={{
+                longueur: saisie.precision_acces.length,
+                max: LIMITES.precision_acces,
+              }}
+              erreur={erreurDe("precision_acces")}
+            />
+          </BlocSaisie>
+
+          <BlocSaisie
+            bloc="precisions"
+            numero={6}
+            titre="Précisions"
+            aide="Le nombre de places et ce qui aide vos voisins à venir."
+            fait={fait("places")}
+            masqueSurMobile={masque(3)}
+            pageUnique={pageUnique}
+          >
+            <div className={seulementSurMobile}>
+              <TitreSection>Places</TitreSection>
+            </div>
+            <div
+              className={`flex flex-col gap-bloc ${
+                pageUnique
+                  ? "desktop:grid desktop:grid-cols-2 desktop:items-start desktop:gap-4"
+                  : ""
+              }`}
+            >
+              <div className="flex flex-col gap-bloc">
+                <ChoixSegmente
+                  libelle="Limite de places"
+                  valeur={saisie.places}
+                  onChange={(places) => poser("places", places)}
+                  options={[
+                    {
+                      id: "sans_limite",
+                      libelle: "Sans limite",
+                      icone: "all_inclusive",
+                    },
+                    { id: "limitees", libelle: "Limité", icone: "group" },
+                  ]}
+                />
+                {saisie.places === "limitees" && (
+                  <Champ
+                    libelle="Nombre de places"
+                    name="capacite_max"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    autoComplete="off"
+                    value={saisie.capacite_max}
+                    onChange={(e) => poser("capacite_max", e.target.value)}
+                    erreur={erreurDe("capacite_max")}
+                    aide="Vous y compris."
+                  />
+                )}
+              </div>
+              <Champ
+                libelle="Minimum de participants"
+                name="capacite_min"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                autoComplete="off"
+                value={saisie.capacite_min}
+                onChange={(e) => poser("capacite_min", e.target.value)}
+                erreur={erreurDe("capacite_min")}
+                aide="Facultatif : en dessous, l'activité n'a pas lieu."
+              />
+            </div>
+            <ChoixEtiquettes
+              groupe="accessibilite"
+              valeurs={saisie.etiquettes}
+              onChange={(etiquettes) => poser("etiquettes", etiquettes)}
+            />
+            <ChoixEtiquettes
+              groupe="pour_qui"
+              valeurs={saisie.etiquettes}
+              onChange={(etiquettes) => poser("etiquettes", etiquettes)}
+            />
+            <ChampTexte
+              libelle="Conseils pratiques"
+              name="conseils_pratiques"
+              autoComplete="off"
+              value={saisie.conseils_pratiques}
+              onChange={(e) => poser("conseils_pratiques", e.target.value)}
+              aide="Une petite laine, des chaussures fermées…"
+            />
+            <ChampTexte
+              libelle="Matériel à prévoir"
+              name="materiel_prevoir"
+              autoComplete="off"
+              value={saisie.materiel_prevoir}
+              onChange={(e) => poser("materiel_prevoir", e.target.value)}
+              aide="Ce que vous fournissez sur place."
+            />
+            <ChampTexte
+              libelle="Ce que vous pouvez apporter"
+              name="a_apporter"
+              autoComplete="off"
+              value={saisie.a_apporter}
+              onChange={(e) => poser("a_apporter", e.target.value)}
+              aide="Ce que chacun peut amener, s'il le souhaite."
+            />
+          </BlocSaisie>
+
+          {etape === 4 && (
+            <div className={`flex flex-col gap-bloc ${seulementSurMobile}`}>
+              <Recapitulatif
+                saisie={saisie}
+                espace={espaceChoisi}
+                regles={regles}
+                reference={reference}
+                avecJev={!modification}
+                nombrePhotos={photos.length}
+                onModifier={modifier}
+                onAnnuler={() =>
+                  router.push(
+                    modification
+                      ? cheminFiche(modification.identifiant)
+                      : "/activites",
+                  )
+                }
+              />
             </div>
           )}
-          <ChampTexte
-            libelle="Mot d'accueil"
-            name="mot_accueil"
-            autoComplete="off"
-            rows={4}
-            value={saisie.mot_accueil}
-            onChange={(e) => poser("mot_accueil", e.target.value)}
-            maxLength={LIMITES.mot_accueil}
-            compteur={{
-              longueur: saisie.mot_accueil.length,
-              max: LIMITES.mot_accueil,
-            }}
-            erreur={erreurDe("mot_accueil")}
-          />
-          <ChampPhotos
-            photos={photos}
-            titre={saisie.titre}
-            onAjouter={(nouvelles) =>
-              setPhotos((actuelles) =>
-                [...actuelles, ...nouvelles].slice(0, MAX_PHOTOS),
-              )
+        </div>
+
+        {pageUnique && (
+          <ColonneApercu
+            saisie={saisie}
+            lieu={lieuApercu}
+            photo={photos[0]?.apercu}
+            points={points}
+            enCours={enCours}
+            message={messageGeneral}
+            voirActivite={
+              apresEchec ? cheminFiche(apresEchec.identifiant) : undefined
             }
-            onRetirer={retirer}
-            onMettreEnPremiere={(index) =>
-              setPhotos((actuelles) => mettreEnPremier(actuelles, index))
-            }
+            onPublier={publierMaintenant}
           />
-        </>
-      )}
-
-      {etape === 2 && (
-        <>
-          <Calendrier
-            libelle="Date"
-            valeur={saisie.date_activite}
-            onChange={(date) => poser("date_activite", date)}
-            aujourdhui={jourDeReference}
-            erreur={erreurDe("date_activite")}
-          />
-          <div className="flex flex-col gap-bloc desktop:flex-row">
-            <ChampListe
-              libelle="Heure de début"
-              name="heure_debut"
-              value={saisie.heure_debut}
-              onChange={(e) => changerDebut(e.target.value)}
-              erreur={erreurDe("heure_debut")}
-              required
-              className="flex-1"
-            >
-              <option value="" disabled>
-                Choisir l&apos;heure
-              </option>
-              {optionsDebut(saisie.heure_debut).map((heure) => (
-                <option key={heure} value={heure}>
-                  {libelleHeure(heure)}
-                </option>
-              ))}
-            </ChampListe>
-            <ChampListe
-              libelle="Heure de fin"
-              name="heure_fin"
-              value={saisie.heure_fin}
-              onChange={(e) => changerFin(e.target.value)}
-              erreur={erreurDe("heure_fin")}
-              required
-              className="flex-1"
-            >
-              <option value="" disabled>
-                Choisir l&apos;heure
-              </option>
-              {optionsFin(saisie.heure_debut, saisie.heure_fin).map((heure) => (
-                <option key={heure} value={heure}>
-                  {libelleHeure(heure)}
-                </option>
-              ))}
-            </ChampListe>
-          </div>
-          <ChoixLieu
-            espaces={espaces}
-            espaceCommun={saisie.espace_commun}
-            lieu={saisie.lieu}
-            onEspaceChange={(valeur) => poser("espace_commun", valeur)}
-            onLieuChange={(lieu) => poser("lieu", lieu)}
-            erreurEspace={erreurDe("espace_commun")}
-            erreurLieu={erreurDe("lieu")}
-          />
-          <Champ
-            libelle="Précision d'accès"
-            name="precision_acces"
-            autoComplete="off"
-            value={saisie.precision_acces}
-            onChange={(e) => poser("precision_acces", e.target.value)}
-            maxLength={LIMITES.precision_acces}
-            compteur={{
-              longueur: saisie.precision_acces.length,
-              max: LIMITES.precision_acces,
-            }}
-            erreur={erreurDe("precision_acces")}
-          />
-        </>
-      )}
-
-      {etape === 3 && (
-        <>
-          <TitreSection>Places</TitreSection>
-          <ChoixSegmente
-            libelle="Limite de places"
-            valeur={saisie.places}
-            onChange={(places) => poser("places", places)}
-            options={[
-              {
-                id: "sans_limite",
-                libelle: "Sans limite",
-                icone: "all_inclusive",
-              },
-              { id: "limitees", libelle: "Limité", icone: "group" },
-            ]}
-          />
-          {saisie.places === "limitees" && (
-            <Champ
-              libelle="Nombre de places"
-              name="capacite_max"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              autoComplete="off"
-              value={saisie.capacite_max}
-              onChange={(e) => poser("capacite_max", e.target.value)}
-              erreur={erreurDe("capacite_max")}
-              aide="Vous y compris."
-            />
-          )}
-          <Champ
-            libelle="Minimum de participants"
-            name="capacite_min"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            autoComplete="off"
-            value={saisie.capacite_min}
-            onChange={(e) => poser("capacite_min", e.target.value)}
-            erreur={erreurDe("capacite_min")}
-            aide="Facultatif : en dessous, l'activité n'a pas lieu."
-          />
-          <ChoixEtiquettes
-            groupe="accessibilite"
-            valeurs={saisie.etiquettes}
-            onChange={(etiquettes) => poser("etiquettes", etiquettes)}
-          />
-          <ChoixEtiquettes
-            groupe="pour_qui"
-            valeurs={saisie.etiquettes}
-            onChange={(etiquettes) => poser("etiquettes", etiquettes)}
-          />
-          <ChampTexte
-            libelle="Conseils pratiques"
-            name="conseils_pratiques"
-            autoComplete="off"
-            value={saisie.conseils_pratiques}
-            onChange={(e) => poser("conseils_pratiques", e.target.value)}
-            aide="Une petite laine, des chaussures fermées…"
-          />
-          <ChampTexte
-            libelle="Matériel à prévoir"
-            name="materiel_prevoir"
-            autoComplete="off"
-            value={saisie.materiel_prevoir}
-            onChange={(e) => poser("materiel_prevoir", e.target.value)}
-            aide="Ce que vous fournissez sur place."
-          />
-          <ChampTexte
-            libelle="Ce que vous pouvez apporter"
-            name="a_apporter"
-            autoComplete="off"
-            value={saisie.a_apporter}
-            onChange={(e) => poser("a_apporter", e.target.value)}
-            aide="Ce que chacun peut amener, s'il le souhaite."
-          />
-        </>
-      )}
-
-      {etape === 4 && (
-        <Recapitulatif
-          saisie={saisie}
-          espace={espaceChoisi}
-          regles={regles}
-          reference={reference}
-          avecJev={!modification}
-          nombrePhotos={photos.length}
-          onModifier={modifier}
-          onAnnuler={() =>
-            router.push(
-              modification
-                ? cheminFiche(modification.identifiant)
-                : "/activites",
-            )
-          }
-        />
-      )}
-
-      <BarreActionFixe>
-        {apresEchec ? (
-          <Link
-            href={cheminFiche(apresEchec.identifiant)}
-            className={`${classesBouton("action", true)} flex-1 text-body-lg`}
-          >
-            Voir l&apos;activité
-          </Link>
-        ) : (
-          <>
-            {etape > 1 && (
-              <Bouton
-                variante="contour"
-                icone="arrow_back"
-                onClick={() => aller((etape - 1) as Etape)}
-                disabled={enCours}
-              >
-                Précédent
-              </Bouton>
-            )}
-            <Bouton
-              type="submit"
-              pleineLargeur
-              disabled={enCours}
-              className="flex-1 text-body-lg"
-            >
-              {etape === NOMBRE_ETAPES
-                ? modification
-                  ? enCours
-                    ? "Enregistrement…"
-                    : "Enregistrer"
-                  : enCours
-                    ? "Publication…"
-                    : "Publier"
-                : "Continuer"}
-            </Bouton>
-          </>
         )}
-      </BarreActionFixe>
+      </div>
+
+      <div className={seulementSurMobile}>
+        <BarreActionFixe>
+          {apresEchec ? (
+            <Link
+              href={cheminFiche(apresEchec.identifiant)}
+              className={`${classesBouton("action", true)} flex-1 text-body-lg`}
+            >
+              Voir l&apos;activité
+            </Link>
+          ) : (
+            <>
+              {etape > 1 && (
+                <Bouton
+                  variante="contour"
+                  icone="arrow_back"
+                  onClick={() => aller((etape - 1) as Etape)}
+                  disabled={enCours}
+                >
+                  Précédent
+                </Bouton>
+              )}
+              <Bouton
+                type="submit"
+                pleineLargeur
+                disabled={enCours}
+                className="flex-1 text-body-lg"
+              >
+                {etape === NOMBRE_ETAPES
+                  ? modification
+                    ? enCours
+                      ? "Enregistrement…"
+                      : "Enregistrer"
+                    : enCours
+                      ? "Publication…"
+                      : "Publier"
+                  : "Continuer"}
+              </Bouton>
+            </>
+          )}
+        </BarreActionFixe>
+      </div>
+
+      <FeuilleConfirmation
+        ouverte={sortie !== null}
+        titre="Quitter sans publier ?"
+        libelleGarder="Rester ici"
+        libelleConfirmer="Quitter"
+        onFermer={() => setSortie(null)}
+        onConfirmer={() => {
+          const cible = sortie;
+          setSortie(null);
+          if (cible) router.push(cible);
+        }}
+      >
+        Ce que vous avez saisi ne sera pas gardé.
+      </FeuilleConfirmation>
     </form>
   );
 }
