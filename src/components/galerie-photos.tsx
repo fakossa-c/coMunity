@@ -10,6 +10,8 @@ type Props = {
   photos: string[];
   /** Le titre de l'activité, repris dans le texte alternatif de chaque photo. */
   titre: string;
+  /** Classes ajoutées à la photo, pour la hauteur en tête de fiche. */
+  className?: string;
 };
 
 /**
@@ -17,7 +19,7 @@ type Props = {
  * de l'une à l'autre (les flèches du clavier aussi, depuis un des boutons). Une seule photo :
  * ni compteur ni boutons.
  */
-export function GaleriePhotos({ photos, titre }: Props) {
+export function GaleriePhotos({ photos, titre, className }: Props) {
   const [rang, setRang] = useState(0);
   // Dit le changement de photo à un lecteur d'écran ; vide tant que personne n'a navigué.
   const [annonce, setAnnonce] = useState("");
@@ -52,6 +54,7 @@ export function GaleriePhotos({ photos, titre }: Props) {
         compteur={seule ? undefined : compteurPhoto(rang + 1, total)}
         arrondi
         immediate
+        className={className}
       />
       {!seule && (
         <>

@@ -1,15 +1,19 @@
 import { writeFile } from "node:fs/promises";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
+  annulerActivite,
   choisirDate,
   continuerProposer,
   IDENTITE_SYNDIC,
+  mettreEnRelecture,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
   nouvelleActivite,
+  reglerAffichage,
   saisirLieuLibre,
   supprimerComptes,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 const emails: string[] = [];
@@ -254,4 +258,181 @@ test("l'écran de succès est réservé au créateur", async ({ page }) => {
   await page.goto(`/activites/${identifiant}/publiee`);
 
   await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+});
+
+// Présentation Journal de la fiche (spec #125, ticket #129) : sur ordinateur, l'inscription est une
+// carte collante à droite, sans barre d'action fixe ; sur mobile, la barre du bas reste en place.
+
+// Dans « Conseils pratiques » : la description d'une activité est limitée à 600 caractères.
+const TEXTE_LONG = Array.from(
+  { length: 40 },
+  (_, rang) =>
+    `Paragraphe ${rang + 1} : un après-midi pour se retrouver autour de crêpes maison et de jeux pour tous les âges.`,
+).join("\n\n");
+
+/** Vrai si le bouton, ou un de ses parents, est fixé à la fenêtre : la barre d'action du bas. */
+function estDansUneBarreFixe(bouton: Locator) {
+  return bouton.evaluate((element) => {
+    for (let n: Element | null = element; n; n = n.parentElement) {
+      if (getComputedStyle(n).position === "fixed") return true;
+    }
+    return false;
+  });
+}
+
+test("sur ordinateur, la carte d'inscription reste visible à droite pendant la lecture", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "La carte est propre à l'ordinateur.");
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id, {
+    conseils_pratiques: TEXTE_LONG,
+    capacite_max: "12",
+  });
+
+  await page.goto(`/activites/${identifiant}`);
+  const bouton = page.getByRole("button", { name: "Je participe" });
+  const texte = page.getByText("Paragraphe 1 :");
+  const boiteTexte = (await texte.boundingBox())!;
+  expect((await bouton.boundingBox())!.x).toBeGreaterThan(
+    boiteTexte.x + boiteTexte.width,
+  );
+  await expect(page.getByText("12 places restantes")).toBeAttached();
+
+  // Pendant la lecture, du début à la fin du texte, la carte suit et reste à l'écran.
+  for (const position of [0.3, 0.6, 1]) {
+    await page.evaluate(
+      (p) => window.scrollTo(0, (document.body.scrollHeight - innerHeight) * p),
+      position,
+    );
+    await expect(bouton).toBeInViewport();
+    await expect(page.getByText("12 places restantes")).toBeInViewport();
+  }
+  expect(await estDansUneBarreFixe(bouton)).toBe(false);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: test.info().outputPath("fiche-carte-ordinateur.png"),
+    fullPage: true,
+  });
+});
+
+test("sur mobile, l'inscription reste la barre fixée en bas de l'écran", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, "La barre du bas est propre au mobile.");
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id, {
+    conseils_pratiques: TEXTE_LONG,
+  });
+
+  await page.goto(`/activites/${identifiant}`);
+  const bouton = page.getByRole("button", { name: "Je participe" });
+  await expect(bouton).toBeInViewport();
+  expect(await estDansUneBarreFixe(bouton)).toBe(true);
+  const { y, height } = (await bouton.boundingBox())!;
+  const fenetre = page.viewportSize()!.height;
+  expect(y + height).toBeGreaterThan(fenetre - 40);
+
+  // La réserve laisse lire la fin de la fiche au-dessus de la barre.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const fin = (await page
+    .getByRole("button", { name: "Copier le lien" })
+    .boundingBox())!;
+  expect(fin.y + fin.height).toBeLessThan(y);
+});
+
+test("la carte d'inscription dit quand les inscriptions sont fermées", async ({
+  page,
+}) => {
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const annulee = await nouvelleActivite(organisateur.id);
+  await annulerActivite(annulee);
+  const enRelecture = await nouvelleActivite(organisateur.id);
+  await mettreEnRelecture(enRelecture, "Une précision à apporter");
+
+  await page.goto(`/activites/${annulee}`);
+  await expect(
+    page.getByText("L'organisateur a annulé cette activité."),
+  ).toBeInViewport();
+  await expect(page.getByRole("button", { name: "Je participe" })).toHaveCount(
+    0,
+  );
+
+  await seConnecter(page, organisateur.email);
+  await page.goto(`/activites/${enRelecture}`);
+  await expect(
+    page.getByText(
+      "Cette activité n'est pas publiée : les inscriptions sont fermées.",
+    ),
+  ).toBeInViewport();
+});
+
+for (const [reglage, reglages] of [
+  ["clair", { theme: "clair", taille: "standard" }],
+  ["sombre", { theme: "sombre", taille: "standard" }],
+  ["grands caractères", { theme: "clair", taille: "grands" }],
+] as const) {
+  test(`la fiche ne défile pas horizontalement, en ${reglage}`, async ({
+    page,
+  }) => {
+    const resident = await nouveauResident("valide");
+    emails.push(resident.email);
+    await reglerAffichage(resident.id, reglages);
+    const identifiant = await nouvelleActivite(resident.id, {
+      titre: "Le Grand Goûter Crêpes & Jeux du dimanche",
+      conseils_pratiques: TEXTE_LONG,
+      capacite_max: "12",
+    });
+
+    await seConnecter(page, resident.email);
+    await page.goto(`/activites/${identifiant}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await verifierSansDefilementHorizontal(page);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
+      path: test.info().outputPath(`fiche-${reglage}.png`),
+      fullPage: true,
+    });
+  });
+}
+
+test("le visiteur du lien partagé lit la fiche sans défilement horizontal, carte comprise", async ({
+  page,
+}) => {
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id, {
+    titre: "Le Grand Goûter Crêpes & Jeux du dimanche",
+    conseils_pratiques: TEXTE_LONG,
+    capacite_max: "12",
+  });
+
+  await page.goto(`/activites/${identifiant}`);
+
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Je participe" }),
+  ).toBeVisible();
+  await verifierSansDefilementHorizontal(page);
+});
+
+test("avec la réduction des animations, la carte et ses boutons n'animent plus rien", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const organisateur = await nouveauResident("valide");
+  emails.push(organisateur.email);
+  const identifiant = await nouvelleActivite(organisateur.id);
+
+  await page.goto(`/activites/${identifiant}`);
+
+  const durees = await page
+    .getByRole("button", { name: "Je participe" })
+    .evaluate((bouton) => getComputedStyle(bouton).transitionDuration);
+  expect(durees.split(",").every((d) => parseFloat(d) === 0)).toBe(true);
 });

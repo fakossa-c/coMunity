@@ -31,7 +31,7 @@ type Props = {
 };
 
 /**
- * Dans la barre de la fiche : « Vous participez » (ou « Vous participez, avec 2 personnes »), avec l'annulation
+ * Dans la barre de la fiche (sur ordinateur, sa carte d'inscription, où le statut et « Annuler » s'empilent) : « Vous participez » (ou « Vous participez, avec 2 personnes »), avec l'annulation
  * derrière une confirmation : la feuille demande « Annuler votre participation ? » avant d'appeler
  * `onAnnuler`.
  */
@@ -43,9 +43,14 @@ export function StatutInscriptionAnnulable({
   const [ouverte, setOuverte] = useState(false);
 
   return (
-    <div className="flex w-full items-center justify-between gap-space-sm">
-      <p className="flex items-center gap-2 font-headline text-body-lg text-on-surface">
-        <Icone nom="check_circle" plein taille={24} className="text-primary" />
+    <div className="flex w-full items-center justify-between gap-space-sm desktop:flex-col desktop:items-stretch desktop:gap-5">
+      <p className="flex items-center gap-2 font-headline text-body-lg text-on-surface desktop:rounded-md desktop:bg-fond-confirme desktop:px-4 desktop:py-3 desktop:text-texte-confirme">
+        <Icone
+          nom="check_circle"
+          plein
+          taille={24}
+          className="text-primary desktop:text-inherit"
+        />
         {libelleStatutInscription(accompagnants)}
       </p>
       <Bouton

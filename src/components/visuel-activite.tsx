@@ -13,6 +13,8 @@ type Props = {
   enCarte?: boolean;
   /** Bloc « À la une » : 192 px sur mobile et le pictogramme plus grand, toute la hauteur du bloc sur ordinateur. */
   grand?: boolean;
+  /** Tête de fiche sans photo : 280 px de haut et pictogramme de 144 px sur ordinateur ; sur mobile, 150 px de haut, comme avant. */
+  enTeteDeFiche?: boolean;
 };
 
 /**
@@ -25,6 +27,7 @@ export function VisuelActivite({
   photo,
   enCarte = false,
   grand = false,
+  enTeteDeFiche = false,
 }: Props) {
   if (photo)
     return (
@@ -44,13 +47,21 @@ export function VisuelActivite({
           ? "h-48 desktop:h-full desktop:min-h-[21.75rem]"
           : enCarte
             ? "h-32"
-            : "h-[150px] rounded-lg"
+            : enTeteDeFiche
+              ? "h-[150px] rounded-lg desktop:h-[17.5rem]"
+              : "h-[150px] rounded-lg"
       }`}
     >
       <Icone
         nom={pictogramme}
         className={
-          grand ? "size-24 desktop:size-40" : enCarte ? "size-16" : "size-20"
+          grand
+            ? "size-24 desktop:size-40"
+            : enCarte
+              ? "size-16"
+              : enTeteDeFiche
+                ? "size-20 desktop:size-36"
+                : "size-20"
         }
       />
     </div>

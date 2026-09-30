@@ -78,15 +78,16 @@ function statutVisiteur(statut: string | null | undefined): StatutVisiteur {
 }
 
 /**
- * L'action fixée en bas de la fiche : l'inscription, pour tous, créateur compris ; pour une
- * activité annulée, en relecture ou masquée, le seul constat. Le créateur gère son activité, et le
- * conseil syndical la modère, depuis le corps de la fiche.
+ * L'inscription de la fiche, pour tous, créateur compris : la barre fixée en bas sur mobile, la
+ * carte collante à droite sur ordinateur. Pour une activité annulée, en relecture ou masquée, le
+ * seul constat. Le créateur gère son activité, et le conseil syndical la modère, depuis le corps
+ * de la fiche.
  */
 function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
   if (estMiseDeCote(fiche.statut)) {
     return (
-      <BarreActionFixe>
-        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
+      <BarreActionFixe carte>
+        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant desktop:text-left">
           Cette activité n&apos;est pas publiée : les inscriptions sont fermées.
         </p>
       </BarreActionFixe>
@@ -94,8 +95,8 @@ function actionDeLaFiche(fiche: FicheActivite, statut: StatutVisiteur) {
   }
   if (fiche.statut === "annulee") {
     return (
-      <BarreActionFixe>
-        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant">
+      <BarreActionFixe carte>
+        <p className="w-full text-center font-headline text-body-lg text-on-surface-variant desktop:text-left">
           L&apos;organisateur a annulé cette activité.
         </p>
       </BarreActionFixe>
@@ -170,135 +171,149 @@ export default async function Fiche({ params }: Props) {
           <BoutonPartager titre={fiche.titre} lien={lien} />
         ) : undefined
       }
-      action={actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
     >
-      <article className="flex flex-col gap-[14px]">
+      {/* Mobile : la réserve de 130 px sous la fiche laisse lire sa fin au-dessus de la barre fixe. */}
+      <article className="flex flex-col gap-[14px] pb-[130px] desktop:gap-8 desktop:pb-0">
         {fiche.photos.length > 0 ? (
           <GaleriePhotos
             photos={fiche.photos.map(adressePhoto)}
             titre={fiche.titre}
+            className="desktop:h-[17.5rem]"
           />
         ) : (
           <VisuelActivite
             pictogramme={fiche.pictogramme as NomIcone}
             categorie={fiche.categorie}
+            enTeteDeFiche
           />
         )}
-        <p className="flex items-center gap-2 pt-1.5 font-headline text-label-md text-on-surface-variant">
-          <span className="text-primary">
-            <Icone nom={categorie.pictogramme} taille={22} />
-          </span>
-          {categorie.libelle} · Initiative de résident
-        </p>
-        <h1 className="font-headline text-headline-xl-mobile text-on-surface desktop:text-headline-xl">
-          {fiche.titre}
-        </h1>
-        {fiche.est_organisateur && (
-          <DecisionDuConseil
-            statut={fiche.statut}
-            message={fiche.message_moderation}
-          />
-        )}
-        <EtatActivite
-          statut={fiche.statut}
-          capaciteMin={fiche.capacite_min}
-          placesPrises={fiche.places_prises}
-          passee={estPassee(fiche.date_activite)}
-        />
-        <PanneauInfos
-          lignes={[
-            {
-              icone: "event",
-              titre: jourLong(fiche.date_activite),
-              detail: creneau(fiche.heure_debut, fiche.heure_fin),
-            },
-            {
-              icone: "location_on",
-              titre: fiche.lieu,
-              detail: fiche.precision_acces ?? undefined,
-            },
-          ]}
-        />
-        <Jauge
-          capaciteMax={fiche.capacite_max}
-          placesPrises={fiche.places_prises}
-        />
-        {fiche.capacite_min !== null && fiche.capacite_min > 1 && (
-          <p className="text-body-md text-on-surface-variant">
-            {libelleMinimum(fiche.capacite_min)} pour que l&apos;activité ait
-            lieu.
+        <div className="contents desktop:flex desktop:flex-col desktop:gap-3">
+          <p className="flex items-center gap-2 pt-1.5 font-headline text-label-md text-on-surface-variant desktop:pt-0 desktop:text-label-lg">
+            <span className="text-primary">
+              <Icone nom={categorie.pictogramme} taille={22} />
+            </span>
+            {categorie.libelle} · Initiative de résident
           </p>
-        )}
-        <EtiquettesActivite etiquettes={fiche.etiquettes} />
-        {fiche.organisateur_nom_affiche && (
-          <ProposePar
-            initiale={fiche.organisateur_nom_affiche.charAt(0).toUpperCase()}
-            nom={fiche.organisateur_nom_affiche}
-            photo={photoOrganisateur}
-          />
-        )}
-        {fiche.mot_accueil && <EncartPastel>{fiche.mot_accueil}</EncartPastel>}
-        {fiche.description && (
-          <BlocTexte titre="Description">{fiche.description}</BlocTexte>
-        )}
-        {fiche.consignes_espace && (
-          <BlocTexte titre="Consignes de l'espace commun">
-            {fiche.consignes_espace}
-          </BlocTexte>
-        )}
-        {fiche.conseils_pratiques && (
-          <BlocTexte titre="Conseils pratiques">
-            {fiche.conseils_pratiques}
-          </BlocTexte>
-        )}
-        {fiche.materiel_prevoir && (
-          <BlocTexte titre="Matériel à prévoir">
-            {fiche.materiel_prevoir}
-          </BlocTexte>
-        )}
-        {fiche.a_apporter && (
-          <BlocTexte titre="Ce que vous pouvez apporter">
-            {fiche.a_apporter}
-          </BlocTexte>
-        )}
-        {session?.statut === "valide" && (
-          <Participants identifiant={identifiant} />
-        )}
-        {!annulee && activitePassee && fiche.mes_accompagnants !== null && (
-          <FormulaireRetour fiche={fiche} />
-        )}
-        {!annulee &&
-          activitePassee &&
-          (fiche.est_organisateur || conseilSyndical) && (
-            <Retours identifiant={identifiant} />
-          )}
-        {partageable && (
-          <>
-            <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
-            <BoutonCopier
-              texte={lien}
-              libelle="Copier le lien"
-              confirmation="Lien copié"
+          <h1 className="font-headline text-headline-xl-mobile break-words text-on-surface desktop:text-titre-journal">
+            {fiche.titre}
+          </h1>
+        </div>
+        {/* Ordinateur : le texte à gauche (720 px), la carte d'inscription collante à droite. */}
+        <div className="contents desktop:grid desktop:grid-cols-[minmax(0,1fr)_23.5rem] desktop:items-start desktop:gap-x-14">
+          <div className="contents desktop:flex desktop:min-w-0 desktop:flex-col desktop:gap-6">
+            {fiche.est_organisateur && (
+              <DecisionDuConseil
+                statut={fiche.statut}
+                message={fiche.message_moderation}
+              />
+            )}
+            <EtatActivite
+              statut={fiche.statut}
+              capaciteMin={fiche.capacite_min}
+              placesPrises={fiche.places_prises}
+              passee={estPassee(fiche.date_activite)}
             />
-          </>
-        )}
-        {fiche.est_organisateur && (
-          <GestionActivite
-            identifiant={identifiant}
-            annulee={annulee}
-            modifiable={fiche.statut === "publiee"}
-            annulable={!estMiseDeCote(fiche.statut)}
-            placesPrises={fiche.places_prises}
-          />
-        )}
-        {conseilSyndical && (
-          <ModerationConseil
-            identifiant={identifiant}
-            titre={fiche.titre}
-            statut={fiche.statut}
-            raison={fiche.raison_relecture}
-          />
-        )}
+            <PanneauInfos
+              lignes={[
+                {
+                  icone: "event",
+                  titre: jourLong(fiche.date_activite),
+                  detail: creneau(fiche.heure_debut, fiche.heure_fin),
+                },
+                {
+                  icone: "location_on",
+                  titre: fiche.lieu,
+                  detail: fiche.precision_acces ?? undefined,
+                },
+              ]}
+            />
+            <Jauge
+              capaciteMax={fiche.capacite_max}
+              placesPrises={fiche.places_prises}
+            />
+            {fiche.capacite_min !== null && fiche.capacite_min > 1 && (
+              <p className="text-body-md text-on-surface-variant">
+                {libelleMinimum(fiche.capacite_min)} pour que l&apos;activité
+                ait lieu.
+              </p>
+            )}
+            <EtiquettesActivite etiquettes={fiche.etiquettes} />
+            {fiche.organisateur_nom_affiche && (
+              <ProposePar
+                initiale={fiche.organisateur_nom_affiche
+                  .charAt(0)
+                  .toUpperCase()}
+                nom={fiche.organisateur_nom_affiche}
+                photo={photoOrganisateur}
+              />
+            )}
+            {fiche.mot_accueil && (
+              <EncartPastel>{fiche.mot_accueil}</EncartPastel>
+            )}
+            {fiche.description && (
+              <BlocTexte titre="Description">{fiche.description}</BlocTexte>
+            )}
+            {fiche.consignes_espace && (
+              <BlocTexte titre="Consignes de l'espace commun">
+                {fiche.consignes_espace}
+              </BlocTexte>
+            )}
+            {fiche.conseils_pratiques && (
+              <BlocTexte titre="Conseils pratiques">
+                {fiche.conseils_pratiques}
+              </BlocTexte>
+            )}
+            {fiche.materiel_prevoir && (
+              <BlocTexte titre="Matériel à prévoir">
+                {fiche.materiel_prevoir}
+              </BlocTexte>
+            )}
+            {fiche.a_apporter && (
+              <BlocTexte titre="Ce que vous pouvez apporter">
+                {fiche.a_apporter}
+              </BlocTexte>
+            )}
+            {session?.statut === "valide" && (
+              <Participants identifiant={identifiant} />
+            )}
+            {!annulee && activitePassee && fiche.mes_accompagnants !== null && (
+              <FormulaireRetour fiche={fiche} />
+            )}
+            {!annulee &&
+              activitePassee &&
+              (fiche.est_organisateur || conseilSyndical) && (
+                <Retours identifiant={identifiant} />
+              )}
+            {partageable && (
+              <div className="flex flex-col gap-[14px] desktop:flex-row desktop:flex-wrap desktop:items-start desktop:gap-3">
+                <BoutonRelayer message={messageWhatsApp(fiche, lien)} />
+                <BoutonCopier
+                  texte={lien}
+                  libelle="Copier le lien"
+                  confirmation="Lien copié"
+                />
+              </div>
+            )}
+            {fiche.est_organisateur && (
+              <GestionActivite
+                identifiant={identifiant}
+                annulee={annulee}
+                modifiable={fiche.statut === "publiee"}
+                annulable={!estMiseDeCote(fiche.statut)}
+                placesPrises={fiche.places_prises}
+              />
+            )}
+            {conseilSyndical && (
+              <ModerationConseil
+                identifiant={identifiant}
+                titre={fiche.titre}
+                statut={fiche.statut}
+                raison={fiche.raison_relecture}
+              />
+            )}
+          </div>
+          {actionDeLaFiche(fiche, statutVisiteur(session?.statut))}
+        </div>
       </article>
     </EcranSecondaire>
   );
