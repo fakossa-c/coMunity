@@ -59,9 +59,9 @@ test("« Garder mon compte » referme l'explication sans rien supprimer", async 
   await expect(
     page.getByRole("heading", { level: 1, name: "Mon compte" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("list", { name: "Votre compte" }),
-  ).toContainText(resident.email);
+  await expect(page.getByRole("list", { name: "Votre compte" })).toContainText(
+    resident.email,
+  );
 });
 
 test("la suppression déconnecte, ferme le compte, annule l'activité à venir des inscrits et retire ses photos", async ({
@@ -144,9 +144,9 @@ test("un membre du syndic ne trouve pas « Supprimer mon compte » dans ses iden
   await expect(
     page.getByRole("heading", { level: 1, name: "Mon compte" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("list", { name: "Votre compte" }),
-  ).toContainText(syndic.email);
+  await expect(page.getByRole("list", { name: "Votre compte" })).toContainText(
+    syndic.email,
+  );
   await expect(
     page.getByRole("button", { name: "Supprimer mon compte" }),
   ).toHaveCount(0);

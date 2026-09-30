@@ -207,7 +207,9 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
   await seConnecter(page, resident.email);
   await page.goto("/proposer");
   await page.getByLabel("Titre de l'activité").fill("Atelier compost");
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await continuerProposer(page);
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()

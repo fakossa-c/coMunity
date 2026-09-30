@@ -170,7 +170,9 @@ test.describe("aide à l'installation sur Android", () => {
     await proposerInstallation(page);
 
     const encart = aideInstallation(page);
-    const installer = encart.getByRole("button", { name: "Installer l'application" });
+    const installer = encart.getByRole("button", {
+      name: "Installer l'application",
+    });
     await expect(installer).toBeVisible();
     const boite = await installer.boundingBox();
     expect(boite?.height).toBeGreaterThanOrEqual(52);
@@ -200,7 +202,9 @@ test.describe("aide à l'installation sur Android", () => {
       .click();
 
     await expect(
-      aideInstallation(page).getByRole("button", { name: "Installer l'application" }),
+      aideInstallation(page).getByRole("button", {
+        name: "Installer l'application",
+      }),
     ).toBeVisible();
   });
 });

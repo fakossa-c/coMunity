@@ -52,7 +52,9 @@ function continuer(page: Page) {
 async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await etape(page, 1);
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await page
     .getByLabel("Mot d'accueil")
     .fill("Venez comme vous êtes, seul ou en famille.");
@@ -120,7 +122,9 @@ test("sur mobile, un résident propose une activité en quatre étapes, sans per
   await page.getByLabel("Titre de l'activité").fill("Atelier");
   await expect(page.getByRole("main")).toContainText("7 / 50");
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await page.getByLabel("Mot d'accueil").fill("Venez comme vous êtes.");
   await expect(page.getByRole("main")).toContainText("22 / 300");
   await continuer(page);

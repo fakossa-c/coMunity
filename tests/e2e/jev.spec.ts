@@ -155,7 +155,9 @@ test("Jev présélectionne la catégorie et le pictogramme, le créateur les cha
     .getByRole("button", { name: "Garder celui de la catégorie" })
     .click();
   await expect(principal).not.toContainText("Pictogramme suggéré");
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await expect(principal).not.toContainText("Suggérée d'après votre titre");
   await continuerProposer(page);
   await etapeProposer(page, 4);
@@ -231,7 +233,9 @@ test("la catégorie choisie par le créateur n'est pas remplacée", async ({
 }) => {
   const titre = titreDuCas("Bricolage");
   await commencer(page, titre);
-  await page.getByLabel("Catégorie").selectOption({ label: "Jardin et nature" });
+  await page
+    .getByLabel("Catégorie")
+    .selectOption({ label: "Jardin et nature" });
   await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Jardin et nature");
