@@ -32,6 +32,8 @@ export default async function ReglementInterieurSyndic({
   const { fait, titre } = await searchParams;
   const { sections, misAJourLe } = await lireReglement();
   const confirmation = fait && titre ? CONFIRMATIONS[fait]?.(titre) : undefined;
+  // La date ne se dit que s'il y a des sections à dater.
+  const miseAJour = sections.length > 0 ? misAJourLe : null;
 
   return (
     <EcranSyndic rubrique="reglement">
@@ -39,32 +41,47 @@ export default async function ReglementInterieurSyndic({
         titre="Règlement intérieur"
         sousTitre="Les règles de vie de la résidence, que les résidents lisent dans Ma copro, section par section."
       />
-      <div className="flex flex-col gap-space-lg">
+      {/* Sur ordinateur, une colonne de 960 px au plus, « Nouvelle section » en tête ; sur mobile,
+          « Ajouter une section » reste sous la liste. */}
+      <div className="flex flex-col gap-space-lg desktop:max-w-[60rem]">
         <Annonce message={confirmation} />
+        <div
+          className={`${miseAJour ? "" : "hidden"}desktop:flex desktop:items-center desktop:justify-between desktop:gap-8`}
+        >
+          {miseAJour && (
+            <p className="text-body-md text-on-surface-variant">
+              {`Mis à jour le ${dateReglement(miseAJour)}`}
+            </p>
+          )}
+          <div className="hidden shrink-0 desktop:ml-auto desktop:block">
+            <Link
+              href="/syndic/reglement/nouvelle"
+              className={classesBouton("action")}
+            >
+              <Icone nom="add" taille={24} />
+              Nouvelle section
+            </Link>
+          </div>
+        </div>
         {sections.length === 0 ? (
           <p className="max-w-[65ch] text-body-lg text-on-surface-variant">
             Aucune section pour le moment : ajoutez la première, les résidents
             la liront dans Ma copro.
           </p>
         ) : (
-          <>
-            {misAJourLe && (
-              <p className="text-body-md text-on-surface-variant">
-                {`Mis à jour le ${dateReglement(misAJourLe)}`}
-              </p>
-            )}
-            <ListeSections
-              sections={sections.map(({ id, titre }) => ({ id, titre }))}
-            />
-          </>
+          <ListeSections
+            sections={sections.map(({ id, titre }) => ({ id, titre }))}
+          />
         )}
-        <Link
-          href="/syndic/reglement/nouvelle"
-          className={classesBouton("action", true)}
-        >
-          <Icone nom="add" taille={24} />
-          Ajouter une section
-        </Link>
+        <div className="desktop:hidden">
+          <Link
+            href="/syndic/reglement/nouvelle"
+            className={classesBouton("action", true)}
+          >
+            <Icone nom="add" taille={24} />
+            Ajouter une section
+          </Link>
+        </div>
       </div>
     </EcranSyndic>
   );

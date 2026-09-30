@@ -8,7 +8,11 @@ import { deplacerSection } from "./actions";
 
 type Props = { sections: { id: string; titre: string }[] };
 
-/** Les sections du règlement dans l'ordre, chacune avec ses boutons Monter, Descendre et Modifier. */
+/**
+ * Les sections du règlement dans l'ordre, chacune avec ses boutons Monter, Descendre et Modifier.
+ * Sur ordinateur, une ligne par section : le titre à gauche, les boutons à droite, qui passent à
+ * la ligne quand ils ne tiennent pas à côté de 15 rem de titre.
+ */
 export function ListeSections({ sections }: Props) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
@@ -38,17 +42,17 @@ export function ListeSections({ sections }: Props) {
       <Annonce message={confirmation} />
       <ul
         aria-label="Sections du règlement intérieur"
-        className="flex flex-col gap-space-sm"
+        className="flex flex-col gap-space-sm desktop:gap-4"
       >
         {sections.map((section, rang) => (
           <li
             key={section.id}
-            className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4"
+            className="flex flex-col gap-space-sm rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4 desktop:flex-row desktop:flex-wrap desktop:items-center desktop:gap-x-6 desktop:px-8 desktop:py-5"
           >
-            <h2 className="font-headline text-headline-sm [overflow-wrap:anywhere] text-on-surface">
+            <h2 className="font-headline text-headline-sm [overflow-wrap:anywhere] text-on-surface desktop:min-w-0 desktop:flex-1 desktop:basis-60">
               {section.titre}
             </h2>
-            <div className="flex flex-wrap gap-space-sm">
+            <div className="flex flex-wrap gap-space-sm desktop:ml-auto">
               <Bouton
                 variante="contour"
                 icone="expand_less"
