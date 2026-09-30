@@ -4,6 +4,7 @@ import {
   choisirDate,
   continuerProposer,
   inscrireResident,
+  laisserRetour,
   MOT_DE_PASSE,
   nouveauResident,
   nouvelleActivite,
@@ -305,6 +306,36 @@ test.describe("les segments de l'écran Activités", () => {
     await expect(
       page.getByText("Comment était cette activité ?"),
     ).toBeVisible();
+  });
+
+  test("une activité passée dont l'avis est déjà donné montre la note à la place de « Donner mon avis »", async ({
+    page,
+  }) => {
+    const { resident, titres, identifiants } = await residentAvecActivites();
+    await laisserRetour(
+      identifiants.suivieRecente,
+      resident.id,
+      4,
+      "Chouette moment.",
+    );
+    await seConnecter(page, resident.email);
+    await page.goto("/activites?onglet=archivees");
+
+    const donne = archivees(page)
+      .getByRole("listitem")
+      .filter({ hasText: titres.suivieRecente });
+    const attendu = archivees(page)
+      .getByRole("listitem")
+      .filter({ hasText: titres.suivieAncienne });
+    await expect(donne.getByText("Votre avis : 4 sur 5")).toBeVisible();
+    await expect(
+      donne.getByRole("link", { name: "Donner mon avis" }),
+    ).toHaveCount(0);
+    // Sans avis, la ligne propose toujours d'en donner un, et ne montre aucune note.
+    await expect(
+      attendu.getByRole("link", { name: "Donner mon avis" }),
+    ).toBeVisible();
+    await expect(attendu.getByText(/Votre avis :/)).toHaveCount(0);
   });
 
   test("une ligne archivée ouvre la fiche de l'activité", async ({ page }) => {
