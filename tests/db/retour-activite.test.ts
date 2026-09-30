@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clientAdmin,
+  clientVisiteur,
   nouveauResident,
   nouveauSyndic,
   type Compte,
@@ -260,5 +261,50 @@ describe("lire les retours d'une activité", () => {
       mon_retour_note: null,
       mon_retour_commentaire: null,
     });
+  });
+});
+
+describe("mes retours, pour la liste des activités archivées", () => {
+  it("renvoie la note des avis déjà donnés par la personne connectée, une ligne par activité", async () => {
+    const organisateur = await nouveauResident("valide");
+    const participant = await nouveauResident("valide");
+    const notee = await publier(organisateur);
+    const sansAvis = await publier(organisateur);
+    await inscrire(participant, notee.identifiant_public);
+    await inscrire(participant, sansAvis.identifiant_public);
+    await participant.client.rpc("laisser_retour", {
+      p_identifiant: notee.identifiant_public,
+      p_note: 4,
+      p_commentaire: "Chouette moment.",
+    });
+
+    const { data, error } = await participant.client.rpc("mes_retours");
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ activite_id: notee.id, note: 4 }]);
+  });
+
+  it("ne renvoie jamais l'avis d'un autre participant", async () => {
+    const organisateur = await nouveauResident("valide");
+    const auteur = await nouveauResident("valide");
+    const voisin = await nouveauResident("valide");
+    const activite = await publier(organisateur);
+    await inscrire(auteur, activite.identifiant_public);
+    await inscrire(voisin, activite.identifiant_public);
+    await auteur.client.rpc("laisser_retour", {
+      p_identifiant: activite.identifiant_public,
+      p_note: 2,
+      p_commentaire: "Décevant.",
+    });
+
+    const { data } = await voisin.client.rpc("mes_retours");
+
+    expect(data).toEqual([]);
+  });
+
+  it("est fermée aux visiteurs sans session", async () => {
+    const { error } = await clientVisiteur().rpc("mes_retours");
+
+    expect(error).not.toBeNull();
   });
 });

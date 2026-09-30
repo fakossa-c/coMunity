@@ -9,14 +9,15 @@ import { clientSession } from "./supabase/serveur";
  * Trois lectures : les activités à venir du catalogue où il est inscrit, celles qu'il organise
  * (passées, à venir, annulées) et ses inscriptions passées, celles du jour même comprises : une
  * activité du jour terminée n'est plus au catalogue, mais elle est archivée. Le classement les
- * départage d'après l'heure de fin.
+ * départage d'après l'heure de fin. Une quatrième, `mes_retours`, donne la note des avis déjà
+ * laissés : la table des retours est fermée, la liste ne peut pas la lire ligne à ligne.
  */
 export async function lireMesActivites(residentId: string) {
   const supabase = await clientSession();
   const maintenant = new Date();
   const jour = aujourdhui(maintenant);
 
-  const [catalogue, organisees, passees] = await Promise.all([
+  const [catalogue, organisees, passees, retours] = await Promise.all([
     supabase.rpc("catalogue_activites"),
     supabase.rpc("mes_activites_organisees"),
     supabase
@@ -26,6 +27,7 @@ export async function lireMesActivites(residentId: string) {
       )
       .eq("resident_id", residentId)
       .lte("activite.date_activite", jour),
+    supabase.rpc("mes_retours"),
   ]);
   if (catalogue.error)
     throw new Error(
@@ -39,6 +41,8 @@ export async function lireMesActivites(residentId: string) {
     throw new Error(
       `Vos activités passées sont illisibles : ${passees.error.message}`,
     );
+  if (retours.error)
+    throw new Error(`Vos avis sont illisibles : ${retours.error.message}`);
 
   const inscriptionsAVenir = (catalogue.data as ActiviteDuJour[]).filter(
     (activite) => activite.mes_accompagnants != null,
@@ -50,10 +54,18 @@ export async function lireMesActivites(residentId: string) {
   // Une activité du jour est dans les deux lectures tant qu'elle n'est pas terminée : le
   // catalogue, plus complet, l'emporte.
   const dejaLues = new Set(inscriptionsAVenir.map((activite) => activite.id));
+  const notes = new Map(
+    (retours.data as { activite_id: string; note: number }[]).map(
+      ({ activite_id, note }) => [activite_id, note],
+    ),
+  );
   const inscriptions = [
     ...inscriptionsAVenir,
     ...inscriptionsPassees.filter((activite) => !dejaLues.has(activite.id)),
-  ];
+  ].map((activite) => ({
+    ...activite,
+    mon_retour_note: notes.get(activite.id) ?? null,
+  }));
 
   return classerMesActivites({
     inscriptions: inscriptions,
