@@ -36,12 +36,27 @@ export function destinationArrivee(
     : destination;
 }
 
+/** L'erreur Postgres qu'on reçoit en lisant une colonne qui n'existe pas. */
+const COLONNE_ABSENTE = "42703";
+
+/**
+ * Lit `colonnes` d'un profil avec sa page d'arrivée. La migration de la colonne est retenue
+ * jusqu'à la fusion de `develop` vers `main` (issue #123) : une base qui ne l'a pas encore est
+ * relue sans elle, et le profil compte alors le tableau de bord, la valeur par défaut.
+ */
 export async function lireAvecPageArrivee<T extends object>(
-  _lire: (colonnes: string) => PromiseLike<{
+  lire: (colonnes: string) => PromiseLike<{
     data: T | null;
     error: { code: string } | null;
   }>,
-  _colonnes: string,
+  colonnes: string,
 ): Promise<(T & { pageArrivee: PageArrivee }) | null> {
-  throw new Error("À écrire");
+  let lecture = await lire(`${colonnes}, page_arrivee`);
+  if (lecture.error?.code === COLONNE_ABSENTE) lecture = await lire(colonnes);
+  if (!lecture.data) return null;
+
+  const { page_arrivee, ...profil } = lecture.data as T & {
+    page_arrivee?: PageArrivee;
+  };
+  return { ...(profil as T), pageArrivee: page_arrivee ?? "tableau_de_bord" };
 }
