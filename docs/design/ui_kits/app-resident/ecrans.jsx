@@ -74,7 +74,7 @@ function EcranActivites({ aller, inscrit, annuler, ouvrirMenu }) {
     <Ecran barreEtat="9:41" barreBas={<BarreNavigation actif="activites" onChange={aller} />} flottant={<BoutonFlottant />}>
       <EnTeteResidence residence={RESIDENCE} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)" }}><TitrePage titre="Activités" sousTitre="Vos inscriptions et vos propositions" /></div>
-      <BarreFiltres variante="liste" avant={<Onglets onglets={[{ id: "vais", libelle: "J’y vais" }, { id: "organise", libelle: "J’organise" }]} actif={onglet} onChange={setOnglet} />}>
+      <BarreFiltres variante="liste" avant={<Onglets onglets={[{ id: "vais", libelle: "Je participe" }, { id: "organise", libelle: "J’organise" }]} actif={onglet} onChange={setOnglet} />}>
         <PuceFiltre selectionnee={periode === "avenir"} icone="event" onClick={() => setPeriode("avenir")}>À venir</PuceFiltre>
         <PuceFiltre selectionnee={periode === "passees"} icone="history" onClick={() => setPeriode("passees")}>Passées</PuceFiltre>
       </BarreFiltres>

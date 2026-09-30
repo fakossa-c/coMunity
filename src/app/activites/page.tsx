@@ -6,22 +6,22 @@ import { EcranPrincipal } from "@/components/cadre";
 import { classesBouton } from "@/components/bouton";
 import { CarteActivite, type Activite } from "@/components/carte-activite";
 import { Icone } from "@/components/icone";
+import { LigneArchivee } from "@/components/ligne-archivee";
 import { TitrePage } from "@/components/titre-page";
-import { aujourdhui, ordreChronologique } from "@/lib/partage-activite";
+import { lireMesActivites } from "@/lib/lecture-mes-activites";
 import { lireSession } from "@/lib/session";
-import { clientSession } from "@/lib/supabase/serveur";
-import { Onglets } from "./onglets";
+import { ongletDemande, SegmentsActivites } from "./onglets";
 
 export const metadata: Metadata = { title: "Activités" };
 
 type Props = {
-  searchParams: Promise<{ onglet?: string; puce?: string }>;
+  searchParams: Promise<{ onglet?: string }>;
 };
 
 export default async function Activites({ searchParams }: Props) {
-  const params = await searchParams;
-  const onglet = params.onglet === "j_organise" ? "j_organise" : "j_y_vais";
-  const puce = params.puce === "passees" ? "passees" : "a_venir";
+  const { onglet } = await searchParams;
+  const actif = ongletDemande(onglet);
+  const session = await lireSession();
 
   return (
     <EcranPrincipal
@@ -39,166 +39,106 @@ export default async function Activites({ searchParams }: Props) {
           Proposer une activité
         </Link>
       </div>
-      <Onglets onglet={onglet} puce={puce} />
-      {onglet === "j_organise" ? (
-        <MesActivitesOrganisees puce={puce} />
-      ) : puce === "a_venir" ? (
-        <MesInscriptionsAVenir />
+      {session ? (
+        <MesActivites residentId={session.id} actif={actif} />
       ) : (
-        <MesInscriptionsPassees />
+        <Bientot
+          icone="diversity_3"
+          message="Connectez-vous pour retrouver vos activités."
+        />
       )}
     </EcranPrincipal>
   );
 }
 
+/** Les trois segments et la liste de celui qui est ouvert. */
+async function MesActivites({
+  residentId,
+  actif,
+}: {
+  residentId: string;
+  actif: ReturnType<typeof ongletDemande>;
+}) {
+  const { jeParticipe, jOrganise, archivees } =
+    await lireMesActivites(residentId);
+
+  return (
+    <>
+      <SegmentsActivites
+        actif={actif}
+        compteurs={{
+          je_participe: jeParticipe.length,
+          j_organise: jOrganise.length,
+          archivees: archivees.length,
+        }}
+      />
+      {actif === "archivees" ? (
+        archivees.length === 0 ? (
+          <Bientot
+            icone="history"
+            message="Vos activités passées, organisées ou suivies, apparaîtront ici."
+          />
+        ) : (
+          <ul
+            aria-label="Activités archivées"
+            className="flex flex-col divide-y-[1.5px] divide-bordure-carte rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-1.5 desktop:p-3"
+          >
+            {archivees.map(({ activite, role }) => (
+              <li key={activite.id}>
+                <LigneArchivee activite={activite} role={role} />
+              </li>
+            ))}
+          </ul>
+        )
+      ) : actif === "j_organise" ? (
+        <ListeActivites
+          libelle="Activités que vous organisez"
+          activites={jOrganise}
+          colonnes={2}
+          messageVide="Vous n'organisez aucune activité à venir. Lancez-en une avec le bouton « Proposer »."
+        />
+      ) : (
+        <ListeActivites
+          libelle="Activités où vous participez"
+          activites={jeParticipe}
+          colonnes={3}
+          messageVide="Vous n'êtes inscrit à aucune activité à venir. Direction l'Accueil pour en découvrir."
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Des cartes d'activité : une colonne sur mobile ; sur ordinateur, trois colonnes (inscriptions)
+ * ou deux (activités organisées, qui portent leur état et leur jauge).
+ */
 function ListeActivites({
   libelle,
   activites,
+  colonnes,
+  messageVide,
 }: {
   libelle: string;
   activites: Activite[];
+  colonnes: 2 | 3;
+  messageVide: string;
 }) {
+  if (activites.length === 0)
+    return <Bientot icone="diversity_3" message={messageVide} />;
+
   return (
-    <ul aria-label={libelle} className="flex flex-col gap-space-sm">
+    <ul
+      aria-label={libelle}
+      className={`flex flex-col gap-space-sm desktop:grid desktop:items-start desktop:gap-x-8 desktop:gap-y-6 ${
+        colonnes === 3 ? "desktop:grid-cols-3" : "desktop:grid-cols-2"
+      }`}
+    >
       {activites.map((activite) => (
         <li key={activite.id}>
           <CarteActivite activite={activite} />
         </li>
       ))}
     </ul>
-  );
-}
-
-/** Les activités où je suis inscrit, à venir, y compris celles que leur créateur a annulées. */
-async function MesInscriptionsAVenir() {
-  const session = await lireSession();
-  if (!session) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message="Connectez-vous pour voir les activités où vous êtes inscrit."
-      />
-    );
-  }
-
-  const supabase = await clientSession();
-  const { data, error } = await supabase.rpc("catalogue_activites");
-  if (error)
-    throw new Error(`Vos inscriptions sont illisibles : ${error.message}`);
-
-  const inscriptions = (data as Activite[]).filter(
-    (activite) => activite.mes_accompagnants != null,
-  );
-
-  if (inscriptions.length === 0) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message="Vous n'êtes inscrit à aucune activité à venir. Direction l'Accueil pour en découvrir."
-      />
-    );
-  }
-
-  return (
-    <ListeActivites libelle="Vos activités à venir" activites={inscriptions} />
-  );
-}
-
-/**
- * Les activités passées où j'étais inscrit, la plus récente d'abord. Celles que leur créateur a
- * annulées n'y figurent pas : on n'y est pas allé.
- */
-async function MesInscriptionsPassees() {
-  const session = await lireSession();
-  if (!session) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message="Connectez-vous pour retrouver vos activités passées."
-      />
-    );
-  }
-
-  const supabase = await clientSession();
-  const { data, error } = await supabase
-    .from("inscription_activite")
-    .select(
-      "activite!inner(id, identifiant_public, titre, categorie, pictogramme, date_activite, heure_debut, lieu, etiquettes, statut)",
-    )
-    .eq("resident_id", session.id)
-    .lt("activite.date_activite", aujourdhui())
-    .neq("activite.statut", "annulee");
-  if (error)
-    throw new Error(`Vos activités passées sont illisibles : ${error.message}`);
-
-  const activites = (data as unknown as { activite: Activite }[])
-    .map(({ activite }) => activite)
-    .sort((a, b) => ordreChronologique(b, a));
-
-  if (activites.length === 0) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message="Les activités passées où vous aviez une place apparaîtront ici."
-      />
-    );
-  }
-
-  return (
-    <ListeActivites libelle="Vos activités passées" activites={activites} />
-  );
-}
-
-/**
- * Les activités que j'organise : à venir (la plus proche d'abord, annulées comprises) ou passées
- * (la plus récente d'abord). Le créateur les gère depuis leur fiche.
- */
-async function MesActivitesOrganisees({
-  puce,
-}: {
-  puce: "a_venir" | "passees";
-}) {
-  const session = await lireSession();
-  if (!session) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message="Connectez-vous pour voir les activités que vous organisez."
-      />
-    );
-  }
-
-  const supabase = await clientSession();
-  const { data, error } = await supabase.rpc("mes_activites_organisees");
-  if (error)
-    throw new Error(`Vos activités sont illisibles : ${error.message}`);
-
-  const jour = aujourdhui();
-  const toutes = data as Activite[];
-  const activites =
-    puce === "a_venir"
-      ? toutes.filter((activite) => activite.date_activite >= jour)
-      : toutes.filter((activite) => activite.date_activite < jour).reverse();
-
-  if (activites.length === 0) {
-    return (
-      <Bientot
-        icone="diversity_3"
-        message={
-          puce === "a_venir"
-            ? "Vous n'organisez aucune activité à venir. Lancez-en une avec le bouton « Proposer »."
-            : "Vos activités passées apparaîtront ici."
-        }
-      />
-    );
-  }
-
-  return (
-    <ListeActivites
-      libelle={
-        puce === "a_venir" ? "Vos activités à venir" : "Vos activités passées"
-      }
-      activites={activites}
-    />
   );
 }

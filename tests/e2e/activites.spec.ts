@@ -24,6 +24,7 @@ async function seConnecter(page: Page, email: string) {
   await page.getByLabel("Adresse email").fill(email);
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Se connecter" }).click();
+  await expect(titreAccueil(page)).toBeVisible();
 }
 
 test("un résident validé crée une activité et la retrouve dans le catalogue", async ({
