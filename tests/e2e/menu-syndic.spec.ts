@@ -54,7 +54,7 @@ async function largeur(page: Page) {
 const RUBRIQUES = [
   ["Tableau de bord", "/syndic/tableau-de-bord"],
   ["Résidents", "/syndic/residents"],
-  ["Membres du syndic", "/syndic/membres"],
+  ["Conseil syndical", "/syndic/membres"],
   ["Modération", "/syndic/moderation"],
   ["Annonces", "/syndic/annonces"],
   ["Espaces communs", "/syndic/espaces-communs"],
@@ -78,12 +78,12 @@ test.describe("sur ordinateur", () => {
     await expect(page).toHaveURL(/\/syndic\/tableau-de-bord$/);
     await expect(
       menuSyndic(page).getByRole("link", {
-        name: /^Résidents, \d+ en attente$/,
+        name: /^Résidents \d+ en attente$/,
       }),
     ).toBeVisible();
     await expect(
       menuSyndic(page).getByRole("link", {
-        name: /^Modération, \d+ à relire$/,
+        name: /^Modération \d+ à relire$/,
       }),
     ).toBeVisible();
 
@@ -122,7 +122,7 @@ test.describe("sur ordinateur", () => {
     await expect.poll(() => largeur(page)).toBeLessThan(120);
     // En rail, les pictogrammes gardent leur nom.
     await expect(
-      menuSyndic(page).getByRole("link", { name: "Membres du syndic" }),
+      menuSyndic(page).getByRole("link", { name: "Conseil syndical" }),
     ).toBeVisible();
 
     await page.reload();

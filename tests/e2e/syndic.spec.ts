@@ -53,7 +53,7 @@ test("un membre du syndic invite un collègue, qui saisit son prénom, son nom e
   await page.goto("/syndic/membres");
   await expect(listeDesMembres(page)).toContainText(syndic.email);
 
-  await page.getByLabel("Adresse email du collègue").fill(collegue);
+  await page.getByLabel("Adresse email du nouveau membre").fill(collegue);
   await page.getByRole("button", { name: "Envoyer l'invitation" }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
     `Invitation envoyée à ${collegue}`,
@@ -110,7 +110,7 @@ test("sur ordinateur, la carte d'invitation est à côté de la liste des membre
     await page.goto("/syndic/membres");
     const liste = (await listeDesMembres(page).boundingBox())!;
     const carte = (await page
-      .getByRole("region", { name: "Inviter un collègue" })
+      .getByRole("region", { name: "Inviter un membre" })
       .boundingBox())!;
     if (isMobile) {
       expect(carte.y + carte.height).toBeLessThanOrEqual(liste.y);

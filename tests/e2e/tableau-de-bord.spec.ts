@@ -126,9 +126,9 @@ test("le classement donne la note, les retours, et « Utiliser comme modèle » 
   await page.goto("/syndic/tableau-de-bord");
 
   const carte = page.getByRole("listitem").filter({ hasText: titre });
-  await expect(carte).toContainText("5 / 5 · 2 retours");
+  await expect(carte).toContainText("5 / 5 · 2 avis");
 
-  await carte.getByText("Lire les retours").click();
+  await carte.getByText("Lire les avis").click();
   await expect(carte.getByText("Très convivial")).toBeVisible();
   await expect(carte.getByText("À refaire dès que possible")).toBeVisible();
 
@@ -146,7 +146,7 @@ test("un résident, même créateur de l'activité, n'accède pas au tableau de 
 
   await page.goto("/syndic/tableau-de-bord");
 
-  await expect(page.getByText("Accès non autorisé")).toBeVisible();
+  await expect(page.getByText("Espace réservé")).toBeVisible();
   await expect(
     page.getByText("Cet espace est réservé aux membres du conseil syndical."),
   ).toBeVisible();

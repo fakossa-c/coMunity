@@ -94,6 +94,6 @@ test("un membre du syndic sans prénom ni nom retrouve la page demandée après 
   await page.getByRole("button", { name: "Continuer" }).click();
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Membres du syndic" }),
+    page.getByRole("heading", { level: 1, name: "Conseil syndical" }),
   ).toBeVisible();
 });

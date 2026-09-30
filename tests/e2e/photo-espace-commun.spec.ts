@@ -158,7 +158,7 @@ test("le conseil syndical ajoute, réordonne, remplace puis retire les photos d'
     // La photo carrée passe en deuxième position, la haute reste dernière.
     await page.getByRole("button", { name: "Monter : photo 3 sur 3" }).click();
     await expect(
-      page.getByText("Photo déplacée en position 2 sur 3."),
+      page.getByText("Photo déplacée : maintenant 2 sur 3."),
     ).toBeAttached();
     await enregistrer(page, espace.nom, "est enregistré.");
 
