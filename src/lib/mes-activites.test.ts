@@ -2,35 +2,58 @@ import { describe, expect, it } from "vitest";
 import { classerMesActivites } from "./mes-activites";
 
 const JOUR = "2026-10-20";
+// Midi à Paris (heure d'été) ce jour-là.
+const MAINTENANT = new Date("2026-10-20T10:00:00Z");
 
 function activite(
   id: string,
   date_activite: string,
-  extras: { heure_debut?: string; statut?: string } = {},
+  extras: { heure_debut?: string; heure_fin?: string; statut?: string } = {},
 ) {
-  return { id, date_activite, heure_debut: "10:00:00", ...extras };
+  return {
+    id,
+    date_activite,
+    heure_debut: "10:00:00",
+    heure_fin: "11:00:00",
+    ...extras,
+  };
 }
 
 function classer(
   inscriptions: ReturnType<typeof activite>[],
   organisees: ReturnType<typeof activite>[] = [],
 ) {
-  return classerMesActivites({ inscriptions, organisees, jour: JOUR });
+  return classerMesActivites({
+    inscriptions,
+    organisees,
+    maintenant: MAINTENANT,
+  });
 }
 
 describe("Je participe", () => {
-  it("garde les inscriptions à venir, la plus proche d'abord, le jour même compris", () => {
+  it("garde les inscriptions à venir, la plus proche d'abord, le jour même compris tant qu'elles ne sont pas finies", () => {
     const { jeParticipe } = classer([
       activite("dans-huit-jours", "2026-10-28"),
-      activite("aujourdhui-soir", JOUR, { heure_debut: "20:00:00" }),
-      activite("aujourdhui-matin", JOUR, { heure_debut: "08:00:00" }),
+      activite("aujourdhui-soir", JOUR, {
+        heure_debut: "20:00:00",
+        heure_fin: "21:00:00",
+      }),
+      activite("aujourdhui-en-cours", JOUR, {
+        heure_debut: "11:00:00",
+        heure_fin: "13:00:00",
+      }),
       activite("hier", "2026-10-19"),
     ]);
     expect(jeParticipe.map((a) => a.id)).toEqual([
-      "aujourdhui-matin",
+      "aujourdhui-en-cours",
       "aujourdhui-soir",
       "dans-huit-jours",
     ]);
+  });
+
+  it("laisse partir de « Je participe » l'activité du jour à son heure de fin", () => {
+    const { jeParticipe } = classer([activite("ce-matin", JOUR)]);
+    expect(jeParticipe).toEqual([]);
   });
 
   it("garde une activité annulée par son créateur : on doit pouvoir le lire", () => {
@@ -115,10 +138,24 @@ describe("Archivées", () => {
     expect(archivees.map((a) => a.activite.id)).toEqual(["annulee"]);
   });
 
-  it("n'est pas une activité du jour même : elle reste à venir", () => {
-    const { archivees, jeParticipe } = classer([activite("ce-soir", JOUR)]);
-    expect(archivees).toEqual([]);
+  it("accueille l'activité du jour terminée, et pas celle qui reste à venir ce soir", () => {
+    const { archivees, jeParticipe } = classer([
+      activite("ce-matin", JOUR),
+      activite("ce-soir", JOUR, {
+        heure_debut: "20:00:00",
+        heure_fin: "21:00:00",
+      }),
+    ]);
+    expect(archivees.map((a) => a.activite.id)).toEqual(["ce-matin"]);
     expect(jeParticipe.map((a) => a.id)).toEqual(["ce-soir"]);
+  });
+
+  it("y range l'activité du jour terminée que l'on organise, et la retire de « J'organise »", () => {
+    const { archivees, jOrganise } = classer([], [activite("ce-matin", JOUR)]);
+    expect(jOrganise).toEqual([]);
+    expect(archivees.map((a) => [a.activite.id, a.role])).toEqual([
+      ["ce-matin", "organisee"],
+    ]);
   });
 });
 

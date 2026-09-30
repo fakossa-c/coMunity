@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { jourDecale } from "../../src/lib/calendrier";
+import { aujourdhui } from "../../src/lib/partage-activite";
 import {
   MOT_DE_PASSE,
   annulerActivite,
@@ -28,11 +30,13 @@ async function seConnecter(page: Page, email: string) {
   await expect(titreAccueil(page)).toBeVisible();
 }
 
-/** La date `AAAA-MM-JJ` dans `jours` jours (négatif : dans le passé), en UTC comme la base. */
+/**
+ * La date `AAAA-MM-JJ` dans `jours` jours (négatif : dans le passé), en heure de Paris comme
+ * l'application. Une activité d'aujourd'hui finit à 23h59 : à venir à l'Accueil quelle que soit
+ * l'heure du test.
+ */
 function dansJours(jours: number) {
-  return new Date(Date.now() + jours * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  return jourDecale(aujourdhui(), jours);
 }
 
 /** « Mardi 27 octobre », comme l'intertitre d'un jour. */
@@ -64,7 +68,10 @@ test("la salutation donne le prénom et le nombre d'activités de la semaine", a
 }) => {
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
-  await nouvelleActivite(resident.id, { date_activite: dansJours(0) });
+  await nouvelleActivite(resident.id, {
+    date_activite: dansJours(0),
+    heure_fin: "23:59",
+  });
 
   await seConnecter(page, resident.email);
 
@@ -88,13 +95,13 @@ test("les activités à venir sont groupées par jour, « Aujourd’hui » d'abo
     titre: tard,
     date_activite: dansJours(0),
     heure_debut: "20:00",
-    heure_fin: "21:00",
+    heure_fin: "23:59",
   });
   await nouvelleActivite(resident.id, {
     titre: tot,
     date_activite: dansJours(0),
     heure_debut: "08:00",
-    heure_fin: "09:00",
+    heure_fin: "23:59",
   });
   await nouvelleActivite(resident.id, { titre: plusTard, date_activite: date });
 
@@ -187,6 +194,7 @@ test("le tiroir « Détails » se déplie au clavier et montre horaire, lieu, ac
   await nouvelleActivite(resident.id, {
     titre: `Plus proche ${Date.now()}`,
     date_activite: dansJours(0),
+    heure_fin: "23:59",
     heure_debut: "00:05",
   });
   await nouvelleActivite(resident.id, {
@@ -240,6 +248,7 @@ test("« Voir la fiche » et « Je participe » ouvrent la fiche ; inscrit, la c
   await nouvelleActivite(organisateur.id, {
     titre: `Plus proche ${suffixe}`,
     date_activite: dansJours(0),
+    heure_fin: "23:59",
     heure_debut: "00:05",
   });
 
@@ -326,6 +335,7 @@ test.describe("captures de l'Accueil", () => {
       const inscrit = await nouvelleActivite(resident.id, {
         titre: "Le Grand Goûter Crêpes & Jeux",
         date_activite: dansJours(0),
+        heure_fin: "23:59",
         capacite_max: "12",
         etiquettes: ["acces_plain_pied", "enfants_bienvenus"],
       });
@@ -382,7 +392,7 @@ test("« À la une » montre la prochaine activité ouverte aux inscriptions, re
       categorie,
       date_activite: dansJours(0),
       heure_debut: heure,
-      heure_fin: "23:00",
+      heure_fin: "23:59",
       ...extras,
     });
   await annulerActivite(await creer("Annulée", "07:00"));
@@ -403,7 +413,7 @@ test("« À la une » montre la prochaine activité ouverte aux inscriptions, re
     enUne.getByRole("heading", { level: 2, name: titre("Ouverte") }),
   ).toBeVisible();
   await expect(enUne).toContainText("À la une");
-  await expect(enUne).toContainText("De 7h40 à 23h00");
+  await expect(enUne).toContainText("De 7h40 à 23h59");
   await expect(enUne.getByRole("link", { name: "Je participe" })).toBeVisible();
   await expect(
     enUne.getByRole("link", { name: "Voir la fiche" }),
@@ -431,6 +441,7 @@ test("« À la une » disparaît quand aucune activité n'est ouverte aux inscri
       titre,
       categorie,
       date_activite: dansJours(0),
+      heure_fin: "23:59",
     }),
   );
 
@@ -455,6 +466,7 @@ test("un résident inscrit lit « Vous participez » sur le bloc « À la une »
     titre,
     categorie,
     date_activite: dansJours(0),
+    heure_fin: "23:59",
     heure_debut: "07:00",
   });
   await inscrireResident(identifiant, resident.id, 2);
@@ -494,7 +506,7 @@ test("les activités d'un jour se rangent en trois colonnes sur ordinateur, en u
       categorie,
       date_activite: dansJours(0),
       heure_debut: heure,
-      heure_fin: "23:00",
+      heure_fin: "23:59",
     });
   }
 
@@ -530,7 +542,10 @@ test("les puces de filtre passent à la ligne sur ordinateur, défilent sans bar
 }) => {
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
-  await nouvelleActivite(resident.id, { date_activite: dansJours(0) });
+  await nouvelleActivite(resident.id, {
+    date_activite: dansJours(0),
+    heure_fin: "23:59",
+  });
   await seConnecter(page, resident.email);
 
   const puces = page
@@ -589,6 +604,7 @@ for (const [reglage, valeurs] of [
         titre: `Atelier long titre ${rang} ${Date.now()}`,
         categorie,
         date_activite: dansJours(0),
+        heure_fin: "23:59",
         heure_debut: heure,
         etiquettes: ["acces_plain_pied", "enfants_bienvenus"],
       });
@@ -613,6 +629,7 @@ test("la préférence de réduction des animations coupe les transitions des car
       titre: `Sans mouvement ${heure} ${Date.now()}`,
       categorie,
       date_activite: dansJours(0),
+      heure_fin: "23:59",
       heure_debut: heure,
     });
   }

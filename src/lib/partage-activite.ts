@@ -10,17 +10,45 @@ export type ActivitePartagee = {
   placesRestantes?: number | null;
 };
 
-/**
- * La date du jour, `AAAA-MM-JJ`. C'est celle de la base (UTC), comme le « à venir » du catalogue
- * de l'Accueil : toutes les pages comparent les dates des activités à ce même jour.
- */
-export function aujourdhui() {
-  return new Date().toISOString().slice(0, 10);
+/** Le fuseau du jour de référence : celui de la résidence, fixe pour toute l'application. */
+const FUSEAU_REFERENCE = "Europe/Paris";
+
+const HORLOGE_REFERENCE = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: FUSEAU_REFERENCE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+/** L'heure murale de Paris à cet instant, `AAAA-MM-JJ HH:MM:SS` : comparable telle quelle. */
+function horlogeDeReference(maintenant: Date) {
+  return HORLOGE_REFERENCE.format(maintenant);
 }
 
-/** Vrai quand le jour de l'activité est avant aujourd'hui : le jour même n'est pas passé. */
-export function estPassee(date: string, jour = aujourdhui()) {
-  return date < jour;
+/**
+ * La date du jour, `AAAA-MM-JJ`, en Europe/Paris. C'est le jour de la base
+ * (`jour_reference()`) : l'Accueil, les activités et les listes comparent tous leurs dates à ce
+ * même jour, jamais à celui d'UTC.
+ */
+export function aujourdhui(maintenant = new Date()) {
+  return horlogeDeReference(maintenant).slice(0, 10);
+}
+
+/**
+ * Vrai quand l'activité est terminée : sa date et son heure de fin sont derrière l'heure de
+ * Paris. Le jour même, elle est à venir jusqu'à son heure de fin, puis passée. Même règle que
+ * `activite_est_passee` en base.
+ */
+export function estPassee(
+  { date_activite, heure_fin }: { date_activite: string; heure_fin: string },
+  maintenant = new Date(),
+) {
+  const fin = heure_fin.length === 5 ? `${heure_fin}:00` : heure_fin;
+  return `${date_activite} ${fin}` < horlogeDeReference(maintenant);
 }
 
 /** Ordre chronologique de deux activités : jour, puis heure de début. */

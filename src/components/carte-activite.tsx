@@ -39,6 +39,8 @@ export type Activite = {
   pictogramme: string;
   date_activite: string;
   heure_debut: string;
+  /** Absente, l'activité n'est jamais tenue pour passée par sa carte. */
+  heure_fin?: string;
   lieu: string;
   /** `null` : pas de limite de participants. Absente : la jauge ne s'affiche pas sur la carte. */
   capacite_max?: number | null;
@@ -147,7 +149,13 @@ export function CarteActivite(props: Props) {
           statut={activite.statut}
           capaciteMin={activite.capacite_min ?? null}
           placesPrises={activite.places_prises ?? 0}
-          passee={estPassee(activite.date_activite)}
+          passee={
+            activite.heure_fin !== undefined &&
+            estPassee({
+              date_activite: activite.date_activite,
+              heure_fin: activite.heure_fin,
+            })
+          }
         />
       )}
       {activite.etiquettes && (

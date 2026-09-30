@@ -33,7 +33,6 @@ import {
   jourLong,
   messageWhatsApp,
 } from "@/lib/partage-activite";
-import { activiteEstPassee } from "@/lib/retour-activite";
 import { estSyndicActif, lireSession } from "@/lib/session";
 import { BlocInscription, type StatutVisiteur } from "./bloc-inscription";
 import { FormulaireRetour } from "./formulaire-retour";
@@ -159,9 +158,8 @@ export default async function Fiche({ params }: Props) {
   // En relecture ou masquée, l'activité n'a pas de lien à partager : les voisins ne la voient pas.
   const partageable = fiche.statut === "publiee";
   const conseilSyndical = estSyndicActif(session);
-  // Distinct de `estPassee` (jour calendaire, ci-dessus pour EtatActivite) : ici la date et
-  // l'heure de fin précises, l'échéance que la RLS de laisser_retour vérifie aussi.
-  const activitePassee = activiteEstPassee(fiche);
+  // La date et l'heure de fin, à l'heure de Paris : l'échéance que `laisser_retour` vérifie aussi.
+  const activitePassee = estPassee(fiche);
 
   return (
     <EcranSecondaire
@@ -211,7 +209,7 @@ export default async function Fiche({ params }: Props) {
               statut={fiche.statut}
               capaciteMin={fiche.capacite_min}
               placesPrises={fiche.places_prises}
-              passee={estPassee(fiche.date_activite)}
+              passee={activitePassee}
             />
             <PanneauInfos
               lignes={[

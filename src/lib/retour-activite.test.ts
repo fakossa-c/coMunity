@@ -1,23 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  activiteEstPassee,
-  libelleNombreRetours,
-  libelleNoteMoyenne,
-} from "./retour-activite";
-
-describe("activiteEstPassee", () => {
-  it("est vraie quand la date et l'heure de fin sont dans le passé", () => {
-    expect(
-      activiteEstPassee({ date_activite: "2020-01-01", heure_fin: "10:00" }),
-    ).toBe(true);
-  });
-
-  it("est fausse quand la date de fin est dans le futur", () => {
-    expect(
-      activiteEstPassee({ date_activite: "2099-01-01", heure_fin: "10:00" }),
-    ).toBe(false);
-  });
-});
+import { libelleNombreRetours, libelleNoteMoyenne } from "./retour-activite";
 
 describe("libelleNoteMoyenne", () => {
   it("affiche la moyenne sur 5", () => {
