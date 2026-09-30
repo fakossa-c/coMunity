@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { destinationArrivee, type ProfilArrivee } from "./page-arrivee";
+import {
+  destinationArrivee,
+  lireAvecPageArrivee,
+  type ProfilArrivee,
+} from "./page-arrivee";
 
 const syndic: ProfilArrivee = {
   role: "syndic",
@@ -56,5 +60,56 @@ describe("destinationArrivee", () => {
     expect(destinationArrivee(incomplet, "/annonces")).toBe(
       "/completer-profil?suivant=%2Fannonces",
     );
+  });
+});
+
+describe("lireAvecPageArrivee", () => {
+  const profil = { role: "syndic", statut: "valide" };
+
+  /** Une base qui a, ou non, la colonne `page_arrivee` ; répond comme PostgREST. */
+  function base(pageArrivee: string | undefined) {
+    const lectures: string[] = [];
+    const lire = async (colonnes: string) => {
+      lectures.push(colonnes);
+      if (colonnes.includes("page_arrivee") && pageArrivee === undefined) {
+        return {
+          data: null,
+          error: {
+            code: "42703",
+            message: "column profil.page_arrivee does not exist",
+          },
+        };
+      }
+      return {
+        data: pageArrivee ? { ...profil, page_arrivee: pageArrivee } : profil,
+        error: null,
+      };
+    };
+    return { lire, lectures };
+  }
+
+  it("lit la page d'arrivée avec le profil", async () => {
+    const { lire } = base("accueil");
+
+    expect(await lireAvecPageArrivee(lire, "role, statut")).toEqual({
+      ...profil,
+      pageArrivee: "accueil",
+    });
+  });
+
+  it("compte le tableau de bord quand la base n'a pas encore la colonne", async () => {
+    const { lire, lectures } = base(undefined);
+
+    expect(await lireAvecPageArrivee(lire, "role, statut")).toEqual({
+      ...profil,
+      pageArrivee: "tableau_de_bord",
+    });
+    expect(lectures).toEqual(["role, statut, page_arrivee", "role, statut"]);
+  });
+
+  it("renvoie null pour un compte sans profil", async () => {
+    const lire = async () => ({ data: null, error: null });
+
+    expect(await lireAvecPageArrivee(lire, "role, statut")).toBeNull();
   });
 });

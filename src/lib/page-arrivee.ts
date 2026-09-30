@@ -35,3 +35,13 @@ export function destinationArrivee(
     ? `${CHEMIN_COMPLETION}?suivant=${encodeURIComponent(destination)}`
     : destination;
 }
+
+export async function lireAvecPageArrivee<T extends object>(
+  _lire: (colonnes: string) => PromiseLike<{
+    data: T | null;
+    error: { code: string } | null;
+  }>,
+  _colonnes: string,
+): Promise<(T & { pageArrivee: PageArrivee }) | null> {
+  throw new Error("À écrire");
+}
