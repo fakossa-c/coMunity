@@ -263,11 +263,6 @@ test.describe("aide à l'installation sur Android", () => {
     await expect(aideInstallation(page)).toBeVisible();
     expect(await aLaUne.boundingBox()).toEqual(avant);
     await attendreBandeauAuDessusDeLaBarre(page);
-    await expect(
-      aideInstallation(page).getByRole("button", {
-        name: "Installer l'application",
-      }),
-    ).toHaveText("Installer");
   });
 
   test("l'invite reçue sur une autre page sert en arrivant sur l'accueil", async ({

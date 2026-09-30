@@ -49,7 +49,6 @@ export default async function Accueil({ searchParams }: Props) {
             : undefined
         }
       />
-      <AideInstallation />
       {activites.length === 0 ? (
         <Bientot icone="diversity_3" message={MESSAGE_VIDE} />
       ) : (
@@ -59,6 +58,8 @@ export default async function Accueil({ searchParams }: Props) {
           aujourdhui={aujourdhui}
         />
       )}
+      {/* Bandeau fixé au bas de l'écran : en fin de contenu, il ne déplace rien en arrivant. */}
+      <AideInstallation />
     </EcranPrincipal>
   );
 }
