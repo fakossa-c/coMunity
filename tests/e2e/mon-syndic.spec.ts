@@ -10,6 +10,7 @@ import {
   reglerAffichage,
   supprimerComptes,
   supprimerFichesSyndic,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #42 : le conseil syndical tient les fiches de Mon syndic, les résidents les lisent.
@@ -332,6 +333,109 @@ test("un visiteur est conduit à la connexion avant de lire Mon syndic", async (
   await expect(page).toHaveURL(/\/connexion\?suivant=%2Fmon-syndic/);
 });
 
+/** Trois fiches complètes, lues par un résident sur Mon syndic ; renvoie les cartes dans l'ordre. */
+async function lireTroisFiches(page: Page) {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const suffixe = randomUUID().slice(0, 6);
+  const noms: string[] = [];
+  for (const [i, prenom] of ["Claire", "Marc", "Nadia"].entries()) {
+    const fiche = await nouvelleFicheSyndic({
+      prenom: `${prenom} ${suffixe}`,
+      nom: "Benali",
+      telephone: `01 23 45 67 8${i}`,
+      email: `${prenom.toLowerCase()}@cabinet-exemple.fr`,
+    });
+    prenoms.push(fiche.prenom);
+    noms.push(`${fiche.prenom} ${fiche.nom}`);
+  }
+  await seConnecter(page, resident.email);
+  await page.goto("/mon-syndic");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Mon syndic" }),
+  ).toBeVisible();
+  return noms.map((nom) => carte(page, nom));
+}
+
+/** Les positions à gauche des cartes de la liste, sans doublon : une par colonne. */
+async function colonnes(page: Page) {
+  const gauches = await page
+    .getByRole("list", { name: "Personnes du syndic" })
+    .locator("> li")
+    .evaluateAll((cartes) =>
+      cartes.map((c) => Math.round(c.getBoundingClientRect().left)),
+    );
+  return [...new Set(gauches)];
+}
+
+test("sur ordinateur, les contacts sont en grille de trois colonnes avec « Appeler » et « Écrire »", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop", "présentation Journal");
+  const cartes = await lireTroisFiches(page);
+
+  // Les projets mobile et desktop partagent la base : d'autres fiches peuvent s'intercaler, seul le
+  // nombre de colonnes est stable.
+  expect(await colonnes(page)).toHaveLength(3);
+  const claire = cartes[0];
+  const appeler = claire.getByRole("link", { name: /^Appeler/ });
+  const ecrire = claire.getByRole("link", { name: /^Écrire/ });
+  await expect(appeler).toHaveAttribute("href", "tel:0123456780");
+  await expect(ecrire).toHaveAttribute(
+    "href",
+    "mailto:claire@cabinet-exemple.fr",
+  );
+  for (const lien of [appeler, ecrire]) {
+    expect((await lien.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(52);
+  }
+  // Les coordonnées restent lisibles en clair, à côté des boutons.
+  await expect(claire).toContainText("01 23 45 67 80");
+  await expect(claire).toContainText("claire@cabinet-exemple.fr");
+  // Aucun encart de message au conseil syndical.
+  await expect(page.getByRole("main")).not.toContainText(
+    "Une question pour le conseil syndical",
+  );
+  await verifierSansDefilementHorizontal(page);
+  await page.screenshot({
+    path: info.outputPath("mon-syndic-ordinateur.png"),
+    fullPage: true,
+  });
+});
+
+test("sur ordinateur, les cartes de Mon syndic n'ont pas de contour et ne bougent plus quand les animations sont réduites", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop", "présentation Journal");
+  const [claire] = await lireTroisFiches(page);
+  const carteClaire = claire.first();
+  const style = (propriete: string) =>
+    carteClaire.evaluate(
+      (el, p) => getComputedStyle(el).getPropertyValue(p),
+      propriete,
+    );
+
+  expect(await style("border-top-color")).toBe("rgba(0, 0, 0, 0)");
+  expect(await style("box-shadow")).not.toBe("none");
+  expect(parseFloat(await style("transition-duration"))).toBeGreaterThan(0);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(await style("transition-duration")).toBe("0s");
+});
+
+test("sur mobile, les contacts restent en une seule colonne, avec leurs coordonnées en boutons", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "mobile", "mise en page mobile inchangée");
+  const [claire] = await lireTroisFiches(page);
+
+  expect(await colonnes(page)).toHaveLength(1);
+  await expect(
+    claire.getByRole("link", { name: /01 23 45 67 80/ }),
+  ).toBeVisible();
+  await expect(claire.getByRole("link", { name: /^Appeler/ })).toHaveCount(0);
+  await verifierSansDefilementHorizontal(page);
+});
+
 for (const theme of ["clair", "sombre"] as const) {
   test(`Mon syndic est accessible en grands caractères et en thème ${theme}`, async ({
     page,
@@ -356,6 +460,7 @@ for (const theme of ["clair", "sombre"] as const) {
       resultat.violations,
       JSON.stringify(resultat.violations, null, 2),
     ).toEqual([]);
+    await verifierSansDefilementHorizontal(page);
     await page.screenshot({
       path: test.info().outputPath(`mon-syndic-${theme}-grands.png`),
       fullPage: true,
