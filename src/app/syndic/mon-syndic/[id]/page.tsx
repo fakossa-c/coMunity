@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { nomFiche, saisieDepuisFiche } from "@/lib/fiche-syndic";
 import {
@@ -25,7 +25,7 @@ export default async function ModifierFiche({ params }: Props) {
   if (!fiche) notFound();
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSyndic rubrique="mon-syndic" retour={RETOUR} actionDansLeFormulaire>
       <TitrePage titre="Modifier une fiche" sousTitre={nomFiche(fiche)} />
       <FormulaireFiche
         comptes={await lireComptesReliables(fiche.compte_id)}
@@ -36,6 +36,6 @@ export default async function ModifierFiche({ params }: Props) {
           photoUrl: fiche.photo_url,
         }}
       />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

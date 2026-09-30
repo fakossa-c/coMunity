@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import {
   COLONNES_ESPACE,
@@ -36,7 +36,11 @@ export default async function ModifierEspaceCommun({ params }: Props) {
   const medias = await lireUrlsMediasEspace(espace);
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSyndic
+      rubrique="espaces-communs"
+      retour={RETOUR}
+      actionDansLeFormulaire
+    >
       <TitrePage titre="Modifier un espace commun" sousTitre={espace.nom} />
       <FormulaireEspace
         espace={{
@@ -46,6 +50,6 @@ export default async function ModifierEspaceCommun({ params }: Props) {
           plan: medias.plan,
         }}
       />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

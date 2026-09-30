@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { GestionResidents } from "./gestion-residents";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Résidents" };
 
 export default async function Residents() {
   const { refus } = await accesSyndic("/syndic/residents");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const supabase = await clientSession();
   const { data, error } = await supabase
@@ -30,7 +29,7 @@ export default async function Residents() {
     );
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="residents">
       <TitrePage
         titre="Résidents"
         sousTitre="Validez les comptes des nouveaux résidents et retirez l'accès de ceux qui quittent la résidence."
@@ -39,6 +38,6 @@ export default async function Residents() {
         enAttente={data.filter((r) => r.statut === "en_attente")}
         valides={valides}
       />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

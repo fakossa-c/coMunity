@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
@@ -29,7 +29,7 @@ export default async function ModifierSection({ params }: Props) {
   if (!section) notFound();
 
   return (
-    <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
+    <EcranSyndic rubrique="reglement" retour={RETOUR} actionDansLeFormulaire>
       <TitrePage titre="Modifier une section" sousTitre={section.titre} />
       <FormulaireSection
         section={{
@@ -37,6 +37,6 @@ export default async function ModifierSection({ params }: Props) {
           saisie: { titre: section.titre, texte: section.texte },
         }}
       />
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

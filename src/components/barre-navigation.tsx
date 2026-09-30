@@ -2,7 +2,11 @@ import Link from "next/link";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-/** Onglets de l'application. Un onglet de plus s'ajoute ici, sans rien d'autre à changer. */
+/**
+ * Onglets de l'application. Un onglet de plus s'ajoute ici, sans rien d'autre à changer.
+ * `libelleCourt` : libellé de la barre du bas, faute de place. `syndic` : onglet réservé à un
+ * membre actif du conseil syndical.
+ */
 export const ONGLETS = [
   { id: "accueil", href: "/", libelle: "Accueil", icone: "home" },
   {
@@ -12,11 +16,21 @@ export const ONGLETS = [
     icone: "diversity_3",
   },
   { id: "annonces", href: "/annonces", libelle: "Annonces", icone: "campaign" },
+  {
+    id: "syndic",
+    href: "/syndic/tableau-de-bord",
+    libelle: "Tableau de bord",
+    libelleCourt: "Syndic",
+    icone: "monitoring",
+    syndic: true,
+  },
 ] as const satisfies readonly {
   id: string;
   href: string;
   libelle: string;
+  libelleCourt?: string;
   icone: NomIcone;
+  syndic?: boolean;
 }[];
 
 export type IdOnglet = (typeof ONGLETS)[number]["id"];
@@ -48,21 +62,28 @@ const LIEN_INACTIF_HAUT =
  * pilule pêche, libellé en 800. `haut` : onglets de la barre du haut du cadre Journal, sur
  * ordinateur ; pilules de libellé seul, l'onglet actif en pêche et en 800. Les deux sont posées
  * dans la page, une seule s'affiche selon la largeur : l'autre est absente de l'arbre
- * d'accessibilité et de l'ordre de tabulation. `actif` est absent d'un écran secondaire.
+ * d'accessibilité et de l'ordre de tabulation. `actif` est absent d'un écran secondaire. Un
+ * membre actif du conseil syndical a un quatrième onglet, « Tableau de bord » en haut et
+ * « Syndic » en bas, actif sur tout l'espace syndic.
  */
 export function BarreNavigation({
   actif,
   emplacement,
+  syndic = false,
 }: {
   actif?: IdOnglet;
   emplacement: keyof typeof MISES_EN_PAGE;
+  /** Vrai pour un membre actif du conseil syndical : l'onglet de l'espace syndic s'ajoute. */
+  syndic?: boolean;
 }) {
   const mise = MISES_EN_PAGE[emplacement];
   const bas = emplacement === "bas";
+  const onglets = ONGLETS.filter((onglet) => syndic || !("syndic" in onglet));
   return (
     <nav aria-label="Navigation principale" className={mise.nav}>
       <ul className={mise.liste}>
-        {ONGLETS.map(({ id, href, libelle, icone }) => {
+        {onglets.map((onglet) => {
+          const { id, href, libelle, icone } = onglet;
           const estActif = id === actif;
           return (
             <li key={id} className={mise.item}>
@@ -81,7 +102,7 @@ export function BarreNavigation({
                     <span
                       className={`whitespace-nowrap ${estActif ? "font-extrabold text-on-surface" : "font-bold text-on-surface-variant"}`}
                     >
-                      {libelle}
+                      {"libelleCourt" in onglet ? onglet.libelleCourt : libelle}
                     </span>
                   </>
                 ) : (

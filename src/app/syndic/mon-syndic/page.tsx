@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { classesBouton } from "@/components/bouton";
-import { EcranSecondaire } from "@/components/cadre";
+import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { Annonce } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
 import { lireFichesSyndic } from "@/lib/lecture-fiches-syndic";
-import { accesSyndic } from "../acces";
+import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { ListeFiches } from "./liste-fiches";
-
-const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Mon syndic" };
 
@@ -25,14 +23,15 @@ const CONFIRMATIONS: Record<string, (nom: string) => string> = {
 
 export default async function MonSyndicSyndic({ searchParams }: Props) {
   const { refus } = await accesSyndic("/syndic/mon-syndic");
-  if (refus) return <EcranSecondaire retour={RETOUR}>{refus}</EcranSecondaire>;
+  if (refus)
+    return <EcranSecondaire retour={RETOUR_ACCUEIL}>{refus}</EcranSecondaire>;
 
   const { fait, nom } = await searchParams;
   const fiches = await lireFichesSyndic();
   const confirmation = fait && nom ? CONFIRMATIONS[fait]?.(nom) : undefined;
 
   return (
-    <EcranSecondaire retour={RETOUR}>
+    <EcranSyndic rubrique="mon-syndic">
       <TitrePage
         titre="Mon syndic"
         sousTitre="Les personnes du syndic que les résidents voient dans Mon syndic, avec leur photo, leur téléphone et leur e-mail."
@@ -65,6 +64,6 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
           Ajouter une fiche
         </Link>
       </div>
-    </EcranSecondaire>
+    </EcranSyndic>
   );
 }

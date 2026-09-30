@@ -48,7 +48,8 @@ export async function modererActivite(
   }
 
   revalidatePath(LISTE);
-  revalidatePath("/syndic");
+  // Le nombre d'activités à relire est dans le menu de toutes les pages de l'espace syndic.
+  revalidatePath("/syndic", "layout");
   revalidatePath(cheminFiche(identifiant));
   revalidatePath("/");
   revalidatePath("/activites");

@@ -9,6 +9,9 @@ import {
   type Session,
 } from "@/lib/session";
 
+/** « Retour » du refus sur une liste de l'espace syndic : elles n'ont pas d'autre retour. */
+export const RETOUR_ACCUEIL = { href: "/", destination: "Accueil" };
+
 /**
  * Vérifie, page par page, que la personne connectée est un membre actif du conseil syndical.
  * Sans session : direction la connexion, avec retour sur `chemin`.

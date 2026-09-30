@@ -8,6 +8,7 @@ import {
   lireSession,
   statutResident,
 } from "@/lib/session";
+import { clientSession } from "@/lib/supabase/serveur";
 import { BarreHaute } from "./barre-haute";
 import { BarreNavigation, type IdOnglet } from "./barre-navigation";
 import { BarreRetour, LienRetour } from "./barre-retour";
@@ -18,6 +19,12 @@ import { GardeCompte, SiCompteOuvert } from "./garde-compte";
 import { Icone } from "./icone";
 import { LienProposer } from "./lien-proposer";
 import { MenuProfil, type Rubrique } from "./menu-profil";
+import {
+  MenuSyndic,
+  TiroirSyndic,
+  type CompteursSyndic,
+  type IdRubriqueSyndic,
+} from "./menu-syndic";
 
 const RUBRIQUES: Rubrique[] = [
   {
@@ -39,13 +46,6 @@ const RUBRIQUES: Rubrique[] = [
     detail: "Espaces, biens communs et règlement",
   },
 ];
-
-const ESPACE_SYNDIC: Rubrique = {
-  href: "/syndic",
-  icone: "shield_person",
-  titre: "Espace syndic",
-  detail: "Résidents et membres du syndic",
-};
 
 /**
  * Avatar qui ouvre le menu du profil, ou « Se connecter » pour un visiteur. `compact` : sans
@@ -70,17 +70,15 @@ async function Compte({ compact = false }: { compact?: boolean }) {
   const statut = statutResident(session);
   const bloque =
     statut === "refuse" || statut === "retire" || estSyndicRetire(session);
-  const rubriques = bloque
-    ? []
-    : estSyndicActif(session)
-      ? [...RUBRIQUES, ESPACE_SYNDIC]
-      : RUBRIQUES;
-  return <MenuProfil {...identite(session)} rubriques={rubriques} />;
+  return (
+    <MenuProfil {...identite(session)} rubriques={bloque ? [] : RUBRIQUES} />
+  );
 }
 
 /**
  * Barre du haut du cadre Journal (ordinateur) : logo, onglets, « Proposer » et compte. Les
  * écrans de connexion n'ont que le logo ; un compte refusé ou retiré n'a ni onglets ni « Proposer ».
+ * Un membre actif du conseil syndical a l'onglet « Tableau de bord ».
  */
 async function BarreDuHaut({
   onglet,
@@ -95,7 +93,11 @@ async function BarreDuHaut({
     <BarreHaute
       navigation={
         <SiCompteOuvert>
-          <BarreNavigation actif={onglet} emplacement="haut" />
+          <BarreNavigation
+            actif={onglet}
+            emplacement="haut"
+            syndic={estSyndicActif(session)}
+          />
         </SiCompteOuvert>
       }
       actions={
@@ -128,7 +130,10 @@ export async function EcranPrincipal({
   flottant,
   children,
 }: PropsPrincipal) {
-  const residence = await lireResidence();
+  const [residence, session] = await Promise.all([
+    lireResidence(),
+    lireSession(),
+  ]);
 
   return (
     <Ecran
@@ -143,7 +148,11 @@ export async function EcranPrincipal({
       }
       barreBas={
         <SiCompteOuvert>
-          <BarreNavigation actif={onglet} emplacement="bas" />
+          <BarreNavigation
+            actif={onglet}
+            emplacement="bas"
+            syndic={estSyndicActif(session)}
+          />
         </SiCompteOuvert>
       }
       // Sur ordinateur, les onglets sont dans la barre du haut : plus de barre du bas à dégager.
@@ -210,6 +219,98 @@ export function EcranSecondaire({
         partager={partageable}
       />
       <GardeCompte completionExigee={completionExigee}>{children}</GardeCompte>
+    </Ecran>
+  );
+}
+
+/** Comptes qui attendent leur validation et activités à relire : les pastilles du menu de l'espace syndic. */
+async function lireCompteursSyndic(): Promise<CompteursSyndic> {
+  const supabase = await clientSession();
+  const [residents, moderation] = await Promise.all([
+    supabase
+      .from("profil")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "resident")
+      .eq("statut", "en_attente"),
+    supabase
+      .from("activite")
+      .select("id", { count: "exact", head: true })
+      .eq("statut", "en_relecture"),
+  ]);
+  return {
+    residents: residents.count ?? 0,
+    moderation: moderation.count ?? 0,
+  };
+}
+
+type PropsSyndic = {
+  /** Rubrique marquée courante dans le menu ; sur un formulaire, celle de sa liste. */
+  rubrique: IdRubriqueSyndic;
+  /** Formulaire : « Retour » vers sa liste. Sur mobile, il reste un écran secondaire. */
+  retour?: { href: string; destination: string };
+  /** Comme pour `EcranSecondaire` : le formulaire porte sa BarreActionFixe, l'écran lui fait place. */
+  actionDansLeFormulaire?: boolean;
+  children: ReactNode;
+};
+
+/**
+ * Écran de l'espace syndic, pour un membre actif du conseil syndical (chaque page contrôle
+ * l'accès avant de le poser ; un refus garde `EcranSecondaire`, sans menu). Sur ordinateur, la
+ * barre du haut avec l'onglet « Tableau de bord » actif et `MenuSyndic` à gauche ; « Retour » en
+ * tête d'un formulaire. Sur mobile, une liste a l'en-tête de résidence, le bouton du tiroir
+ * `TiroirSyndic` et la barre du bas avec « Syndic » actif ; un formulaire garde sa barre de retour.
+ * Les compteurs du menu sont lus une fois par page.
+ */
+export async function EcranSyndic({
+  rubrique,
+  retour,
+  actionDansLeFormulaire = false,
+  children,
+}: PropsSyndic) {
+  const compteurs = await lireCompteursSyndic();
+  const menu = <MenuSyndic actif={rubrique} compteurs={compteurs} />;
+
+  if (retour) {
+    return (
+      <Ecran
+        haut={
+          <>
+            <BarreRetour
+              href={retour.href}
+              destination={retour.destination}
+              compte={<Compte />}
+            />
+            <BarreDuHaut onglet="syndic" />
+          </>
+        }
+        menu={menu}
+        paddingBas={actionDansLeFormulaire ? 170 : 40}
+      >
+        <LienRetour href={retour.href} destination={retour.destination} />
+        <GardeCompte>{children}</GardeCompte>
+      </Ecran>
+    );
+  }
+
+  const residence = await lireResidence();
+  return (
+    <Ecran
+      haut={
+        <>
+          <BarreDuHaut onglet="syndic" />
+          <EnTeteResidence
+            residence={residence?.nom ?? "Notre résidence"}
+            compte={<Compte />}
+          />
+        </>
+      }
+      menu={menu}
+      barreBas={<BarreNavigation actif="syndic" emplacement="bas" syndic />}
+      paddingBas={180}
+      paddingBasBureau={40}
+    >
+      <TiroirSyndic actif={rubrique} compteurs={compteurs} />
+      <GardeCompte>{children}</GardeCompte>
     </Ecran>
   );
 }

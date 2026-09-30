@@ -9,6 +9,28 @@
 /* `sombre:` : variante des rares éléments qui changent de nature en thème sombre (logo). */
 @custom-variant sombre (&:where([data-theme="sombre"], [data-theme="sombre"] *));
 
+/* `rail:` : le menu de l'espace syndic (`[data-menu-syndic]`) réduit à ses pictogrammes. De 64 à
+   80 rem, il l'est tant qu'on ne l'a pas ouvert par-dessus le contenu (`data-ouvert`) ; dès 80 rem,
+   seulement quand la personne l'a réduit (`data-reduit`). Sous 64 rem, le tiroir n'a pas de rail. */
+@custom-variant rail {
+  @media (min-width: 64rem) and (width < 80rem) {
+    &:where(
+      [data-menu-syndic]:not([data-ouvert]),
+      [data-menu-syndic]:not([data-ouvert]) *
+    ) {
+      @slot;
+    }
+  }
+  @media (min-width: 80rem) {
+    &:where(
+      [data-menu-syndic][data-reduit],
+      [data-menu-syndic][data-reduit] *
+    ) {
+      @slot;
+    }
+  }
+}
+
 @theme {
   /* Fonds */
   --color-surface: #f8f9ff;
@@ -190,10 +212,16 @@
   );
 
   --breakpoint-desktop: 64rem;
+  /* Grand écran : le menu de l'espace syndic y est déplié par défaut, réduit en rail en dessous */
+  --breakpoint-grand: 80rem;
 
   /* Cadre « Journal » (ordinateur) : conteneur unique de 1280 px, marges intérieures de 64 px */
   --container-conteneur: 80rem;
   --spacing-marge-journal: 4rem;
+  /* Espace syndic : menu déplié, rail de pictogrammes, contenu centré dans l'espace restant */
+  --spacing-menu-syndic: 18.5rem;
+  --spacing-rail-syndic: 5rem;
+  --container-contenu-syndic: 72rem;
 
   /* Mouvement du cadre Journal : une courbe et deux durées pour tout, coupés par la préférence de
      réduction des animations (voir plus bas). Le dépliage passe par `.depliage`. */
@@ -201,6 +229,7 @@
   --duree-courte: 0.35s;
   --duree-longue: 0.45s;
   --animate-feuille: feuille-monte 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-tiroir: tiroir-entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-voile: voile-apparait 0.25s ease-out;
   --animate-voile-journal: voile-apparait var(--duree-courte)
     var(--ease-journal);
@@ -226,6 +255,11 @@
   @keyframes feuille-monte {
     from {
       transform: translateY(100%);
+    }
+  }
+  @keyframes tiroir-entre {
+    from {
+      transform: translateX(-100%);
     }
   }
   @keyframes menu-entre {
@@ -404,6 +438,18 @@
       ):not([class*="shadow-"]) {
       box-shadow: var(--shadow-douce);
     }
+  }
+}
+
+/* Place prise à gauche par le menu de l'espace syndic, que la barre d'action fixe laisse libre. */
+@media (min-width: 64rem) {
+  :root:has([data-menu-syndic]) {
+    --largeur-menu-syndic: var(--spacing-rail-syndic);
+  }
+}
+@media (min-width: 80rem) {
+  :root:has([data-menu-syndic]:not([data-reduit])) {
+    --largeur-menu-syndic: var(--spacing-menu-syndic);
   }
 }
 

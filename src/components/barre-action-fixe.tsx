@@ -11,7 +11,8 @@ type Props = {
 
 /**
  * Panneau fixé en bas d'une fiche ou d'un formulaire : l'action principale, à portée du pouce.
- * Sur ordinateur, il est collé au bas du conteneur de 1280 px des écrans, pas de la fenêtre ; avec
+ * Sur ordinateur, il est collé au bas du conteneur de 1280 px des écrans, pas de la fenêtre, et
+ * laisse libre le menu de l'espace syndic ; avec
  * `carte`, il reste dans la page, à droite du texte, et suit la lecture.
  */
 export function BarreActionFixe({ children, carte = false }: Props) {
@@ -29,7 +30,7 @@ export function BarreActionFixe({ children, carte = false }: Props) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 mx-auto bg-fond-carte pb-[env(safe-area-inset-bottom)] shadow-barre-action desktop:max-w-conteneur desktop:rounded-t-lg">
+    <div className="fixed inset-x-0 bottom-0 z-40 mx-auto bg-fond-carte pb-[env(safe-area-inset-bottom)] shadow-barre-action desktop:left-[var(--largeur-menu-syndic,0px)] desktop:max-w-conteneur desktop:rounded-t-lg">
       <div className="mx-auto flex max-w-conteneur items-center gap-space-sm px-margin py-3 desktop:px-marge-journal">
         {children}
       </div>
