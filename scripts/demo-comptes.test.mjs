@@ -8,13 +8,30 @@ import {
 } from "./demo-comptes.mjs";
 
 describe("adresseDemo", () => {
-  it("compose fakossa+<username>@gmail.com", () => {
-    expect(adresseDemo("danielle")).toBe("fakossa+danielle@gmail.com");
+  it("compose fakossa+test-<rôle>-<username>@gmail.com", () => {
+    expect(adresseDemo({ role: "resident", username: "danielle" })).toBe(
+      "fakossa+test-resident-danielle@gmail.com",
+    );
+    expect(adresseDemo({ role: "syndic", username: "syndic" })).toBe(
+      "fakossa+test-syndic-syndic@gmail.com",
+    );
+  });
+
+  it("donne à chaque compte une adresse reconnue comme de démonstration", () => {
+    for (const compte of COMPTES) {
+      expect(estAdresseDemo(adresseDemo(compte)), compte.username).toBe(true);
+    }
   });
 });
 
 describe("estAdresseDemo", () => {
   it("reconnaît les adresses de démonstration", () => {
+    expect(estAdresseDemo("fakossa+test-resident-marc@gmail.com")).toBe(true);
+    expect(estAdresseDemo("fakossa+test-syndic-syndic@gmail.com")).toBe(true);
+    expect(estAdresseDemo("Fakossa+Test-Resident-Marc@Gmail.com")).toBe(true);
+  });
+
+  it("reconnaît encore l'ancien format fakossa+<username>, le temps de retirer ces comptes", () => {
     expect(estAdresseDemo("fakossa+marc@gmail.com")).toBe(true);
     expect(estAdresseDemo("Fakossa+Marc@Gmail.com")).toBe(true);
   });
@@ -26,12 +43,30 @@ describe("estAdresseDemo", () => {
     expect(estAdresseDemo("fakossa+marc@gmail.com.autre.fr")).toBe(false);
     expect(estAdresseDemo("x.fakossa+marc@gmail.com")).toBe(false);
     expect(estAdresseDemo("fakossa+@gmail.com")).toBe(false);
+    expect(
+      estAdresseDemo("fakossa+test-resident-marc@gmail.com.autre.fr"),
+    ).toBe(false);
+    expect(estAdresseDemo("x.fakossa+test-resident-marc@gmail.com")).toBe(
+      false,
+    );
+    expect(estAdresseDemo("fakossa+test-@gmail.com")).toBe(false);
+    expect(estAdresseDemo("fakossa+test-admin-marc@gmail.com")).toBe(false);
+    expect(estAdresseDemo("fakossa+test-resident-@gmail.com")).toBe(false);
+    expect(estAdresseDemo("fakossa.conate+test-resident-marc@gmail.com")).toBe(
+      false,
+    );
     expect(estAdresseDemo(undefined)).toBe(false);
   });
 
   it("suit le modèle passé", () => {
     const modele = { ...MODELE_DEMO, prefixe: "essai+", domaine: "exemple.fr" };
+    expect(estAdresseDemo("essai+test-resident-a@exemple.fr", modele)).toBe(
+      true,
+    );
     expect(estAdresseDemo("essai+a@exemple.fr", modele)).toBe(true);
+    expect(estAdresseDemo("fakossa+test-resident-a@gmail.com", modele)).toBe(
+      false,
+    );
     expect(estAdresseDemo("fakossa+a@gmail.com", modele)).toBe(false);
   });
 });
