@@ -305,7 +305,7 @@ test("un membre du conseil syndical trouve « Espace syndic » dans le menu dér
   emails.push(syndic.email);
   await seConnecter(page, syndic.email);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
+    page.getByRole("heading", { level: 1, name: "Tableau de bord" }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Mon profil" }).click();
@@ -460,6 +460,10 @@ test("l'espace syndic suit le même conteneur de 1280 px, avec les mêmes cartes
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
   await seConnecter(page, syndic.email);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Tableau de bord" }),
+  ).toBeVisible();
+  await page.goto("/syndic");
   await expect(
     page.getByRole("heading", { level: 1, name: "Espace syndic" }),
   ).toBeVisible();
