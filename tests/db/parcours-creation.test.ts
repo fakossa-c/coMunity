@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { clientAdmin, nouveauResident, type Compte } from "./clients";
+import {
+  clientAdmin,
+  nouveauResident,
+  publierApresJev,
+  type Compte,
+} from "./clients";
 
 // Ticket #9 : les champs que le parcours de création en 4 étapes ajoute à une activité.
 
@@ -104,6 +109,7 @@ describe("champs du parcours de création", () => {
     const { error: refusee } = await publier(resident, {
       description: "x".repeat(601),
     });
+    await publierApresJev(data!.identifiant_public);
     const { error: modification } = await resident.client
       .from("activite")
       .update({ description: "x".repeat(601) })
