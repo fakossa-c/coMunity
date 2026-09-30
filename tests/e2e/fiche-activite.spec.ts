@@ -263,6 +263,7 @@ test("l'écran de succès est réservé au créateur", async ({ page }) => {
 // Présentation Journal de la fiche (spec #125, ticket #129) : sur ordinateur, l'inscription est une
 // carte collante à droite, sans barre d'action fixe ; sur mobile, la barre du bas reste en place.
 
+// Dans « Conseils pratiques » : la description d'une activité est limitée à 600 caractères.
 const TEXTE_LONG = Array.from(
   { length: 40 },
   (_, rang) =>
@@ -287,7 +288,7 @@ test("sur ordinateur, la carte d'inscription reste visible à droite pendant la 
   const organisateur = await nouveauResident("valide");
   emails.push(organisateur.email);
   const identifiant = await nouvelleActivite(organisateur.id, {
-    description: TEXTE_LONG,
+    conseils_pratiques: TEXTE_LONG,
     capacite_max: "12",
   });
 
@@ -325,7 +326,7 @@ test("sur mobile, l'inscription reste la barre fixée en bas de l'écran", async
   const organisateur = await nouveauResident("valide");
   emails.push(organisateur.email);
   const identifiant = await nouvelleActivite(organisateur.id, {
-    description: TEXTE_LONG,
+    conseils_pratiques: TEXTE_LONG,
   });
 
   await page.goto(`/activites/${identifiant}`);
@@ -384,7 +385,7 @@ for (const [reglage, reglages] of [
     await reglerAffichage(resident.id, reglages);
     const identifiant = await nouvelleActivite(resident.id, {
       titre: "Le Grand Goûter Crêpes & Jeux du dimanche",
-      description: TEXTE_LONG,
+      conseils_pratiques: TEXTE_LONG,
       capacite_max: "12",
     });
 
@@ -407,7 +408,7 @@ test("le visiteur du lien partagé lit la fiche sans défilement horizontal, car
   emails.push(organisateur.email);
   const identifiant = await nouvelleActivite(organisateur.id, {
     titre: "Le Grand Goûter Crêpes & Jeux du dimanche",
-    description: TEXTE_LONG,
+    conseils_pratiques: TEXTE_LONG,
     capacite_max: "12",
   });
 
