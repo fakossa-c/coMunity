@@ -52,8 +52,9 @@ const MISES_EN_PAGE = {
   },
 };
 
-/** Quatre onglets tiennent avec « Proposer » et l'avatar dès 64 rem, grands caractères compris. */
-const MARGE_HAUT_QUATRE_ONGLETS = "px-3.5 grand:px-6";
+/** Marge intérieure des pilules du haut ; resserrée sous 80 rem au-delà de trois onglets, pour tenir avec « Proposer » et l'avatar. */
+const PADDING_HAUT = "px-6";
+const PADDING_HAUT_SERRE = "px-3.5 grand:px-6";
 
 const LIEN_ACTIF_HAUT = "bg-fond-action font-extrabold text-texte-action";
 const LIEN_INACTIF_HAUT =
@@ -93,7 +94,7 @@ export function BarreNavigation({
               <Link
                 href={href}
                 aria-current={estActif ? "page" : undefined}
-                className={`${mise.lien} ${bas ? "" : `${estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT} ${syndic ? MARGE_HAUT_QUATRE_ONGLETS : "px-6"}`}`}
+                className={`${mise.lien} ${bas ? "" : `${estActif ? LIEN_ACTIF_HAUT : LIEN_INACTIF_HAUT} ${onglets.length > 3 ? PADDING_HAUT_SERRE : PADDING_HAUT}`}`}
               >
                 {bas ? (
                   <>

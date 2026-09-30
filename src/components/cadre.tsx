@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { identite } from "@/lib/identite";
+import { lireCompteursSyndic } from "@/lib/lecture-espace-syndic";
 import { lireResidence } from "@/lib/residence";
 import {
   estSyndicActif,
@@ -8,7 +9,6 @@ import {
   lireSession,
   statutResident,
 } from "@/lib/session";
-import { clientSession } from "@/lib/supabase/serveur";
 import { BarreHaute } from "./barre-haute";
 import { BarreNavigation, type IdOnglet } from "./barre-navigation";
 import { BarreRetour, LienRetour } from "./barre-retour";
@@ -19,12 +19,7 @@ import { GardeCompte, SiCompteOuvert } from "./garde-compte";
 import { Icone } from "./icone";
 import { LienProposer } from "./lien-proposer";
 import { MenuProfil, type Rubrique } from "./menu-profil";
-import {
-  MenuSyndic,
-  TiroirSyndic,
-  type CompteursSyndic,
-  type IdRubriqueSyndic,
-} from "./menu-syndic";
+import { MenuSyndic, TiroirSyndic, type IdRubriqueSyndic } from "./menu-syndic";
 
 const RUBRIQUES: Rubrique[] = [
   {
@@ -223,26 +218,6 @@ export function EcranSecondaire({
   );
 }
 
-/** Comptes qui attendent leur validation et activités à relire : les pastilles du menu de l'espace syndic. */
-async function lireCompteursSyndic(): Promise<CompteursSyndic> {
-  const supabase = await clientSession();
-  const [residents, moderation] = await Promise.all([
-    supabase
-      .from("profil")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "resident")
-      .eq("statut", "en_attente"),
-    supabase
-      .from("activite")
-      .select("id", { count: "exact", head: true })
-      .eq("statut", "en_relecture"),
-  ]);
-  return {
-    residents: residents.count ?? 0,
-    moderation: moderation.count ?? 0,
-  };
-}
-
 type PropsSyndic = {
   /** Rubrique marquée courante dans le menu ; sur un formulaire, celle de sa liste. */
   rubrique: IdRubriqueSyndic;
@@ -267,7 +242,10 @@ export async function EcranSyndic({
   actionDansLeFormulaire = false,
   children,
 }: PropsSyndic) {
-  const compteurs = await lireCompteursSyndic();
+  const [compteurs, residence] = await Promise.all([
+    lireCompteursSyndic(),
+    lireResidence(),
+  ]);
   const menu = <MenuSyndic actif={rubrique} compteurs={compteurs} />;
 
   if (retour) {
@@ -292,7 +270,6 @@ export async function EcranSyndic({
     );
   }
 
-  const residence = await lireResidence();
   return (
     <Ecran
       haut={

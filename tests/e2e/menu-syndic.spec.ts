@@ -165,6 +165,7 @@ test.describe("sur ordinateur", () => {
 
     await page.keyboard.press("Escape");
     await expect(deplier).toBeVisible();
+    await expect(deplier).toBeFocused();
     await expect.poll(() => largeur(page)).toBeLessThan(120);
 
     // Le choix d'une rubrique le referme aussi, et rien n'est retenu.

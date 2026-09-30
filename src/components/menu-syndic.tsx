@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type MouseEvent,
@@ -146,6 +147,8 @@ function ListeRubriques({
   compteurs,
   onChoisir,
 }: Props & { onChoisir?: () => void }) {
+  // Le menu et le tiroir posent chacun leur liste dans la page : des identifiants propres à chacune.
+  const prefixe = useId();
   return (
     <div className="flex flex-col gap-5 rail:gap-3">
       {GROUPES.map((groupe, rang) => (
@@ -156,13 +159,13 @@ function ListeRubriques({
           }
         >
           <p
-            id={`groupe-syndic-${rang}`}
+            id={`${prefixe}-${rang}`}
             className="mb-1.5 px-4 font-headline text-label-sm text-on-surface-variant rail:sr-only"
           >
             {groupe}
           </p>
           <ul
-            aria-labelledby={`groupe-syndic-${rang}`}
+            aria-labelledby={`${prefixe}-${rang}`}
             className="flex flex-col gap-1"
           >
             {RUBRIQUES.filter((rubrique) => rubrique.groupe === groupe).map(
@@ -224,24 +227,32 @@ export function MenuSyndic({ actif, compteurs }: Props) {
   const boutonReduire = useRef<HTMLButtonElement>(null);
   const boutonDeplier = useRef<HTMLButtonElement>(null);
 
-  // Ouvert par-dessus le contenu : Échap, un clic à côté ou un redimensionnement le referment.
+  // Ouvert par-dessus le contenu : Échap, un clic à côté, le focus qui en sort ou un
+  // redimensionnement le referment.
   useEffect(() => {
     if (!ouvert) return;
+    const dehors = (cible: EventTarget | null) =>
+      !menu.current?.contains(cible as Node);
     const surTouche = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      setOuvert(false);
+      flushSync(() => setOuvert(false));
       boutonDeplier.current?.focus();
     };
     const surClic = (e: PointerEvent) => {
-      if (!menu.current?.contains(e.target as Node)) setOuvert(false);
+      if (dehors(e.target)) setOuvert(false);
+    };
+    const surFocus = (e: FocusEvent) => {
+      if (dehors(e.target)) setOuvert(false);
     };
     const fermer = () => setOuvert(false);
     document.addEventListener("keydown", surTouche);
     document.addEventListener("pointerdown", surClic);
+    document.addEventListener("focusin", surFocus);
     window.addEventListener("resize", fermer);
     return () => {
       document.removeEventListener("keydown", surTouche);
       document.removeEventListener("pointerdown", surClic);
+      document.removeEventListener("focusin", surFocus);
       window.removeEventListener("resize", fermer);
     };
   }, [ouvert]);
