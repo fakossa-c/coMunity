@@ -8,6 +8,8 @@ export interface EcranProps {
   barreBas?: React.ReactNode;
   /** BoutonFlottant, à 20 px du bord droit et 100 px du bas */
   flottant?: React.ReactNode;
+  /** Menu de l'espace syndic (`MenuSyndic`), collé au bord gauche sur ordinateur */
+  menu?: React.ReactNode;
   /** Réserve en bas de la zone qui défile : 180 avec la navigation, 170 avec une barre d'action */
   paddingBas?: number;
   /** Texte de la barre d'état simulée (ex. "9:41") ; elle défile avec le contenu */

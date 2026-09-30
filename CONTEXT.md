@@ -81,6 +81,10 @@ _Avoid_ : règlement de copropriété (le texte juridique qui fixe les droits de
 La page où le conseil syndical suit, sur une période, ce qui fait vivre la résidence : activités, inscriptions, participants distincts, remplissage, activités les mieux notées, comptes validés et en attente. Seules comptent les activités publiées et terminées, celles qui ont eu lieu.
 _Avoid_ : statistiques, dashboard, analytics
 
+**Espace syndic** :
+La partie de coMunity réservée aux membres actifs du conseil syndical, où ils gèrent la résidence rubrique par rubrique ; le tableau de bord en est la page d'arrivée. Son onglet s'appelle « Tableau de bord » dans la barre du haut et, faute de place, « Syndic » dans la barre du bas du mobile : seul libellé où « syndic » désigne cet espace, jamais le rôle (conseil syndical) ni le mandataire (syndic).
+_Avoid_ : back-office, administration, espace admin
+
 **Participants distincts** :
 Le nombre de résidents différents inscrits à au moins une activité qui a eu lieu sur la période. C'est l'indicateur principal : il mesure du lien réel entre des personnes différentes, pas l'assiduité de quelques habitués.
 _Avoid_ : utilisateurs actifs, fréquentation

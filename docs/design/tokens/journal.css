@@ -1,10 +1,17 @@
 /* Présentation « Journal » (ordinateur, à partir de 64 rem) : jetons du cadre, décidés le 29/09/2026 (spec #125).
    Dans l'application, `src/app/globals.css` les porte sous les noms Tailwind : --container-conteneur, --spacing-marge-journal,
-   --shadow-douce, --color-filet, --radius-flottante, --text-titre-journal. */
+   --shadow-douce, --color-filet, --radius-flottante, --text-titre-journal, --spacing-menu-syndic,
+   --spacing-rail-syndic, --container-contenu-syndic, --breakpoint-grand. */
 :root {
   /* Conteneur unique de toutes les pages : 1280 px, marges intérieures de 64 px */
   --largeur-conteneur: 80rem;
   --marge-journal: 4rem;
+
+  /* Espace syndic (spec #168) : menu déplié dès 80 rem (--breakpoint-grand), rail de 64 à 80 rem,
+     contenu de 1152 px au plus centré dans l'espace restant */
+  --largeur-menu-syndic: 18.5rem;
+  --largeur-rail-syndic: 5rem;
+  --largeur-contenu-syndic: 72rem;
 
   /* Mouvement : une courbe, deux durées. Dépliage : grid-template-rows 0fr vers 1fr, contenu toujours dans le DOM.
      Menu et pop-ups : opacité, translation, léger agrandissement, avec un voile. Survol : légère élévation. */
