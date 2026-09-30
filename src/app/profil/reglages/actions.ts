@@ -5,6 +5,7 @@ import type {
   TailleAffichage,
   ThemeAffichage,
 } from "@/lib/attributs-affichage";
+import type { PageArrivee } from "@/lib/page-arrivee";
 import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 
@@ -20,8 +21,16 @@ export async function choisirTheme(theme: ThemeAffichage): Promise<Resultat> {
   return enregistrer({ theme });
 }
 
+/** Enregistre la page où arrive après la connexion la personne connectée, membre du conseil syndical. */
+export async function choisirPageArrivee(page: PageArrivee): Promise<Resultat> {
+  return enregistrer({ page_arrivee: page });
+}
+
 async function enregistrer(
-  reglage: { taille: TailleAffichage } | { theme: ThemeAffichage },
+  reglage:
+    | { taille: TailleAffichage }
+    | { theme: ThemeAffichage }
+    | { page_arrivee: PageArrivee },
 ): Promise<Resultat> {
   const supabase = await clientSession();
   const {

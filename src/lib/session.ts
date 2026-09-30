@@ -1,10 +1,23 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
-import { userAgent } from "next/server";
 import { cache } from "react";
 import type { TailleAffichage, ThemeAffichage } from "./attributs-affichage";
+import {
+  destinationArrivee,
+  lireAvecPageArrivee,
+  PAGE_ARRIVEE_PAR_DEFAUT,
+  type PageArrivee,
+  type ProfilArrivee,
+} from "./page-arrivee";
 import { clientSession, configurationSupabase } from "./supabase/serveur";
+
+export {
+  doitCompleterProfil,
+  estSyndicActif,
+  estSyndicRetire,
+  statutResident,
+} from "./profil";
+export { CHEMIN_COMPLETION } from "./page-arrivee";
 
 export type Role = "syndic" | "resident";
 export type StatutCompte = "en_attente" | "valide" | "refuse" | "retire";
@@ -22,6 +35,8 @@ export type Session = {
   nom: string | null;
   taille: TailleAffichage;
   theme: ThemeAffichage;
+  /** Sans effet pour un compte qui n'est pas membre actif du conseil syndical. */
+  pageArrivee: PageArrivee;
 };
 
 /** La personne connectée et son profil, lus une fois par requête. `null` si personne n'est connecté. */
@@ -33,11 +48,17 @@ export const lireSession = cache(async (): Promise<Session | null> => {
   const claims = data?.claims;
   if (!claims) return null;
 
-  const { data: profil } = await supabase
-    .from("profil")
-    .select("role, statut, pseudo, prenom, nom, taille, theme")
-    .eq("id", claims.sub)
-    .maybeSingle();
+  const profil = await lireAvecPageArrivee<
+    Omit<Session, "id" | "email" | "pageArrivee">
+  >(
+    (colonnes) =>
+      supabase
+        .from("profil")
+        .select(colonnes)
+        .eq("id", claims.sub)
+        .maybeSingle(),
+    "role, statut, pseudo, prenom, nom, taille, theme",
+  );
   return {
     id: claims.sub,
     email: claims.email ?? "",
@@ -48,63 +69,29 @@ export const lireSession = cache(async (): Promise<Session | null> => {
     nom: profil?.nom ?? null,
     taille: profil?.taille ?? "standard",
     theme: profil?.theme ?? "clair",
+    pageArrivee: profil?.pageArrivee ?? PAGE_ARRIVEE_PAR_DEFAUT,
   };
 });
 
-type Profil = Pick<Session, "role" | "statut">;
-type ProfilNomme = Pick<Session, "role" | "statut" | "prenom" | "nom">;
-
-/** Rôle, statut et nom d'un compte, tels que la personne connectée a le droit de les lire. */
+/** Rôle, statut, nom et page d'arrivée d'un compte, tels que la personne connectée a le droit de les lire. */
 export async function lireProfil(
   supabase: SupabaseClient,
   id: string,
-): Promise<ProfilNomme | null> {
-  const { data } = await supabase
-    .from("profil")
-    .select("role, statut, prenom, nom")
-    .eq("id", id)
-    .maybeSingle();
-  return data;
-}
-
-export function estSyndicActif(profil: Profil | null) {
-  return profil?.role === "syndic" && profil.statut === "valide";
-}
-
-export function estSyndicRetire(profil: Profil | null) {
-  return profil?.role === "syndic" && profil.statut === "retire";
-}
-
-/** Statut d'un compte résident ; `null` pour un membre du syndic ou un compte sans profil. */
-export function statutResident(profil: Profil | null) {
-  return profil?.role === "resident" ? profil.statut : null;
-}
-
-/** Vrai pour un membre du syndic qui n'a pas encore saisi son prénom et son nom. */
-export function doitCompleterProfil(profil: ProfilNomme | null) {
-  return estSyndicActif(profil) && !(profil?.prenom && profil.nom);
+): Promise<ProfilArrivee | null> {
+  return lireAvecPageArrivee<Omit<ProfilArrivee, "pageArrivee">>(
+    (colonnes) =>
+      supabase.from("profil").select(colonnes).eq("id", id).maybeSingle(),
+    "role, statut, prenom, nom",
+  );
 }
 
 /**
- * Où envoyer une personne qui vient de se connecter ou de choisir son mot de passe : la page
- * qu'elle demandait, sinon l'espace syndic pour un membre du syndic sur ordinateur, l'accueil
- * pour les autres. Un membre du syndic sans prénom ni nom passe d'abord par l'écran qui les demande.
+ * Où envoyer une personne qui vient de se connecter, de choisir son mot de passe ou de se
+ * présenter : voir `destinationArrivee`.
  */
 export async function accueilDe(
-  profil: ProfilNomme | null,
+  profil: ProfilArrivee | null,
   suivant?: string | null,
 ) {
-  const destination =
-    suivant ??
-    (estSyndicActif(profil) && !(await surMobile()) ? "/syndic" : "/");
-  return doitCompleterProfil(profil)
-    ? `${CHEMIN_COMPLETION}?suivant=${encodeURIComponent(destination)}`
-    : destination;
-}
-
-/** L'écran où un membre du syndic saisit son prénom et son nom avant d'aller plus loin. */
-export const CHEMIN_COMPLETION = "/completer-profil";
-
-async function surMobile() {
-  return userAgent({ headers: await headers() }).device.type === "mobile";
+  return destinationArrivee(profil, suivant);
 }

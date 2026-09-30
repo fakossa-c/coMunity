@@ -63,3 +63,58 @@ describe("réglages d'affichage", () => {
     expect(data).toEqual({ taille: "standard", theme: "clair" });
   });
 });
+
+describe("page d'arrivée", () => {
+  function pageArriveeDe(id: string) {
+    return clientAdmin()
+      .from("profil")
+      .select("page_arrivee")
+      .eq("id", id)
+      .maybeSingle();
+  }
+
+  it("un nouveau profil arrive sur le tableau de bord par défaut", async () => {
+    const syndic = await nouveauSyndic();
+
+    const { data } = await pageArriveeDe(syndic.id);
+    expect(data).toEqual({ page_arrivee: "tableau_de_bord" });
+  });
+
+  it("le propriétaire choisit l'accueil", async () => {
+    const syndic = await nouveauSyndic();
+
+    const { error } = await syndic.client
+      .from("profil")
+      .update({ page_arrivee: "accueil" })
+      .eq("id", syndic.id);
+    expect(error).toBeNull();
+
+    const { data } = await pageArriveeDe(syndic.id);
+    expect(data).toEqual({ page_arrivee: "accueil" });
+  });
+
+  it("un autre compte ne peut pas modifier la page d'arrivée d'autrui", async () => {
+    const syndic = await nouveauSyndic();
+    const autre = await nouveauSyndic();
+
+    const { error } = await autre.client
+      .from("profil")
+      .update({ page_arrivee: "accueil" })
+      .eq("id", syndic.id);
+
+    expect(error).toBeNull();
+    const { data } = await pageArriveeDe(syndic.id);
+    expect(data).toEqual({ page_arrivee: "tableau_de_bord" });
+  });
+
+  it("une valeur hors énumération est refusée", async () => {
+    const syndic = await nouveauSyndic();
+
+    const { error } = await syndic.client
+      .from("profil")
+      .update({ page_arrivee: "annonces" })
+      .eq("id", syndic.id);
+
+    expect(error).not.toBeNull();
+  });
+});

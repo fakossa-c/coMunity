@@ -60,14 +60,14 @@ export function titreAccueil(page: Page) {
 }
 
 /**
- * Le titre de la page où arrive un membre du syndic qui se connecte depuis `page` : l'espace
- * syndic sur ordinateur, l'accueil sur mobile. `mobile` vient de la fixture `isMobile` : un
- * contexte ouvert par `browser.newContext()` émule le même appareil que le projet.
+ * Le titre de la page où arrive un membre du conseil syndical qui se connecte depuis `page`,
+ * avec la page d'arrivée par défaut : le tableau de bord, sur ordinateur comme sur mobile
+ * (ticket #170). L'appareil ne change plus l'arrivée ; le paramètre reste le temps que les specs
+ * cessent de le passer.
  */
-export function arriveeDuSyndic(page: Page, { mobile }: { mobile: boolean }) {
-  return mobile
-    ? titreAccueil(page)
-    : page.getByRole("heading", { level: 1, name: "Espace syndic" });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- paramètre gardé pour les specs qui le passent encore
+export function arriveeDuSyndic(page: Page, _appareil: { mobile: boolean }) {
+  return page.getByRole("heading", { level: 1, name: "Tableau de bord" });
 }
 
 /** Un résident, validé sauf mention contraire. */

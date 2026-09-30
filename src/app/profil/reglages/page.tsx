@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { EcranSecondaire } from "@/components/cadre";
-import { lireSession } from "@/lib/session";
+import { estSyndicActif, lireSession } from "@/lib/session";
 import { TitrePage } from "@/components/titre-page";
 import { ReglagesAffichage } from "./reglages-affichage";
 
@@ -13,9 +13,15 @@ export default async function MesReglages() {
 
   return (
     <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
-      <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
+      <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-[45rem]">
         <TitrePage titre="Mes réglages" />
-        <ReglagesAffichage taille={session.taille} theme={session.theme} />
+        <ReglagesAffichage
+          taille={session.taille}
+          theme={session.theme}
+          pageArrivee={
+            estSyndicActif(session) ? session.pageArrivee : undefined
+          }
+        />
       </div>
     </EcranSecondaire>
   );

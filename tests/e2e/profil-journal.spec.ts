@@ -176,7 +176,7 @@ test.describe("sur ordinateur", () => {
     expect(suppression.width).toBeLessThan(400);
   });
 
-  test("Mes réglages : la taille des caractères et l'apparence sont côte à côte", async ({
+  test("Mes réglages : les choix s'empilent dans une colonne de 720 px au plus", async ({
     page,
   }) => {
     await residentConnecte(page);
@@ -188,8 +188,9 @@ test.describe("sur ordinateur", () => {
     const apparence = await boite(
       page.getByRole("group", { name: "Apparence" }),
     );
-    expect(apparence.x).toBeGreaterThan(taille.x + taille.width);
-    expect(apparence.y).toBeCloseTo(taille.y, 0);
+    expect(apparence.y).toBeGreaterThan(taille.y + taille.height);
+    expect(apparence.x).toBeCloseTo(taille.x, 0);
+    expect(taille.width).toBeLessThanOrEqual(720);
   });
 });
 
