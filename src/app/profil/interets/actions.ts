@@ -7,7 +7,10 @@ import { clientSession } from "@/lib/supabase/serveur";
 
 const INTERETS = "/profil/interets";
 
-const NON_CONNECTE = { ok: false, message: "Vous devez être connecté." };
+const NON_CONNECTE = {
+  ok: false,
+  message: "Connectez-vous pour gérer vos centres d'intérêt.",
+};
 const DEJA_DECLARE = "Vous avez déjà déclaré ce centre d'intérêt.";
 
 async function personneConnectee() {

@@ -36,7 +36,7 @@ export default async function MesInformations({
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
           titre="Mes informations"
-          sousTitre="Contrôlez les informations partagées"
+          sousTitre="Ce que vos voisins voient de vous"
         />
         <Annonce
           message={

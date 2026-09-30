@@ -139,7 +139,7 @@ export async function modifierMotDePasse(
 
 const messagesSuppression: Record<string, string> = {
   "42501":
-    "Un membre du conseil syndical ne supprime pas son compte ici : son accès se retire depuis l'espace syndic.",
+    "Membre du conseil syndical, vous ne supprimez pas votre compte ici : un autre membre retire votre accès depuis l'espace syndic.",
 };
 
 /**

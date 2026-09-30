@@ -12,7 +12,7 @@ import { TitrePage } from "@/components/titre-page";
 import { DeuxColonnes } from "../deux-colonnes";
 import { SuppressionCompte } from "./suppression-compte";
 
-export const metadata: Metadata = { title: "Mes identifiants" };
+export const metadata: Metadata = { title: "Mon compte" };
 
 const CONFIRMATIONS: Record<string, string> = {
   "mot-de-passe": "Votre mot de passe est modifié.",
@@ -50,29 +50,29 @@ export default async function MesIdentifiants({
     redirect(`/connexion?suivant=${encodeURIComponent(suivant)}`);
   }
 
-  // Un membre du syndic ne supprime pas son compte ici : son départ passe par le retrait d'accès.
+  // Un membre du conseil syndical ne supprime pas son compte ici : son départ passe par le retrait d'accès.
   const peutSupprimer = (await lireSession())?.role !== "syndic";
   const confirmation = typeof fait === "string" ? CONFIRMATIONS[fait] : null;
   const enAttente = utilisateur.new_email
-    ? `Un lien de confirmation a été envoyé à ${utilisateur.new_email}. Votre adresse changera quand vous l'aurez ouvert.`
+    ? `Un lien de confirmation a été envoyé à ${utilisateur.new_email}. Votre adresse changera une fois ce lien ouvert.`
     : null;
 
   return (
     <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
-        <TitrePage titre="Mes identifiants" />
+        <TitrePage titre="Mon compte" />
         <Annonce message={confirmation ?? enAttente} />
         <Annonce
           message={
             lien === "invalide"
-              ? "Ce lien n'est plus valable : il a déjà servi ou il a expiré. Refaites la demande avec « Modifier » sur la ligne Email."
+              ? "Ce lien a déjà servi ou a expiré. Refaites la demande avec « Modifier » sur la ligne Email."
               : null
           }
           erreur
         />
         <DeuxColonnes>
           <CarteLignes
-            libelle="Vos identifiants"
+            libelle="Votre compte"
             lignes={[
               {
                 icone: "mail",

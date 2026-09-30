@@ -33,14 +33,14 @@ export default async function Profil() {
           <LigneMenu
             href="/profil/identifiants"
             icone="key"
-            titre="Mes identifiants"
+            titre="Mon compte"
             detail="Email, mot de passe, déconnexion"
           />
           <LigneMenu
             href="/profil/informations"
             icone="badge"
             titre="Mes informations"
-            detail="Contrôlez les informations partagées"
+            detail="Ce que vos voisins voient de vous"
           />
           <LigneMenu
             href="/profil/interets"
