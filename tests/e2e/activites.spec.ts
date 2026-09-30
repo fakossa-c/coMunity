@@ -337,7 +337,7 @@ test.describe("les segments de l'écran Activités", () => {
     await expect(
       attendu.getByRole("link", { name: "Donner mon avis" }),
     ).toBeVisible();
-    await expect(attendu.getByText(/Votre avis :/)).toHaveCount(0);
+    await expect(attendu.getByText(/Votre avis\s:/)).toHaveCount(0);
   });
 
   test("une ligne archivée ouvre la fiche de l'activité", async ({ page }) => {

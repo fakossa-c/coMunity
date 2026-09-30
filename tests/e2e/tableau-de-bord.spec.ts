@@ -102,7 +102,9 @@ test("le tableau de bord montre les chiffres, les graphiques en texte et le sél
     .getByRole("figure")
     .filter({ hasText: "Par jour de la semaine" });
   await expect(jours.getByRole("listitem")).toHaveCount(7);
-  await expect(jours.getByText(/^Meilleur remplissage moyen : /)).toBeVisible();
+  await expect(
+    jours.getByText(/^Meilleur remplissage moyen\s:\s/),
+  ).toBeVisible();
   const creneaux = page
     .getByRole("figure")
     .filter({ hasText: "Par tranche horaire" });
