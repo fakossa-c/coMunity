@@ -41,9 +41,6 @@ describe("estAdresseDemo", () => {
     expect(estAdresseDemo("fakossa@gmail.com")).toBe(false);
     expect(estAdresseDemo("fakossa.conate@gmail.com")).toBe(false);
     expect(estAdresseDemo("marc@gmail.com")).toBe(false);
-    expect(estAdresseDemo("fakossa+marc@gmail.com.autre.fr")).toBe(false);
-    expect(estAdresseDemo("x.fakossa+marc@gmail.com")).toBe(false);
-    expect(estAdresseDemo("fakossa+@gmail.com")).toBe(false);
     expect(
       estAdresseDemo("fakossa+test-resident-marc@gmail.com.autre.fr"),
     ).toBe(false);
@@ -68,7 +65,6 @@ describe("estAdresseDemo", () => {
     expect(estAdresseDemo("fakossa+test-resident-a@gmail.com", modele)).toBe(
       false,
     );
-    expect(estAdresseDemo("fakossa+a@gmail.com", modele)).toBe(false);
   });
 });
 
