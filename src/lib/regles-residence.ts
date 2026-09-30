@@ -52,30 +52,35 @@ export async function lireUrlsPhotosEspaces(
   return urls;
 }
 
+/** Un fichier du bucket avec son adresse signée, vide quand elle n'a pas pu l'être. */
+export type MediaEspace = { chemin: string; url: string };
+
 /**
- * Les adresses signées des photos (dans l'ordre) et du plan de situation d'un espace commun, pour
- * sa fiche, en une seule demande de signature. Un fichier dont l'adresse n'a pas pu être signée
- * manque simplement : la fiche s'affiche sans.
+ * Les photos (dans l'ordre) et le plan de situation d'un espace commun, chacun avec son adresse
+ * signée, en une seule demande de signature. Un fichier dont l'adresse n'a pas pu être signée
+ * garde son chemin et une adresse vide : la fiche l'écarte, le formulaire le conserve.
  */
 export async function lireUrlsMediasEspace(
   espace: Pick<EspaceCommun, "photos" | "plan_chemin">,
-): Promise<{ photos: string[]; plan?: string }> {
+): Promise<{ photos: MediaEspace[]; plan: MediaEspace | null }> {
   const chemins = [
     ...espace.photos,
     ...(espace.plan_chemin ? [espace.plan_chemin] : []),
   ];
-  if (chemins.length === 0) return { photos: [] };
+  if (chemins.length === 0) return { photos: [], plan: null };
 
   const supabase = await clientSession();
   const { data } = await supabase.storage
     .from(BUCKET_PHOTOS_ESPACES)
     .createSignedUrls(chemins, VALIDITE_PHOTO_SECONDES);
-  const adresses = chemins.map((_, i) => data?.[i]?.signedUrl || undefined);
-  const photos = adresses
-    .slice(0, espace.photos.length)
-    .filter((url): url is string => !!url);
-  const plan = espace.plan_chemin ? adresses[espace.photos.length] : undefined;
-  return { photos, plan };
+  const medias = chemins.map((chemin, i) => ({
+    chemin,
+    url: data?.[i]?.signedUrl ?? "",
+  }));
+  return {
+    photos: medias.slice(0, espace.photos.length),
+    plan: espace.plan_chemin ? medias[espace.photos.length] : null,
+  };
 }
 
 /** L'heure de calme de la résidence (« 22:00:00 »), ou `null` si la résidence n'en a pas. */

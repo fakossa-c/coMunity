@@ -35,8 +35,8 @@ export default async function PageFicheEspace({ params }: Props) {
       {espace && espaces ? (
         <FicheEspaceCommun
           espace={espace}
-          photos={medias?.photos}
-          plan={medias?.plan}
+          photos={medias?.photos.map((photo) => photo.url).filter(Boolean)}
+          plan={medias?.plan?.url || undefined}
           autres={espaces.filter((e) => e.id !== espace.id)}
         />
       ) : (

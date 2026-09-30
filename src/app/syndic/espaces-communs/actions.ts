@@ -12,6 +12,7 @@ import {
 import { heure } from "@/lib/partage-activite";
 import {
   BUCKET_PHOTOS_ESPACES,
+  MAX_PHOTOS_ESPACE,
   cheminPhotoEspace,
   estCheminPhotoEspace,
 } from "@/lib/photo-espace-commun";
@@ -23,8 +24,9 @@ const LISTE = "/syndic/espaces-communs";
 
 const messages: Record<string, string> = {
   "42501": "Seuls les membres du conseil syndical gèrent les espaces communs.",
+  "23514":
+    "Un champ n'est pas valide : vérifiez les longueurs, la capacité, les mesures et les photos.",
   "23505": "Un espace commun porte déjà ce nom : choisissez-en un autre.",
-  "23514": "Un champ n'est pas valide : vérifiez les longueurs et la capacité.",
 };
 
 function echec(code: string | undefined, parDefaut: string): Resultat {
@@ -41,68 +43,101 @@ function retourALaListe(
   redirect(`${LISTE}?${new URLSearchParams({ fait, nom })}`);
 }
 
-/** Supprime une photo du bucket ; au pire, un fichier orphelin y reste : plus aucun espace commun ne le montre. */
-async function retirerPhoto(supabase: SupabaseClient, chemin: string | null) {
-  if (chemin && estCheminPhotoEspace(chemin))
-    await supabase.storage.from(BUCKET_PHOTOS_ESPACES).remove([chemin]);
+/** Supprime des fichiers du bucket ; au pire, des fichiers orphelins y restent : plus aucun espace commun ne les montre. */
+async function retirerFichiers(
+  supabase: SupabaseClient,
+  chemins: (string | null)[],
+) {
+  const valides = chemins.filter(
+    (chemin): chemin is string => !!chemin && estCheminPhotoEspace(chemin),
+  );
+  if (valides.length > 0)
+    await supabase.storage.from(BUCKET_PHOTOS_ESPACES).remove(valides);
 }
 
-type Depot =
-  { ok: true; chemin: string; token: string } | { ok: false; message: string };
+/** Les chemins des photos et du plan d'un espace commun, tels que la base les a. */
+type Medias = { photos: string[]; plan_chemin: string | null };
+
+type Depots =
+  | { ok: true; depots: { chemin: string; token: string }[] }
+  | { ok: false; message: string };
 
 /**
- * Autorise le navigateur à déposer la photo d'un espace commun : vérifie son poids (`taille`, en
- * octets), puis donne le chemin et un jeton à usage unique. La photo ne transite pas par le
- * serveur. La base ne laisse déposer que le conseil syndical.
+ * Autorise le navigateur à déposer les images d'un espace commun (ses photos et son plan) :
+ * vérifie le poids de chacune (`tailles`, en octets), puis donne à chacune son chemin et un jeton
+ * à usage unique, dans le même ordre. Les images ne transitent pas par le serveur. La base ne
+ * laisse déposer que le conseil syndical.
  */
-export async function preparerDepotPhoto(taille: number): Promise<Depot> {
-  if (!(taille > 0 && taille <= TAILLE_MAX_PHOTO))
+export async function preparerDepots(tailles: number[]): Promise<Depots> {
+  if (tailles.length > MAX_PHOTOS_ESPACE + 1)
+    return { ok: false, message: "Il y a trop d'images à envoyer." };
+  if (!tailles.every((taille) => taille > 0 && taille <= TAILLE_MAX_PHOTO))
     return {
       ok: false,
-      message: "La photo est trop lourde. Choisissez-en une autre.",
+      message: "Une image est trop lourde. Choisissez-en une autre.",
     };
 
   const supabase = await clientSession();
-  const chemin = cheminPhotoEspace(randomUUID());
-  const { data, error } = await supabase.storage
-    .from(BUCKET_PHOTOS_ESPACES)
-    .createSignedUploadUrl(chemin);
-  if (error)
+  const depots = await Promise.all(
+    tailles.map(async () => {
+      const chemin = cheminPhotoEspace(randomUUID());
+      const { data, error } = await supabase.storage
+        .from(BUCKET_PHOTOS_ESPACES)
+        .createSignedUploadUrl(chemin);
+      return error ? null : { chemin, token: data.token };
+    }),
+  );
+  if (depots.some((depot) => depot === null))
     return {
       ok: false,
       message:
-        "La photo n'a pas pu être envoyée. Vous n'avez peut-être plus le droit de gérer les espaces communs.",
+        "Les images n'ont pas pu être envoyées. Vous n'avez peut-être plus le droit de gérer les espaces communs.",
     };
-  return { ok: true, chemin, token: data.token };
+  return { ok: true, depots: depots as { chemin: string; token: string }[] };
 }
 
 /**
- * Ajoute un espace commun (`id` absent) ou enregistre sa modification. `photoChemin` est la photo
- * de l'espace, déjà déposée par le navigateur, ou `null` pour n'en avoir aucune : la photo
- * remplacée ou retirée disparaît du bucket. La base ne laisse écrire que le conseil syndical.
+ * Ajoute un espace commun (`id` absent) ou enregistre sa modification. `photos` sont ses photos
+ * dans l'ordre et `planChemin` son plan de situation, déjà déposés par le navigateur (`null` :
+ * pas de plan) : les images remplacées ou retirées disparaissent du bucket. La base ne laisse
+ * écrire que le conseil syndical.
  */
 export async function enregistrerEspace(
   id: string | null,
   saisie: SaisieEspace,
-  photoChemin: string | null,
+  photos: string[],
+  planChemin: string | null,
 ): Promise<Resultat> {
   const verdict = verifierEspace(saisie);
   if (verdict.erreur) return { ok: false, message: verdict.erreur };
-  if (photoChemin !== null && !estCheminPhotoEspace(photoChemin))
-    return { ok: false, message: "La photo n'est pas valide." };
+  if (
+    photos.length > MAX_PHOTOS_ESPACE ||
+    !photos.every(estCheminPhotoEspace) ||
+    new Set(photos).size !== photos.length
+  )
+    return { ok: false, message: "Les photos ne sont pas valides." };
+  if (
+    planChemin !== null &&
+    (!estCheminPhotoEspace(planChemin) || photos.includes(planChemin))
+  )
+    return { ok: false, message: "Le plan n'est pas valide." };
 
   const supabase = await clientSession();
-  let anciennePhoto: string | null = null;
+  let avant: Medias = { photos: [], plan_chemin: null };
   if (id) {
-    const { data: avant } = await supabase
+    const { data } = await supabase
       .from("espace_commun")
-      .select("photo_chemin")
+      .select("photos, plan_chemin")
       .eq("id", id)
-      .maybeSingle();
-    anciennePhoto = avant?.photo_chemin ?? null;
+      .maybeSingle<Medias>();
+    if (data) avant = data;
   }
 
-  const espace = { ...versEspaceCommun(saisie), photo_chemin: photoChemin };
+  const espace = {
+    ...versEspaceCommun(saisie),
+    photos,
+    plan_chemin: planChemin,
+  };
   const { data, error } = id
     ? await supabase
         .from("espace_commun")
@@ -123,13 +158,15 @@ export async function enregistrerEspace(
         "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le modifier.",
     };
 
-  if (anciennePhoto !== photoChemin)
-    await retirerPhoto(supabase, anciennePhoto);
+  await retirerFichiers(supabase, [
+    ...avant.photos.filter((chemin) => !photos.includes(chemin)),
+    avant.plan_chemin !== planChemin ? avant.plan_chemin : null,
+  ]);
   return retourALaListe(id ? "enregistre" : "ajoute", espace.nom);
 }
 
 /**
- * Supprime un espace commun, avec sa photo. Les activités qui s'y tenaient gardent son nom comme
+ * Supprime un espace commun, avec ses photos et son plan. Les activités qui s'y tenaient gardent son nom comme
  * lieu libre, sans ses règles.
  */
 export async function supprimerEspace(
@@ -141,7 +178,7 @@ export async function supprimerEspace(
     .from("espace_commun")
     .delete()
     .eq("id", id)
-    .select("photo_chemin");
+    .select("photos, plan_chemin");
   if (error)
     return echec(
       error.code,
@@ -154,7 +191,7 @@ export async function supprimerEspace(
         "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le supprimer.",
     };
 
-  await retirerPhoto(supabase, data[0].photo_chemin);
+  await retirerFichiers(supabase, [...data[0].photos, data[0].plan_chemin]);
   return retourALaListe("supprime", nom);
 }
 

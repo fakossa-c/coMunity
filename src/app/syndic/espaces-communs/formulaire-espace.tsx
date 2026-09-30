@@ -8,6 +8,10 @@ import {
   ChampPhotoEspace,
   type PhotoEspaceSaisie,
 } from "@/components/champ-photo-espace";
+import {
+  ChampPlanEspace,
+  type PlanEspaceSaisie,
+} from "@/components/champ-plan-espace";
 import { ChoixPastilles } from "@/components/choix-pastilles";
 import { FeuilleConfirmation } from "@/components/feuille-confirmation";
 import { Annonce } from "@/components/formulaire";
@@ -21,28 +25,30 @@ import {
   type SaisieEspace,
 } from "@/lib/espaces-communs";
 import { envoyerPhotos } from "@/lib/envoi-photos";
-import { BUCKET_PHOTOS_ESPACES } from "@/lib/photo-espace-commun";
+import {
+  BUCKET_PHOTOS_ESPACES,
+  deplacerPhoto,
+} from "@/lib/photo-espace-commun";
+import { retirerPhoto } from "@/lib/photos-activite";
+import type { MediaEspace } from "@/lib/regles-residence";
 import {
   erreurDuChamp,
   erreurGenerale,
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import {
-  enregistrerEspace,
-  preparerDepotPhoto,
-  supprimerEspace,
-} from "./actions";
+import { enregistrerEspace, preparerDepots, supprimerEspace } from "./actions";
 
 type Props = {
   /**
-   * Absent pour un nouvel espace commun. `photo` : sa photo enregistrée, avec l'adresse signée
-   * qui l'affiche (vide quand elle n'a pas pu être signée).
+   * Absent pour un nouvel espace commun. `photos` et `plan` : ses images enregistrées, avec
+   * l'adresse signée qui les affiche (vide quand elle n'a pas pu être signée).
    */
   espace?: {
     id: string;
     saisie: SaisieEspace;
-    photo: { chemin: string; url: string } | null;
+    photos: MediaEspace[];
+    plan: MediaEspace | null;
   };
 };
 
@@ -56,9 +62,17 @@ export function FormulaireEspace({ espace }: Props) {
   const [saisie, setSaisie] = useState<SaisieEspace>(
     espace?.saisie ?? SAISIE_ESPACE_VIDE,
   );
-  const [photo, setPhoto] = useState<PhotoEspaceSaisie | null>(
-    espace?.photo
-      ? { chemin: espace.photo.chemin, apercu: espace.photo.url }
+  const [photos, setPhotos] = useState<PhotoEspaceSaisie[]>(
+    () =>
+      espace?.photos.map((photo) => ({
+        cle: photo.chemin,
+        chemin: photo.chemin,
+        apercu: photo.url,
+      })) ?? [],
+  );
+  const [plan, setPlan] = useState<PlanEspaceSaisie | null>(
+    espace?.plan
+      ? { chemin: espace.plan.chemin, apercu: espace.plan.url }
       : null,
   );
   const [erreur, setErreur] = useState<ErreurFormulaire<ChampEspace>>({});
@@ -80,26 +94,52 @@ export function FormulaireEspace({ espace }: Props) {
     if (verdict.erreur) return;
     // Enregistré, l'espace mène à la liste : seul un échec revient ici.
     demarrer(async () => {
-      let chemin = photo?.chemin ?? null;
-      if (photo?.fichier) {
-        const depot = await preparerDepotPhoto(photo.fichier.size);
-        if (!depot.ok) return setResultat(depot);
-        const [envoye] = await envoyerPhotos(
-          [depot],
-          [photo.fichier],
+      // Les images choisies à l'instant partent d'abord, en un seul dépôt : photos, puis plan.
+      const nouvellesPhotos = photos.filter((p) => p.fichier);
+      const aEnvoyer = [
+        ...nouvellesPhotos.map((p) => p.fichier as Blob),
+        ...(plan?.fichier ? [plan.fichier] : []),
+      ];
+      const envoyees = new Map<string, string>();
+      let cheminPlan = plan?.chemin ?? null;
+      if (aEnvoyer.length > 0) {
+        const depots = await preparerDepots(aEnvoyer.map((f) => f.size));
+        if (!depots.ok) return setResultat(depots);
+        const chemins = await envoyerPhotos(
+          depots.depots,
+          aEnvoyer,
           BUCKET_PHOTOS_ESPACES,
         );
-        if (!envoye)
+        nouvellesPhotos.forEach((p, i) => {
+          const chemin = chemins[i];
+          if (chemin) envoyees.set(p.cle, chemin);
+        });
+        if (plan?.fichier) cheminPlan = chemins[nouvellesPhotos.length];
+        // Une image déposée n'est pas renvoyée à l'essai suivant : elle garde son chemin.
+        setPhotos((actuelles) =>
+          actuelles.map((p) =>
+            envoyees.has(p.cle)
+              ? { cle: p.cle, apercu: p.apercu, chemin: envoyees.get(p.cle) }
+              : p,
+          ),
+        );
+        if (plan?.fichier && cheminPlan)
+          setPlan({ apercu: plan.apercu, chemin: cheminPlan });
+        if (chemins.includes(null))
           return setResultat({
             ok: false,
             message:
-              "La photo n'a pas pu être envoyée. Réessayez dans un instant.",
+              "Une image n'a pas pu être envoyée. Réessayez dans un instant.",
           });
-        chemin = envoye;
-        // Une photo déposée n'est pas renvoyée à l'essai suivant : elle garde son chemin.
-        setPhoto({ apercu: photo.apercu, chemin: envoye });
       }
-      setResultat(await enregistrerEspace(espace?.id ?? null, saisie, chemin));
+      setResultat(
+        await enregistrerEspace(
+          espace?.id ?? null,
+          saisie,
+          photos.map((p) => p.chemin ?? (envoyees.get(p.cle) as string)),
+          cheminPlan,
+        ),
+      );
     });
   }
 
@@ -165,10 +205,49 @@ export function FormulaireEspace({ espace }: Props) {
       />
       <ChampTexte {...texte("description", "Description")} rows={3} />
       <ChampPhotoEspace
-        photo={photo}
+        photos={photos}
         nom={saisie.nom}
-        onChoisir={setPhoto}
-        onRetirer={() => setPhoto(null)}
+        onAjouter={(nouvelles) => setPhotos((p) => [...p, ...nouvelles])}
+        onRetirer={(index) => setPhotos((p) => retirerPhoto(p, index))}
+        onDeplacer={(index, decalage) =>
+          setPhotos((p) => deplacerPhoto(p, index, decalage))
+        }
+      />
+      <ChampPlanEspace
+        plan={plan}
+        nom={saisie.nom}
+        onChoisir={setPlan}
+        onRetirer={() => setPlan(null)}
+      />
+      <Champ
+        libelle="Longueur (en mètres)"
+        name="longueur"
+        inputMode="decimal"
+        autoComplete="off"
+        value={saisie.longueur}
+        onChange={(e) => poser("longueur", e.target.value)}
+        erreur={erreurDe("longueur")}
+        aide="De 0,5 à 100 m, par exemple 8,5. Vide : pas de dimensions."
+      />
+      <Champ
+        libelle="Largeur (en mètres)"
+        name="largeur"
+        inputMode="decimal"
+        autoComplete="off"
+        value={saisie.largeur}
+        onChange={(e) => poser("largeur", e.target.value)}
+        erreur={erreurDe("largeur")}
+        aide="De 0,5 à 100 m. À saisir avec la longueur."
+      />
+      <Champ
+        libelle="Hauteur sous plafond (en mètres)"
+        name="hauteur_plafond"
+        inputMode="decimal"
+        autoComplete="off"
+        value={saisie.hauteur_plafond}
+        onChange={(e) => poser("hauteur_plafond", e.target.value)}
+        erreur={erreurDe("hauteur_plafond")}
+        aide="De 1 à 15 m, par exemple 2,7. Vide : pas de hauteur."
       />
       <Champ
         libelle="Capacité"
