@@ -209,3 +209,30 @@ test("un membre du syndic trouve « Espace syndic » dans le menu", async ({
     .click();
   await expect(page).toHaveURL(/\/syndic$/);
 });
+
+for (const statut of ["refuse", "retire"] as const) {
+  test(`un compte ${statut === "refuse" ? "refusé" : "retiré"} n'a que « Se déconnecter » et « Fermer »`, async ({
+    page,
+    isMobile,
+  }) => {
+    const resident = await nouveauResident(statut);
+    emails.push(resident.email);
+    await seConnecter(page, resident.email);
+    await expect(avatar(page)).toBeVisible();
+
+    await ouvrirMenu(page);
+    await expect(menu(page).getByRole("link")).toHaveCount(0);
+    await expect(
+      menu(page).getByRole("button", { name: "Se déconnecter" }),
+    ).toBeVisible();
+
+    // « Se déconnecter » est une ligne d'action : il ne remplace jamais « Fermer ».
+    if (isMobile) {
+      await menu(page).getByRole("button", { name: "Fermer" }).click();
+    } else {
+      await page.keyboard.press("Escape");
+    }
+    await expect(menu(page)).toBeHidden();
+    await expect(page).not.toHaveURL(/connexion/);
+  });
+}
