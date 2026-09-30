@@ -10,7 +10,7 @@ import {
   supprimerComptes,
 } from "./outils";
 
-// Ticket #41 : un résident supprime son compte depuis Profil › Mes identifiants.
+// Ticket #41 : un résident supprime son compte depuis Profil › Mon compte.
 
 const emails: string[] = [];
 
@@ -57,10 +57,10 @@ test("« Garder mon compte » referme l'explication sans rien supprimer", async 
 
   await page.reload();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Mes identifiants" }),
+    page.getByRole("heading", { level: 1, name: "Mon compte" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("list", { name: "Vos identifiants" }),
+    page.getByRole("list", { name: "Votre compte" }),
   ).toContainText(resident.email);
 });
 
@@ -142,10 +142,10 @@ test("un membre du syndic ne trouve pas « Supprimer mon compte » dans ses iden
   await page.goto("/profil/identifiants");
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Mes identifiants" }),
+    page.getByRole("heading", { level: 1, name: "Mon compte" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("list", { name: "Vos identifiants" }),
+    page.getByRole("list", { name: "Votre compte" }),
   ).toContainText(syndic.email);
   await expect(
     page.getByRole("button", { name: "Supprimer mon compte" }),

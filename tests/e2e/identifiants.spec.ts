@@ -30,10 +30,10 @@ async function residentConnecte(page: Page) {
 }
 
 function carteIdentifiants(page: Page) {
-  return page.getByRole("list", { name: "Vos identifiants" });
+  return page.getByRole("list", { name: "Votre compte" });
 }
 
-test("Mes identifiants s'ouvre depuis le menu de l'avatar, et on s'y déconnecte", async ({
+test("Mon compte s'ouvre depuis le menu de l'avatar, et on s'y déconnecte", async ({
   page,
 }) => {
   const resident = await residentConnecte(page);
@@ -43,10 +43,10 @@ test("Mes identifiants s'ouvre depuis le menu de l'avatar, et on s'y déconnecte
     .getByRole("dialog", { name: "Menu du profil" })
     .getByRole("link", { name: /^Profil/ })
     .click();
-  await page.getByRole("link", { name: /Mes identifiants/ }).click();
+  await page.getByRole("link", { name: /Mon compte/ }).click();
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Mes identifiants" }),
+    page.getByRole("heading", { level: 1, name: "Mon compte" }),
   ).toBeVisible();
   await expect(carteIdentifiants(page)).toContainText(resident.email);
   await expect(carteIdentifiants(page)).toContainText("••••••••");
@@ -72,7 +72,7 @@ test("le changement de mot de passe est refusé, avec le message sous le champ e
   await residentConnecte(page);
   await page.goto("/profil/identifiants/mot-de-passe");
   await expect(
-    page.getByRole("link", { name: "Retour : Mes identifiants" }),
+    page.getByRole("link", { name: "Retour : Mon compte" }),
   ).toBeVisible();
 
   const actuel = page.getByLabel("Mot de passe actuel", { exact: true });
@@ -161,7 +161,7 @@ test("un lien de changement d'adresse périmé, ouvert sans être connecté, s'e
 
   await expect(page).toHaveURL(/\/profil\/identifiants/);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
-    "Ce lien n'est plus valable",
+    "Ce lien a déjà servi ou a expiré",
   );
 });
 

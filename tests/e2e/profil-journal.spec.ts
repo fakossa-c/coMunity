@@ -62,7 +62,7 @@ test.describe("sur ordinateur", () => {
     ["/profil", "Danielle M."],
     ["/profil/informations", "Mes informations"],
     ["/profil/interets", "Mes intérêts"],
-    ["/profil/identifiants", "Mes identifiants"],
+    ["/profil/identifiants", "Mon compte"],
     ["/profil/reglages", "Mes réglages"],
     ["/profil/informations/modifier", "Modifier mes informations"],
     ["/profil/identifiants/email", "Modifier l'email"],
@@ -160,7 +160,7 @@ test.describe("sur ordinateur", () => {
     expect(cartes.x).toBeGreaterThan(champ.x + champ.width);
   });
 
-  test("Mes identifiants : « Se déconnecter » et « Supprimer mon compte » ne s'étirent pas sur toute la largeur", async ({
+  test("Mon compte : « Se déconnecter » et « Supprimer mon compte » ne s'étirent pas sur toute la largeur", async ({
     page,
   }) => {
     await residentConnecte(page);

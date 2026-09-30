@@ -38,12 +38,12 @@ const ECRANS_DU_RESIDENT: Ecran[] = [
   {
     chemin: "/profil/identifiants/mot-de-passe",
     href: "/profil/identifiants",
-    destination: "Mes identifiants",
+    destination: "Mon compte",
   },
   {
     chemin: "/profil/identifiants/email",
     href: "/profil/identifiants",
-    destination: "Mes identifiants",
+    destination: "Mon compte",
   },
   { chemin: "/profil/interets", href: "/profil", destination: "Profil" },
   { chemin: "/profil/reglages", href: "/profil", destination: "Profil" },

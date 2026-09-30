@@ -231,7 +231,7 @@ test("les cartes n'ont plus de contour, elles se distinguent par leur ombre douc
 
   const rubrique = page
     .getByRole("main")
-    .getByRole("link", { name: /^Mes identifiants/ });
+    .getByRole("link", { name: /^Mon compte/ });
   await expect(rubrique).toBeVisible();
   expect(await styleCalcule(rubrique, "border-top-color")).toBe(
     "rgba(0, 0, 0, 0)",
