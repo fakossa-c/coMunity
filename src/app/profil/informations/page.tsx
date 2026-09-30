@@ -32,7 +32,7 @@ export default async function MesInformations({
   const moi = identite({ ...session, pseudo: informations?.pseudo ?? null });
 
   return (
-    <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
+    <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
           titre="Mes informations"

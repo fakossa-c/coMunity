@@ -28,7 +28,7 @@ export default async function ActivitePubliee({ params }: Props) {
   const message = messageWhatsApp(fiche, lien);
 
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Votre activité est publiée"
         sousTitre="Partagez-la maintenant avec vos voisins."

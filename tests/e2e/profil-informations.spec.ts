@@ -209,9 +209,9 @@ test("« Annuler » ne modifie rien ; « Enregistrer » change le pseudo et l'ad
   });
   await auditer(page);
 
-  // Annuler : rien n'est enregistré.
+  // Retour : rien n'est enregistré.
   await page.getByLabel("Pseudo").fill("Autre pseudo");
-  await page.getByRole("link", { name: "Annuler" }).click();
+  await page.getByRole("link", { name: /^Retour/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Mes informations" }),
   ).toBeVisible();

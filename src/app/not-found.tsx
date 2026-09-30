@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Page introuvable" };
 
 export default function PageIntrouvable() {
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Page introuvable"
         sousTitre="Cette adresse ne mène à aucune page de l'app."

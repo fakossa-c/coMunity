@@ -58,7 +58,7 @@ export default async function MesIdentifiants({
     : null;
 
   return (
-    <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
+    <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage titre="Mes identifiants" />
         <Annonce message={confirmation ?? enAttente} />

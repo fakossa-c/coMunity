@@ -5,7 +5,7 @@ import { lireComptesReliables } from "@/lib/lecture-fiches-syndic";
 import { accesSyndic } from "../../acces";
 import { FormulaireFiche } from "../formulaire-fiche";
 
-const RETOUR = { href: "/syndic/mon-syndic", libelle: "Annuler" };
+const RETOUR = { href: "/syndic/mon-syndic", destination: "Mon syndic" };
 
 export const metadata: Metadata = { title: "Ajouter une fiche" };
 

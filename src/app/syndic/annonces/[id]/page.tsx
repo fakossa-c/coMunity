@@ -7,7 +7,7 @@ import { lireAnnonce, lireSondageDeLAnnonce } from "@/lib/lecture-annonces";
 import { accesSyndic } from "../../acces";
 import { FormulaireAnnonce } from "../formulaire-annonce";
 
-const RETOUR = { href: "/syndic/annonces", libelle: "Annuler" };
+const RETOUR = { href: "/syndic/annonces", destination: "Annonces" };
 
 export const metadata: Metadata = { title: "Modifier une annonce" };
 

@@ -11,7 +11,7 @@ import { lireEspacesCommuns, lireHeureCalme } from "@/lib/regles-residence";
 import { accesSyndic } from "../acces";
 import { HeureCalme } from "./heure-calme";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Espaces communs" };
 

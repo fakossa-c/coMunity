@@ -20,7 +20,7 @@ export default async function MonSyndic() {
   const fiches = peutLire ? await lireFichesSyndic() : null;
 
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage titre="Mon syndic" sousTitre="Contacts et demandes" />
       {fiches === null ? (
         <Bientot

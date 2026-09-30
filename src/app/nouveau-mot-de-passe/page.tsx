@@ -14,7 +14,7 @@ export default async function NouveauMotDePasse() {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/", libelle: "Accueil" }}
+      retour={{ href: "/", destination: "Accueil" }}
       avecCompte={session !== null}
       completionExigee={false}
     >

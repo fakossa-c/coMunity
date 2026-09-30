@@ -20,7 +20,7 @@ import { lireToutesLesAnnonces } from "@/lib/lecture-annonces";
 import { accesSyndic } from "../acces";
 import { ActionsAnnonce } from "./actions-annonce";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Annonces du conseil syndical" };
 

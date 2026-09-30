@@ -12,7 +12,10 @@ import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
 import { FormulaireEspace } from "../formulaire-espace";
 
-const RETOUR = { href: "/syndic/espaces-communs", libelle: "Annuler" };
+const RETOUR = {
+  href: "/syndic/espaces-communs",
+  destination: "Espaces communs",
+};
 
 export const metadata: Metadata = { title: "Modifier un espace commun" };
 

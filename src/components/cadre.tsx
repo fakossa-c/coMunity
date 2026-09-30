@@ -157,7 +157,7 @@ export async function EcranPrincipal({
 }
 
 type PropsSecondaire = {
-  retour: { href: string; libelle: string };
+  retour: { href: string; destination: string };
   /** Faux sur les écrans de connexion, où l'avatar n'a pas lieu d'être. */
   avecCompte?: boolean;
   /** Bouton « Partager » d'une fiche, dans la barre de retour. */
@@ -194,7 +194,7 @@ export function EcranSecondaire({
         <>
           <BarreRetour
             href={retour.href}
-            libelle={retour.libelle}
+            destination={retour.destination}
             partager={partageable}
             compte={avecCompte && <Compte compact={Boolean(partager)} />}
           />
@@ -206,7 +206,7 @@ export function EcranSecondaire({
     >
       <LienRetour
         href={retour.href}
-        libelle={retour.libelle}
+        destination={retour.destination}
         partager={partageable}
       />
       <GardeCompte completionExigee={completionExigee}>{children}</GardeCompte>

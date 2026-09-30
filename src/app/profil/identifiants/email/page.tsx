@@ -15,7 +15,7 @@ export default async function ModifierEmail() {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/profil/identifiants", libelle: "Annuler" }}
+      retour={{ href: "/profil/identifiants", destination: "Mes identifiants" }}
       actionDansLeFormulaire
     >
       <TitrePage titre="Modifier l'email" />

@@ -18,7 +18,7 @@ export default async function Connexion({
 
   return (
     <EcranSecondaire
-      retour={{ href: "/", libelle: "Accueil" }}
+      retour={{ href: "/", destination: "Accueil" }}
       avecCompte={false}
     >
       <div className="flex max-w-md flex-col">

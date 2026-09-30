@@ -446,7 +446,7 @@ test("une carte ouvre la fiche de l'espace : ce qui est renseigné, « Proposer 
 
   // Le retour ramène à Ma copro.
   await page.goBack();
-  await page.getByRole("link", { name: "Ma copro", exact: true }).click();
+  await page.getByRole("link", { name: "Retour : Ma copro" }).click();
   await expect(page).toHaveURL(/\/ma-copro$/);
 });
 

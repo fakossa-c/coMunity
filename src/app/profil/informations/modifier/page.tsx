@@ -19,7 +19,7 @@ export default async function ModifierMesInformations() {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/profil/informations", libelle: "Annuler" }}
+      retour={{ href: "/profil/informations", destination: "Mes informations" }}
       actionDansLeFormulaire
     >
       <TitrePage titre="Modifier mes informations" />

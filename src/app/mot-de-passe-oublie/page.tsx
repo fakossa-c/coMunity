@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Mot de passe oublié" };
 export default function MotDePasseOublie() {
   return (
     <EcranSecondaire
-      retour={{ href: "/connexion", libelle: "Connexion" }}
+      retour={{ href: "/connexion", destination: "Connexion" }}
       avecCompte={false}
     >
       <div className="max-w-md">

@@ -5,7 +5,7 @@ import { TitrePage } from "@/components/titre-page";
 /** Lien d'annonce qui ne mène à rien : identifiant inconnu, ou annonce supprimée. */
 export default function AnnonceIntrouvable() {
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Annonce introuvable"
         sousTitre="Ce lien ne mène à aucune annonce."

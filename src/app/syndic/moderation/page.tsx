@@ -15,7 +15,7 @@ import { cheminFiche, heure, jourLong } from "@/lib/partage-activite";
 import { accesSyndic } from "../acces";
 import { DecisionModeration } from "./decision-moderation";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Modération des activités" };
 

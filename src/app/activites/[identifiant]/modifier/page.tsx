@@ -29,7 +29,10 @@ export default async function Modifier({ params }: Props) {
 
   return (
     <EcranSecondaire
-      retour={{ href: cheminFiche(identifiant), libelle: "Annuler" }}
+      retour={{
+        href: cheminFiche(identifiant),
+        destination: "Fiche de l'activité",
+      }}
       actionDansLeFormulaire
     >
       <TitrePage titre="Modifier" sousTitre={fiche.titre} />

@@ -13,7 +13,7 @@ export default async function Inscription() {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/connexion", libelle: "Connexion" }}
+      retour={{ href: "/connexion", destination: "Connexion" }}
       avecCompte={false}
     >
       <div className="max-w-md">
