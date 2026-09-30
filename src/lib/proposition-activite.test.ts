@@ -8,11 +8,16 @@ import {
   avertissementsApplicables,
   blocageDeLEtape,
   changerCategorie,
+  descriptionPourAssistant,
+  entreeJevDe,
+  espaceDeLAdresse,
   pictogrammeDeLaSaisie,
   propositionDe,
+  resteARemplir,
   saisieDeCopie,
   saisieDepuisActivite,
   verifierEtape,
+  verifierPage,
   versNouvelleActivite,
   type SaisieActivite,
 } from "./proposition-activite";
@@ -21,6 +26,7 @@ const COMPLETE: SaisieActivite = {
   ...SAISIE_VIDE,
   titre: "Goûter crêpes",
   categorie: "moments_partages",
+  description: "Crêpes sucrées et salées, jeux de société pour tous.",
   mot_accueil: "Venez comme vous êtes.",
   date_activite: "2026-10-24",
   heure_debut: "16:00",
@@ -38,9 +44,10 @@ const COMPLETE: SaisieActivite = {
 };
 
 describe("limites de saisie", () => {
-  it("titre 50, précision d'accès 120, mot d'accueil 300", () => {
+  it("titre 50, description 600, précision d'accès 120, mot d'accueil 300", () => {
     expect(LIMITES).toEqual({
       titre: 50,
+      description: 600,
       precision_acces: 120,
       mot_accueil: 300,
     });
@@ -70,6 +77,19 @@ describe("vérification d'une étape", () => {
     expect(
       verifierEtape(1, { ...COMPLETE, titre: "x".repeat(51) }),
     ).toMatchObject({ champ: "titre" });
+  });
+
+  it("étape 1 : la description tient en 600 caractères, 600 passent", () => {
+    expect(
+      verifierEtape(1, { ...COMPLETE, description: "x".repeat(600) }),
+    ).toEqual({});
+    expect(
+      verifierEtape(1, { ...COMPLETE, description: "x".repeat(601) }),
+    ).toEqual({ champ: "description", erreur: "600 caractères maximum." });
+  });
+
+  it("étape 1 : une description vide est permise", () => {
+    expect(verifierEtape(1, { ...COMPLETE, description: "" })).toEqual({});
   });
 
   it("étape 1 : le mot d'accueil tient en 300 caractères", () => {
@@ -142,6 +162,7 @@ describe("conversion vers l'activité à publier", () => {
       titre: "Goûter crêpes",
       categorie: "moments_partages",
       pictogramme: "waving_hand",
+      description: "Crêpes sucrées et salées, jeux de société pour tous.",
       mot_accueil: "Venez comme vous êtes.",
       date_activite: "2026-10-24",
       heure_debut: "16:00",
@@ -166,6 +187,7 @@ describe("conversion vers l'activité à publier", () => {
         capacite_max: "12",
         capacite_min: "",
         precision_acces: "  ",
+        description: "   ",
         mot_accueil: "",
         conseils_pratiques: "",
         materiel_prevoir: "",
@@ -176,6 +198,7 @@ describe("conversion vers l'activité à publier", () => {
       capacite_max: null,
       capacite_min: null,
       precision_acces: null,
+      description: null,
       mot_accueil: null,
       conseils_pratiques: null,
       materiel_prevoir: null,
@@ -190,6 +213,7 @@ const EXISTANTE = {
   titre: "Goûter crêpes",
   categorie: "moments_partages" as const,
   pictogramme: "waving_hand",
+  description: "Crêpes sucrées et salées, jeux de société pour tous.",
   mot_accueil: "Venez comme vous êtes.",
   date_activite: "2026-10-24",
   heure_debut: "16:00:00",
@@ -211,6 +235,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
       titre: "Goûter crêpes",
       categorie: "moments_partages",
       pictogramme: "",
+      description: "Crêpes sucrées et salées, jeux de société pour tous.",
       mot_accueil: "Venez comme vous êtes.",
       date_activite: "2026-10-24",
       heure_debut: "16:00",
@@ -234,6 +259,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
       capacite_max: null,
       capacite_min: null,
       precision_acces: null,
+      description: null,
       mot_accueil: null,
     });
 
@@ -242,6 +268,7 @@ describe("saisie pré-remplie depuis une activité existante", () => {
       capacite_max: "",
       capacite_min: "",
       precision_acces: "",
+      description: "",
       mot_accueil: "",
     });
   });
@@ -346,7 +373,8 @@ describe("lieu : espace commun ou lieu libre", () => {
   it("l'assistant reçoit l'espace commun, ou le lieu libre, et les places", () => {
     expect(propositionDe(dansLaSalle)).toEqual({
       titre: "Goûter crêpes",
-      description: "Venez comme vous êtes.",
+      description:
+        "Crêpes sucrées et salées, jeux de société pour tous.\n\nVenez comme vous êtes.",
       categorie: "moments_partages",
       date: "2026-10-24",
       heureDebut: "16:00",
@@ -546,5 +574,182 @@ describe("suggestions de l'assistant appliquées à la saisie", () => {
 
     expect(saisie.categorie).toBe("culture_loisirs");
     expect(pictogrammeDeLaSaisie(saisie)).toBe("menu_book");
+  });
+});
+
+describe("description et mot d'accueil pour l'assistant", () => {
+  it("l'assistant lit la description, puis le mot d'accueil", () => {
+    expect(descriptionPourAssistant(COMPLETE)).toBe(
+      "Crêpes sucrées et salées, jeux de société pour tous.\n\nVenez comme vous êtes.",
+    );
+  });
+
+  it("un seul des deux textes suffit, sans ligne vide en trop", () => {
+    expect(descriptionPourAssistant({ ...COMPLETE, mot_accueil: "  " })).toBe(
+      "Crêpes sucrées et salées, jeux de société pour tous.",
+    );
+    expect(descriptionPourAssistant({ ...COMPLETE, description: "" })).toBe(
+      "Venez comme vous êtes.",
+    );
+    expect(
+      descriptionPourAssistant({
+        ...COMPLETE,
+        description: "",
+        mot_accueil: "",
+      }),
+    ).toBe("");
+  });
+
+  it("Jev reçoit les deux textes, bornés à la somme des deux limites", () => {
+    expect(entreeJevDe(COMPLETE).description).toBe(
+      descriptionPourAssistant(COMPLETE),
+    );
+    expect(LIMITES.description + LIMITES.mot_accueil).toBe(900);
+  });
+});
+
+describe("vérification de la page entière", () => {
+  it("une saisie complète passe", () => {
+    expect(verifierPage(COMPLETE)).toEqual({});
+  });
+
+  it("rend la première erreur, dans l'ordre de la page", () => {
+    expect(
+      verifierPage({ ...COMPLETE, titre: "", date_activite: "" }),
+    ).toMatchObject({ champ: "titre" });
+    expect(
+      verifierPage({ ...COMPLETE, date_activite: "", espace_commun: "" }),
+    ).toMatchObject({ champ: "date_activite" });
+    expect(
+      verifierPage({ ...COMPLETE, places: "limitees", capacite_max: "" }),
+    ).toMatchObject({ champ: "capacite_max" });
+  });
+
+  it("une description trop longue est refusée avant la date", () => {
+    expect(
+      verifierPage({
+        ...COMPLETE,
+        description: "x".repeat(601),
+        date_activite: "",
+      }),
+    ).toMatchObject({ champ: "description" });
+  });
+
+  it("garde le plancher des places déjà prises en modification", () => {
+    expect(
+      verifierPage(
+        { ...COMPLETE, places: "limitees", capacite_max: "3" },
+        { placesPrises: 5 },
+      ),
+    ).toMatchObject({ champ: "capacite_max" });
+  });
+});
+
+describe("« Il reste à remplir »", () => {
+  const vide = SAISIE_VIDE;
+
+  it("une nouvelle activité a tout à remplir : titre, date et heure, lieu, puis la description conseillée", () => {
+    expect(resteARemplir(vide)).toEqual([
+      {
+        cle: "titre",
+        libelle: "Titre",
+        fait: false,
+        obligatoire: true,
+        etat: "à saisir",
+        bloc: "titre-description",
+      },
+      {
+        cle: "date_heure",
+        libelle: "Date et heure",
+        fait: false,
+        obligatoire: true,
+        etat: "à choisir",
+        bloc: "date-heure",
+      },
+      {
+        cle: "lieu",
+        libelle: "Lieu",
+        fait: false,
+        obligatoire: true,
+        etat: "à choisir",
+        bloc: "lieu",
+      },
+      {
+        cle: "description",
+        libelle: "Description",
+        fait: false,
+        obligatoire: false,
+        etat: "conseillée",
+        bloc: "titre-description",
+      },
+    ]);
+  });
+
+  it("une saisie complète n'a plus rien d'obligatoire à remplir", () => {
+    const points = resteARemplir(COMPLETE);
+    expect(points.every((point) => point.fait)).toBe(true);
+    expect(points.map((point) => point.etat)).toEqual(["", "", "", ""]);
+  });
+
+  it("« Autre lieu » sans nom demande de le nommer", () => {
+    const lieu = resteARemplir({
+      ...COMPLETE,
+      espace_commun: LIEU_LIBRE,
+      lieu: " ",
+    }).find((point) => point.cle === "lieu");
+    expect(lieu).toMatchObject({ fait: false, etat: "à nommer" });
+  });
+
+  it("un espace commun choisi suffit pour le lieu", () => {
+    const lieu = resteARemplir({
+      ...COMPLETE,
+      espace_commun: "salle",
+      lieu: "",
+    }).find((point) => point.cle === "lieu");
+    expect(lieu).toMatchObject({ fait: true });
+  });
+
+  it("la date sans heure de début ou de fin n'est pas faite", () => {
+    const date = (saisie: SaisieActivite) =>
+      resteARemplir(saisie).find((point) => point.cle === "date_heure");
+    expect(date({ ...COMPLETE, heure_fin: "" })).toMatchObject({
+      fait: false,
+      etat: "à choisir",
+    });
+    expect(date({ ...COMPLETE, date_activite: "" })).toMatchObject({
+      fait: false,
+    });
+  });
+
+  it("des places limitées sans nombre s'ajoutent à la liste", () => {
+    const points = resteARemplir({
+      ...COMPLETE,
+      places: "limitees",
+      capacite_max: "",
+    });
+    expect(points.find((point) => point.cle === "places")).toMatchObject({
+      fait: false,
+      obligatoire: true,
+      etat: "à indiquer",
+      bloc: "precisions",
+    });
+    expect(
+      resteARemplir(COMPLETE).some((point) => point.cle === "places"),
+    ).toBe(false);
+  });
+});
+
+describe("paramètre d'adresse `espace`", () => {
+  const ESPACES = [{ id: "salle" }, { id: "jardin" }];
+
+  it("un identifiant d'espace commun de la résidence préchoisit le lieu", () => {
+    expect(espaceDeLAdresse(ESPACES, "jardin")).toBe("jardin");
+  });
+
+  it("un identifiant inconnu, vide ou absent est ignoré", () => {
+    expect(espaceDeLAdresse(ESPACES, "inconnu")).toBe("");
+    expect(espaceDeLAdresse(ESPACES, "")).toBe("");
+    expect(espaceDeLAdresse(ESPACES, undefined)).toBe("");
+    expect(espaceDeLAdresse([], "jardin")).toBe("");
   });
 });
