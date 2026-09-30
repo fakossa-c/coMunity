@@ -15,7 +15,7 @@ export type JourActivites<T> = {
 
 /**
  * Les activités groupées par jour, dans l'ordre chronologique. `aujourdhui` est la date du jour
- * au format `AAAA-MM-JJ`, celle de la base (UTC), comme le « à venir » du catalogue.
+ * au format `AAAA-MM-JJ`, celle d'Europe/Paris, comme le « à venir » du catalogue.
  */
 export function grouperParJour<
   T extends { date_activite: string; heure_debut: string },

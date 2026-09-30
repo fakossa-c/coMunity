@@ -4,7 +4,6 @@ import { Bientot } from "@/components/bientot";
 import { EcranPrincipal } from "@/components/cadre";
 import {
   CarteActivite,
-  type Activite,
   type ActiviteDuJour,
 } from "@/components/carte-activite";
 import { PuceFiltre } from "@/components/puce-filtre";
@@ -64,32 +63,13 @@ export default async function Accueil({ searchParams }: Props) {
   );
 }
 
-/** Les activités à venir, avec leur heure de fin, que le catalogue ne donne pas. */
-async function lireCatalogue(): Promise<ActiviteDuJour[]> {
+/** Les activités à venir : le catalogue donne aussi leur heure de fin, et retire celles qui sont finies. */
+async function lireCatalogue() {
   const supabase = await clientSession();
   const { data, error } = await supabase.rpc("catalogue_activites");
   if (error)
     throw new Error(`Catalogue des activités illisible : ${error.message}`);
-  const activites = data as Activite[];
-  if (activites.length === 0) return [];
-
-  const { data: fins, error: erreurFins } = await supabase
-    .from("activite")
-    .select("id, heure_fin")
-    .in(
-      "id",
-      activites.map((activite) => activite.id),
-    );
-  if (erreurFins)
-    throw new Error(
-      `Horaires des activités illisibles : ${erreurFins.message}`,
-    );
-  // Une activité sans heure de fin a été supprimée entre les deux lectures : elle n'est plus à venir.
-  const finDe = new Map(fins.map((fin) => [fin.id, fin.heure_fin as string]));
-  return activites.flatMap((activite) => {
-    const fin = finDe.get(activite.id);
-    return fin ? [{ ...activite, heure_fin: fin }] : [];
-  });
+  return data as ActiviteDuJour[];
 }
 
 function Catalogue({

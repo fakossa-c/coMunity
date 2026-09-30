@@ -5,6 +5,7 @@ import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import { libelleJour, libelleMois, moisDe } from "../../src/lib/calendrier";
+import { aujourdhui } from "../../src/lib/partage-activite";
 
 const local = lireSupabaseLocal();
 
@@ -165,14 +166,15 @@ export async function nouvelleActivite(
 }
 
 /**
- * Une activité à venir plus proche que toute autre (aujourd'hui, 00h05) : elle prend le bloc
+ * Une activité à venir plus proche que toute autre (aujourd'hui à Paris, de 00h05 à 23h59) : elle prend le bloc
  * « À la une » de l'Accueil, et les activités d'un test restent dans la grille du jour.
  */
 export async function nouvelleActiviteEnTete(organisateur: string) {
   return nouvelleActivite(organisateur, {
     titre: `En tête ${Date.now()}`,
-    date_activite: new Date().toISOString().slice(0, 10),
+    date_activite: aujourdhui(),
     heure_debut: "00:05",
+    heure_fin: "23:59",
   });
 }
 

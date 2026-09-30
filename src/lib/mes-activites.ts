@@ -4,6 +4,7 @@ type Classable = {
   id: string;
   date_activite: string;
   heure_debut: string;
+  heure_fin: string;
   statut?: string;
 };
 
@@ -14,26 +15,27 @@ export type ActiviteArchivee<T> = { activite: T; role: RoleArchive };
 
 /**
  * Les trois segments de l'écran Activités.
- * - Je participe : les inscriptions à venir (le jour même compris), annulées par leur créateur
- *   comprises pour qu'on le lise, la plus proche d'abord.
+ * - Je participe : les inscriptions à venir (le jour même compris, jusqu'à l'heure de fin),
+ *   annulées par leur créateur comprises pour qu'on le lise, la plus proche d'abord.
  * - J'organise : les activités organisées à venir, annulées comprises, la plus proche d'abord.
  * - Archivées : toutes les activités passées, organisées ou suivies, la plus récente d'abord. Une
  *   activité organisée où l'on était aussi inscrit compte une fois, en organisée. Une activité
  *   suivie puis annulée n'y figure pas (on n'y est pas allé) ; une organisée puis annulée y reste.
  *
- * `inscriptions` et `organisees` couvrent le passé comme l'avenir ; le jour de référence les
- * partage.
+ * `inscriptions` et `organisees` couvrent le passé comme l'avenir ; l'heure de fin de chaque
+ * activité, comparée à `maintenant` en heure de Paris, les partage : le jour même, une activité
+ * change de liste à son heure de fin.
  */
 export function classerMesActivites<T extends Classable>({
   inscriptions,
   organisees,
-  jour,
+  maintenant,
 }: {
   inscriptions: T[];
   organisees: T[];
-  jour: string;
+  maintenant: Date;
 }) {
-  const aVenir = (activite: T) => !estPassee(activite.date_activite, jour);
+  const aVenir = (activite: T) => !estPassee(activite, maintenant);
   const plusRecenteDAbord = (a: ActiviteArchivee<T>, b: ActiviteArchivee<T>) =>
     ordreChronologique(b.activite, a.activite);
 
