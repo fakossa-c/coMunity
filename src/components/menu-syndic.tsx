@@ -39,7 +39,7 @@ const RUBRIQUES = [
     id: "membres",
     href: "/syndic/membres",
     icone: "shield_person",
-    libelle: "Membres du syndic",
+    libelle: "Conseil syndical",
     groupe: "Résidence",
   },
   {
@@ -172,10 +172,12 @@ function ListeRubriques({
               (rubrique) => {
                 const estActif = rubrique.id === actif;
                 const nombre = compteurs[rubrique.id] ?? 0;
-                // Le nombre fait partie du nom de la ligne, le rail n'ayant que la pastille.
+                // Le nombre fait partie du nom de la ligne, le rail n'ayant que la pastille. Le nom
+                // commence par le texte visible, libellé puis pastille, sans ponctuation entre eux :
+                // la commande vocale « cliquer sur Résidents » le retrouve.
                 const nom =
                   nombre > 0 && "compteur" in rubrique
-                    ? `${rubrique.libelle}, ${nombre} ${rubrique.compteur}`
+                    ? `${rubrique.libelle} ${nombre} ${rubrique.compteur}`
                     : undefined;
                 return (
                   <li key={rubrique.id}>

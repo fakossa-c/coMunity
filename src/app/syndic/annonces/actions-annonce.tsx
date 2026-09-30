@@ -54,7 +54,7 @@ export function ActionsAnnonce({ id, titre, epinglee }: Props) {
           className={classesBouton("contour")}
         >
           <Icone nom="content_copy" />
-          Dupliquer<span className="sr-only"> : {titre}</span>
+          Réutiliser<span className="sr-only"> : {titre}</span>
         </Link>
         <Bouton
           variante="danger"
@@ -74,9 +74,8 @@ export function ActionsAnnonce({ id, titre, epinglee }: Props) {
         onConfirmer={supprimer}
         desactive={enCours}
       >
-        Les résidents ne la verront plus. Son lien public ne mènera plus nulle
-        part, même dans le groupe WhatsApp où il a été partagé. Cette action est
-        définitive.
+        Les résidents ne la verront plus, et son lien ne s&apos;ouvrira plus,
+        même partagé sur WhatsApp. Cette action est définitive.
       </FeuilleConfirmation>
     </div>
   );

@@ -23,9 +23,9 @@ import { clientSession } from "@/lib/supabase/serveur";
 const LISTE = "/syndic/espaces-communs";
 
 const messages: Record<string, string> = {
-  "42501": "Seuls les membres du conseil syndical gèrent les espaces communs.",
+  "42501": "Seul le conseil syndical peut gérer les espaces communs.",
   "23514":
-    "Un champ n'est pas valide : vérifiez les longueurs, la capacité, les mesures et les photos.",
+    "Une information ne convient pas. Vérifiez les textes, la capacité, les mesures et les photos.",
   "23505": "Un espace commun porte déjà ce nom : choisissez-en un autre.",
 };
 
@@ -91,7 +91,7 @@ export async function preparerDepots(tailles: number[]): Promise<Depots> {
     return {
       ok: false,
       message:
-        "Les images n'ont pas pu être envoyées. Vous n'avez peut-être plus le droit de gérer les espaces communs.",
+        "Les images n'ont pas pu être envoyées. Votre accès à l'espace syndic a peut-être été retiré.",
     };
   return { ok: true, depots: depots as { chemin: string; token: string }[] };
 }
@@ -115,12 +115,18 @@ export async function enregistrerEspace(
     !photos.every(estCheminPhotoEspace) ||
     new Set(photos).size !== photos.length
   )
-    return { ok: false, message: "Les photos ne sont pas valides." };
+    return {
+      ok: false,
+      message: "Les photos ne conviennent pas. Choisissez-en d'autres.",
+    };
   if (
     planChemin !== null &&
     (!estCheminPhotoEspace(planChemin) || photos.includes(planChemin))
   )
-    return { ok: false, message: "Le plan n'est pas valide." };
+    return {
+      ok: false,
+      message: "Le plan ne convient pas. Choisissez une autre image.",
+    };
 
   const supabase = await clientSession();
   let avant: Medias = { photos: [], plan_chemin: null };
@@ -154,8 +160,7 @@ export async function enregistrerEspace(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le modifier.",
+      message: "Cet espace commun n'existe plus, ou votre accès a été retiré.",
     };
 
   await retirerFichiers(supabase, [
@@ -187,8 +192,7 @@ export async function supprimerEspace(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cet espace commun n'existe plus, ou vous n'avez plus le droit de le supprimer.",
+      message: "Cet espace commun n'existe plus, ou votre accès a été retiré.",
     };
 
   await retirerFichiers(supabase, [...data[0].photos, data[0].plan_chemin]);

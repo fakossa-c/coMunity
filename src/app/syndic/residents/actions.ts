@@ -35,14 +35,14 @@ export async function statuer(
 
   if (error) {
     const messages: Record<string, string> = {
-      "42501": "Seuls les membres du syndic peuvent gérer les résidents.",
-      P0002: `Le compte de ${nomComplet(resident)} a déjà été traité, par vous ou par un collègue. La liste est à jour.`,
+      "42501": "Seul le conseil syndical peut valider ou retirer un résident.",
+      P0002: `Le compte de ${nomComplet(resident)} a déjà été traité, par vous ou un autre membre du conseil syndical.`,
     };
     return {
       ok: false,
       message:
         messages[error.code] ??
-        "L'opération n'a pas abouti. Réessayez dans un instant.",
+        "La décision n'a pas été enregistrée. Réessayez dans un instant.",
     };
   }
   return { ok: true, message: reussites[decision](nomComplet(resident)) };

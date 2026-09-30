@@ -17,28 +17,28 @@ const FEUILLES = {
   publier: {
     titre: "Publier cette activité ?",
     explication:
-      "Elle devient visible de toute la résidence. Vous pouvez laisser un mot à son créateur.",
+      "Elle devient visible de toute la résidence. Vous pouvez laisser un mot à son organisateur.",
     libelleGarder: "Garder en relecture",
     libelleConfirmer: "Publier",
-    libelleChamp: "Message pour le créateur (facultatif)",
+    libelleChamp: "Message pour l'organisateur (facultatif)",
     obligatoire: false,
   },
   refuser: {
     titre: "Refuser cette activité ?",
     explication:
-      "Elle reste masquée : seul son créateur la voit, avec votre message.",
+      "Elle reste masquée : seul son organisateur la voit, avec votre message.",
     libelleGarder: "Garder en relecture",
     libelleConfirmer: "Refuser",
-    libelleChamp: "Message pour le créateur",
+    libelleChamp: "Message pour l'organisateur",
     obligatoire: true,
   },
   masquer: {
     titre: "Masquer cette activité ?",
     explication:
-      "Les voisins ne la voient plus, ni son lien public. Son créateur la voit, avec votre message. Vous pouvez la rétablir à tout moment.",
+      "Les voisins ne la voient plus, même par son lien. Son organisateur la voit, avec votre message. Vous pouvez la rétablir à tout moment.",
     libelleGarder: "Garder visible",
     libelleConfirmer: "Masquer",
-    libelleChamp: "Message pour le créateur",
+    libelleChamp: "Message pour l'organisateur",
     obligatoire: true,
   },
 } as const;
@@ -106,7 +106,7 @@ export function DecisionModeration({
     const texte = message.trim();
     if (feuille.obligatoire && texte === "") {
       setErreur(
-        "Écrivez un message pour expliquer votre décision au créateur.",
+        "Écrivez un message pour expliquer votre décision à l'organisateur.",
       );
       return;
     }

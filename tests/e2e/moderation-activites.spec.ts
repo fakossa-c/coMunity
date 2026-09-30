@@ -162,7 +162,7 @@ test("une activité en relecture ou masquée n'est visible ni des voisins ni d'u
   );
   await expect(pageCreateur.getByText("En relecture").first()).toBeVisible();
   await expect(
-    pageCreateur.getByText("Le conseil syndical relit votre activité"),
+    pageCreateur.getByText("Le conseil syndical la relit avant de la publier"),
   ).toBeVisible();
 
   // Le membre du conseil syndical voit l'activité en relecture.
@@ -312,7 +312,7 @@ test("le menu de l'espace syndic annonce les activités à relire", async ({
   }
   const rubrique = page
     .getByRole("navigation", { name: "Espace syndic" })
-    .getByRole("link", { name: /^Modération, \d+ à relire$/ });
+    .getByRole("link", { name: /^Modération \d+ à relire$/ });
 
   await rubrique.click();
   await expect(page).toHaveURL(/\/syndic\/moderation$/);

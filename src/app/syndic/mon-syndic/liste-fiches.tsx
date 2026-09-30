@@ -37,7 +37,7 @@ export function ListeFiches({ fiches }: { fiches: Fiche[] }) {
       const resultat = await deplacerFiche(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `${nomFiche(fiche)} passe en position ${arrivee + 1} sur ${fiches.length}.`,
+          `${nomFiche(fiche)} est maintenant ${arrivee === 0 ? "1re" : `${arrivee + 1}e`} sur ${fiches.length}.`,
         );
       else setErreur(resultat.message);
     });

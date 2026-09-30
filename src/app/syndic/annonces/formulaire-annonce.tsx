@@ -254,7 +254,7 @@ export function FormulaireAnnonce({ annonce }: Props) {
           value={saisie.expire_le}
           onChange={(e) => poser("expire_le", e.target.value)}
           erreur={erreurDe("expire_le")}
-          aide="Facultatif. Passé ce jour, l'annonce quitte la liste ; son lien public reste lisible."
+          aide="Facultatif. Passé ce jour, l'annonce quitte la liste, mais son lien s'ouvre toujours."
         />
       </BlocFormulaire>
       <BlocFormulaire>

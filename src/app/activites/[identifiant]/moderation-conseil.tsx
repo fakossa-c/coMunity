@@ -24,10 +24,11 @@ type Props = {
 const ETATS: Record<StatutActivite, string> = {
   publiee: "Publiée : visible de toute la résidence.",
   en_relecture:
-    "Visible de son créateur et du conseil syndical seulement, jusqu'à votre décision. Publiez-la pour pouvoir l'annuler.",
+    "Seuls son organisateur et le conseil syndical la voient, jusqu'à votre décision. Publiez-la pour pouvoir l'annuler.",
   masquee:
-    "Visible de son créateur et du conseil syndical seulement. Rétablissez-la pour pouvoir l'annuler.",
-  annulee: "Annulée : ses inscrits en sont informés, elle ne se modère plus.",
+    "Seuls son organisateur et le conseil syndical la voient. Rétablissez-la pour pouvoir l'annuler.",
+  annulee:
+    "Annulée : ses inscrits le voient sur sa fiche, il n'y a plus rien à décider.",
 };
 
 /**

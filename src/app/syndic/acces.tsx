@@ -28,12 +28,12 @@ export async function accesSyndic(
     session,
     refus: (
       <>
-        <TitrePage titre="Espace syndic" sousTitre="Accès non autorisé" />
+        <TitrePage titre="Espace syndic" sousTitre="Espace réservé" />
         <Bientot
           icone="lock"
           message={
             estSyndicRetire(session)
-              ? "Votre accès à l'espace syndic a été retiré. Si c'est une erreur, adressez-vous à un membre du conseil syndical."
+              ? "Votre accès à l'espace syndic a été retiré. Une erreur ? Parlez-en à un membre du conseil syndical."
               : "Cet espace est réservé aux membres du conseil syndical."
           }
         />

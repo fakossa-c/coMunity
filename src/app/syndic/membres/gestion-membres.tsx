@@ -37,12 +37,12 @@ export function GestionMembres({ membres, idMoi }: Props) {
             id="titre-inviter"
             className="mb-space-sm font-headline text-headline-sm"
           >
-            Inviter un collègue
+            Inviter un membre
           </h2>
           <form action={inviter} className="flex flex-col gap-space-md">
             <Champ
-              libelle="Adresse email du collègue"
-              aide="Votre collègue recevra un lien pour choisir son mot de passe."
+              libelle="Adresse email du nouveau membre"
+              aide="Un lien lui permettra de choisir son mot de passe."
               name="email"
               type="email"
               autoComplete="off"

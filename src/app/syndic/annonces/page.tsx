@@ -46,7 +46,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
       <div className="desktop:flex desktop:items-start desktop:justify-between desktop:gap-8">
         <TitrePage
           titre="Annonces"
-          sousTitre="Les informations du conseil syndical pour les résidents : assemblées, travaux, sondages, informations pratiques."
+          sousTitre="Assemblées, travaux, sondages et infos pratiques pour les résidents."
         />
         {/* Sur ordinateur, le bouton d'ajout est en tête ; sur mobile, il reste sous la liste. */}
         <div className="hidden shrink-0 desktop:mt-2.5 desktop:block">
@@ -123,7 +123,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
                       className="inline-flex min-h-cible items-center gap-1.5 self-start font-headline text-label-lg text-primary underline"
                     >
                       <Icone nom="visibility" taille={22} />
-                      Voir la page publique
+                      Voir l&apos;annonce
                       <span className="sr-only"> : {annonce.titre}</span>
                     </Link>
                     <div className="desktop:mt-auto">

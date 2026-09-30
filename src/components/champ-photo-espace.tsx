@@ -93,7 +93,7 @@ export function ChampPhotoEspace({
 
   function deplacer(index: number, decalage: -1 | 1) {
     setDeplacement(
-      `Photo déplacée en position ${compteurPhoto(index + decalage + 1, photos.length)}.`,
+      `Photo déplacée : maintenant ${compteurPhoto(index + decalage + 1, photos.length)}.`,
     );
     onDeplacer(index, decalage);
     resume.current?.focus();

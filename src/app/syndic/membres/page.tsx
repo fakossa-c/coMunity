@@ -5,7 +5,7 @@ import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic, RETOUR_ACCUEIL } from "../acces";
 import { GestionMembres } from "./gestion-membres";
 
-export const metadata: Metadata = { title: "Membres du syndic" };
+export const metadata: Metadata = { title: "Conseil syndical" };
 
 export default async function MembresDuSyndic() {
   const { session, refus } = await accesSyndic("/syndic/membres");
@@ -24,8 +24,8 @@ export default async function MembresDuSyndic() {
   return (
     <EcranSyndic rubrique="membres">
       <TitrePage
-        titre="Membres du syndic"
-        sousTitre="Invitez un collègue par email ou retirez l'accès d'un membre qui quitte l'équipe."
+        titre="Conseil syndical"
+        sousTitre="Invitez un membre par email, ou retirez l'accès de celui qui quitte le conseil."
       />
       <GestionMembres membres={membres} idMoi={session.id} />
     </EcranSyndic>

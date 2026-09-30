@@ -26,8 +26,8 @@ import { clientSession } from "@/lib/supabase/serveur";
 const LISTE = "/syndic/annonces";
 
 const messages: Record<string, string> = {
-  "42501": "Seuls les membres du conseil syndical gèrent les annonces.",
-  "23514": "Un champ n'est pas valide : vérifiez les longueurs.",
+  "42501": "Seul le conseil syndical peut gérer les annonces.",
+  "23514": "Un texte est trop long. Raccourcissez-le, puis enregistrez.",
 };
 
 function echec(code: string | undefined, parDefaut: string): Resultat {
@@ -99,7 +99,7 @@ export async function preparerDepot(
     return {
       ok: false,
       message:
-        "Le fichier n'a pas pu être envoyé. Vous n'avez peut-être plus le droit de publier des annonces.",
+        "Le fichier n'a pas pu être envoyé. Votre accès à l'espace syndic a peut-être été retiré.",
     };
   return { ok: true, chemin, token: data.token };
 }
@@ -141,7 +141,10 @@ export async function enregistrerAnnonce(
   }
   for (const chemin of [saisie.photo_chemin, saisie.document_chemin]) {
     if (chemin !== null && !estCheminDeFichier(chemin))
-      return { ok: false, message: "Un fichier joint n'est pas valide." };
+      return {
+        ok: false,
+        message: "Un fichier joint ne convient pas. Choisissez-en un autre.",
+      };
   }
 
   const annonce = versLigneAnnonce(saisie);
@@ -156,8 +159,7 @@ export async function enregistrerAnnonce(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cette annonce n'existe plus, ou vous n'avez plus le droit de la modifier.",
+      message: "Cette annonce n'existe plus, ou votre accès a été retiré.",
     };
 
   if (sondageAJoindre) {
@@ -173,7 +175,7 @@ export async function enregistrerAnnonce(
       return echec(
         erreurSondage.code,
         annulation
-          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée à moitié faite : ouvrez-la pour la corriger."
+          ? "Le sondage n'a pas pu être enregistré, et l'annonce est restée incomplète : ouvrez-la pour la corriger."
           : "Le sondage n'a pas pu être enregistré. Réessayez dans un instant.",
       );
     }
@@ -226,8 +228,7 @@ export async function supprimerAnnonce(
   if (data.length === 0)
     return {
       ok: false,
-      message:
-        "Cette annonce n'existe plus, ou vous n'avez plus le droit de la supprimer.",
+      message: "Cette annonce n'existe plus, ou votre accès a été retiré.",
     };
 
   await retirerFichiersOrphelins(supabase, [

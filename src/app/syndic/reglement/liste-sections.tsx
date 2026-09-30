@@ -30,7 +30,7 @@ export function ListeSections({ sections }: Props) {
       const resultat = await deplacerSection(id, versLeHaut);
       if (resultat.ok)
         setConfirmation(
-          `« ${titre} » passe en position ${arrivee + 1} sur ${sections.length}.`,
+          `« ${titre} » est maintenant ${arrivee === 0 ? "1re" : `${arrivee + 1}e`} sur ${sections.length}.`,
         );
       else setErreur(resultat.message);
     });

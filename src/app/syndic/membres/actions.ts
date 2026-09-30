@@ -26,7 +26,7 @@ export async function inviterCollegue(email: string): Promise<Resultat> {
       ok: false,
       message:
         invitation.error.code === "42501"
-          ? "Seuls les membres du syndic peuvent inviter un collègue."
+          ? "Seul le conseil syndical peut inviter un membre."
           : "L'invitation n'a pas pu être enregistrée. Réessayez dans un instant.",
     };
   }
@@ -38,7 +38,7 @@ export async function inviterCollegue(email: string): Promise<Resultat> {
       ok: false,
       message:
         error.code === "email_exists"
-          ? `${adresse} a déjà un compte sur la plateforme : cette adresse ne peut pas être invitée.`
+          ? `${adresse} a déjà un compte coMunity : invitez une autre adresse.`
           : "L'email d'invitation n'a pas pu partir. Réessayez dans un instant.",
     };
   }
@@ -46,7 +46,7 @@ export async function inviterCollegue(email: string): Promise<Resultat> {
   revalidatePath("/syndic/membres");
   return {
     ok: true,
-    message: `Invitation envoyée à ${adresse}. Votre collègue apparaît dans la liste et pourra se connecter dès que son mot de passe sera choisi.`,
+    message: `Invitation envoyée à ${adresse}. Le nouveau membre apparaît dans la liste et pourra se connecter une fois son mot de passe choisi.`,
   };
 }
 
@@ -57,7 +57,7 @@ export async function retirerMembre(membre: Membre): Promise<Resultat> {
   });
   if (error) {
     const messages: Record<string, string> = {
-      "42501": "Seuls les membres du syndic peuvent retirer un accès.",
+      "42501": "Seul le conseil syndical peut retirer un accès.",
       P0001: "Vous ne pouvez pas retirer votre propre accès.",
       P0002: `${membre.email} n'a déjà plus accès à l'espace syndic.`,
     };
@@ -65,7 +65,7 @@ export async function retirerMembre(membre: Membre): Promise<Resultat> {
       ok: false,
       message:
         messages[error.code] ??
-        "Le retrait n'a pas abouti. Réessayez dans un instant.",
+        "Le retrait a échoué. Réessayez dans un instant.",
     };
   }
 

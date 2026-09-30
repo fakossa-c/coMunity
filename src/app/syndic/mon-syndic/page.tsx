@@ -34,7 +34,7 @@ export default async function MonSyndicSyndic({ searchParams }: Props) {
     <EcranSyndic rubrique="mon-syndic">
       <TitrePage
         titre="Mon syndic"
-        sousTitre="Les personnes du syndic que les résidents voient dans Mon syndic, avec leur photo, leur téléphone et leur e-mail."
+        sousTitre="Les contacts du syndic que les résidents retrouvent dans Mon syndic."
       />
       {/* Sur ordinateur, une colonne de 960 px au plus, « Nouvelle fiche » en tête, à droite ; sur
           mobile, « Ajouter une fiche » reste sous la liste. */}
