@@ -401,7 +401,7 @@ describe("assistant de création avec Jev", () => {
       expect(avis.moderation).toEqual({
         avis: "a_relire",
         raison:
-          "Jev juge cette proposition contraire aux règles de bon voisinage.",
+          "L'assistant juge cette proposition contraire aux règles de bon voisinage.",
       });
     });
 

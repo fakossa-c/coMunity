@@ -701,7 +701,7 @@ describe("« Il reste à remplir »", () => {
     expect(points.map((point) => point.etat)).toEqual(["", "", "", ""]);
   });
 
-  it("« Autre lieu » sans nom demande de le nommer", () => {
+  it("« Ailleurs… » sans nom demande de le nommer", () => {
     const lieu = resteARemplir({
       ...COMPLETE,
       espace_commun: LIEU_LIBRE,

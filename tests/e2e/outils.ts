@@ -456,14 +456,14 @@ export async function supprimerEspacesCommuns(noms: string[]) {
 }
 
 /**
- * À l'étape « Date et lieu », saisit un lieu libre : choisit « Autre lieu… » dans la liste quand
+ * À l'étape « Date et lieu », saisit un lieu libre : choisit « Ailleurs… » dans la liste quand
  * la résidence a des espaces communs (un autre test peut en créer à tout moment), puis remplit le
  * champ.
  */
 export async function saisirLieuLibre(page: Page, lieu: string) {
   const liste = page.getByLabel("Lieu", { exact: true });
   if ((await liste.count()) > 0)
-    await liste.selectOption({ label: "Autre lieu…" });
+    await liste.selectOption({ label: "Ailleurs…" });
   await page.getByLabel("Nom du lieu").fill(lieu);
 }
 

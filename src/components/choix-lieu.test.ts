@@ -65,14 +65,14 @@ describe("ChoixLieu", () => {
     expect(html).toContain("Nom du lieu");
   });
 
-  it("avec des espaces : la liste « Lieu », les espaces dans l'ordre reçu, puis « Autre lieu… »", () => {
+  it("avec des espaces : la liste « Lieu », les espaces dans l'ordre reçu, puis « Ailleurs… »", () => {
     const html = rendre([SALLE, COUR], "");
 
     expect(html).toMatch(/<label[^>]*>Lieu<\/label>/);
     expect(html).toContain("<select");
     expect(html).not.toContain("n&#x27;a pas encore enregistré");
     expect(html.indexOf("Salle commune")).toBeLessThan(html.indexOf("Cour"));
-    expect(html.indexOf("Cour")).toBeLessThan(html.indexOf("Autre lieu…"));
+    expect(html.indexOf("Cour")).toBeLessThan(html.indexOf("Ailleurs…"));
     expect(html).toContain("Choisir un lieu");
   });
 
@@ -101,7 +101,7 @@ describe("ChoixLieu", () => {
     expect(html).not.toContain("Consignes");
   });
 
-  it("« Autre lieu… » ouvre le champ libre, sans résumé d'espace", () => {
+  it("« Ailleurs… » ouvre le champ libre, sans résumé d'espace", () => {
     const html = rendre([SALLE], LIEU_LIBRE, "Chez Danielle");
 
     expect(html).toContain("Nom du lieu");

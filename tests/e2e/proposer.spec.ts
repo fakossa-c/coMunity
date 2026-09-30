@@ -566,7 +566,7 @@ test.describe("sur ordinateur : une page unique", () => {
     await expect(reste.filter({ hasText: "Date et heure" })).toContainText(
       "à choisir",
     );
-    // Sans espace commun dans la résidence, le lieu est d'emblée « Autre lieu » : il reste à le nommer.
+    // Sans espace commun dans la résidence, le lieu est d'emblée « Ailleurs… » : il reste à le nommer.
     await expect(reste.filter({ hasText: "Lieu" })).toContainText(
       /à (choisir|nommer)/,
     );
