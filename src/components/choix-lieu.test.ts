@@ -18,6 +18,11 @@ const SALLE: EspaceCommun = {
   horaires_acces: null,
   contact: null,
   photo_chemin: null,
+  photos: [],
+  longueur_m: null,
+  largeur_m: null,
+  hauteur_plafond_m: null,
+  plan_chemin: null,
 };
 
 const COUR: EspaceCommun = {

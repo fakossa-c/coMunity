@@ -35,13 +35,22 @@ export type EspaceCommun = {
   consignes: string | null;
   horaires_acces: string | null;
   contact: string | null;
-  /** Chemin de la photo dans le bucket `espaces-communs` ; `null` sans photo. */
+  /** Chemin de la première photo dans le bucket `espaces-communs` ; `null` sans photo. */
   photo_chemin: string | null;
+  /** Les chemins des photos, dans l'ordre : la première est l'image de la carte. */
+  photos: string[];
+  /** Mètres ; `null` sans dimensions (longueur et largeur vont ensemble). */
+  longueur_m: number | null;
+  largeur_m: number | null;
+  /** Mètres ; `null` sans hauteur sous plafond. */
+  hauteur_plafond_m: number | null;
+  /** Chemin du plan de situation dans le bucket `espaces-communs` ; `null` sans plan. */
+  plan_chemin: string | null;
 };
 
 /** Les colonnes à lire pour un `EspaceCommun`. */
 export const COLONNES_ESPACE =
-  "id, nom, batiment, localisation, description, capacite, equipements, heure_fin_max, consignes, horaires_acces, contact, photo_chemin";
+  "id, nom, batiment, localisation, description, capacite, equipements, heure_fin_max, consignes, horaires_acces, contact, photo_chemin, photos, longueur_m, largeur_m, hauteur_plafond_m, plan_chemin";
 
 /** Longueurs maximales des textes, les mêmes que les contraintes en base. */
 export const LIMITES_ESPACE = {
@@ -54,13 +63,22 @@ export const LIMITES_ESPACE = {
   contact: 120,
 } as const;
 
+/** Plages des mesures, en mètres, les mêmes que les contraintes en base. */
+export const PLAGES_MESURES = {
+  dimension: { min: 0.5, max: 100 },
+  hauteur: { min: 1, max: 15 },
+} as const;
+
 type ChampTexte = keyof typeof LIMITES_ESPACE;
 
-/** Ce que le conseil syndical saisit, tel quel. */
+/** Ce que le conseil syndical saisit, tel quel. Les mesures se saisissent avec une virgule ou un point. */
 export type SaisieEspace = Record<ChampTexte, string> & {
   capacite: string;
   equipements: EquipementEspace[];
   heure_fin_max: string;
+  longueur: string;
+  largeur: string;
+  hauteur_plafond: string;
 };
 
 export type ChampEspace = Exclude<keyof SaisieEspace, "equipements">;
@@ -76,10 +94,30 @@ export const SAISIE_ESPACE_VIDE: SaisieEspace = {
   consignes: "",
   horaires_acces: "",
   contact: "",
+  longueur: "",
+  largeur: "",
+  hauteur_plafond: "",
 };
 
-/** Ce que la saisie de texte enregistre, sans l'identifiant ni la photo, qui a son propre envoi. */
-export type NouvelEspace = Omit<EspaceCommun, "id" | "photo_chemin">;
+/** Ce que la saisie enregistre, sans l'identifiant ni les photos et le plan, qui ont leur propre envoi. */
+export type NouvelEspace = Omit<
+  EspaceCommun,
+  "id" | "photo_chemin" | "photos" | "plan_chemin"
+>;
+
+/** La mesure saisie en mètres (virgule ou point) ; `null` si vide, `NaN` si ce n'est pas un nombre. */
+function mesure(valeur: string) {
+  const t = valeur.trim().replace(",", ".");
+  if (t === "") return null;
+  return /^\d+(\.\d+)?$/.test(t) ? Number(t) : NaN;
+}
+
+function dansLaPlage(
+  valeur: number,
+  { min, max }: { min: number; max: number },
+) {
+  return valeur >= min && valeur <= max;
+}
 
 function texte(valeur: string) {
   const t = valeur.trim();
@@ -104,6 +142,31 @@ export function verifierEspace(
         erreur: "Indiquez une capacité d'au moins 1 personne, ou laissez vide.",
       };
   }
+  const longueur = mesure(saisie.longueur);
+  const largeur = mesure(saisie.largeur);
+  const hauteur = mesure(saisie.hauteur_plafond);
+  if (longueur !== null && !dansLaPlage(longueur, PLAGES_MESURES.dimension))
+    return {
+      champ: "longueur",
+      erreur: "Indiquez une longueur de 0,5 à 100 m.",
+    };
+  if (largeur !== null && !dansLaPlage(largeur, PLAGES_MESURES.dimension))
+    return { champ: "largeur", erreur: "Indiquez une largeur de 0,5 à 100 m." };
+  if (longueur !== null && largeur === null)
+    return {
+      champ: "largeur",
+      erreur: "Indiquez aussi la largeur, ou videz la longueur.",
+    };
+  if (largeur !== null && longueur === null)
+    return {
+      champ: "longueur",
+      erreur: "Indiquez aussi la longueur, ou videz la largeur.",
+    };
+  if (hauteur !== null && !dansLaPlage(hauteur, PLAGES_MESURES.hauteur))
+    return {
+      champ: "hauteur_plafond",
+      erreur: "Indiquez une hauteur de 1 à 15 m.",
+    };
   return {};
 }
 
@@ -122,7 +185,15 @@ export function versEspaceCommun(saisie: SaisieEspace): NouvelEspace {
     consignes: texte(saisie.consignes),
     horaires_acces: texte(saisie.horaires_acces),
     contact: texte(saisie.contact),
+    longueur_m: mesure(saisie.longueur),
+    largeur_m: mesure(saisie.largeur),
+    hauteur_plafond_m: mesure(saisie.hauteur_plafond),
   };
+}
+
+/** Une mesure en mètres, avec la virgule décimale : « 2,7 ». */
+function saisieMesure(valeur: number | null) {
+  return valeur === null ? "" : String(valeur).replace(".", ",");
 }
 
 /** La saisie qui pré-remplit la modification d'un espace commun. */
@@ -138,6 +209,9 @@ export function saisieDepuisEspace(espace: EspaceCommun): SaisieEspace {
     consignes: espace.consignes ?? "",
     horaires_acces: espace.horaires_acces ?? "",
     contact: espace.contact ?? "",
+    longueur: saisieMesure(espace.longueur_m),
+    largeur: saisieMesure(espace.largeur_m),
+    hauteur_plafond: saisieMesure(espace.hauteur_plafond_m),
   };
 }
 
@@ -145,6 +219,21 @@ export function saisieDepuisEspace(espace: EspaceCommun): SaisieEspace {
 export function libelleCapacite(capacite: number | null) {
   if (capacite === null) return "Sans limite de places";
   return `Jusqu'à ${capacite} ${capacite === 1 ? "personne" : "personnes"}`;
+}
+
+/** « 8 m × 6 m, soit 48 m² » ; `null` sans longueur ni largeur. */
+export function libelleDimensions(
+  longueur: number | null,
+  largeur: number | null,
+) {
+  if (longueur === null || largeur === null) return null;
+  const surface = Math.round(longueur * largeur * 10) / 10;
+  return `${saisieMesure(longueur)} m × ${saisieMesure(largeur)} m, soit ${saisieMesure(surface)} m²`;
+}
+
+/** « 2,7 m » ; `null` sans hauteur sous plafond. */
+export function libelleHauteur(hauteur: number | null) {
+  return hauteur === null ? null : `${saisieMesure(hauteur)} m`;
 }
 
 /** « Bâtiment B · Jusqu'à 20 personnes · Ferme à 21h00 » : un espace commun en une ligne. */

@@ -7,7 +7,7 @@ import {
   saisieDepuisEspace,
   type EspaceCommun,
 } from "@/lib/espaces-communs";
-import { lireUrlsPhotosEspaces } from "@/lib/regles-residence";
+import { lireUrlsMediasEspace } from "@/lib/regles-residence";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
 import { FormulaireEspace } from "../formulaire-espace";
@@ -30,7 +30,7 @@ export default async function ModifierEspaceCommun({ params }: Props) {
     .eq("id", id)
     .maybeSingle<EspaceCommun>();
   if (!espace) notFound();
-  const urls = await lireUrlsPhotosEspaces([espace]);
+  const medias = await lireUrlsMediasEspace(espace);
 
   return (
     <EcranSecondaire retour={RETOUR} actionDansLeFormulaire>
@@ -39,9 +39,8 @@ export default async function ModifierEspaceCommun({ params }: Props) {
         espace={{
           id: espace.id,
           saisie: saisieDepuisEspace(espace),
-          photo: espace.photo_chemin
-            ? { chemin: espace.photo_chemin, url: urls[espace.id] ?? "" }
-            : null,
+          photos: medias.photos,
+          plan: medias.plan,
         }}
       />
     </EcranSecondaire>

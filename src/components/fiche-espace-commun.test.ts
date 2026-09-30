@@ -18,6 +18,11 @@ const SALLE: EspaceCommun = {
   horaires_acces: "De 8h00 à 22h00, tous les jours",
   contact: "Colette, gardienne",
   photo_chemin: "salle.jpg",
+  photos: ["salle.jpg"],
+  longueur_m: 8,
+  largeur_m: 6,
+  hauteur_plafond_m: 2.7,
+  plan_chemin: "plan.jpg",
 };
 
 const COUR: EspaceCommun = {
@@ -33,16 +38,25 @@ const COUR: EspaceCommun = {
   horaires_acces: null,
   contact: null,
   photo_chemin: null,
+  photos: [],
+  longueur_m: null,
+  largeur_m: null,
+  hauteur_plafond_m: null,
+  plan_chemin: null,
 };
 
 const AUTRE: EspaceCommun = { ...COUR, id: "jardin", nom: "Jardin partagé" };
 
 function rendre(
   espace: EspaceCommun,
-  { photo, autres = [] }: { photo?: string; autres?: EspaceCommun[] } = {},
+  {
+    photos = [],
+    plan,
+    autres = [],
+  }: { photos?: string[]; plan?: string; autres?: EspaceCommun[] } = {},
 ) {
   return renderToStaticMarkup(
-    createElement(FicheEspaceCommun, { espace, photo, autres }),
+    createElement(FicheEspaceCommun, { espace, photos, plan, autres }),
   );
 }
 
@@ -70,13 +84,94 @@ describe("FicheEspaceCommun", () => {
   });
 
   it("montre la photo en tête, avec son texte alternatif", () => {
-    const html = rendre(SALLE, { photo: "https://exemple.test/salle.jpg" });
+    const html = rendre(SALLE, { photos: ["https://exemple.test/salle.jpg"] });
 
     expect(html).toContain('src="https://exemple.test/salle.jpg"');
     expect(html).toContain(
       'alt="Salle commune, photo de l&#x27;espace commun"',
     );
     expect(html.indexOf("<img")).toBeLessThan(html.indexOf("<h1"));
+  });
+
+  it("avec une seule photo, la galerie n'a ni compteur, ni boutons, ni vignettes", () => {
+    const html = rendre(SALLE, { photos: ["https://exemple.test/a.jpg"] });
+
+    expect(html).not.toContain("Photo suivante");
+    expect(html).not.toContain("1 sur 1");
+    expect(html).not.toContain("Vignettes");
+  });
+
+  it("avec plusieurs photos, montre la galerie : la première en grand, le compteur et une vignette par photo", () => {
+    const html = rendre(SALLE, {
+      photos: [
+        "https://exemple.test/a.jpg",
+        "https://exemple.test/b.jpg",
+        "https://exemple.test/c.jpg",
+      ],
+    });
+
+    expect(html).toContain('aria-label="Photos de l&#x27;espace commun"');
+    expect(html).toContain('alt="Salle commune, photo 1 sur 3"');
+    expect(html).toContain("1 sur 3");
+    expect(html).toContain("Photo suivante");
+    // Sur ordinateur, une vignette par photo, chacune nommée par son rang.
+    for (const rang of [1, 2, 3])
+      expect(html).toMatch(
+        new RegExp(
+          `<button[^>]*aria-label="Photo ${rang} sur 3"[^>]*>(?:(?!</button>).)*<img`,
+        ),
+      );
+    expect(html).toContain('aria-current="true"');
+    expect(html.indexOf("<img")).toBeLessThan(html.indexOf("<h1"));
+  });
+
+  it("donne les dimensions avec leur surface et la hauteur sous plafond, avant la capacité", () => {
+    const html = rendre(SALLE);
+
+    expect(html).toMatch(
+      /<dt[^>]*>(?:(?!<\/dt>).)*Dimensions<\/dt>\s*<dd[^>]*>8 m × 6 m, soit 48 m²/,
+    );
+    expect(html).toMatch(
+      /<dt[^>]*>(?:(?!<\/dt>).)*Hauteur sous plafond<\/dt>\s*<dd[^>]*>2,7 m/,
+    );
+    expect(html.indexOf("Dimensions")).toBeLessThan(html.indexOf("Capacité"));
+    expect(html.indexOf("Hauteur sous plafond")).toBeLessThan(
+      html.indexOf("Capacité"),
+    );
+  });
+
+  it("n'affiche que la hauteur quand il n'y a pas de dimensions, et inversement", () => {
+    const hauteurSeule = rendre({
+      ...SALLE,
+      longueur_m: null,
+      largeur_m: null,
+    });
+    expect(hauteurSeule).not.toContain("Dimensions");
+    expect(hauteurSeule).toContain("Hauteur sous plafond");
+
+    const dimensionsSeules = rendre({ ...SALLE, hauteur_plafond_m: null });
+    expect(dimensionsSeules).toContain("Dimensions");
+    expect(dimensionsSeules).not.toContain("Hauteur sous plafond");
+  });
+
+  it("montre le plan de situation dans « Utiliser cet espace », avec un lien pour l'agrandir", () => {
+    const html = rendre(SALLE, { plan: "https://exemple.test/plan.jpg" });
+
+    expect(html).toContain('src="https://exemple.test/plan.jpg"');
+    expect(html).toContain('alt="Plan de situation de Salle commune"');
+    expect(html).toMatch(
+      /<a[^>]*href="https:\/\/exemple.test\/plan.jpg"[^>]*target="_blank"[^>]*>(?:(?!<\/a>).)*Agrandir le plan/,
+    );
+    expect(html.indexOf("Utiliser cet espace")).toBeLessThan(
+      html.indexOf("Plan de situation"),
+    );
+  });
+
+  it("sans plan, n'affiche ni image ni lien de plan", () => {
+    const html = rendre(SALLE);
+
+    expect(html).not.toContain("Plan de situation");
+    expect(html).not.toContain("Agrandir le plan");
   });
 
   it("propose « Proposer une activité ici » vers Proposer avec le lieu choisi", () => {
@@ -132,6 +227,9 @@ describe("FicheEspaceCommun", () => {
     for (const absent of [
       "Caractéristiques",
       "Capacité",
+      "Dimensions",
+      "Hauteur sous plafond",
+      "Plan de situation",
       "Horaires d&#x27;accès",
       "Équipements",
       "Consignes",

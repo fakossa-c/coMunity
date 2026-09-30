@@ -387,6 +387,48 @@ export async function cheminPhotoEspace(id: string) {
   return data.photo_chemin as string | null;
 }
 
+/** L'identifiant d'un espace commun, retrouvé par son nom. */
+export async function identifiantEspaceCommun(nom: string) {
+  const { data, error } = await clientAdmin()
+    .from("espace_commun")
+    .select("id")
+    .eq("nom", nom)
+    .single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+/** Les photos (dans l'ordre) et le plan de situation d'un espace commun, tels que la base les a. */
+export async function mediasEspace(id: string) {
+  const { data, error } = await clientAdmin()
+    .from("espace_commun")
+    .select("photos, plan_chemin")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data as { photos: string[]; plan_chemin: string | null };
+}
+
+/**
+ * Dépose une image unie dans le bucket `espaces-communs`, comme la saisie du conseil syndical
+ * le fait, et rend son chemin : de quoi garnir la photo ou le plan d'un espace sans passer par
+ * l'écran. `supprimerEspacesCommuns` retire le fichier avec l'espace.
+ */
+export async function deposerImageEspace(
+  couleur: string,
+  largeur = 1280,
+  hauteur = 720,
+) {
+  const chemin = `${randomUUID()}.jpg`;
+  const { error } = await clientAdmin()
+    .storage.from("espaces-communs")
+    .upload(chemin, await photoJpeg(couleur, largeur, hauteur), {
+      contentType: "image/jpeg",
+    });
+  if (error) throw error;
+  return chemin;
+}
+
 /** Vrai quand le fichier est encore dans le bucket `espaces-communs`. */
 export async function photoEspaceDeposee(chemin: string) {
   const { data } = await clientAdmin()
@@ -397,7 +439,18 @@ export async function photoEspaceDeposee(chemin: string) {
 
 /** Supprime des espaces communs, par leur nom : ceux qu'un test a créés, par l'écran ou non. */
 export async function supprimerEspacesCommuns(noms: string[]) {
-  await clientAdmin().from("espace_commun").delete().in("nom", noms);
+  const admin = clientAdmin();
+  const { data } = await admin
+    .from("espace_commun")
+    .select("photos, plan_chemin")
+    .in("nom", noms);
+  const fichiers = (data ?? []).flatMap((e) => [
+    ...e.photos,
+    ...(e.plan_chemin ? [e.plan_chemin] : []),
+  ]);
+  if (fichiers.length > 0)
+    await admin.storage.from("espaces-communs").remove(fichiers);
+  await admin.from("espace_commun").delete().in("nom", noms);
 }
 
 /**

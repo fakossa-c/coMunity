@@ -6,6 +6,7 @@ import {
   encartAssistant,
   estBureau,
   etapeProposer,
+  identifiantEspaceCommun,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -84,6 +85,9 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
     .getByLabel("Localisation")
     .fill("Rez-de-chaussée, au fond du hall");
   await page.getByLabel("Description").fill("Une grande pièce claire.");
+  await page.getByLabel("Longueur (en mètres)").fill("8");
+  await page.getByLabel("Largeur (en mètres)").fill("6,5");
+  await page.getByLabel("Hauteur sous plafond (en mètres)").fill("2.7");
   await page.getByLabel("Capacité").fill("20");
   await page.getByRole("checkbox", { name: "Coin cuisine" }).check();
   await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
@@ -115,6 +119,12 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   await expect(page.getByLabel("Consignes")).toHaveValue(
     "Laissez la salle propre.",
   );
+  // Les mesures reviennent avec une virgule décimale.
+  await expect(page.getByLabel("Longueur (en mètres)")).toHaveValue("8");
+  await expect(page.getByLabel("Largeur (en mètres)")).toHaveValue("6,5");
+  await expect(page.getByLabel("Hauteur sous plafond (en mètres)")).toHaveValue(
+    "2,7",
+  );
   await page.getByLabel("Capacité").fill("25");
   await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await expect(page.getByRole("main").getByRole("status")).toContainText(
@@ -136,6 +146,97 @@ test("le conseil syndical ajoute, modifie puis supprime un espace commun", async
   await expect(
     page.getByRole("link", { name: `Modifier : ${nom}` }),
   ).toHaveCount(0);
+});
+
+test("les dimensions et la hauteur sous plafond : plages vérifiées avant l'envoi, un résident les lit sur la fiche, les vider les retire", async ({
+  page,
+  browser,
+}) => {
+  const syndic = await nouveauSyndic();
+  const resident = await nouveauResident("valide");
+  emails.push(syndic.email, resident.email);
+  const nom = `Atelier ${randomUUID().slice(0, 6)}`;
+  espaces.push(nom);
+  const enregistrer = () =>
+    page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+  const erreur = (texte: string) =>
+    expect(page.getByRole("main").getByRole("alert")).toContainText(texte);
+
+  await seConnecter(page, syndic.email);
+  await page.goto("/syndic/espaces-communs/nouveau");
+  await page.getByLabel("Nom").fill(nom);
+
+  await page.getByLabel("Longueur (en mètres)").fill("8");
+  await enregistrer();
+  await erreur("Indiquez aussi la largeur, ou videz la longueur.");
+
+  await page.getByLabel("Largeur (en mètres)").fill("150");
+  await enregistrer();
+  await erreur("Indiquez une largeur de 0,5 à 100 m.");
+
+  await page.getByLabel("Largeur (en mètres)").fill("6");
+  await page.getByLabel("Hauteur sous plafond (en mètres)").fill("20");
+  await enregistrer();
+  await erreur("Indiquez une hauteur de 1 à 15 m.");
+
+  await page.getByLabel("Hauteur sous plafond (en mètres)").fill("2,7");
+  await page.screenshot({
+    path: test.info().outputPath("formulaire-espace-mesures.png"),
+    fullPage: true,
+  });
+  await enregistrer();
+  await expect(page.getByRole("main").getByRole("status")).toContainText(
+    `« ${nom} » est ajouté aux espaces communs.`,
+  );
+
+  // Un résident lit la surface et la hauteur sur la fiche.
+  const id = await identifiantEspaceCommun(nom);
+  const {
+    baseURL,
+    viewport,
+    userAgent,
+    isMobile,
+    hasTouch,
+    deviceScaleFactor,
+  } = test.info().project.use;
+  const contexte = await browser.newContext({
+    baseURL,
+    viewport,
+    userAgent,
+    isMobile,
+    hasTouch,
+    deviceScaleFactor,
+    locale: "fr-FR",
+  });
+  const lecteur = await contexte.newPage();
+  try {
+    await seConnecter(lecteur, resident.email);
+    await lecteur.goto(`/ma-copro/espaces/${id}`);
+    await expect(lecteur.getByRole("main")).toContainText(
+      "8 m × 6 m, soit 48 m²",
+    );
+    await expect(lecteur.getByRole("main")).toContainText("2,7 m");
+
+    // Vider les trois champs retire les lignes de la fiche.
+    await page.getByRole("link", { name: `Modifier : ${nom}` }).click();
+    for (const libelle of [
+      "Longueur (en mètres)",
+      "Largeur (en mètres)",
+      "Hauteur sous plafond (en mètres)",
+    ])
+      await page.getByLabel(libelle).fill("");
+    await enregistrer();
+    await expect(page.getByRole("main").getByRole("status")).toContainText(
+      `« ${nom} » est enregistré.`,
+    );
+    await lecteur.reload();
+    await expect(lecteur.getByRole("main")).not.toContainText("Dimensions");
+    await expect(lecteur.getByRole("main")).not.toContainText(
+      "Hauteur sous plafond",
+    );
+  } finally {
+    await contexte.close();
+  }
 });
 
 test("le conseil syndical règle l'heure de calme de la résidence", async ({
