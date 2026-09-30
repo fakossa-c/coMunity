@@ -10,6 +10,7 @@ import {
 import { lireUrlsMediasEspace } from "@/lib/regles-residence";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireEspace } from "../formulaire-espace";
 
 const RETOUR = {
@@ -41,15 +42,17 @@ export default async function ModifierEspaceCommun({ params }: Props) {
       retour={RETOUR}
       actionDansLeFormulaire
     >
-      <TitrePage titre="Modifier un espace commun" sousTitre={espace.nom} />
-      <FormulaireEspace
-        espace={{
-          id: espace.id,
-          saisie: saisieDepuisEspace(espace),
-          photos: medias.photos,
-          plan: medias.plan,
-        }}
-      />
+      <ColonneFormulaire>
+        <TitrePage titre="Modifier un espace commun" sousTitre={espace.nom} />
+        <FormulaireEspace
+          espace={{
+            id: espace.id,
+            saisie: saisieDepuisEspace(espace),
+            photos: medias.photos,
+            plan: medias.plan,
+          }}
+        />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }

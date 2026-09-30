@@ -4,6 +4,7 @@ import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireSection } from "../formulaire-section";
 
 const RETOUR = {
@@ -30,13 +31,15 @@ export default async function ModifierSection({ params }: Props) {
 
   return (
     <EcranSyndic rubrique="reglement" retour={RETOUR} actionDansLeFormulaire>
-      <TitrePage titre="Modifier une section" sousTitre={section.titre} />
-      <FormulaireSection
-        section={{
-          id: section.id,
-          saisie: { titre: section.titre, texte: section.texte },
-        }}
-      />
+      <ColonneFormulaire>
+        <TitrePage titre="Modifier une section" sousTitre={section.titre} />
+        <FormulaireSection
+          section={{
+            id: section.id,
+            saisie: { titre: section.titre, texte: section.texte },
+          }}
+        />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }

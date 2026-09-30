@@ -37,6 +37,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
+import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import { enregistrerEspace, preparerDepots, supprimerEspace } from "./actions";
 
 type Props = {
@@ -183,7 +184,7 @@ export function FormulaireEspace({ espace }: Props) {
         e.preventDefault();
         enregistrer();
       }}
-      className="flex flex-col gap-bloc"
+      className={CLASSES_FORMULAIRE}
     >
       <Annonce
         message={
@@ -191,115 +192,130 @@ export function FormulaireEspace({ espace }: Props) {
         }
         erreur
       />
-      <Champ
-        {...texte("nom", "Nom", "Par exemple : Salle commune, Cour, Jardin.")}
-        required
-      />
-      <Champ {...texte("batiment", "Bâtiment", "Facultatif.")} />
-      <Champ
-        {...texte(
-          "localisation",
-          "Localisation",
-          "Comment le trouver : étage, entrée, repère.",
-        )}
-      />
-      <ChampTexte {...texte("description", "Description")} rows={3} />
-      <ChampPhotoEspace
-        photos={photos}
-        nom={saisie.nom}
-        onAjouter={(nouvelles) => setPhotos((p) => [...p, ...nouvelles])}
-        onRetirer={(index) => setPhotos((p) => retirerPhoto(p, index))}
-        onDeplacer={(index, decalage) =>
-          setPhotos((p) => deplacerPhoto(p, index, decalage))
-        }
-      />
-      <ChampPlanEspace
-        plan={plan}
-        nom={saisie.nom}
-        onChoisir={setPlan}
-        onRetirer={() => setPlan(null)}
-      />
-      <Champ
-        libelle="Longueur (en mètres)"
-        name="longueur"
-        inputMode="decimal"
-        autoComplete="off"
-        value={saisie.longueur}
-        onChange={(e) => poser("longueur", e.target.value)}
-        erreur={erreurDe("longueur")}
-        aide="De 0,5 à 100 m, par exemple 8,5. Vide : pas de dimensions."
-      />
-      <Champ
-        libelle="Largeur (en mètres)"
-        name="largeur"
-        inputMode="decimal"
-        autoComplete="off"
-        value={saisie.largeur}
-        onChange={(e) => poser("largeur", e.target.value)}
-        erreur={erreurDe("largeur")}
-        aide="De 0,5 à 100 m. À saisir avec la longueur."
-      />
-      <Champ
-        libelle="Hauteur sous plafond (en mètres)"
-        name="hauteur_plafond"
-        inputMode="decimal"
-        autoComplete="off"
-        value={saisie.hauteur_plafond}
-        onChange={(e) => poser("hauteur_plafond", e.target.value)}
-        erreur={erreurDe("hauteur_plafond")}
-        aide="De 1 à 15 m, par exemple 2,7. Vide : pas de hauteur."
-      />
-      <Champ
-        libelle="Capacité"
-        name="capacite"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        autoComplete="off"
-        value={saisie.capacite}
-        onChange={(e) => poser("capacite", e.target.value)}
-        erreur={erreurDe("capacite")}
-        aide="Le nombre de personnes au plus. Vide : pas de limite."
-      />
-      <ChoixPastilles
-        titre="Équipements et accessibilité"
-        options={OPTIONS_EQUIPEMENTS}
-        valeurs={saisie.equipements}
-        onChange={(equipements) => poser("equipements", equipements)}
-      />
-      <Champ
-        libelle="Heure de fin maximale"
-        name="heure_fin_max"
-        type="time"
-        autoComplete="off"
-        value={saisie.heure_fin_max}
-        onChange={(e) => poser("heure_fin_max", e.target.value)}
-        erreur={erreurDe("heure_fin_max")}
-        aide="Aucune activité ne finit plus tard. Vide : pas d'heure limite."
-      />
-      <ChampTexte
-        {...texte(
-          "consignes",
-          "Consignes",
-          "Affichées aux voisins qui y proposent une activité, et sur sa fiche.",
-        )}
-        rows={3}
-      />
-      <Champ
-        {...texte(
-          "horaires_acces",
-          "Horaires d'accès",
-          "Par exemple : tous les jours de 9h à 21h.",
-        )}
-      />
-      <Champ
-        {...texte("contact", "Contact", "Qui appeler pour la clé ou un souci.")}
-      />
+      <BlocFormulaire>
+        <Champ
+          {...texte("nom", "Nom", "Par exemple : Salle commune, Cour, Jardin.")}
+          required
+        />
+        <Champ {...texte("batiment", "Bâtiment", "Facultatif.")} />
+        <Champ
+          {...texte(
+            "localisation",
+            "Localisation",
+            "Comment le trouver : étage, entrée, repère.",
+          )}
+        />
+        <ChampTexte {...texte("description", "Description")} rows={3} />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <ChampPhotoEspace
+          photos={photos}
+          nom={saisie.nom}
+          onAjouter={(nouvelles) => setPhotos((p) => [...p, ...nouvelles])}
+          onRetirer={(index) => setPhotos((p) => retirerPhoto(p, index))}
+          onDeplacer={(index, decalage) =>
+            setPhotos((p) => deplacerPhoto(p, index, decalage))
+          }
+        />
+        <ChampPlanEspace
+          plan={plan}
+          nom={saisie.nom}
+          onChoisir={setPlan}
+          onRetirer={() => setPlan(null)}
+        />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <Champ
+          libelle="Longueur (en mètres)"
+          name="longueur"
+          inputMode="decimal"
+          autoComplete="off"
+          value={saisie.longueur}
+          onChange={(e) => poser("longueur", e.target.value)}
+          erreur={erreurDe("longueur")}
+          aide="De 0,5 à 100 m, par exemple 8,5. Vide : pas de dimensions."
+        />
+        <Champ
+          libelle="Largeur (en mètres)"
+          name="largeur"
+          inputMode="decimal"
+          autoComplete="off"
+          value={saisie.largeur}
+          onChange={(e) => poser("largeur", e.target.value)}
+          erreur={erreurDe("largeur")}
+          aide="De 0,5 à 100 m. À saisir avec la longueur."
+        />
+        <Champ
+          libelle="Hauteur sous plafond (en mètres)"
+          name="hauteur_plafond"
+          inputMode="decimal"
+          autoComplete="off"
+          value={saisie.hauteur_plafond}
+          onChange={(e) => poser("hauteur_plafond", e.target.value)}
+          erreur={erreurDe("hauteur_plafond")}
+          aide="De 1 à 15 m, par exemple 2,7. Vide : pas de hauteur."
+        />
+        <Champ
+          libelle="Capacité"
+          name="capacite"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          autoComplete="off"
+          value={saisie.capacite}
+          onChange={(e) => poser("capacite", e.target.value)}
+          erreur={erreurDe("capacite")}
+          aide="Le nombre de personnes au plus. Vide : pas de limite."
+        />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <ChoixPastilles
+          titre="Équipements et accessibilité"
+          options={OPTIONS_EQUIPEMENTS}
+          valeurs={saisie.equipements}
+          onChange={(equipements) => poser("equipements", equipements)}
+        />
+        <Champ
+          libelle="Heure de fin maximale"
+          name="heure_fin_max"
+          type="time"
+          autoComplete="off"
+          value={saisie.heure_fin_max}
+          onChange={(e) => poser("heure_fin_max", e.target.value)}
+          erreur={erreurDe("heure_fin_max")}
+          aide="Aucune activité ne finit plus tard. Vide : pas d'heure limite."
+        />
+      </BlocFormulaire>
+      <BlocFormulaire>
+        <ChampTexte
+          {...texte(
+            "consignes",
+            "Consignes",
+            "Affichées aux voisins qui y proposent une activité, et sur sa fiche.",
+          )}
+          rows={3}
+        />
+        <Champ
+          {...texte(
+            "horaires_acces",
+            "Horaires d'accès",
+            "Par exemple : tous les jours de 9h à 21h.",
+          )}
+        />
+        <Champ
+          {...texte(
+            "contact",
+            "Contact",
+            "Qui appeler pour la clé ou un souci.",
+          )}
+        />
+      </BlocFormulaire>
 
       {espace && (
         <>
           <Bouton
             variante="danger"
+            className="desktop:self-start"
             icone="delete"
             onClick={() => setSuppression(true)}
             disabled={enCours}
@@ -322,7 +338,7 @@ export function FormulaireEspace({ espace }: Props) {
         </>
       )}
 
-      <BarreActionFixe>
+      <BarreActionFixe colonne>
         <Bouton
           type="submit"
           pleineLargeur

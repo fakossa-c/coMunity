@@ -19,6 +19,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
+import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import { enregistrerSection, supprimerSection } from "./actions";
 
 type Props = {
@@ -77,7 +78,7 @@ export function FormulaireSection({ section }: Props) {
         e.preventDefault();
         enregistrer();
       }}
-      className="flex flex-col gap-bloc"
+      className={CLASSES_FORMULAIRE}
     >
       <Annonce
         message={
@@ -85,62 +86,68 @@ export function FormulaireSection({ section }: Props) {
         }
         erreur
       />
-      <Champ
-        libelle="Titre"
-        name="titre"
-        autoComplete="off"
-        value={saisie.titre}
-        onChange={(e) => poser("titre", e.target.value)}
-        maxLength={LIMITES_SECTION.titre}
-        erreur={erreurDuChamp(erreur, "titre")}
-        compteur={{
-          longueur: saisie.titre.length,
-          max: LIMITES_SECTION.titre,
-        }}
-        required
-      />
-      <ChampTexte
-        libelle="Texte"
-        name="texte"
-        autoComplete="off"
-        rows={10}
-        value={saisie.texte}
-        onChange={(e) => poser("texte", e.target.value)}
-        maxLength={LIMITES_SECTION.texte}
-        erreur={erreurDuChamp(erreur, "texte")}
-        aide={AIDE_TEXTE}
-        required
-      />
+      <BlocFormulaire>
+        <Champ
+          libelle="Titre"
+          name="titre"
+          autoComplete="off"
+          value={saisie.titre}
+          onChange={(e) => poser("titre", e.target.value)}
+          maxLength={LIMITES_SECTION.titre}
+          erreur={erreurDuChamp(erreur, "titre")}
+          compteur={{
+            longueur: saisie.titre.length,
+            max: LIMITES_SECTION.titre,
+          }}
+          required
+        />
+        <ChampTexte
+          libelle="Texte"
+          name="texte"
+          autoComplete="off"
+          rows={10}
+          value={saisie.texte}
+          onChange={(e) => poser("texte", e.target.value)}
+          maxLength={LIMITES_SECTION.texte}
+          erreur={erreurDuChamp(erreur, "texte")}
+          aide={AIDE_TEXTE}
+          required
+        />
+      </BlocFormulaire>
 
-      <Bouton
-        variante="contour"
-        icone={apercu ? "visibility_off" : "visibility"}
-        aria-expanded={apercu}
-        aria-controls={idApercu}
-        onClick={() => setApercu(!apercu)}
-      >
-        {apercu ? "Masquer l'aperçu" : "Voir l'aperçu"}
-      </Bouton>
-      <div
-        id={idApercu}
-        role="region"
-        aria-label="Aperçu de la section"
-        hidden={!apercu}
-        className="rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4"
-      >
-        <p className="mb-space-sm text-body-md text-on-surface-variant">
-          Voici comment les résidents liront cette section une fois dépliée.
-        </p>
-        <h2 className="mb-space-sm font-headline text-headline-sm text-on-surface">
-          {saisie.titre.trim() || "Titre de la section"}
-        </h2>
-        <TexteReglement texte={saisie.texte} />
-      </div>
+      <BlocFormulaire>
+        <Bouton
+          variante="contour"
+          className="desktop:self-start"
+          icone={apercu ? "visibility_off" : "visibility"}
+          aria-expanded={apercu}
+          aria-controls={idApercu}
+          onClick={() => setApercu(!apercu)}
+        >
+          {apercu ? "Masquer l'aperçu" : "Voir l'aperçu"}
+        </Bouton>
+        <div
+          id={idApercu}
+          role="region"
+          aria-label="Aperçu de la section"
+          hidden={!apercu}
+          className="rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte p-4 desktop:shadow-none"
+        >
+          <p className="mb-space-sm text-body-md text-on-surface-variant">
+            Voici comment les résidents liront cette section une fois dépliée.
+          </p>
+          <h2 className="mb-space-sm font-headline text-headline-sm text-on-surface">
+            {saisie.titre.trim() || "Titre de la section"}
+          </h2>
+          <TexteReglement texte={saisie.texte} />
+        </div>
+      </BlocFormulaire>
 
       {section && (
         <>
           <Bouton
             variante="danger"
+            className="desktop:self-start"
             icone="delete"
             onClick={() => setSuppression(true)}
             disabled={enCours}
@@ -162,7 +169,7 @@ export function FormulaireSection({ section }: Props) {
         </>
       )}
 
-      <BarreActionFixe>
+      <BarreActionFixe colonne>
         <Bouton
           type="submit"
           pleineLargeur

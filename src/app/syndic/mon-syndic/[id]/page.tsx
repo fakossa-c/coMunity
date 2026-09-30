@@ -8,6 +8,7 @@ import {
   lireFichesSyndic,
 } from "@/lib/lecture-fiches-syndic";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireFiche } from "../formulaire-fiche";
 
 const RETOUR = { href: "/syndic/mon-syndic", destination: "Mon syndic" };
@@ -26,16 +27,18 @@ export default async function ModifierFiche({ params }: Props) {
 
   return (
     <EcranSyndic rubrique="mon-syndic" retour={RETOUR} actionDansLeFormulaire>
-      <TitrePage titre="Modifier une fiche" sousTitre={nomFiche(fiche)} />
-      <FormulaireFiche
-        comptes={await lireComptesReliables(fiche.compte_id)}
-        fiche={{
-          id: fiche.id,
-          saisie: saisieDepuisFiche(fiche),
-          photoChemin: fiche.photo_chemin,
-          photoUrl: fiche.photo_url,
-        }}
-      />
+      <ColonneFormulaire>
+        <TitrePage titre="Modifier une fiche" sousTitre={nomFiche(fiche)} />
+        <FormulaireFiche
+          comptes={await lireComptesReliables(fiche.compte_id)}
+          fiche={{
+            id: fiche.id,
+            saisie: saisieDepuisFiche(fiche),
+            photoChemin: fiche.photo_chemin,
+            photoUrl: fiche.photo_url,
+          }}
+        />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }

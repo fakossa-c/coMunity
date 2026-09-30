@@ -25,6 +25,7 @@ import {
   type Resultat,
 } from "@/lib/resultat";
 import { clientNavigateur } from "@/lib/supabase/navigateur";
+import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import {
   enregistrerFiche,
   preparerDepotPhoto,
@@ -160,7 +161,7 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
         e.preventDefault();
         enregistrer();
       }}
-      className="flex flex-col gap-bloc"
+      className={CLASSES_FORMULAIRE}
     >
       <Annonce
         message={
@@ -168,67 +169,77 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
         }
         erreur
       />
-      <Champ {...texte("prenom", "Prénom", LIMITES_FICHE.identite)} required />
-      <Champ {...texte("nom", "Nom", LIMITES_FICHE.identite)} required />
-      <Champ
-        {...texte("telephone", "Téléphone", LIMITES_FICHE.telephone, {
-          type: "tel",
-          inputMode: "tel",
-          aide: "Facultatif. Les résidents pourront l'appeler d'un geste.",
-        })}
-      />
-      <Champ
-        {...texte("email", "E-mail", LIMITES_FICHE.email, {
-          type: "email",
-          inputMode: "email",
-          aide: "Facultatif. Les résidents pourront lui écrire d'un geste.",
-        })}
-      />
-
-      <div className="flex flex-col gap-space-sm">
-        <div className="flex items-center gap-space-md">
-          <Avatar
-            initiale={initialeFiche(saisie) || "?"}
-            taille={72}
-            photo={apercu ?? undefined}
-          />
-          <p className="text-body-md text-on-surface-variant">
-            {apercu
-              ? "Voici la photo que les résidents verront."
-              : "Sans photo, les résidents voient l'initiale du prénom."}
-          </p>
-        </div>
-        <ChampFichier
-          libelle="Photo"
-          aide="Facultatif. JPEG, PNG ou WebP : elle est réduite avant d'être envoyée."
-          accept="image/jpeg,image/png,image/webp"
-          fichier={choisie?.fichier ?? null}
-          nomActuel={photoChemin && !choisie ? "Photo actuelle" : null}
-          erreur={erreurPhoto}
-          onChoisir={choisirPhoto}
-          onRetirer={retirerPhoto}
+      <BlocFormulaire>
+        <Champ
+          {...texte("prenom", "Prénom", LIMITES_FICHE.identite)}
+          required
         />
-      </div>
+        <Champ {...texte("nom", "Nom", LIMITES_FICHE.identite)} required />
+        <Champ
+          {...texte("telephone", "Téléphone", LIMITES_FICHE.telephone, {
+            type: "tel",
+            inputMode: "tel",
+            aide: "Facultatif. Les résidents pourront l'appeler d'un geste.",
+          })}
+        />
+        <Champ
+          {...texte("email", "E-mail", LIMITES_FICHE.email, {
+            type: "email",
+            inputMode: "email",
+            aide: "Facultatif. Les résidents pourront lui écrire d'un geste.",
+          })}
+        />
+      </BlocFormulaire>
 
-      <ChampListe
-        libelle="Compte dans l'espace syndic"
-        name="compteId"
-        value={saisie.compteId}
-        onChange={(e) => poser("compteId", e.target.value)}
-        aide="Si cette personne a un compte dans l'espace syndic, reliez-le : la fiche porte alors la mention « Sur coMunity »."
-      >
-        <option value="">Aucun compte</option>
-        {comptes.map(({ id, libelle }) => (
-          <option key={id} value={id}>
-            {libelle}
-          </option>
-        ))}
-      </ChampListe>
+      <BlocFormulaire>
+        <div className="flex flex-col gap-space-sm">
+          <div className="flex items-center gap-space-md">
+            <Avatar
+              initiale={initialeFiche(saisie) || "?"}
+              taille={72}
+              photo={apercu ?? undefined}
+            />
+            <p className="text-body-md text-on-surface-variant">
+              {apercu
+                ? "Voici la photo que les résidents verront."
+                : "Sans photo, les résidents voient l'initiale du prénom."}
+            </p>
+          </div>
+          <ChampFichier
+            libelle="Photo"
+            aide="Facultatif. JPEG, PNG ou WebP : elle est réduite avant d'être envoyée."
+            accept="image/jpeg,image/png,image/webp"
+            fichier={choisie?.fichier ?? null}
+            nomActuel={photoChemin && !choisie ? "Photo actuelle" : null}
+            erreur={erreurPhoto}
+            onChoisir={choisirPhoto}
+            onRetirer={retirerPhoto}
+          />
+        </div>
+      </BlocFormulaire>
+
+      <BlocFormulaire>
+        <ChampListe
+          libelle="Compte dans l'espace syndic"
+          name="compteId"
+          value={saisie.compteId}
+          onChange={(e) => poser("compteId", e.target.value)}
+          aide="Si cette personne a un compte dans l'espace syndic, reliez-le : la fiche porte alors la mention « Sur coMunity »."
+        >
+          <option value="">Aucun compte</option>
+          {comptes.map(({ id, libelle }) => (
+            <option key={id} value={id}>
+              {libelle}
+            </option>
+          ))}
+        </ChampListe>
+      </BlocFormulaire>
 
       {fiche && (
         <>
           <Bouton
             variante="danger"
+            className="desktop:self-start"
             icone="delete"
             onClick={() => setSuppression(true)}
             disabled={enCours}
@@ -251,7 +262,7 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
         </>
       )}
 
-      <BarreActionFixe>
+      <BarreActionFixe colonne>
         <Bouton
           type="submit"
           pleineLargeur

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { TitrePage } from "@/components/titre-page";
 import { accesSyndic } from "../../acces";
+import { ColonneFormulaire } from "../../colonne-formulaire";
 import { FormulaireEspace } from "../formulaire-espace";
 
 const RETOUR = {
@@ -21,11 +22,13 @@ export default async function NouvelEspaceCommun() {
       retour={RETOUR}
       actionDansLeFormulaire
     >
-      <TitrePage
-        titre="Ajouter un espace commun"
-        sousTitre="Seul le nom est obligatoire ; le reste aide les voisins et l'assistant."
-      />
-      <FormulaireEspace />
+      <ColonneFormulaire>
+        <TitrePage
+          titre="Ajouter un espace commun"
+          sousTitre="Seul le nom est obligatoire ; le reste aide les voisins et l'assistant."
+        />
+        <FormulaireEspace />
+      </ColonneFormulaire>
     </EcranSyndic>
   );
 }
