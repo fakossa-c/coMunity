@@ -1,19 +1,27 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   choisirDate,
+  continuerProposer,
+  etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
+  nouvelEspaceCommun,
   nouvelleActiviteEnTete,
+  reglerAffichage,
   saisirLieuLibre,
   supprimerComptes,
+  supprimerEspacesCommuns,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #9 : le parcours de création en 4 étapes, du bouton « Proposer » à la fiche publiée.
 
 const emails: string[] = [];
+const espaces: string[] = [];
 
 test.afterEach(async () => {
   await supprimerComptes(emails.splice(0));
+  await supprimerEspacesCommuns(espaces.splice(0));
 });
 
 async function seConnecter(page: Page, email: string) {
@@ -358,4 +366,426 @@ test("le parcours reste en pêche et sans pourcentage sur le plus petit téléph
     path: test.info().outputPath("etape-1-360.png"),
     fullPage: true,
   });
+});
+
+// Ticket #133 : sur ordinateur, Proposer est une page unique avec un aperçu vivant de la carte ;
+// le mobile garde ses étapes. Le champ « Description » existe dans les deux présentations.
+
+const BLOCS = [
+  "Titre et description",
+  "Catégorie",
+  "Photos",
+  "Date et heure",
+  "Lieu",
+  "Précisions",
+];
+
+function colonneDroite(page: Page) {
+  return page.getByRole("complementary", { name: "Aperçu et publication" });
+}
+
+function apercu(page: Page) {
+  return colonneDroite(page).getByRole("article", {
+    name: "Aperçu de la carte de l'activité",
+  });
+}
+
+/** Un résident validé, connecté, sur Proposer. */
+async function ouvrirProposer(page: Page, adresse = "/proposer") {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  await seConnecter(page, resident.email);
+  await page.goto(adresse);
+  return resident;
+}
+
+/** Remplit ce qu'il faut pour publier, sur les étapes du mobile comme sur la page de l'ordinateur. */
+async function remplirLeNecessaire(
+  page: Page,
+  titre: string,
+  description?: string,
+) {
+  await etapeProposer(page, 1);
+  await page.getByLabel("Titre de l'activité").fill(titre);
+  if (description !== undefined)
+    await page.getByLabel("Description", { exact: true }).fill(description);
+  await continuerProposer(page);
+  await etapeProposer(page, 2);
+  await choisirDate(page, dansUnMois());
+  await page.getByLabel("Heure de début").selectOption("10:00");
+  await saisirLieuLibre(page, "Cour intérieure");
+  await continuerProposer(page);
+  await etapeProposer(page, 3);
+  await continuerProposer(page);
+  await etapeProposer(page, 4);
+}
+
+test.describe("sur ordinateur : une page unique", () => {
+  test.skip(
+    ({ isMobile }) => isMobile,
+    "Sur mobile, Proposer garde son parcours en étapes.",
+  );
+
+  test("six blocs, plus d'étapes, et une colonne à droite qui reste visible", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    const principal = page.getByRole("main");
+
+    for (const bloc of BLOCS)
+      await expect(
+        principal.getByRole("heading", { level: 2, name: bloc, exact: true }),
+      ).toBeVisible();
+    await expect(principal).not.toContainText("Étape 1 sur 4");
+    await expect(page.getByRole("button", { name: "Continuer" })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("button", { name: "Précédent" })).toHaveCount(
+      0,
+    );
+
+    // La colonne : aperçu de la carte, « Il reste à remplir », « Publier l'activité ».
+    const colonne = colonneDroite(page);
+    await expect(apercu(page)).toBeVisible();
+    await expect(
+      colonne.getByRole("heading", { name: "Il reste à remplir" }),
+    ).toBeVisible();
+    await expect(
+      colonne.getByRole("button", { name: "Publier l'activité" }),
+    ).toBeVisible();
+    // L'assistant est en haut, au-dessus des blocs.
+    const encart = page.getByText("Conseils de l'assistant");
+    await expect(encart).toBeVisible();
+    const [haut, premierBloc] = await Promise.all([
+      encart.boundingBox(),
+      principal
+        .getByRole("heading", { level: 2, name: "Titre et description" })
+        .boundingBox(),
+    ]);
+    expect(haut!.y).toBeLessThan(premierBloc!.y);
+    // Ni la barre du bas ni la barre d'action fixe du mobile.
+    await expect(page.getByRole("button", { name: "Publier" })).toHaveCount(1);
+    await page.screenshot({
+      path: test.info().outputPath("page-unique-vide.png"),
+      fullPage: true,
+    });
+
+    // La colonne colle en haut quand la page défile.
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    const collee = await colonne.boundingBox();
+    expect(collee!.y).toBeGreaterThanOrEqual(0);
+    expect(collee!.y).toBeLessThan(120);
+    // Même en bas de page, on peut atteindre « Publier l'activité ».
+    await colonne
+      .getByRole("button", { name: "Publier l'activité" })
+      .scrollIntoViewIfNeeded();
+    const bouton = await colonne
+      .getByRole("button", { name: "Publier l'activité" })
+      .boundingBox();
+    expect(bouton!.y + bouton!.height).toBeLessThanOrEqual(
+      page.viewportSize()!.height,
+    );
+    await page.screenshot({
+      path: test.info().outputPath("page-unique-bas.png"),
+    });
+  });
+
+  test("l'aperçu et « Il reste à remplir » suivent la saisie", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    const colonne = colonneDroite(page);
+    const reste = colonne.getByRole("listitem");
+    await expect(apercu(page)).toContainText("Le titre de votre activité");
+    await expect(reste.filter({ hasText: "Titre" })).toContainText("à saisir");
+    await expect(reste.filter({ hasText: "Date et heure" })).toContainText(
+      "à choisir",
+    );
+    await expect(reste.filter({ hasText: "Lieu" })).toContainText("à choisir");
+    await expect(reste.filter({ hasText: "Description" })).toContainText(
+      "conseillée",
+    );
+
+    await page.getByLabel("Titre de l'activité").fill("Goûter d'automne");
+    await expect(apercu(page)).toContainText("Goûter d'automne");
+    await expect(reste.filter({ hasText: "Titre" })).not.toContainText(
+      "à saisir",
+    );
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Crêpes et jeux de société pour tous.");
+    await expect(apercu(page)).toContainText(
+      "Crêpes et jeux de société pour tous.",
+    );
+    await expect(reste.filter({ hasText: "Description" })).not.toContainText(
+      "conseillée",
+    );
+
+    await page
+      .getByLabel("Catégorie")
+      .selectOption({ label: "Jardin & Nature" });
+    await expect(apercu(page)).toContainText("Jardin & Nature");
+    await choisirDate(page, dansUnMois());
+    await page.getByLabel("Heure de début").selectOption("10:00");
+    await page.getByLabel("Heure de fin").selectOption("11:30");
+    await expect(apercu(page)).toContainText("De 10h00 à 11h30");
+    await expect(reste.filter({ hasText: "Date et heure" })).not.toContainText(
+      "à choisir",
+    );
+    await saisirLieuLibre(page, "Cour intérieure");
+    await expect(apercu(page)).toContainText("Cour intérieure");
+    await page.getByRole("radio", { name: "Limité", exact: true }).check();
+    await page.getByLabel("Nombre de places").fill("12");
+    await expect(apercu(page)).toContainText("12 personnes");
+    await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
+    await expect(apercu(page)).toContainText("Accès plain-pied");
+
+    await expect(
+      colonne.getByRole("heading", { name: "Tout est rempli" }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath("page-unique-remplie.png"),
+      fullPage: true,
+    });
+  });
+
+  test("« Publier l'activité » dit ce qui manque, puis publie, description sur la fiche", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    const titre = `Goûter ${Date.now()}`;
+    const description = "Crêpes sucrées et salées, jeux de société pour tous.";
+    const publier = colonneDroite(page).getByRole("button", {
+      name: "Publier l'activité",
+    });
+
+    await publier.click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "Donnez un titre",
+    );
+    await page.getByLabel("Titre de l'activité").fill(titre);
+    await page.getByLabel("Description", { exact: true }).fill(description);
+    await publier.click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "Choisissez une date.",
+    );
+    await choisirDate(page, dansUnMois());
+    await page.getByLabel("Heure de début").selectOption("10:00");
+    await saisirLieuLibre(page, "Cour intérieure");
+    await publier.click();
+
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Votre activité est publiée",
+      }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Voir la fiche" }).click();
+    await expect(page.getByRole("main")).toContainText("Description");
+    await expect(page.getByRole("main")).toContainText(description);
+  });
+
+  test("« Annuler » ne demande confirmation que si quelque chose a été saisi", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    const retour = page
+      .getByRole("main")
+      .getByRole("link", { name: "Annuler" });
+
+    // Rien de saisi : on part directement.
+    await retour.click();
+    await expect(page).toHaveURL(/\/activites$/);
+
+    // Une saisie : la confirmation, où l'on peut rester sans rien perdre.
+    await page.goto("/proposer");
+    await page.getByLabel("Titre de l'activité").fill("Brouillon");
+    await retour.click();
+    const confirmation = page.getByRole("dialog", {
+      name: "Quitter sans publier ?",
+    });
+    await expect(confirmation).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath("confirmation-retour.png"),
+    });
+    await confirmation.getByRole("button", { name: "Rester ici" }).click();
+    await expect(confirmation).toBeHidden();
+    await expect(page).toHaveURL(/\/proposer$/);
+    await expect(page.getByLabel("Titre de l'activité")).toHaveValue(
+      "Brouillon",
+    );
+
+    await retour.click();
+    await confirmation.getByRole("button", { name: "Quitter" }).click();
+    await expect(page).toHaveURL(/\/activites$/);
+  });
+
+  test("l'assistant relit la proposition en haut de la page", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    await page.getByLabel("Titre de l'activité").fill("Atelier tricot");
+    await choisirDate(page, dansUnMois());
+    await page.getByLabel("Heure de début").selectOption("21:00");
+    await page.getByLabel("Heure de fin").selectOption("22:30");
+    await saisirLieuLibre(page, "Chez Danielle, 2e étage");
+
+    await expect(page.getByRole("main")).toContainText(
+      "Votre activité finit après 22h00, l'heure de calme de la résidence",
+    );
+  });
+
+  test("la page unique tient sans barre de défilement horizontale, en clair, en sombre et en grands caractères", async ({
+    page,
+  }) => {
+    const resident = await ouvrirProposer(page);
+    for (const reglage of [
+      { theme: "clair", taille: "standard" },
+      { theme: "sombre", taille: "standard" },
+      { theme: "clair", taille: "grands" },
+    ] as const) {
+      await reglerAffichage(resident.id, reglage);
+      await page.goto("/proposer");
+      await page
+        .getByLabel("Titre de l'activité")
+        .fill("Un titre d'activité très long pour tenir ".repeat(1));
+      await page
+        .getByLabel("Description", { exact: true })
+        .fill("Une description qui s'étire ".repeat(20));
+      await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
+      await verifierSansDefilementHorizontal(page);
+      await page.screenshot({
+        path: test
+          .info()
+          .outputPath(`page-unique-${reglage.theme}-${reglage.taille}.png`),
+        fullPage: true,
+      });
+    }
+  });
+
+  test("la préférence de réduction des animations coupe celles de la page", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    await page.getByLabel("Titre de l'activité").fill("Goûter");
+    const pastille = page
+      .getByRole("main")
+      .locator("[data-fait='true']")
+      .first();
+    await expect(pastille).toBeVisible();
+    const duree = () =>
+      pastille.evaluate(
+        (element) => getComputedStyle(element).transitionDuration,
+      );
+    expect(await duree()).not.toBe("0s");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await duree()).toBe("0s");
+  });
+});
+
+test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
+  test("600 caractères au plus, enregistré, sur la fiche, repris par Modifier et Dupliquer", async ({
+    page,
+  }) => {
+    await ouvrirProposer(page);
+    const titre = `Goûter description ${Date.now()}`;
+    const description = "Crêpes sucrées et salées, jeux de société pour tous.";
+    const champ = page.getByLabel("Description", { exact: true });
+
+    await etapeProposer(page, 1);
+    await page.getByLabel("Titre de l'activité").fill(titre);
+    await expect(page.getByRole("main")).toContainText("0 / 600 caractères");
+    await expect(champ).toHaveAttribute("maxlength", "600");
+    await champ.fill("x".repeat(601));
+    await expect(page.getByRole("main")).toContainText("601 / 600 caractères");
+    await page.getByRole("button", { name: /^(Continuer|Publier)/ }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "600 caractères maximum.",
+    );
+
+    await champ.fill(description);
+    await expect(page.getByRole("main")).toContainText(
+      `${description.length} / 600 caractères`,
+    );
+    await continuerProposer(page);
+    await etapeProposer(page, 2);
+    await choisirDate(page, dansUnMois());
+    await page.getByLabel("Heure de début").selectOption("10:00");
+    await saisirLieuLibre(page, "Cour intérieure");
+    await continuerProposer(page);
+    await continuerProposer(page);
+    await etapeProposer(page, 4);
+    await page.getByRole("button", { name: /^Publier/ }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Votre activité est publiée",
+      }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Voir la fiche" }).click();
+    await expect(page.getByRole("main")).toContainText(description);
+    const fiche = page.url();
+
+    // Modifier reprend la description ; Dupliquer aussi.
+    await page.goto(`${fiche}/modifier`);
+    await expect(champ).toHaveValue(description);
+    await page.goto(`/proposer?copie=${fiche.split("/").pop()}`);
+    await expect(champ).toHaveValue(description);
+  });
+});
+
+test.describe("le paramètre d'adresse « espace »", () => {
+  async function lieuChoisi(page: Page) {
+    await page.getByLabel("Titre de l'activité").fill("Goûter");
+    await continuerProposer(page);
+    await etapeProposer(page, 2);
+    return page.getByLabel("Lieu", { exact: true });
+  }
+
+  test("préchoisit l'espace commun", async ({ page }) => {
+    const espace = await nouvelEspaceCommun();
+    espaces.push(espace.nom);
+    await ouvrirProposer(page, `/proposer?espace=${espace.id}`);
+
+    await expect(await lieuChoisi(page)).toHaveValue(espace.id);
+    await expect(page.getByLabel("Nom du lieu")).toHaveCount(0);
+  });
+
+  test("un identifiant inconnu est ignoré", async ({ page }) => {
+    const espace = await nouvelEspaceCommun();
+    espaces.push(espace.nom);
+    await ouvrirProposer(
+      page,
+      "/proposer?espace=00000000-0000-0000-0000-000000000000",
+    );
+
+    await expect(await lieuChoisi(page)).toHaveValue("");
+  });
+});
+
+test("sur mobile comme sur ordinateur, la saisie ne fait pas défiler la page horizontalement", async ({
+  page,
+}) => {
+  await ouvrirProposer(page);
+  await page.getByLabel("Titre de l'activité").fill("Un titre d'activité");
+  await page
+    .getByLabel("Description", { exact: true })
+    .fill("Une description qui s'étire ".repeat(20));
+  await verifierSansDefilementHorizontal(page);
+});
+
+test("« Publier » de la page unique, ou « Publier » du dernier écran : la publication est la même", async ({
+  page,
+}) => {
+  await ouvrirProposer(page);
+  const titre = `Publication ${Date.now()}`;
+  await remplirLeNecessaire(page, titre);
+  await page.getByRole("button", { name: /^Publier/ }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
+  ).toBeVisible();
 });

@@ -583,3 +583,23 @@ export async function verifierSansDefilementHorizontal(page: Page) {
   });
   expect(debordements, "éléments avec une barre horizontale").toEqual([]);
 }
+
+/**
+ * Vrai en largeur ordinateur (à partir de 64 rem) : Proposer y est une page unique, sans étapes
+ * ni « Continuer », alors que le mobile garde son parcours en quatre étapes.
+ */
+export function estBureau(page: Page) {
+  return (page.viewportSize()?.width ?? 0) >= 1024;
+}
+
+/** Attend l'étape `numero` du parcours de Proposer ; sur ordinateur, il n'y a pas d'étapes. */
+export async function etapeProposer(page: Page, numero: number) {
+  if (estBureau(page)) return;
+  await expect(page.getByRole("main")).toContainText(`Étape ${numero} sur 4`);
+}
+
+/** « Continuer » vers l'étape suivante de Proposer ; sur ordinateur, tout est déjà sur la page. */
+export async function continuerProposer(page: Page) {
+  if (estBureau(page)) return;
+  await page.getByRole("button", { name: "Continuer" }).click();
+}
