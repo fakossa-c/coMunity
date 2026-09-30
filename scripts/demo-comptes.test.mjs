@@ -50,6 +50,7 @@ describe("estAdresseDemo", () => {
       false,
     );
     expect(estAdresseDemo("fakossa+test-@gmail.com")).toBe(false);
+    expect(estAdresseDemo("fakossa+test-admin-marc@gmail.com")).toBe(false);
     expect(estAdresseDemo("fakossa+test-resident-@gmail.com")).toBe(false);
     expect(estAdresseDemo("fakossa.conate+test-resident-marc@gmail.com")).toBe(
       false,
