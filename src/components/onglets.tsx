@@ -41,7 +41,7 @@ export function Onglets({ onglets, actif, libelleGroupe }: Props) {
             href={onglet.href}
             role="tab"
             aria-selected={selectionne}
-            className={`flex min-h-ligne min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center font-headline text-label-md transition-colors duration-(--duree-courte) ease-journal desktop:h-[54px] desktop:min-h-0 desktop:w-[212px] desktop:flex-none desktop:flex-row desktop:gap-2.5 desktop:px-6 desktop:text-label-lg ${
+            className={`flex min-h-ligne min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center font-headline text-label-md transition-colors duration-(--duree-courte) ease-journal desktop:h-[54px] desktop:min-h-0 desktop:w-[212px] desktop:flex-none desktop:flex-row desktop:gap-2.5 desktop:px-4 desktop:text-label-lg desktop:whitespace-nowrap ${
               selectionne
                 ? "bg-fond-action font-extrabold text-texte-action"
                 : "text-on-surface-variant hover:bg-fond-carte/60 hover:text-on-surface"

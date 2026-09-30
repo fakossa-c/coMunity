@@ -106,7 +106,7 @@ export function CarteActivite(props: Props) {
   const { inscrit } = etatInscription(activite);
   const couleur = couleurDe(activite.categorie);
   return (
-    <article className="relative flex survol-eleve flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)]">
+    <article className="relative flex survol-eleve flex-col gap-space-sm rounded-lg border-[1.5px] border-border-distinct/20 bg-surface-container-lowest p-space-md shadow-[0_3px_0_0_rgba(24,34,48,0.08)] desktop:border-transparent desktop:shadow-(--shadow-douce)">
       <div className="flex items-start gap-space-sm">
         <span
           className={`flex size-12 shrink-0 items-center justify-center rounded-full ${couleur.fond} ${couleur.encre}`}
