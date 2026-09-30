@@ -27,7 +27,7 @@ function ecranDeCompletion(page: Page) {
   });
 }
 
-test("après connexion, un membre du syndic arrive sur le tableau de bord", async ({
+test("après connexion, un membre du conseil syndical arrive sur le tableau de bord", async ({
   page,
   isMobile,
 }) => {

@@ -1,12 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
-import type {
-  PageArrivee,
-  TailleAffichage,
-  ThemeAffichage,
-} from "./attributs-affichage";
-import { destinationArrivee, lireAvecPageArrivee } from "./page-arrivee";
+import type { TailleAffichage, ThemeAffichage } from "./attributs-affichage";
+import {
+  destinationArrivee,
+  lireAvecPageArrivee,
+  PAGE_ARRIVEE_PAR_DEFAUT,
+  type PageArrivee,
+  type ProfilArrivee,
+} from "./page-arrivee";
 import { clientSession, configurationSupabase } from "./supabase/serveur";
 
 export {
@@ -67,21 +69,16 @@ export const lireSession = cache(async (): Promise<Session | null> => {
     nom: profil?.nom ?? null,
     taille: profil?.taille ?? "standard",
     theme: profil?.theme ?? "clair",
-    pageArrivee: profil?.pageArrivee ?? "tableau_de_bord",
+    pageArrivee: profil?.pageArrivee ?? PAGE_ARRIVEE_PAR_DEFAUT,
   };
 });
-
-type ProfilNomme = Pick<
-  Session,
-  "role" | "statut" | "prenom" | "nom" | "pageArrivee"
->;
 
 /** Rôle, statut, nom et page d'arrivée d'un compte, tels que la personne connectée a le droit de les lire. */
 export async function lireProfil(
   supabase: SupabaseClient,
   id: string,
-): Promise<ProfilNomme | null> {
-  return lireAvecPageArrivee<Omit<ProfilNomme, "pageArrivee">>(
+): Promise<ProfilArrivee | null> {
+  return lireAvecPageArrivee<Omit<ProfilArrivee, "pageArrivee">>(
     (colonnes) =>
       supabase.from("profil").select(colonnes).eq("id", id).maybeSingle(),
     "role, statut, prenom, nom",
@@ -93,7 +90,7 @@ export async function lireProfil(
  * présenter : voir `destinationArrivee`.
  */
 export async function accueilDe(
-  profil: ProfilNomme | null,
+  profil: ProfilArrivee | null,
   suivant?: string | null,
 ) {
   return destinationArrivee(profil, suivant);

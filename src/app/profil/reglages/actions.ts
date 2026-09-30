@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import type {
-  PageArrivee,
   TailleAffichage,
   ThemeAffichage,
 } from "@/lib/attributs-affichage";
+import type { PageArrivee } from "@/lib/page-arrivee";
 import type { Resultat } from "@/lib/resultat";
 import { clientSession } from "@/lib/supabase/serveur";
 

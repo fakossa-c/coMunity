@@ -1,7 +1,5 @@
 export type TailleAffichage = "standard" | "grands";
 export type ThemeAffichage = "clair" | "sombre";
-/** La page où arrive un membre du conseil syndical après la connexion. */
-export type PageArrivee = "tableau_de_bord" | "accueil";
 
 type Reglages = { taille: TailleAffichage; theme: ThemeAffichage } | null;
 

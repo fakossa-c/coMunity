@@ -60,13 +60,13 @@ export function titreAccueil(page: Page) {
 }
 
 /**
- * Le titre de la page où arrive un membre du syndic qui se connecte depuis `page`, avec la page
- * d'arrivée par défaut : le tableau de bord, sur ordinateur comme sur mobile (ticket #170).
- * L'appareil ne change plus l'arrivée ; le paramètre reste le temps que les specs cessent de le
- * passer.
+ * Le titre de la page où arrive un membre du conseil syndical qui se connecte depuis `page`,
+ * avec la page d'arrivée par défaut : le tableau de bord, sur ordinateur comme sur mobile
+ * (ticket #170). L'appareil ne change plus l'arrivée ; le paramètre reste le temps que les specs
+ * cessent de le passer.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- paramètre gardé pour les specs qui le passent encore
-export function arriveeDuSyndic(page: Page, _appareil?: { mobile: boolean }) {
+export function arriveeDuSyndic(page: Page, _appareil: { mobile: boolean }) {
   return page.getByRole("heading", { level: 1, name: "Tableau de bord" });
 }
 

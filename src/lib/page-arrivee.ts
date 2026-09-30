@@ -1,7 +1,13 @@
-import type { PageArrivee } from "./attributs-affichage";
 import { doitCompleterProfil, estSyndicActif } from "./profil";
 import type { Role, StatutCompte } from "./session";
 
+/** La page où arrive un membre du conseil syndical après la connexion, choisie dans Mes réglages. */
+export type PageArrivee = "tableau_de_bord" | "accueil";
+
+/** La valeur de la colonne en base, et celle d'un profil lu sur une base qui ne l'a pas encore. */
+export const PAGE_ARRIVEE_PAR_DEFAUT: PageArrivee = "tableau_de_bord";
+
+/** Ce que la destination après connexion lit du profil. */
 export type ProfilArrivee = {
   role: Role | null;
   statut: StatutCompte | null;
@@ -10,7 +16,7 @@ export type ProfilArrivee = {
   pageArrivee: PageArrivee;
 };
 
-/** L'écran où un membre du syndic saisit son prénom et son nom avant d'aller plus loin. */
+/** L'écran où un membre du conseil syndical saisit son prénom et son nom avant d'aller plus loin. */
 export const CHEMIN_COMPLETION = "/completer-profil";
 
 const CHEMINS: Record<PageArrivee, string> = {
@@ -42,7 +48,7 @@ const COLONNE_ABSENTE = "42703";
 /**
  * Lit `colonnes` d'un profil avec sa page d'arrivée. La migration de la colonne est retenue
  * jusqu'à la fusion de `develop` vers `main` (issue #123) : une base qui ne l'a pas encore est
- * relue sans elle, et le profil compte alors le tableau de bord, la valeur par défaut.
+ * relue sans elle, et le profil compte alors la valeur par défaut.
  */
 export async function lireAvecPageArrivee<T extends object>(
   lire: (colonnes: string) => PromiseLike<{
@@ -58,5 +64,8 @@ export async function lireAvecPageArrivee<T extends object>(
   const { page_arrivee, ...profil } = lecture.data as T & {
     page_arrivee?: PageArrivee;
   };
-  return { ...(profil as T), pageArrivee: page_arrivee ?? "tableau_de_bord" };
+  return {
+    ...(profil as T),
+    pageArrivee: page_arrivee ?? PAGE_ARRIVEE_PAR_DEFAUT,
+  };
 }

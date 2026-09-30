@@ -4,10 +4,11 @@ import { useState, useTransition } from "react";
 import { ChoixSegmente } from "@/components/choix-segmente";
 import { TitreSection } from "@/components/titre-section";
 import type {
-  PageArrivee,
   TailleAffichage,
   ThemeAffichage,
 } from "@/lib/attributs-affichage";
+import type { PageArrivee } from "@/lib/page-arrivee";
+import type { Resultat } from "@/lib/resultat";
 import { choisirPageArrivee, choisirTaille, choisirTheme } from "./actions";
 
 type Props = {
@@ -38,33 +39,29 @@ export function ReglagesAffichage({
     else document.documentElement.removeAttribute(nom);
   }
 
+  function enregistrer(action: () => Promise<Resultat>) {
+    setErreur(null);
+    demarrer(async () => {
+      const resultat = await action();
+      if (!resultat.ok) setErreur(resultat.message);
+    });
+  }
+
   function changerTaille(valeur: TailleAffichage) {
     setTaille(valeur);
     appliquer("data-taille", valeur === "grands" ? "grands" : null);
-    setErreur(null);
-    demarrer(async () => {
-      const resultat = await choisirTaille(valeur);
-      if (!resultat.ok) setErreur(resultat.message);
-    });
+    enregistrer(() => choisirTaille(valeur));
   }
 
   function changerTheme(valeur: ThemeAffichage) {
     setTheme(valeur);
     appliquer("data-theme", valeur === "sombre" ? "sombre" : null);
-    setErreur(null);
-    demarrer(async () => {
-      const resultat = await choisirTheme(valeur);
-      if (!resultat.ok) setErreur(resultat.message);
-    });
+    enregistrer(() => choisirTheme(valeur));
   }
 
   function changerPageArrivee(valeur: PageArrivee) {
     setPageArrivee(valeur);
-    setErreur(null);
-    demarrer(async () => {
-      const resultat = await choisirPageArrivee(valeur);
-      if (!resultat.ok) setErreur(resultat.message);
-    });
+    enregistrer(() => choisirPageArrivee(valeur));
   }
 
   return (
