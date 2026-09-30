@@ -53,24 +53,20 @@ const ECRANS_DU_RESIDENT: Ecran[] = [
   { chemin: "/page-qui-n-existe-pas", href: "/", destination: "Accueil" },
 ];
 
+// Les listes de l'espace syndic n'ont plus de « Retour » : son menu les relie (ticket #169).
+// Ses formulaires le gardent, vers leur liste.
+const LISTES_DU_SYNDIC = [
+  "/syndic/tableau-de-bord",
+  "/syndic/residents",
+  "/syndic/membres",
+  "/syndic/moderation",
+  "/syndic/annonces",
+  "/syndic/espaces-communs",
+  "/syndic/reglement",
+  "/syndic/mon-syndic",
+];
+
 const ECRANS_DU_SYNDIC: Ecran[] = [
-  { chemin: "/syndic", href: "/", destination: "Accueil" },
-  {
-    chemin: "/syndic/residents",
-    href: "/syndic",
-    destination: "Espace syndic",
-  },
-  { chemin: "/syndic/membres", href: "/syndic", destination: "Espace syndic" },
-  {
-    chemin: "/syndic/moderation",
-    href: "/syndic",
-    destination: "Espace syndic",
-  },
-  {
-    chemin: "/syndic/tableau-de-bord",
-    href: "/syndic",
-    destination: "Espace syndic",
-  },
   {
     chemin: "/syndic/annonces/nouvelle",
     href: "/syndic/annonces",
@@ -131,6 +127,24 @@ test.describe("« Retour » en haut de tout écran secondaire", () => {
       await verifierRetour(page, ecran);
     });
   }
+
+  test("les listes de l'espace syndic n'ont pas de « Retour »", async ({
+    page,
+  }) => {
+    const syndic = await nouveauSyndic();
+    emails.push(syndic.email);
+    await seConnecter(page, syndic.email);
+
+    for (const chemin of LISTES_DU_SYNDIC) {
+      await test.step(chemin, async () => {
+        await page.goto(chemin);
+        await page.getByRole("heading", { level: 1 }).waitFor();
+        await expect(page.getByRole("link", { name: /^Retour/ })).toHaveCount(
+          0,
+        );
+      });
+    }
+  });
 
   test("la connexion dit « Retour » elle aussi, vers l'accueil", async ({
     page,

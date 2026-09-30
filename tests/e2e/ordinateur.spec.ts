@@ -298,7 +298,7 @@ test("le menu de l'avatar est un menu déroulant sous l'avatar, qui s'anime et s
   await expect(avatar).toBeFocused();
 });
 
-test("un membre du conseil syndical trouve « Espace syndic » dans le menu déroulant", async ({
+test("un membre du conseil syndical arrive sur le tableau de bord, et le menu déroulant n'a plus « Espace syndic »", async ({
   page,
 }) => {
   const syndic = await nouveauSyndic();
@@ -310,7 +310,10 @@ test("un membre du conseil syndical trouve « Espace syndic » dans le menu dér
 
   await page.getByRole("button", { name: "Mon profil" }).click();
   const menu = page.getByRole("dialog", { name: "Menu du profil" });
-  await expect(menu.getByRole("link", { name: /Espace syndic/ })).toBeVisible();
+  await expect(menu.getByRole("link", { name: /^Profil/ })).toBeVisible();
+  await expect(menu.getByRole("link", { name: /Espace syndic/ })).toHaveCount(
+    0,
+  );
 });
 
 test("une confirmation s'ouvre en pop-up centrée avec un voile, et le clavier reste utilisable", async ({
@@ -454,7 +457,7 @@ test("la barre d'action est collée au bas de la colonne", async ({ page }) => {
   expect(barre.width).toBeCloseTo(contenu.width, -1);
 });
 
-test("l'espace syndic suit le même conteneur de 1280 px, avec les mêmes cartes", async ({
+test("l'espace syndic a son menu à gauche, et son contenu centré dans l'espace restant", async ({
   page,
 }) => {
   const syndic = await nouveauSyndic();
@@ -463,16 +466,15 @@ test("l'espace syndic suit le même conteneur de 1280 px, avec les mêmes cartes
   await expect(
     page.getByRole("heading", { level: 1, name: "Tableau de bord" }),
   ).toBeVisible();
-  await page.goto("/syndic");
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Espace syndic" }),
-  ).toBeVisible();
 
-  const contenu = await boite(page.getByRole("main"));
-  expect(contenu.width).toBeCloseTo(1280, -1);
-  // Les rubriques restent des cartes : elles se rangent en colonnes sur la largeur.
-  const rubriques = page.getByRole("main").getByRole("list").getByRole("link");
-  expect((await boite(rubriques.nth(1))).x).toBeGreaterThan(
-    (await boite(rubriques.first())).x,
+  const menu = await boite(
+    page.getByRole("navigation", { name: "Espace syndic" }),
   );
+  const contenu = await boite(page.getByRole("main"));
+  expect(menu.x).toBeLessThan(40);
+  expect(contenu.x).toBeGreaterThanOrEqual(menu.x + menu.width);
+  expect(contenu.width).toBeLessThanOrEqual(1152);
+  const droite = page.viewportSize()!.width - (contenu.x + contenu.width);
+  const gauche = contenu.x - (menu.x + menu.width);
+  expect(Math.abs(droite - gauche)).toBeLessThan(40);
 });

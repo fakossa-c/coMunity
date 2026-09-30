@@ -74,7 +74,6 @@ test("le tableau de bord montre les chiffres, les graphiques en texte et le sél
   await activiteReussie(page);
 
   await page.goto("/syndic");
-  await page.getByRole("link", { name: /^Tableau de bord/ }).click();
 
   await expect(
     page.getByRole("heading", { level: 1, name: "Tableau de bord" }),

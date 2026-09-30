@@ -55,8 +55,7 @@ test("le conseil syndical rédige deux sections, un résident les lit en les dé
   titres.push(bruit, dechets);
 
   await seConnecter(page, syndic.email);
-  await page.goto("/syndic");
-  await page.getByRole("link", { name: /Règlement intérieur/ }).click();
+  await page.goto("/syndic/reglement");
   await expect(
     page.getByRole("heading", { level: 1, name: "Règlement intérieur" }),
   ).toBeVisible();

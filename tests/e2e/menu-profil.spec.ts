@@ -193,7 +193,7 @@ test("« Se déconnecter » déconnecte et ramène à l'accueil", async ({
   await expect(avatar(page)).toHaveCount(0);
 });
 
-test("un membre du syndic trouve « Espace syndic » dans le menu", async ({
+test("un membre du syndic ne trouve plus « Espace syndic » dans le menu : l'onglet y mène", async ({
   page,
   isMobile,
 }) => {
@@ -204,10 +204,10 @@ test("un membre du syndic trouve « Espace syndic » dans le menu", async ({
 
   await page.goto("/");
   await ouvrirMenu(page);
-  await menu(page)
-    .getByRole("link", { name: /Espace syndic/ })
-    .click();
-  await expect(page).toHaveURL(/\/syndic$/);
+  await expect(menu(page).getByRole("link", { name: /^Profil/ })).toBeVisible();
+  await expect(
+    menu(page).getByRole("link", { name: /Espace syndic/ }),
+  ).toHaveCount(0);
 });
 
 for (const statut of ["refuse", "retire"] as const) {
