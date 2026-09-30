@@ -5,8 +5,8 @@ import {
   type ReglesResidence,
 } from "@/assistant";
 import {
-  avertissementsApplicables,
   entreeJevDe,
+  fusionnerAvis,
   propositionDe,
   verifierPage,
   type SaisieActivite,
@@ -88,14 +88,5 @@ export function useAvisAssistant({
     };
   }, [actif, avecJev, complete, entree]);
 
-  if (!local) return null;
-  return {
-    ...local,
-    avertissements: avertissementsApplicables(
-      [...local.avertissements, ...(jev?.avertissements ?? [])],
-      saisie,
-      reference,
-    ),
-    moderation: jev?.moderation ?? local.moderation,
-  };
+  return local && fusionnerAvis(local, jev, saisie, reference);
 }

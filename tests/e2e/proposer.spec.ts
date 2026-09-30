@@ -3,6 +3,7 @@ import {
   choisirDate,
   continuerProposer,
   encartAssistant,
+  estBureau,
   etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
@@ -754,34 +755,6 @@ test.describe("sur ordinateur : une page unique", () => {
     );
   });
 
-  test("la page unique tient sans barre de défilement horizontale, en clair, en sombre et en grands caractères", async ({
-    page,
-  }) => {
-    const resident = await ouvrirProposer(page);
-    for (const reglage of [
-      { theme: "clair", taille: "standard" },
-      { theme: "sombre", taille: "standard" },
-      { theme: "clair", taille: "grands" },
-    ] as const) {
-      await reglerAffichage(resident.id, reglage);
-      await page.goto("/proposer");
-      await page
-        .getByLabel("Titre de l'activité")
-        .fill("Un titre d'activité très long pour tenir ".repeat(1));
-      await page
-        .getByLabel("Description", { exact: true })
-        .fill("Une description qui s'étire ".repeat(20));
-      await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
-      await verifierSansDefilementHorizontal(page);
-      await page.screenshot({
-        path: test
-          .info()
-          .outputPath(`page-unique-${reglage.theme}-${reglage.taille}.png`),
-        fullPage: true,
-      });
-    }
-  });
-
   test("la préférence de réduction des animations coupe celles de la page", async ({
     page,
   }) => {
@@ -801,6 +774,36 @@ test.describe("sur ordinateur : une page unique", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     expect(await duree()).toBe("0s");
   });
+});
+
+test("la saisie tient sans barre de défilement horizontale, en clair, en sombre et en grands caractères, sur mobile comme sur ordinateur", async ({
+  page,
+}) => {
+  const resident = await ouvrirProposer(page);
+  for (const reglage of [
+    { theme: "clair", taille: "standard" },
+    { theme: "sombre", taille: "standard" },
+    { theme: "clair", taille: "grands" },
+  ] as const) {
+    await reglerAffichage(resident.id, reglage);
+    await page.goto("/proposer");
+    await page
+      .getByLabel("Titre de l'activité")
+      .fill("Un titre d'activité très long pour tenir ".repeat(1));
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Une description qui s'étire ".repeat(20));
+    // Sur mobile, les étiquettes sont à l'étape 3 : l'étape 1 est déjà bien remplie.
+    if (estBureau(page))
+      await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
+    await verifierSansDefilementHorizontal(page);
+    await page.screenshot({
+      path: test
+        .info()
+        .outputPath(`saisie-${reglage.theme}-${reglage.taille}.png`),
+      fullPage: true,
+    });
+  }
 });
 
 test.describe("le champ Description, sur mobile comme sur ordinateur", () => {

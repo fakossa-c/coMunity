@@ -7,4 +7,4 @@ alter table public.activite
   add constraint activite_description_600
   check (length(description) <= 600) not valid;
 
-comment on column public.activite.description is 'La présentation de l''activité, bloc « Description » de la fiche : 600 caractères au plus. Distincte du mot d''accueil (`mot_accueil`), le mot personnel de l''organisateur en tête de la fiche.';
+comment on column public.activite.description is 'La description de l''activité, bloc « Description » de la fiche : 600 caractères au plus. Distincte du mot d''accueil (`mot_accueil`), le mot personnel de l''organisateur en tête de la fiche.';

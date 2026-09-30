@@ -46,7 +46,7 @@ export type SaisieActivite = {
   categorie: CategorieActivite;
   /** Un pictogramme propre à l'activité ; `""` : celui de sa catégorie. */
   pictogramme: string;
-  /** La présentation de l'activité, sur sa fiche : ce qu'on y fait, pour qui, comment venir. */
+  /** La description de l'activité, sur sa fiche : ce qu'on y fait, pour qui, comment venir. */
   description: string;
   /** Le mot personnel de l'organisateur, en encart en tête de la fiche : distinct de la description. */
   mot_accueil: string;
@@ -515,6 +515,27 @@ export function descriptionPourAssistant(saisie: SaisieActivite) {
     .map((texte) => texte.trim())
     .filter(Boolean)
     .join("\n\n");
+}
+
+/**
+ * L'avis complet de l'assistant : les règles de la résidence (`local`), complétées par l'avis de
+ * Jev quand il y en a un (un Jev absent, en erreur ou lent n'ajoute rien).
+ */
+export function fusionnerAvis(
+  local: AvisAssistant,
+  jev: AvisAssistant | null,
+  saisie: SaisieActivite,
+  reference?: SaisieActivite,
+): AvisAssistant {
+  return {
+    ...local,
+    avertissements: avertissementsApplicables(
+      [...local.avertissements, ...(jev?.avertissements ?? [])],
+      saisie,
+      reference,
+    ),
+    moderation: jev?.moderation ?? local.moderation,
+  };
 }
 
 /** La proposition que l'assistant analyse, tirée de la saisie. */

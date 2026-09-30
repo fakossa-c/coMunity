@@ -2,14 +2,22 @@ import type { AvisAssistant } from "@/assistant";
 import { EncartPastel } from "./encart-pastel";
 import { Icone } from "./icone";
 
-type Props = { avis: AvisAssistant | null };
+type Props = {
+  avis: AvisAssistant | null;
+  /**
+   * Vrai sur la page unique tant qu'il manque le titre, la date, l'heure ou le lieu : sans conseil,
+   * l'encart n'affirme pas que la proposition est prête, il dit ce qu'il attend.
+   */
+  incomplete?: boolean;
+};
 
 /**
- * L'encart « Conseils de l'assistant » du récapitulatif, en haut de page : ce que renvoie le module
- * assistant. Un point bloquant se dit comme tel, visible sans défiler, avant la publication ;
- * sans rien à signaler, l'encart le dit en clair plutôt que de rester vide.
+ * L'encart « Conseils de l'assistant » : en haut du récapitulatif du mobile et de la page unique de
+ * l'ordinateur, ce que renvoie le module assistant. Un point bloquant se dit comme tel, visible
+ * sans défiler, avant la publication ; sans rien à signaler, l'encart le dit en clair plutôt que
+ * de rester vide.
  */
-export function EncartAssistant({ avis }: Props) {
+export function EncartAssistant({ avis, incomplete = false }: Props) {
   const conseils = avis
     ? [
         ...avis.avertissements,
@@ -43,9 +51,11 @@ export function EncartAssistant({ avis }: Props) {
         </ul>
       ) : (
         <p>
-          {avis
-            ? "Rien à signaler : votre proposition est prête à être publiée."
-            : "L'assistant relit votre proposition…"}
+          {!avis
+            ? "L'assistant relit votre proposition…"
+            : incomplete
+              ? "Rien à signaler pour l'instant. L'assistant relira votre proposition quand le titre, la date, l'heure et le lieu seront remplis."
+              : "Rien à signaler : votre proposition est prête à être publiée."}
         </p>
       )}
     </EncartPastel>

@@ -65,11 +65,11 @@ export function ApercuActivite({
           {categoriesActivite[categorie].libelle}
         </p>
         <p className="font-headline text-label-lg text-texte-date">{creneau}</p>
-        <h3
+        <p
           className={`font-headline text-headline-md ${titre ? "text-on-surface" : "text-on-surface-variant italic"}`}
         >
           {titre || TITRE_VIDE}
-        </h3>
+        </p>
         <p
           className={`line-clamp-3 text-body-lg break-words text-on-surface-variant ${description ? "" : "italic"}`}
         >

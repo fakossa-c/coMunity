@@ -34,7 +34,6 @@ export function BlocSaisie({
   pageUnique,
   children,
 }: Props) {
-  const idTitre = `bloc-${bloc}-titre`;
   return (
     <section
       id={`bloc-${bloc}`}
@@ -58,10 +57,7 @@ export function BlocSaisie({
             {fait ? <Icone nom="check" taille={24} /> : numero}
           </span>
           <div className="min-w-0 flex-1">
-            <h2
-              id={idTitre}
-              className="font-headline text-headline-lg text-on-surface"
-            >
+            <h2 className="font-headline text-headline-lg text-on-surface">
               {titre}
             </h2>
             {aide && (
