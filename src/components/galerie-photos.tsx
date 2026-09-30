@@ -107,10 +107,10 @@ export function GaleriePhotos({
       {avecVignettes && (
         <ul
           aria-label="Vignettes"
-          className="hidden min-h-0 desktop:flex desktop:flex-col desktop:gap-[9px]"
+          className="hidden min-h-0 desktop:flex desktop:flex-col desktop:gap-2"
         >
           {photos.map((photo, i) => (
-            <li key={photo} className="min-h-11 flex-1">
+            <li key={photo} className="min-h-cible flex-1">
               <button
                 type="button"
                 aria-label={`Photo ${compteurPhoto(i + 1, total)}`}
@@ -118,7 +118,7 @@ export function GaleriePhotos({
                 onClick={() => aller(i)}
                 className={`relative block size-full cursor-pointer overflow-hidden rounded-md bg-rayures-photo transition-[opacity,box-shadow] duration-(--duree-courte) ease-(--ease-journal) ${
                   i === rang
-                    ? "opacity-100 ring-[3px] ring-primary-fixed-dim"
+                    ? "opacity-100 ring-3 ring-primary-fixed-dim"
                     : "opacity-60 hover:opacity-100"
                 }`}
               >

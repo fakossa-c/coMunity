@@ -544,6 +544,33 @@ for (const [reglage, valeurs] of [
   });
 }
 
+test("avec la réduction des animations, la galerie et la fiche n'ont plus aucune transition", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const espace = await nouvelEspaceCommun({
+    photos: [
+      await deposerImageEspace("#8f2b00"),
+      await deposerImageEspace("#0d3b66"),
+    ],
+  });
+  espaces.push(espace.nom);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await seConnecter(page, resident.email);
+  await page.goto(`/ma-copro/espaces/${espace.id}`);
+  await expect(galerie(page)).toBeVisible();
+
+  const transitions = await page.getByRole("main").evaluate((principal) =>
+    [...principal.querySelectorAll("*")]
+      .map((element) => getComputedStyle(element).transitionDuration)
+      .flatMap((durees) => durees.split(",").map((duree) => parseFloat(duree)))
+      .filter((duree) => duree > 0),
+  );
+  expect(transitions, "durées de transition restantes").toEqual([]);
+});
+
 test("le formulaire d'un espace commun ne défile pas horizontalement avec cinq photos et un plan", async ({
   page,
 }) => {
