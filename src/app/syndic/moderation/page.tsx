@@ -73,6 +73,9 @@ function Rubrique({
       {activites.length === 0 ? (
         <p className="text-body-lg text-on-surface-variant">{vide}</p>
       ) : (
+        // Colonnes de 20,5 rem au moins, pour que « Publier » et « Refuser » tiennent côte à côte :
+        // deux colonnes à côté du menu déplié, trois avec le rail ou sur grand écran (le contenu
+        // plafonne à 1152 px, donc jamais plus de trois).
         <ul
           aria-label={titre}
           className="flex flex-col gap-space-md desktop:grid desktop:grid-cols-[repeat(auto-fill,minmax(20.5rem,1fr))] desktop:gap-6"
