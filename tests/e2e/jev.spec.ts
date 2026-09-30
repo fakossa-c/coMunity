@@ -60,10 +60,19 @@ function titreDuCas(cas: string) {
   return `Atelier ${cas} ${randomUUID().slice(0, 6)}`;
 }
 
-/** Ouvre le parcours d'un nouveau résident, connecté, et remplit l'étape 1 sans toucher à la catégorie. */
-async function commencer(page: Page, titre: string) {
+/**
+ * Ouvre le parcours d'un nouveau résident, connecté, et remplit l'étape 1 sans toucher à la
+ * catégorie. `avantLaSaisie` prépare le compte avant que le titre soit saisi : sur ordinateur,
+ * quitter le titre pour le mot d'accueil suffit à appeler Jev, qui présélectionne la catégorie.
+ */
+async function commencer(
+  page: Page,
+  titre: string,
+  avantLaSaisie?: (resident: { id: string }) => Promise<void>,
+) {
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
+  await avantLaSaisie?.(resident);
   await seConnecter(page, resident.email);
   await page.goto("/proposer");
   await etapeProposer(page, 1);
@@ -469,8 +478,9 @@ test("plafond de création atteint : Jev n'est pas appelé, le parcours va au bo
 }) => {
   // « Bruyante » : Jev, s'il était écouté, mettrait l'activité en relecture.
   const titre = titreDuCas("Bruyante");
-  const resident = await commencer(page, titre);
-  await epuiserLeBudget(resident.id, "creation");
+  const resident = await commencer(page, titre, (nouveau) =>
+    epuiserLeBudget(nouveau.id, "creation"),
+  );
 
   await continuerProposer(page);
   await jusquAuRecapitulatif(page);
