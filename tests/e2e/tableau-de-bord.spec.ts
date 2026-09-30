@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   MOT_DE_PASSE,
   inscrireResident,
@@ -8,7 +8,9 @@ import {
   nouveauResident,
   nouveauSyndic,
   nouvelleActivite,
+  reglerAffichage,
   supprimerComptes,
+  verifierSansDefilementHorizontal,
 } from "./outils";
 
 // Ticket #17 : le conseil syndical suit ce qui anime la résidence depuis son tableau de bord. Les
@@ -65,7 +67,7 @@ async function activiteReussie(page: Page) {
     "À refaire dès que possible",
   );
   await seConnecter(page, syndic.email);
-  return { titre, identifiant, createur };
+  return { titre, identifiant, createur, syndic };
 }
 
 test("le tableau de bord montre les chiffres, les graphiques en texte et le sélecteur de période", async ({
@@ -177,4 +179,146 @@ test("le tableau de bord n'a pas de défaut d'accessibilité critique", async ({
   const resultat = await new AxeBuilder({ page }).include("main").analyze();
   const critiques = resultat.violations.filter((v) => v.impact === "critical");
   expect(critiques, JSON.stringify(critiques, null, 2)).toEqual([]);
+});
+
+// Spec #168, ticket #171 : sur ordinateur, le tableau de bord passe en présentation Journal (la
+// période sous le titre, les quatre chiffres clés sur une ligne, « Mois par mois » et « Activités
+// les mieux notées » côte à côte, « Ce qui remplit le mieux » en trois cartes dessous) ; sur
+// mobile, rien ne change.
+
+async function boite(element: Locator) {
+  await expect(element).toBeVisible();
+  return (await element.boundingBox())!;
+}
+
+/** Les positions distinctes, arrondies au pixel, d'un côté des éléments : `x` pour compter les colonnes, `y` les lignes. */
+async function positions(elements: Locator, cote: "x" | "y") {
+  await expect(elements.first()).toBeVisible();
+  return elements.evaluateAll(
+    (liste, cote) =>
+      new Set(
+        liste.map((e) => {
+          const rect = e.getBoundingClientRect();
+          return Math.round(cote === "x" ? rect.left : rect.top);
+        }),
+      ).size,
+    cote,
+  );
+}
+
+function sections(page: Page) {
+  return {
+    titre: page.getByRole("heading", { level: 1, name: "Tableau de bord" }),
+    periode: page.getByRole("navigation", { name: "Période" }),
+    chiffres: page.getByRole("region", { name: "En chiffres" }),
+    parMois: page.getByRole("region", { name: "Mois par mois" }),
+    remplissage: page.getByRole("region", { name: "Ce qui remplit le mieux" }),
+    classement: page.getByRole("region", {
+      name: "Activités les mieux notées",
+    }),
+  };
+}
+
+test.describe("présentation Journal sur ordinateur", () => {
+  test.skip(({ isMobile }) => isMobile, "Mise en page propre à l'ordinateur.");
+
+  async function verifierJournal(page: Page) {
+    const s = sections(page);
+    const titre = await boite(s.titre);
+    const periode = await boite(s.periode);
+    const chiffres = await boite(s.chiffres);
+    expect(periode.y).toBeGreaterThan(titre.y);
+    expect(periode.y).toBeLessThan(chiffres.y);
+
+    const cartesChiffres = s.chiffres.locator("dl > *");
+    await expect(cartesChiffres).toHaveCount(4);
+    expect(await positions(cartesChiffres, "y")).toBe(1);
+    expect(await positions(cartesChiffres, "x")).toBe(4);
+
+    const parMois = await boite(s.parMois);
+    const classement = await boite(s.classement);
+    expect(Math.round(classement.y)).toBe(Math.round(parMois.y));
+    expect(classement.x).toBeGreaterThan(parMois.x + parMois.width - 1);
+
+    const remplissage = await boite(s.remplissage);
+    expect(remplissage.y).toBeGreaterThan(parMois.y + parMois.height - 1);
+    expect(remplissage.y).toBeGreaterThan(classement.y + classement.height - 1);
+    const cartesRemplissage = s.remplissage.getByRole("figure");
+    await expect(cartesRemplissage).toHaveCount(3);
+    expect(await positions(cartesRemplissage, "y")).toBe(1);
+    expect(await positions(cartesRemplissage, "x")).toBe(3);
+  }
+
+  for (const largeur of [1280, 1100]) {
+    test(`à ${largeur} px, les chiffres clés tiennent sur une ligne et « Mois par mois » est à côté des activités les mieux notées, sans défilement horizontal`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: largeur, height: 900 });
+      await activiteReussie(page);
+      await page.goto("/syndic/tableau-de-bord");
+      await verifierJournal(page);
+      await verifierSansDefilementHorizontal(page);
+    });
+  }
+
+  test("en thème sombre et en grands caractères, la présentation tient sans défilement horizontal", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1100, height: 900 });
+    const { syndic } = await activiteReussie(page);
+    await reglerAffichage(syndic.id, { theme: "sombre", taille: "grands" });
+    await page.goto("/syndic/tableau-de-bord");
+    await expect(page.locator("html")).toHaveAttribute("data-taille", "grands");
+    await verifierJournal(page);
+    await verifierSansDefilementHorizontal(page);
+  });
+});
+
+test.describe("sur mobile", () => {
+  test.skip(({ isMobile }) => !isMobile, "Mise en page mobile.");
+
+  test("rien ne change : une colonne, les sections dans le même ordre", async ({
+    page,
+  }) => {
+    await activiteReussie(page);
+    await page.goto("/syndic/tableau-de-bord");
+    const s = sections(page);
+
+    expect(await positions(s.chiffres.locator("dl > *"), "x")).toBe(1);
+    expect(await positions(s.remplissage.getByRole("figure"), "x")).toBe(1);
+
+    const hauts = [];
+    for (const section of [
+      s.periode,
+      s.chiffres,
+      s.parMois,
+      s.remplissage,
+      s.classement,
+    ]) {
+      hauts.push((await boite(section)).y);
+    }
+    expect(hauts).toEqual([...hauts].sort((a, b) => a - b));
+    await verifierSansDefilementHorizontal(page);
+  });
+});
+
+test("changer de période met à jour les dates et les chiffres mois par mois", async ({
+  page,
+}) => {
+  await activiteReussie(page);
+  await page.goto("/syndic/tableau-de-bord?periode=30_jours");
+  const s = sections(page);
+  const mois = s.parMois.getByRole("figure").getByRole("listitem");
+  const dates = page.getByRole("region", { name: "Période" }).getByText(/^Du /);
+  await expect(mois.first()).toBeVisible();
+  const datesSur30Jours = await dates.textContent();
+  expect(await mois.count()).toBeLessThanOrEqual(2);
+
+  await s.periode.getByRole("link", { name: "12 derniers mois" }).click();
+  await expect(page).toHaveURL(/periode=12_mois/);
+  await expect(dates).not.toHaveText(datesSur30Jours!);
+  await expect.poll(() => mois.count()).toBeGreaterThanOrEqual(12);
+  await expect(
+    s.chiffres.getByText("Activités", { exact: true }),
+  ).toBeVisible();
 });
