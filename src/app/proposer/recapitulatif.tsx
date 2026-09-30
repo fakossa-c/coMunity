@@ -45,7 +45,6 @@ type Props = {
   /** Les photos choisies, à l'étape 1. */
   nombrePhotos: number;
   onModifier: (etape: Etape) => void;
-  onAnnuler: () => void;
 };
 
 /** « 12 places », « Sans limite ». */
@@ -183,7 +182,6 @@ export function Recapitulatif({
   avecJev,
   nombrePhotos,
   onModifier,
-  onAnnuler,
 }: Props) {
   const [avis, setAvis] = useState<AvisAssistant | null>(null);
 
@@ -222,9 +220,6 @@ export function Recapitulatif({
           <CarteLignes libelle={TITRES_ETAPES[etape]} lignes={lignes} />
         </section>
       ))}
-      <Bouton variante="danger" icone="close" onClick={onAnnuler}>
-        Annuler la proposition
-      </Bouton>
     </>
   );
 }

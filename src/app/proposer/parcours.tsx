@@ -134,7 +134,7 @@ export function ParcoursProposition({
   const router = useRouter();
   const bureau = useBureau();
   // Vrai quand la page unique est celle qu'on voit : ce qu'elle fait en plus (l'assistant qui relit
-  // en continu, la confirmation en quittant) ne concerne ni le mobile ni Modifier.
+  // en continu) ne concerne ni le mobile ni Modifier.
   const modeUnique = pageUnique && bureau;
   const [etape, setEtape] = useState<Etape>(1);
   // Vrai après « Modifier » depuis le récapitulatif : « Continuer » y ramène directement.
@@ -414,7 +414,7 @@ export function ParcoursProposition({
   // Une publication dont des photos n'ont pas pu partir a déjà créé l'activité : rien à perdre.
   const modifiee =
     !apresEchec && (photos.length > 0 || JSON.stringify(saisie) !== depart);
-  const [sortie, setSortie] = useConfirmationDeSortie(modeUnique, modifiee);
+  const [sortie, setSortie] = useConfirmationDeSortie(modifiee);
   useDefilementVersLErreur(modeUnique, erreur);
 
   const erreurDe = (champ: ChampSaisie) => erreurDuChamp(erreur, champ);
@@ -844,13 +844,6 @@ export function ParcoursProposition({
                 avecJev={!modification}
                 nombrePhotos={photos.length}
                 onModifier={modifier}
-                onAnnuler={() =>
-                  router.push(
-                    modification
-                      ? cheminFiche(modification.identifiant)
-                      : "/activites",
-                  )
-                }
               />
             </div>
           )}
@@ -916,9 +909,9 @@ export function ParcoursProposition({
 
       <FeuilleConfirmation
         ouverte={sortie !== null}
-        titre="Quitter sans publier ?"
-        libelleGarder="Rester ici"
-        libelleConfirmer="Quitter"
+        titre="Abandonner la proposition ?"
+        libelleGarder="Continuer la saisie"
+        libelleConfirmer="Abandonner"
         onFermer={() => setSortie(null)}
         onConfirmer={() => {
           const cible = sortie;
