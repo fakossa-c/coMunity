@@ -87,8 +87,8 @@ describe("periodeDe autour de minuit, à Paris", () => {
     ).toEqual({ debut: "2027-01-01", fin: "2027-01-01" });
   });
 
-  it("le jour de Paris est celui de la base, quel que soit le fuseau du serveur", () => {
-    // 21h30 UTC en été : encore le 29 à Paris (23h30).
+  it("avant minuit à Paris, la période s'arrête encore ce jour-là", () => {
+    // 21h30 UTC en été : 23h30 le 29 à Paris.
     expect(
       periodeDe("30_jours", aujourdhui(new Date("2026-09-29T21:30:00Z"))).fin,
     ).toBe("2026-09-29");
