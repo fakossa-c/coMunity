@@ -11,6 +11,8 @@ import {
 import { aujourdhui } from "../../src/lib/partage-activite";
 import {
   choisirDate,
+  continuerProposer,
+  etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
   supprimerComptes,
@@ -39,8 +41,8 @@ async function surLEtapeDateEtLieu(page: Page) {
   await expect(page).not.toHaveURL(/connexion/);
   await page.goto("/proposer");
   await page.getByLabel("Titre de l'activité").fill("Atelier compost");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await expect(page.getByRole("main")).toContainText("Étape 2 sur 4");
+  await continuerProposer(page);
+  await etapeProposer(page, 2);
   return page.getByRole("group", { name: "Date", exact: true });
 }
 

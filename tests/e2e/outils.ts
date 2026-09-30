@@ -603,3 +603,8 @@ export async function continuerProposer(page: Page) {
   if (estBureau(page)) return;
   await page.getByRole("button", { name: "Continuer" }).click();
 }
+
+/** L'encart « Conseils de l'assistant » que l'on voit : la page unique de l'ordinateur et le récapitulatif du mobile ont chacun le leur, l'autre restant masqué. */
+export function encartAssistant(page: Page) {
+  return page.getByText("Conseils de l'assistant").filter({ visible: true });
+}

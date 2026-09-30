@@ -4,6 +4,9 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import {
   choisirDate,
+  continuerProposer,
+  estBureau,
+  etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -48,10 +51,6 @@ function dansUnMois() {
     .slice(0, 10);
 }
 
-function etape(page: Page, numero: number) {
-  return expect(page.getByRole("main")).toContainText(`Étape ${numero} sur 4`);
-}
-
 function continuer(page: Page) {
   return page.getByRole("button", { name: "Continuer" }).click();
 }
@@ -67,23 +66,26 @@ async function commencer(page: Page, titre: string) {
   emails.push(resident.email);
   await seConnecter(page, resident.email);
   await page.goto("/proposer");
-  await etape(page, 1);
+  await etapeProposer(page, 1);
   await page.getByLabel("Titre de l'activité").fill(titre);
   await page.getByLabel("Mot d'accueil").fill("Venez avec vos idées.");
   return resident;
 }
 
-/** Remplit l'étape 2 (lieu libre) puis l'étape 3, et s'arrête sur le récapitulatif. */
+/**
+ * Remplit la date, les heures et le lieu libre, puis le reste jusqu'au récapitulatif : sur mobile
+ * les étapes 2 et 3, sur ordinateur la page unique, où l'assistant relit en haut de la page.
+ */
 async function jusquAuRecapitulatif(page: Page) {
-  await etape(page, 2);
+  await etapeProposer(page, 2);
   await choisirDate(page, dansUnMois());
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Chez Danielle, 2e étage");
-  await continuer(page);
-  await etape(page, 3);
-  await continuer(page);
-  await etape(page, 4);
+  await continuerProposer(page);
+  await etapeProposer(page, 3);
+  await continuerProposer(page);
+  await etapeProposer(page, 4);
 }
 
 /** Ce que le faux Jev a reçu pour ce titre. */
@@ -115,14 +117,17 @@ test("Jev présélectionne la catégorie et le pictogramme, le créateur les cha
 }) => {
   const titre = titreDuCas("Bricolage");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
 
-  // De retour à l'étape 1, la catégorie et le pictogramme sont ceux de Jev, dits comme tels.
-  await page
-    .getByRole("button", { name: "Modifier : Titre, catégorie et photos" })
-    .click();
-  await etape(page, 1);
+  // Sur mobile, de retour à l'étape 1 ; sur ordinateur, la page unique la montre déjà : la
+  // catégorie et le pictogramme sont ceux de Jev, dits comme tels.
+  if (!estBureau(page)) {
+    await page
+      .getByRole("button", { name: "Modifier : Titre, catégorie et photos" })
+      .click();
+    await etapeProposer(page, 1);
+  }
   const principal = page.getByRole("main");
   await expect(page.getByLabel("Catégorie")).toHaveValue("creation_bricolage");
   await expect(principal).toContainText(
@@ -143,10 +148,10 @@ test("Jev présélectionne la catégorie et le pictogramme, le créateur les cha
   await expect(principal).not.toContainText("Pictogramme suggéré");
   await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
   await expect(principal).not.toContainText("Suggérée d'après votre titre");
-  await continuer(page);
-  await etape(page, 4);
+  await continuerProposer(page);
+  await etapeProposer(page, 4);
   await expect(principal).toContainText("Jardin & Nature");
-  await page.getByRole("button", { name: "Publier" }).click();
+  await page.getByRole("button", { name: /^Publier/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
   ).toBeVisible();
@@ -178,7 +183,7 @@ test("le pictogramme suggéré par Jev est celui de l'activité publiée, et se 
 }) => {
   const titre = titreDuCas("Bricolage");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Création & Bricolage");
   await page.getByRole("button", { name: "Publier" }).click();
@@ -196,7 +201,7 @@ test("le pictogramme suggéré par Jev est celui de l'activité publiée, et se 
 test("une suggestion incertaine ne change rien", async ({ page }) => {
   const titre = titreDuCas("Incertain");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Moments partagés");
   await expect(page.getByRole("main")).not.toContainText("relue");
@@ -218,7 +223,7 @@ test("la catégorie choisie par le créateur n'est pas remplacée", async ({
   const titre = titreDuCas("Bricolage");
   await commencer(page, titre);
   await page.getByLabel("Catégorie").selectOption({ label: "Jardin & Nature" });
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Jardin & Nature");
   await page.getByRole("button", { name: "Publier" }).click();
@@ -234,7 +239,7 @@ test("Jev signale une information qui semble manquer, sans empêcher de publier"
 }) => {
   const titre = titreDuCas("Sans détail");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText(
     "Précisez ce que chacun doit apporter, ou ce que vous fournissez.",
@@ -251,7 +256,7 @@ test("une proposition jugée non conforme est mise en relecture, avec la raison 
 }) => {
   const titre = titreDuCas("Bruyante");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText(
     "Votre activité sera relue par le conseil syndical avant d'être visible de vos voisins.",
@@ -284,7 +289,7 @@ test("un Jev en panne ne bloque ni le parcours ni la publication", async ({
 }) => {
   const titre = titreDuCas("Panne");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Rien à signaler");
   await page.getByRole("button", { name: "Publier" }).click();
@@ -301,7 +306,7 @@ test("un Jev trop lent ne bloque ni le parcours ni la publication", async ({
   test.setTimeout(90_000);
   const titre = titreDuCas("Lent");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Rien à signaler", {
     timeout: 15_000,
@@ -333,7 +338,7 @@ test("pendant l'appel à Jev, l'activité n'est publique pour personne", async (
   // « Lent » : le faux Jev met 8 s à répondre, l'assistant renonce au bout de 3 s.
   const titre = titreDuCas("Lent");
   await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Rien à signaler", {
     timeout: 15_000,
@@ -446,7 +451,7 @@ test("un parcours de création réserve ses appels à Jev sur le budget de créa
 }) => {
   const titre = titreDuCas("Bricolage");
   const resident = await commencer(page, titre);
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await page.getByRole("button", { name: "Publier" }).click();
   await expect(
@@ -467,7 +472,7 @@ test("plafond de création atteint : Jev n'est pas appelé, le parcours va au bo
   const resident = await commencer(page, titre);
   await epuiserLeBudget(resident.id, "creation");
 
-  await continuer(page);
+  await continuerProposer(page);
   await jusquAuRecapitulatif(page);
   await expect(page.getByRole("main")).toContainText("Rien à signaler");
   await page.getByRole("button", { name: "Publier" }).click();

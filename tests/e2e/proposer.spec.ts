@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   choisirDate,
   continuerProposer,
+  encartAssistant,
   etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
@@ -84,9 +85,14 @@ async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await etape(page, 4);
 }
 
-test("un résident propose une activité en quatre étapes, sans perdre sa saisie", async ({
+test("sur mobile, un résident propose une activité en quatre étapes, sans perdre sa saisie", async ({
   page,
+  isMobile,
 }) => {
+  test.skip(
+    !isMobile,
+    "Parcours en étapes du mobile : la page unique de l'ordinateur a ses propres tests.",
+  );
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   const titre = `Atelier compost ${Date.now()}`;
@@ -262,9 +268,14 @@ test("un résident propose une activité en quatre étapes, sans perdre sa saisi
   await expect(carte).toContainText("Enfants bienvenus");
 });
 
-test("le minimum de participants démarre à 1, et les conseils de l'assistant ouvrent le récapitulatif", async ({
+test("sur mobile, le minimum de participants démarre à 1, et les conseils de l'assistant ouvrent le récapitulatif", async ({
   page,
+  isMobile,
 }) => {
+  test.skip(
+    !isMobile,
+    "Parcours en étapes du mobile : la page unique de l'ordinateur a ses propres tests.",
+  );
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   const titre = `Café des voisins ${Date.now()}`;
@@ -297,7 +308,7 @@ test("le minimum de participants démarre à 1, et les conseils de l'assistant o
 
   // L'encart de l'assistant est sous le titre de l'étape, au-dessus des cartes, sans défiler.
   await etape(page, 4);
-  const encart = page.getByText("Conseils de l'assistant");
+  const encart = encartAssistant(page);
   const premiereCarte = page.getByRole("heading", {
     name: "Titre, catégorie et photos",
   });
@@ -328,7 +339,14 @@ test("le minimum de participants démarre à 1, et les conseils de l'assistant o
   );
 });
 
-test("« Annuler la proposition » ne publie rien", async ({ page }) => {
+test("sur mobile, « Annuler la proposition » ne publie rien", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(
+    !isMobile,
+    "Parcours en étapes du mobile : la page unique de l'ordinateur a ses propres tests.",
+  );
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   const titre = `Brouillon ${Date.now()}`;
@@ -454,7 +472,7 @@ test.describe("sur ordinateur : une page unique", () => {
       colonne.getByRole("button", { name: "Publier l'activité" }),
     ).toBeVisible();
     // L'assistant est en haut, au-dessus des blocs.
-    const encart = page.getByText("Conseils de l'assistant");
+    const encart = encartAssistant(page);
     await expect(encart).toBeVisible();
     const [haut, premierBloc] = await Promise.all([
       encart.boundingBox(),
@@ -588,6 +606,102 @@ test.describe("sur ordinateur : une page unique", () => {
     await page.getByRole("link", { name: "Voir la fiche" }).click();
     await expect(page.getByRole("main")).toContainText("Description");
     await expect(page.getByRole("main")).toContainText(description);
+  });
+
+  test("un résident propose une activité d'un seul tenant : heures, places, étiquettes, textes, puis la fiche et la carte", async ({
+    page,
+  }) => {
+    const resident = await ouvrirProposer(page);
+    const titre = `Atelier compost ${Date.now()}`;
+    // Une activité plus proche prend « À la une » : celle du test s'affiche dans la grille.
+    await nouvelleActiviteEnTete(resident.id);
+    await page.goto("/proposer");
+
+    await page.getByLabel("Titre de l'activité").fill("Atelier");
+    await expect(page.getByRole("main")).toContainText("7 / 50");
+    await page.getByLabel("Titre de l'activité").fill(titre);
+    await page
+      .getByLabel("Catégorie")
+      .selectOption({ label: "Jardin & Nature" });
+    await page.getByLabel("Mot d'accueil").fill("Venez comme vous êtes.");
+    await expect(page.getByRole("main")).toContainText("22 / 300");
+
+    // Les heures : la fin suit le début tant que le créateur ne l'a pas choisie.
+    await choisirDate(page, dansUnMois());
+    const debut = page.getByLabel("Heure de début");
+    const fin = page.getByLabel("Heure de fin");
+    await debut.selectOption("10:00");
+    await expect(fin).toHaveValue("11:30");
+    await expect(page.getByRole("main")).toContainText("Durée : 1 h 30");
+    await expect(fin.locator("option[value='10:00']")).toHaveCount(0);
+    await fin.selectOption("12:00");
+    await debut.selectOption("10:30");
+    await expect(fin).toHaveValue("12:00");
+    await debut.selectOption("10:00");
+    await fin.selectOption("11:30");
+    await saisirLieuLibre(page, "Cour intérieure");
+    await page.getByLabel("Précision d'accès").fill("Par le portail vert.");
+
+    // Les places : un minimum au-dessus du maximum est refusé, sous « Publier l'activité ».
+    await expect(page.getByLabel("Minimum de participants")).toHaveValue("1");
+    await page.getByRole("radio", { name: "Limité", exact: true }).check();
+    await page.getByLabel("Nombre de places").fill("12");
+    await page.getByLabel("Minimum de participants").fill("20");
+    await colonneDroite(page)
+      .getByRole("button", { name: "Publier l'activité" })
+      .click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "Le minimum ne peut pas dépasser le nombre de places.",
+    );
+    await page.getByLabel("Minimum de participants").fill("4");
+    await page.getByRole("checkbox", { name: "Accès plain-pied" }).check();
+    await page.getByRole("checkbox", { name: "Enfants bienvenus" }).check();
+    await page
+      .getByLabel("Conseils pratiques")
+      .fill("Prévoyez une petite laine.");
+    await page.getByLabel("Matériel à prévoir").fill("Gants fournis.");
+    await page
+      .getByLabel("Ce que vous pouvez apporter")
+      .fill("Vos épluchures de la semaine.");
+    await expect(apercu(page)).toContainText(
+      "Jusqu'à 12 personnes · confirmée dès 4",
+    );
+    await page.screenshot({
+      path: test.info().outputPath("page-unique-complete.png"),
+      fullPage: true,
+    });
+
+    await colonneDroite(page)
+      .getByRole("button", { name: "Publier l'activité" })
+      .click();
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Votre activité est publiée",
+      }),
+    ).toBeVisible();
+
+    // La fiche reprend tout ce que la page a saisi.
+    await page.getByRole("link", { name: "Voir la fiche" }).click();
+    const fiche = page.getByRole("main");
+    await expect(fiche).toContainText("Venez comme vous êtes.");
+    await expect(fiche).toContainText("Par le portail vert.");
+    await expect(fiche).toContainText("Accès plain-pied");
+    await expect(fiche).toContainText("Enfants bienvenus");
+    await expect(fiche).toContainText("Au moins 4 participants");
+    await expect(fiche).toContainText("Prévoyez une petite laine.");
+    await expect(fiche).toContainText("Gants fournis.");
+    await expect(fiche).toContainText("Vos épluchures de la semaine.");
+    await expect(fiche).toContainText("sur 12 places");
+
+    // La carte du catalogue porte les étiquettes.
+    await page.goto("/");
+    const carte = page
+      .getByRole("region", { name: "Activités à venir" })
+      .getByRole("listitem")
+      .filter({ hasText: titre });
+    await expect(carte).toContainText("Accès plain-pied");
+    await expect(carte).toContainText("Enfants bienvenus");
   });
 
   test("« Annuler » ne demande confirmation que si quelque chose a été saisi", async ({
@@ -769,7 +883,12 @@ test.describe("le paramètre d'adresse « espace »", () => {
 
 test("sur mobile comme sur ordinateur, la saisie ne fait pas défiler la page horizontalement", async ({
   page,
+  isMobile,
 }) => {
+  test.skip(
+    !isMobile,
+    "Parcours en étapes du mobile : la page unique de l'ordinateur a ses propres tests.",
+  );
   await ouvrirProposer(page);
   await page.getByLabel("Titre de l'activité").fill("Un titre d'activité");
   await page

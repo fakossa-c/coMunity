@@ -2,6 +2,10 @@ import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import {
   choisirDate,
+  continuerProposer,
+  encartAssistant,
+  estBureau,
+  etapeProposer,
   MOT_DE_PASSE,
   nouveauResident,
   nouveauSyndic,
@@ -41,21 +45,13 @@ function listeDesEspaces(page: Page) {
   return page.getByRole("list", { name: "Espaces communs" });
 }
 
-function etape(page: Page, numero: number) {
-  return expect(page.getByRole("main")).toContainText(`Étape ${numero} sur 4`);
-}
-
-function continuer(page: Page) {
-  return page.getByRole("button", { name: "Continuer" }).click();
-}
-
 /** Ouvre le parcours et remplit l'étape 1. */
 async function commencerProposition(page: Page, titre: string) {
   await page.goto("/proposer");
-  await etape(page, 1);
+  await etapeProposer(page, 1);
   await page.getByLabel("Titre de l'activité").fill(titre);
-  await continuer(page);
-  await etape(page, 2);
+  await continuerProposer(page);
+  await etapeProposer(page, 2);
   await choisirDate(page, dansUnMois());
 }
 
@@ -216,8 +212,9 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   // Bloqué après l'heure de fin maximale, avec l'heure limite.
   await page.getByLabel("Heure de début").selectOption("19:30");
   await page.getByLabel("Heure de fin").selectOption("21:30");
-  await continuer(page);
-  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+  // Sur mobile, « Continuer » refuse l'étape ; sur ordinateur, l'assistant le dit déjà en haut de la page.
+  await continuerProposer(page);
+  await expect(page.getByRole("main")).toContainText(
     "ferme à 21h00 : finissez au plus tard à 21h00.",
   );
   await page.screenshot({
@@ -225,26 +222,26 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
     fullPage: true,
   });
   await page.getByLabel("Heure de fin").selectOption("21:00");
-  await continuer(page);
+  await continuerProposer(page);
 
   // Bloqué sans limite de places dans un espace qui en a une.
-  await etape(page, 3);
-  await continuer(page);
-  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+  await etapeProposer(page, 3);
+  await continuerProposer(page);
+  await expect(page.getByRole("main")).toContainText(
     "accueille 10 personnes au plus : limitez les places à 10.",
   );
   await page.getByRole("radio", { name: "Limité", exact: true }).check();
   await page.getByLabel("Nombre de places").fill("8");
-  await continuer(page);
+  await continuerProposer(page);
 
   // Le récapitulatif avertit du chevauchement, sans bloquer.
-  await etape(page, 4);
-  const conseils = page.getByText("Conseils de l'assistant").locator("..");
+  await etapeProposer(page, 4);
+  const conseils = encartAssistant(page).locator("..");
   await expect(conseils).toContainText(
     `« Atelier tricot » occupe déjà l'espace commun « ${espace.nom} » ce jour-là`,
   );
   await expect(page.getByRole("main")).toContainText(espace.nom);
-  await page.getByRole("button", { name: "Publier" }).click();
+  await page.getByRole("button", { name: /^Publier/ }).click();
 
   await page.getByRole("link", { name: "Voir la fiche" }).click();
   await expect(
@@ -274,16 +271,18 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
   await expect(page.getByLabel("Lieu", { exact: true })).toHaveValue("");
   await page.getByLabel("Heure de début").selectOption("21:00");
   await page.getByLabel("Heure de fin").selectOption("22:30");
-  await continuer(page);
+  await continuerProposer(page);
+  if (estBureau(page))
+    await page.getByRole("button", { name: "Publier l'activité" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Choisissez où se tient l'activité.",
   );
   await saisirLieuLibre(page, "Chez Danielle, 2e étage");
-  await continuer(page);
+  await continuerProposer(page);
 
-  await etape(page, 3);
-  await continuer(page);
-  await etape(page, 4);
+  await etapeProposer(page, 3);
+  await continuerProposer(page);
+  await etapeProposer(page, 4);
   await expect(page.getByRole("main")).toContainText(
     "Votre activité finit après 22h00, l'heure de calme de la résidence",
   );
@@ -291,7 +290,7 @@ test("un créateur choisit « Autre », saisit un lieu libre et publie, averti d
     path: test.info().outputPath("recapitulatif-calme.png"),
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Publier" }).click();
+  await page.getByRole("button", { name: /^Publier/ }).click();
 
   await page.getByRole("link", { name: "Voir la fiche" }).click();
   await expect(

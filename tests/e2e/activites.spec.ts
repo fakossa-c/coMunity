@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   annulerActivite,
   choisirDate,
+  continuerProposer,
   inscrireResident,
   MOT_DE_PASSE,
   nouveauResident,
@@ -50,7 +51,7 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page
     .getByLabel("Mot d'accueil")
     .fill("On apprend à composter ensemble, dans la cour.");
-  await page.getByRole("button", { name: "Continuer" }).click();
+  await continuerProposer(page);
   const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
@@ -58,9 +59,9 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await page.getByRole("button", { name: "Publier" }).click();
+  await continuerProposer(page);
+  await continuerProposer(page);
+  await page.getByRole("button", { name: /^Publier/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
   ).toBeVisible();
