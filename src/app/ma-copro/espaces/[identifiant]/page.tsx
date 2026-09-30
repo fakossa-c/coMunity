@@ -31,7 +31,7 @@ export default async function PageFicheEspace({ params }: Props) {
   const medias = espace ? await lireUrlsMediasEspace(espace) : null;
 
   return (
-    <EcranSecondaire retour={{ href: "/ma-copro", libelle: "Ma copro" }}>
+    <EcranSecondaire retour={{ href: "/ma-copro", destination: "Ma copro" }}>
       {espace && espaces ? (
         <FicheEspaceCommun
           espace={espace}

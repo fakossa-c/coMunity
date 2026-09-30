@@ -118,7 +118,9 @@ test("un écran secondaire a la même barre du haut, sans onglet courant", async
   ).toHaveCount(0);
   await expect(entete.getByRole("link", { name: "Proposer" })).toBeVisible();
   // « Retour » reste un lien de la page, sous la barre.
-  const retour = page.getByRole("main").getByRole("link", { name: "Accueil" });
+  const retour = page
+    .getByRole("main")
+    .getByRole("link", { name: "Retour : Accueil" });
   await expect(retour).toBeVisible();
   await retour.click();
   await expect(titreAccueil(page)).toBeVisible();

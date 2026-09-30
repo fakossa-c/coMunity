@@ -36,7 +36,7 @@ export default async function CompleterProfil({
 
   return (
     <EcranSecondaire
-      retour={{ href: "/", libelle: "Accueil" }}
+      retour={{ href: "/", destination: "Accueil" }}
       completionExigee={false}
     >
       <div className="max-w-md">

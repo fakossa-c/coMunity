@@ -30,7 +30,7 @@ type Props = {
   photo: { chemin: string; url: string } | null;
 };
 
-/** « Modifier mes informations » : « Annuler » en haut de l'écran, « Enregistrer » fixé en bas. */
+/** « Modifier mes informations » : « Retour » en haut de l'écran, « Enregistrer » fixé en bas. */
 export function FormulaireInformations({ depart, photo: photoDepart }: Props) {
   const [saisie, setSaisie] = useState(depart);
   const [photo, setPhoto] = useState<PhotoProfilSaisie | null>(

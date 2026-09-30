@@ -38,7 +38,7 @@ import {
 } from "@/lib/tableau-de-bord";
 import { accesSyndic } from "../acces";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 

@@ -20,7 +20,7 @@ export default async function PageMesInterets() {
     .order("cree_le");
 
   return (
-    <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
+    <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage
           titre="Mes intérêts"

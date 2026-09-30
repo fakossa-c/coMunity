@@ -10,7 +10,7 @@ import { dateReglement } from "@/lib/reglement";
 import { accesSyndic } from "../acces";
 import { ListeSections } from "./liste-sections";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Règlement intérieur" };
 

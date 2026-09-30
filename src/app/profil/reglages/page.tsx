@@ -12,7 +12,7 @@ export default async function MesReglages() {
   if (!session) redirect("/connexion?suivant=%2Fprofil%2Freglages");
 
   return (
-    <EcranSecondaire retour={{ href: "/profil", libelle: "Profil" }}>
+    <EcranSecondaire retour={{ href: "/profil", destination: "Profil" }}>
       <div className="flex max-w-xl flex-col gap-bloc desktop:max-w-none">
         <TitrePage titre="Mes réglages" />
         <ReglagesAffichage taille={session.taille} theme={session.theme} />

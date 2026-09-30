@@ -71,7 +71,9 @@ test("le changement de mot de passe est refusé, avec le message sous le champ e
 }) => {
   await residentConnecte(page);
   await page.goto("/profil/identifiants/mot-de-passe");
-  await expect(page.getByRole("link", { name: "Annuler" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Retour : Mes identifiants" }),
+  ).toBeVisible();
 
   const actuel = page.getByLabel("Mot de passe actuel", { exact: true });
   const nouveau = page.getByLabel("Nouveau mot de passe", { exact: true });

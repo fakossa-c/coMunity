@@ -73,6 +73,37 @@ test("le créateur modifie son activité dans le parcours pré-rempli", async ({
   );
 });
 
+test("« Retour » de Modifier ne demande confirmation que si quelque chose a été changé", async ({
+  page,
+}) => {
+  const { identifiant } = await createurAvecActivite(page);
+  const retour = page.getByRole("link", { name: /^Retour/ });
+
+  // Rien de changé : on retrouve la fiche tout de suite.
+  await page.goto(`/activites/${identifiant}/modifier`);
+  await retour.click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+
+  // Un changement : la confirmation, où l'on peut continuer ou abandonner.
+  await page.goto(`/activites/${identifiant}/modifier`);
+  await page.getByLabel("Titre de l'activité").fill("Un autre titre");
+  await retour.click();
+  const confirmation = page.getByRole("dialog", {
+    name: "Abandonner la proposition ?",
+  });
+  await confirmation
+    .getByRole("button", { name: "Continuer la saisie" })
+    .click();
+  await expect(confirmation).toBeHidden();
+  await expect(page.getByLabel("Titre de l'activité")).toHaveValue(
+    "Un autre titre",
+  );
+
+  await retour.click();
+  await confirmation.getByRole("button", { name: "Abandonner" }).click();
+  await expect(page).toHaveURL(new RegExp(`/activites/${identifiant}$`));
+});
+
 test("modifier reprend le jour et les heures, même hors du pas de 15 minutes", async ({
   page,
 }) => {

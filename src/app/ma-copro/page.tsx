@@ -29,7 +29,7 @@ export default async function MaCopro() {
   const photos = espaces ? await lireUrlsPhotosEspaces(espaces) : {};
 
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Ma copro"
         sousTitre="Les espaces communs, puis le règlement de la résidence"

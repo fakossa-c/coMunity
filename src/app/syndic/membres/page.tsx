@@ -5,7 +5,7 @@ import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "../acces";
 import { GestionMembres } from "./gestion-membres";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Membres du syndic" };
 

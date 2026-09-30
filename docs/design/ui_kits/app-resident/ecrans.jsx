@@ -49,7 +49,7 @@ function EcranFiche({ retour, inscrire, ouvrirMenu }) {
         <Compteur valeur={n} onChange={setN} />
         <Bouton pleineLargeur style={{ fontSize: "var(--text-body-lg)" }} onClick={() => inscrire(n)}>{n ? "Je participe, avec " + n + (n > 1 ? " personnes" : " personne") : "Je participe"}</Bouton>
       </BarreActionFixe>}>
-      <BarreRetour onRetour={retour} onPartager={() => {}} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Accueil" onRetour={retour} onPartager={() => {}} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ margin: "0 var(--spacing-margin)" }}><EmplacementPhoto legende="photo · goûter" hauteur={150} arrondi compteur="1 sur 4" /></div>
       <div style={{ padding: "16px var(--spacing-margin) 0", display: "flex", flexDirection: "column", gap: 14 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-headline)", fontSize: "var(--text-label-md)", fontWeight: 700, color: "var(--color-on-surface-variant)" }}>
@@ -125,7 +125,7 @@ function EcranRubrique({ ecran, retour, ouvrirMenu }) {
   const m = RUBRIQUES_MENU[ecran] || { titre: ecran };
   return (
     <Ecran barreEtat="9:41">
-      <BarreRetour onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Accueil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)" }}><TitrePage titre={m.titre} sousTitre={m.detail} /></div>
       <PasMaquette>Cette page n’est pas encore maquettée.</PasMaquette>
     </Ecran>
@@ -144,7 +144,7 @@ function CadreRubrique({ id, retour, ouvrirMenu, children }) {
   const r = RUBRIQUES_PROFIL.find((x) => x.id === id);
   return (
     <Ecran barreEtat="9:41" paddingBas={40}>
-      <BarreRetour libelleRetour="Profil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Profil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)", display: "flex", flexDirection: "column", gap: 20 }}>
         <TitrePage titre={r.titre} sousTitre={r.detail} />
         {children}
@@ -157,7 +157,7 @@ function EcranProfil({ aller, retour, ouvrirMenu }) {
   const { Ecran, BarreRetour, EnTeteProfil, LigneMenu } = window.DS;
   return (
     <Ecran barreEtat="9:41" paddingBas={40}>
-      <BarreRetour onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination="Accueil" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "8px var(--spacing-margin) 0", display: "flex", flexDirection: "column", gap: 24 }}>
         <EnTeteProfil initiale="D" nom="Danielle" adresse="Bât. B, 2e étage" />
         <nav style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -241,12 +241,12 @@ function EcranReglages({ grand, basculerTaille, theme, setTheme, ...props }) {
   );
 }
 
-function CadreModif({ titre, sousTitre, retour, ouvrirMenu, children }) {
+function CadreModif({ titre, sousTitre, destination, retour, ouvrirMenu, children }) {
   const { Ecran, BarreRetour, TitrePage, BarreActionFixe, Bouton } = window.DS;
   return (
     <Ecran barreEtat="9:41" paddingBas={170} barreBas={
       <BarreActionFixe><Bouton pleineLargeur style={{ fontSize: "var(--text-body-lg)" }} onClick={retour}>Enregistrer</Bouton></BarreActionFixe>}>
-      <BarreRetour libelleRetour="Annuler" onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
+      <BarreRetour destination={destination} onRetour={retour} onPartager={null} initiale="D" onProfil={ouvrirMenu} />
       <div style={{ padding: "0 var(--spacing-margin)", display: "flex", flexDirection: "column", gap: 20 }}>
         <TitrePage titre={titre} sousTitre={sousTitre} />
         {children}
@@ -258,7 +258,7 @@ function CadreModif({ titre, sousTitre, retour, ouvrirMenu, children }) {
 function EcranModifierEmail(props) {
   const { Champ } = window.DS;
   return (
-    <CadreModif titre="Modifier l’e-mail" {...props}>
+    <CadreModif titre="Modifier l’e-mail" destination="Mes identifiants" {...props}>
       <Champ libelle="E-mail actuel" valeur="danielle.m@exemple.fr" type="email" />
       <Champ libelle="Nouvel e-mail" type="email" autoComplete="email" aide="Vous recevrez un lien de confirmation à cette adresse." />
       <Champ libelle="Mot de passe" secret autoComplete="current-password" aide="Pour confirmer que c’est bien vous." />
@@ -269,7 +269,7 @@ function EcranModifierEmail(props) {
 function EcranModifierMotDePasse(props) {
   const { Champ } = window.DS;
   return (
-    <CadreModif titre="Modifier le mot de passe" {...props}>
+    <CadreModif titre="Modifier le mot de passe" destination="Mes identifiants" {...props}>
       <Champ libelle="Mot de passe actuel" secret autoComplete="current-password" />
       <Champ libelle="Nouveau mot de passe" secret autoComplete="new-password" aide="8 caractères minimum." />
       <Champ libelle="Confirmer le nouveau mot de passe" secret autoComplete="new-password" />
@@ -280,7 +280,7 @@ function EcranModifierMotDePasse(props) {
 function EcranModifierInfos(props) {
   const { Champ } = window.DS;
   return (
-    <CadreModif titre="Modifier mes informations" {...props}>
+    <CadreModif titre="Modifier mes informations" destination="Mes informations" {...props}>
       <Champ libelle="Pseudo" valeur="Dany" aide="Toujours visible par les voisins." />
       <Champ libelle="Prénom" valeur="Danielle" autoComplete="given-name" />
       <Champ libelle="Nom" valeur="Martin" autoComplete="family-name" />

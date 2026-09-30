@@ -5,7 +5,7 @@ import { TitrePage } from "@/components/titre-page";
 /** Lien d'activité qui ne mène à rien : identifiant inconnu, ou activité retirée de la vue. */
 export default function ActiviteIntrouvable() {
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <TitrePage
         titre="Activité introuvable"
         sousTitre="Ce lien ne mène à aucune activité."

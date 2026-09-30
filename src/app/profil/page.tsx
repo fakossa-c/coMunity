@@ -16,7 +16,7 @@ export default async function Profil() {
   const informations = await lireInformations(session.id);
 
   return (
-    <EcranSecondaire retour={{ href: "/", libelle: "Accueil" }}>
+    <EcranSecondaire retour={{ href: "/", destination: "Accueil" }}>
       <div className="flex max-w-xl flex-col gap-space-lg pt-2 desktop:max-w-none desktop:gap-space-xl">
         <EnTeteProfil
           {...identite({ ...session, pseudo: informations?.pseudo ?? null })}

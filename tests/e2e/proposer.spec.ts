@@ -340,7 +340,7 @@ test("sur mobile, le minimum de participants démarre à 1, et les conseils de l
   );
 });
 
-test("sur mobile, « Annuler la proposition » ne publie rien", async ({
+test("sur mobile, le récapitulatif n'a plus de bouton « Annuler la proposition » : « Retour » porte l'abandon", async ({
   page,
   isMobile,
 }) => {
@@ -356,11 +356,55 @@ test("sur mobile, « Annuler la proposition » ne publie rien", async ({
   await page.goto("/proposer");
   await saisirJusquAuRecapitulatif(page, titre);
 
-  await page.getByRole("button", { name: "Annuler la proposition" }).click();
+  await expect(
+    page.getByRole("button", { name: "Annuler la proposition" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("link", { name: /^Retour/ }).click();
+  const confirmation = page.getByRole("dialog", {
+    name: "Abandonner la proposition ?",
+  });
+  await confirmation.getByRole("button", { name: "Abandonner" }).click();
 
   await expect(page).toHaveURL(/\/activites$/);
   await page.goto("/");
   await expect(page.getByRole("main")).not.toContainText(titre);
+});
+
+test("« Retour » ne demande confirmation que si quelque chose a été saisi, sur mobile comme sur ordinateur", async ({
+  page,
+}) => {
+  await ouvrirProposer(page);
+  const retour = page.getByRole("link", { name: /^Retour/ });
+
+  // Rien de saisi : on part directement.
+  await retour.click();
+  await expect(page).toHaveURL(/\/activites$/);
+
+  // Une saisie : la confirmation, où l'on peut continuer sans rien perdre.
+  await page.goto("/proposer");
+  await page.getByLabel("Titre de l'activité").fill("Brouillon");
+  await retour.click();
+  const confirmation = page.getByRole("dialog", {
+    name: "Abandonner la proposition ?",
+  });
+  await expect(confirmation).toBeVisible();
+  await expect(
+    confirmation.getByRole("button", { name: "Continuer la saisie" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath("confirmation-retour.png"),
+  });
+  await confirmation
+    .getByRole("button", { name: "Continuer la saisie" })
+    .click();
+  await expect(confirmation).toBeHidden();
+  await expect(page).toHaveURL(/\/proposer$/);
+  await expect(page.getByLabel("Titre de l'activité")).toHaveValue("Brouillon");
+
+  await retour.click();
+  await confirmation.getByRole("button", { name: "Abandonner" }).click();
+  await expect(page).toHaveURL(/\/activites$/);
 });
 
 test("le parcours reste en pêche et sans pourcentage sur le plus petit téléphone", async ({
@@ -703,41 +747,6 @@ test.describe("sur ordinateur : une page unique", () => {
       .filter({ hasText: titre });
     await expect(carte).toContainText("Accès plain-pied");
     await expect(carte).toContainText("Enfants bienvenus");
-  });
-
-  test("« Annuler » ne demande confirmation que si quelque chose a été saisi", async ({
-    page,
-  }) => {
-    await ouvrirProposer(page);
-    const retour = page
-      .getByRole("main")
-      .getByRole("link", { name: "Annuler" });
-
-    // Rien de saisi : on part directement.
-    await retour.click();
-    await expect(page).toHaveURL(/\/activites$/);
-
-    // Une saisie : la confirmation, où l'on peut rester sans rien perdre.
-    await page.goto("/proposer");
-    await page.getByLabel("Titre de l'activité").fill("Brouillon");
-    await retour.click();
-    const confirmation = page.getByRole("dialog", {
-      name: "Quitter sans publier ?",
-    });
-    await expect(confirmation).toBeVisible();
-    await page.screenshot({
-      path: test.info().outputPath("confirmation-retour.png"),
-    });
-    await confirmation.getByRole("button", { name: "Rester ici" }).click();
-    await expect(confirmation).toBeHidden();
-    await expect(page).toHaveURL(/\/proposer$/);
-    await expect(page.getByLabel("Titre de l'activité")).toHaveValue(
-      "Brouillon",
-    );
-
-    await retour.click();
-    await confirmation.getByRole("button", { name: "Quitter" }).click();
-    await expect(page).toHaveURL(/\/activites$/);
   });
 
   test("l'assistant relit la proposition en haut de la page", async ({

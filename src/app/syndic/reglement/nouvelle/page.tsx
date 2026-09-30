@@ -4,7 +4,10 @@ import { TitrePage } from "@/components/titre-page";
 import { accesSyndic } from "../../acces";
 import { FormulaireSection } from "../formulaire-section";
 
-const RETOUR = { href: "/syndic/reglement", libelle: "Annuler" };
+const RETOUR = {
+  href: "/syndic/reglement",
+  destination: "Règlement intérieur",
+};
 
 export const metadata: Metadata = { title: "Ajouter une section" };
 

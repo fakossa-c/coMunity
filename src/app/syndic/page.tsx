@@ -7,7 +7,7 @@ import { TitrePage } from "@/components/titre-page";
 import { clientSession } from "@/lib/supabase/serveur";
 import { accesSyndic } from "./acces";
 
-const RETOUR = { href: "/", libelle: "Accueil" };
+const RETOUR = { href: "/", destination: "Accueil" };
 
 export const metadata: Metadata = { title: "Espace syndic" };
 

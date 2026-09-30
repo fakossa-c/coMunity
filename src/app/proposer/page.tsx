@@ -32,7 +32,7 @@ export default async function Proposer({ searchParams }: Props) {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/activites", libelle: "Annuler" }}
+      retour={{ href: "/activites", destination: "Activités" }}
       actionDansLeFormulaire={Boolean(peutParticiper)}
     >
       <TitrePage

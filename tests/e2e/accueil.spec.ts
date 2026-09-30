@@ -185,7 +185,7 @@ test("une page secondaire a une barre de retour collante, sans barre du bas", as
   await page.setViewportSize({ width: 360, height: 400 });
   await page.goto("/mon-syndic");
 
-  const retour = page.getByRole("link", { name: "Accueil" });
+  const retour = page.getByRole("link", { name: "Retour : Accueil" });
   await expect(retour).toBeVisible();
   await expect(navigationPrincipale(page)).toHaveCount(0);
   expect(await position(page.getByRole("banner"))).toBe("sticky");
@@ -203,9 +203,8 @@ test("les anciennes pages n'existent plus", async ({ page }) => {
     await expect(
       page.getByRole("main").getByRole("heading", { name: "Page introuvable" }),
     ).toBeVisible();
-    // Le lien de retour : sur ordinateur, l'onglet « Accueil » de la barre du haut le précède.
     await expect(
-      page.getByRole("link", { name: "Accueil" }).last(),
+      page.getByRole("link", { name: "Retour : Accueil" }),
     ).toBeVisible();
   }
 });

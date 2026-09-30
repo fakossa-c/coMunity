@@ -9,7 +9,7 @@ import { lireFichesSyndic } from "@/lib/lecture-fiches-syndic";
 import { accesSyndic } from "../acces";
 import { ListeFiches } from "./liste-fiches";
 
-const RETOUR = { href: "/syndic", libelle: "Espace syndic" };
+const RETOUR = { href: "/syndic", destination: "Espace syndic" };
 
 export const metadata: Metadata = { title: "Mon syndic" };
 

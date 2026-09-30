@@ -163,7 +163,7 @@ export default async function Fiche({ params }: Props) {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/", libelle: "Retour" }}
+      retour={{ href: "/", destination: "Accueil" }}
       partager={
         partageable ? (
           <BoutonPartager titre={fiche.titre} lien={lien} />

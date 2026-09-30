@@ -71,7 +71,7 @@ export default async function PageAnnonce({ params }: Props) {
 
   return (
     <EcranSecondaire
-      retour={{ href: "/annonces", libelle: "Annonces" }}
+      retour={{ href: "/annonces", destination: "Annonces" }}
       partager={<BoutonPartager titre={annonce.titre} lien={lien} />}
     >
       {/* Sur ordinateur (cadre Journal), l'en-tête court sur toute la largeur, le texte et le

@@ -65,8 +65,7 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
   await expect(
     page.getByRole("heading", { level: 1, name: "Votre activité est publiée" }),
   ).toBeVisible();
-  // Le lien de retour ; sur ordinateur, l'onglet « Accueil » de la barre du haut le précède.
-  await page.getByRole("link", { name: "Accueil" }).last().click();
+  await page.getByRole("link", { name: "Retour : Accueil" }).click();
 
   await expect(titreAccueil(page)).toBeVisible();
   // Seule activité à venir, elle est dans le bloc « À la une » plutôt que dans la grille.
