@@ -460,6 +460,7 @@ for (const theme of ["clair", "sombre"] as const) {
       resultat.violations,
       JSON.stringify(resultat.violations, null, 2),
     ).toEqual([]);
+    await verifierSansDefilementHorizontal(page);
     await page.screenshot({
       path: test.info().outputPath(`mon-syndic-${theme}-grands.png`),
       fullPage: true,

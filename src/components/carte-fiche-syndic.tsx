@@ -10,12 +10,12 @@ import { classesBouton } from "./bouton";
 import { Etiquette } from "./etiquette";
 import { Icone } from "./icone";
 
-const LIEN =
+const LIEN_COORDONNEE =
   "justify-start! text-left [overflow-wrap:anywhere] " +
   classesBouton("contour", true);
 
 /** Bouton « Appeler » ou « Écrire » de la carte sur ordinateur : 56 px, contour, pleine largeur. */
-const BOUTON = classesBouton("contour", true);
+const BOUTON_CONTACT = classesBouton("contour", true);
 
 /**
  * La fiche d'une personne du syndic dans Mon syndic : photo (ou initiale), prénom et nom, la
@@ -52,7 +52,10 @@ export function CarteFicheSyndic({ fiche }: { fiche: FicheAvecPhoto }) {
         >
           {fiche.telephone && (
             <li>
-              <a href={lienTelephone(fiche.telephone)} className={LIEN}>
+              <a
+                href={lienTelephone(fiche.telephone)}
+                className={LIEN_COORDONNEE}
+              >
                 <Icone nom="call" taille={24} />
                 {fiche.telephone}
                 <span className="sr-only"> : appeler {nom}</span>
@@ -61,7 +64,7 @@ export function CarteFicheSyndic({ fiche }: { fiche: FicheAvecPhoto }) {
           )}
           {fiche.email && (
             <li>
-              <a href={lienEmail(fiche.email)} className={LIEN}>
+              <a href={lienEmail(fiche.email)} className={LIEN_COORDONNEE}>
                 <Icone nom="mail" taille={24} />
                 {fiche.email}
                 <span className="sr-only"> : écrire à {nom}</span>
@@ -88,7 +91,10 @@ export function CarteFicheSyndic({ fiche }: { fiche: FicheAvecPhoto }) {
           </ul>
           <div className="flex flex-col gap-space-sm">
             {fiche.telephone && (
-              <a href={lienTelephone(fiche.telephone)} className={BOUTON}>
+              <a
+                href={lienTelephone(fiche.telephone)}
+                className={BOUTON_CONTACT}
+              >
                 <Icone nom="call" taille={24} />
                 Appeler
                 <span className="sr-only">
@@ -98,7 +104,7 @@ export function CarteFicheSyndic({ fiche }: { fiche: FicheAvecPhoto }) {
               </a>
             )}
             {fiche.email && (
-              <a href={lienEmail(fiche.email)} className={BOUTON}>
+              <a href={lienEmail(fiche.email)} className={BOUTON_CONTACT}>
                 <Icone nom="mail" taille={24} />
                 Écrire
                 <span className="sr-only">
