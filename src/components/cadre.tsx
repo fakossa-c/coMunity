@@ -248,7 +248,7 @@ export function EcranConnexion({
     >
       <div className="desktop:mx-auto desktop:max-w-[34rem]">
         <LienRetour href={retour.href} destination={retour.destination} />
-        <div className="desktop:rounded-flottante desktop:bg-fond-carte desktop:p-10 desktop:shadow-douce desktop:[--text-titre-journal--line-height:var(--text-headline-xl--line-height)] desktop:[--text-titre-journal:var(--text-headline-xl)]">
+        <div className="desktop:rounded-lg desktop:bg-fond-carte desktop:p-10 desktop:shadow-douce desktop:[--text-titre-journal--line-height:var(--text-headline-xl--line-height)] desktop:[--text-titre-journal:var(--text-headline-xl)]">
           <GardeCompte completionExigee={completionExigee}>
             <div className="max-w-md desktop:max-w-none">{children}</div>
           </GardeCompte>

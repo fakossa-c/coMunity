@@ -28,7 +28,7 @@ async function seConnecter(page: Page, email: string) {
   await expect(page).not.toHaveURL(/\/connexion/);
 }
 
-type Ecran = {
+type EcranTeste = {
   nom: string;
   titre: string;
   /** Vrai pour les écrans où la personne est connectée. */
@@ -37,7 +37,7 @@ type Ecran = {
   ouvrir: (page: Page, affichage?: Affichage) => Promise<void>;
 };
 
-const ECRANS: Ecran[] = [
+const ECRANS: EcranTeste[] = [
   {
     nom: "la connexion",
     titre: "Connexion",
@@ -88,7 +88,9 @@ const ECRANS: Ecran[] = [
   },
 ];
 
-function titre(page: Page, ecran: Ecran) {
+const CONNEXION = ECRANS[0];
+
+function titre(page: Page, ecran: EcranTeste) {
   return page.getByRole("heading", { level: 1, name: ecran.titre });
 }
 
@@ -96,7 +98,7 @@ function titre(page: Page, ecran: Ecran) {
  * La boîte de la carte qui porte le titre : son premier ancêtre qui a une ombre, comme toute carte
  * de la présentation Journal. Nulle quand le titre n'est dans aucune carte.
  */
-async function boiteCarte(page: Page, ecran: Ecran) {
+async function boiteCarte(page: Page, ecran: EcranTeste) {
   return titre(page, ecran).evaluate((element) => {
     for (
       let parent = element.parentElement;
@@ -121,9 +123,7 @@ async function verifierLogoSeul(page: Page) {
   await expect(barre.getByRole("link", { name: "coMunity" })).toBeVisible();
   await expect(barre.getByRole("button")).toHaveCount(0);
   await expect(barre.getByRole("navigation")).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Mon profil" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Mon profil" })).toHaveCount(0);
   await expect(
     page.getByRole("navigation", { name: "Navigation principale" }),
   ).toHaveCount(0);
@@ -133,7 +133,7 @@ async function verifierLogoSeul(page: Page) {
  * Sur ordinateur : le titre, les champs et les boutons tiennent dans une carte de 520 à 560 px,
  * centrée dans la fenêtre.
  */
-async function verifierCarteCentree(page: Page, ecran: Ecran) {
+async function verifierCarteCentree(page: Page, ecran: EcranTeste) {
   await expect(titre(page, ecran)).toBeVisible();
   const carte = await boiteCarte(page, ecran);
   expect(carte, "le titre est dans une carte").not.toBeNull();
@@ -185,9 +185,9 @@ test("sur ordinateur, l'encart « Nouveau dans la résidence ? » suit la carte 
 }) => {
   test.skip(isMobile, "Carte propre à l'ordinateur.");
   await page.setViewportSize({ width: 1440, height: 900 });
-  await ECRANS[0].ouvrir(page);
+  await CONNEXION.ouvrir(page);
 
-  const carte = (await boiteCarte(page, ECRANS[0]))!;
+  const carte = (await boiteCarte(page, CONNEXION))!;
   const encart = (await page
     .getByText("Nouveau dans la résidence ?")
     .locator("..")
