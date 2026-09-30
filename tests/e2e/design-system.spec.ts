@@ -85,7 +85,7 @@ test.describe("grands caractères", () => {
     await page.goto("/connexion");
     const texte = page
       .getByRole("main")
-      .getByText("Accédez à votre espace avec votre email");
+      .getByText("Retrouvez les activités et les annonces de votre résidence");
     expect(await styleCalcule(texte, "font-size")).toBe("18px");
 
     await poserSurLaRacine(page, "data-taille", "grands");

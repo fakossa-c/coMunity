@@ -135,10 +135,10 @@ test("un résident refusé ne voit qu'un message l'invitant à contacter le synd
 
   await seConnecter(page, resident.email);
   await expect(page.getByRole("main")).toContainText(
-    "Votre compte n'a pas été accepté",
+    "Le conseil syndical n'a pas validé votre compte",
   );
   await expect(page.getByRole("main")).toContainText(
-    "contactez le conseil syndical",
+    "Parlez-en au conseil syndical",
   );
   await expect(navigationPrincipale(page)).toHaveCount(0);
   await page.goto("/proposer");
@@ -146,7 +146,7 @@ test("un résident refusé ne voit qu'un message l'invitant à contacter le synd
     page.getByRole("heading", { level: 1, name: "Proposer" }),
   ).toHaveCount(0);
   await expect(page.getByRole("main")).toContainText(
-    "Votre compte n'a pas été accepté",
+    "Le conseil syndical n'a pas validé votre compte",
   );
 });
 
@@ -171,7 +171,7 @@ test("le syndic retire un résident qui déménage, qui ne voit plus qu'un messa
 
   await seConnecter(page, resident.email);
   await expect(page.getByRole("main")).toContainText(
-    "Votre accès à la résidence a été retiré",
+    "Le conseil syndical a retiré votre accès",
   );
   await expect(titreAccueil(page)).toHaveCount(0);
   await expect(navigationPrincipale(page)).toHaveCount(0);
