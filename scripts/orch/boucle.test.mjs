@@ -9,6 +9,7 @@ import {
   decider,
   decisionVerrou,
   doitVerifier,
+  etatApres,
   evenementsCloture,
   evenementsLancement,
   formaterRapport,
@@ -568,6 +569,7 @@ function creerMonde(surcharge = {}) {
     activites: {},
     transcripts: {},
     specs: {},
+    maintenant: MAINTENANT,
     propre: true,
     arret: false,
     actionsExecutees: [],
@@ -606,7 +608,7 @@ function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
           ),
       );
       return {
-        maintenant: MAINTENANT,
+        maintenant: monde.maintenant,
         bornes,
         commentaires: monde.commentaires,
         activites: monde.activites,
@@ -671,6 +673,40 @@ function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
             ok: true,
             evenements: [
               { evenement: "attente", ticket: n, detail: action.raison },
+            ],
+          };
+        case "reprendre":
+        case "relancer":
+        case "noterEtat": {
+          monde.entrees = etatApres(
+            { version: 1, tickets: monde.entrees },
+            action,
+            {
+              maintenant: monde.maintenant,
+            },
+          ).tickets;
+          if (action.type !== "noterEtat") monde.sessions[n] = "working";
+          return {
+            ok: true,
+            evenements: [
+              {
+                evenement: {
+                  reprendre: "reprise",
+                  relancer: "relance",
+                  noterEtat: "echec",
+                }[action.type],
+                ticket: n,
+                detail: action.motif ?? action.raison,
+              },
+            ],
+          };
+        }
+        case "arreterSession":
+          monde.sessions[n] = "stopped";
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "arret-session", ticket: n, detail: action.raison },
             ],
           };
         default:
@@ -1998,6 +2034,321 @@ describe("decider : inactivité", () => {
       "rendreHumain",
       "arreterSession",
       "relancer",
+    ]);
+  });
+});
+
+// --- Appliquer une action à l'état ------------------------------------------------------------
+
+describe("etatApres", () => {
+  const avant = {
+    version: 1,
+    tickets: {
+      217: {
+        session: "aaaaaaaa",
+        nom: "ticket-217",
+        demarreA: il_y_a(120),
+        reprises: 1,
+        echecs: 1,
+        reprendreApres: il_y_a(1),
+      },
+    },
+  };
+
+  it("note un échec : les compteurs changent, la session reste", () => {
+    const apres = etatApres(
+      avant,
+      {
+        type: "noterEtat",
+        ticket: 217,
+        changements: { echecs: 2, reprendreApres: heure(20) },
+      },
+      { maintenant: MAINTENANT },
+    );
+    expect(apres.tickets["217"]).toMatchObject({
+      session: "aaaaaaaa",
+      echecs: 2,
+      reprendreApres: heure(20),
+    });
+  });
+
+  it("une reprise relance la durée de la session et lève l'attente, sans perdre les compteurs", () => {
+    const apres = etatApres(
+      avant,
+      {
+        type: "reprendre",
+        ticket: 217,
+        changements: { reprises: 2, reprendreApres: undefined },
+      },
+      { maintenant: MAINTENANT },
+    );
+    expect(apres.tickets["217"]).toEqual({
+      session: "aaaaaaaa",
+      nom: "ticket-217",
+      demarreA: MAINTENANT.toISOString(),
+      reprises: 2,
+      echecs: 1,
+    });
+  });
+
+  it("une reprise qui rend un autre identifiant (copie de la session) suit le nouvel identifiant", () => {
+    const apres = etatApres(
+      avant,
+      { type: "reprendre", ticket: 217, changements: {} },
+      { maintenant: MAINTENANT, session: "bbbbbbbb" },
+    );
+    expect(apres.tickets["217"].session).toBe("bbbbbbbb");
+  });
+
+  it("une relance pointe sur la nouvelle session et garde les compteurs", () => {
+    const apres = etatApres(
+      avant,
+      { type: "relancer", ticket: 217, changements: { inactivites: 1 } },
+      { maintenant: MAINTENANT, session: "cccccccc" },
+    );
+    expect(apres.tickets["217"]).toEqual({
+      session: "cccccccc",
+      nom: "ticket-217",
+      demarreA: MAINTENANT.toISOString(),
+      reprises: 1,
+      echecs: 1,
+      inactivites: 1,
+    });
+  });
+});
+
+// --- La boucle : questions, reprises, bornes --------------------------------------------------
+
+/** Un monde à un ticket (le 1, de la spec 208) en vol depuis 20:00, qu'on fait vivre étape par
+ * étape : à chaque pause de la boucle, l'étape suivante modifie le monde ; après la dernière, la
+ * boucle est interrompue. */
+function monde1(surcharge = {}) {
+  return creerMonde({
+    tickets: { 1: { titre: "Un", etat: "OPEN", etiquettes: [] } },
+    bloqueurs: {},
+    entrees: { 1: entree(1, { session: "s1", nom: "ticket-1" }) },
+    sessions: { 1: "working" },
+    specs: { 1: 208 },
+    ...surcharge,
+  });
+}
+
+const parEtapes = (etapes) => (monde) => {
+  const etape = etapes.shift();
+  if (etape) etape(monde);
+  else monde.arret = true;
+};
+
+describe("boucle : une question, puis la reprise de la session", () => {
+  it("reprend la même session quand le label est retiré après une réponse, puis clôture la PR", async () => {
+    const monde = monde1({
+      sessions: { 1: "done" },
+      commentaires: {
+        1: [commentaire(2, "Quelle table ?\nPortée : spec")],
+      },
+    });
+    monde.tickets[1].etiquettes = ["needs-info"];
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        (m) => {
+          m.tickets[1].etiquettes = [];
+          m.commentaires[1].push(commentaire(3, "La table activites."));
+        },
+        toutesTerminent,
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "reprise #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+    expect(monde.entrees).toEqual({});
+  });
+
+  it("gèle les lancements de la spec le temps de la question, puis les reprend", async () => {
+    const monde = creerMonde({
+      tickets: {
+        1: { titre: "Un", etat: "OPEN", etiquettes: ["needs-info"] },
+        2: { titre: "Deux", etat: "OPEN", etiquettes: [] },
+      },
+      bloqueurs: {},
+      entrees: { 1: entree(1, { session: "s1", nom: "ticket-1" }) },
+      sessions: { 1: "done" },
+      specs: { 1: 208, 2: 208 },
+      commentaires: { 1: [commentaire(2, "Quelle table ?\nPortée : spec")] },
+    });
+    // Le ticket 1, en vol, n'est pas lançable : seul le 2 l'est.
+    const lireAvant = portsDuMonde(monde, {
+      apresAttente: () => (monde.arret = true),
+    });
+    expect(await lancerBoucle(lireAvant)).toBe(0);
+    expect(monde.actionsExecutees.filter((a) => a.type === "lancer")).toEqual(
+      [],
+    );
+    expect(lireAvant.lignes.join("\n")).toMatch(/En attente de votre réponse/);
+
+    monde.arret = false;
+    monde.tickets[1].etiquettes = [];
+    monde.commentaires[1].push(commentaire(3, "La table activites."));
+    const apres = portsDuMonde(monde, {
+      apresAttente: () => (monde.arret = true),
+    });
+    await lancerBoucle(apres);
+    expect(monde.actionsExecutees.map((a) => a.type)).toContain("lancer");
+  });
+});
+
+describe("boucle : CI rouge", () => {
+  it("rend le ticket avec le lien au troisième échec, après deux reprises", async () => {
+    const monde = monde1({
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: { 1: verdictCiRouge },
+    });
+    const redevientDone = (m) => {
+      m.sessions[1] = "done";
+    };
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([redevientDone, redevientDone]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "reprise #1",
+      "reprise #1",
+      "anomalie #1",
+      "arret interrompu",
+    ]);
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+    expect(monde.entrees[1].reprises).toBe(2);
+  });
+
+  it("clôture normalement une CI rouge puis verte", async () => {
+    const monde = monde1({
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: { 1: verdictCiRouge },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        (m) => {
+          m.sessions[1] = "done";
+          m.verdicts[1] = verdictVert;
+        },
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "reprise #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+  });
+});
+
+describe("boucle : limite de l'abonnement", () => {
+  it("attend, reprend la session sans perdre le travail, puis clôture", async () => {
+    const monde = monde1({ sessions: { 1: "failed" } });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        // Le tour suivant tombe avant l'heure de la reprise : rien à faire.
+        (m) => {
+          m.maintenant = new Date(m.maintenant.getTime() + 5 * MINUTE);
+        },
+        // Après l'attente (10 minutes en tout), la session est reprise.
+        (m) => {
+          m.maintenant = new Date(m.maintenant.getTime() + 6 * MINUTE);
+        },
+        toutesTerminent,
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "echec #1",
+      "attente #1",
+      "reprise #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+  });
+
+  it("rend le ticket au troisième échec, avec des attentes de plus en plus longues", async () => {
+    const monde = monde1({ sessions: { 1: "failed" } });
+    const ecoule = (minutes) => (m) => {
+      m.maintenant = new Date(m.maintenant.getTime() + minutes * MINUTE);
+    };
+    const echoue = (m) => {
+      m.sessions[1] = "failed";
+    };
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([ecoule(11), echoue, ecoule(21), echoue]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const evts = evenements(ports.lignes);
+    expect(evts.filter((e) => e === "reprise #1")).toHaveLength(2);
+    expect(evts).toContain("anomalie #1");
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+    expect(monde.entrees[1].echecs).toBe(2);
+  });
+});
+
+describe("boucle : durée et inactivité", () => {
+  it("rend le ticket d'une session qui dépasse la durée maximale, avec la raison", async () => {
+    const monde = monde1();
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        (m) => {
+          m.maintenant = new Date(m.maintenant.getTime() + 200 * MINUTE);
+        },
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "arret-session #1",
+      "anomalie #1",
+      "arret interrompu",
+    ]);
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+    expect(ports.lignes.join("\n")).toMatch(/durée maximale/);
+  });
+
+  it("relance une fois la session inactive, puis la rend à la deuxième inactivité", async () => {
+    const monde = monde1({ activites: { 1: il_y_a(60) } });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        // La nouvelle session produit une sortie, puis se tait à son tour.
+        (m) => {
+          m.activites[1] = m.maintenant.toISOString();
+        },
+        (m) => {
+          m.maintenant = new Date(m.maintenant.getTime() + 40 * MINUTE);
+        },
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "arret-session #1",
+      "relance #1",
+      "arret-session #1",
+      "anomalie #1",
+      "arret interrompu",
+    ]);
+    expect(monde.entrees[1].inactivites).toBe(1);
+  });
+
+  it("arrête et rend une session qui attend une saisie", async () => {
+    const monde = monde1({ sessions: { 1: "blocked" } });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "arret-session #1",
+      "anomalie #1",
+      "arret interrompu",
     ]);
   });
 });
