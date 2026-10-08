@@ -603,6 +603,11 @@ export async function supprimerFichesSyndic(prenoms: string[]) {
  */
 export async function choisirDate(page: Page, date: string) {
   const calendrier = page.getByRole("group", { name: "Date", exact: true });
+  // Le mois n'est testé qu'une fois le calendrier rendu : sinon un jour du mois affiché passerait
+  // pour un mois à venir, et la boucle ferait défiler le calendrier jusqu'à l'avoir perdu.
+  await expect(
+    calendrier.getByRole("button", { name: "Mois suivant" }),
+  ).toBeVisible();
   const mois = calendrier.getByText(libelleMois(moisDe(date)), { exact: true });
   for (let i = 0; i < 24 && !(await mois.isVisible()); i++)
     await calendrier.getByRole("button", { name: "Mois suivant" }).click();
