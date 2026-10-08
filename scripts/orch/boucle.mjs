@@ -189,7 +189,7 @@ const ETIQUETTE_QUESTION = "needs-info";
 const ETIQUETTE_RENDU = "ready-for-human";
 const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
 // Une session `done`, `stopped` ou introuvable ne travaille plus : son résultat est sur le tracker.
-const ETATS_SESSION_FINIE = ["done", "stopped"];
+const ETATS_SESSION_FINIE = ["done", "stopped", "failed"];
 
 const parNumero = (a, b) => a.numero - b.numero;
 
@@ -203,6 +203,10 @@ export function messageDeReprise({
   ticket,
   reponse,
   autresComptes = 0,
+  pr,
+  url,
+  reprise,
+  reprisesMax,
 }) {
   const autres =
     autresComptes > 0
@@ -213,6 +217,9 @@ export function messageDeReprise({
       ? `Le propriétaire du dépôt a répondu à ta question sur le ticket #${ticket} : ${reponse.url}.`
       : `Le label \`needs-info\` du ticket #${ticket} a été retiré sans commentaire de réponse du propriétaire après ta question : relis le ticket et ses commentaires.`;
     return `${debut} Relis la réponse sur le ticket, applique-la et continue jusqu'à la PR, selon le contrat de fin de session de ton prompt. ${MESSAGE_DONNEES}${autres}`;
+  }
+  if (motif === "ci") {
+    return `Le contrôle de CI de ta PR #${pr} est rouge : ${url}. Lis le journal du run (\`gh run view\`), corrige la cause sur la branche du ticket #${ticket}, relance la suite de tests en local (par morceaux), pousse, puis arrête-toi sans surveiller la CI : la boucle la relit. Reprise ${reprise} sur ${reprisesMax} au plus ; au-delà, le ticket est rendu. ${MESSAGE_DONNEES}`;
   }
   throw new Error(`Motif de reprise inconnu : ${motif}`);
 }
@@ -253,6 +260,35 @@ function repriseApresQuestion(situation, ticket, entree) {
       autresComptes,
     }),
     changements: { questionRepondue: question.id, reprendreApres: undefined },
+  });
+}
+
+/** CI rouge sur la PR : la session est reprise avec le lien du run, `reprisesCiMax` fois au plus ;
+ * ensuite le ticket est rendu avec le lien. */
+function repriseCiRouge(situation, ticket, entree, pr, ci) {
+  const faites = entree.reprises ?? 0;
+  const max = situation.bornes.reprisesCiMax;
+  if (faites >= max) {
+    return {
+      type: "rendreHumain",
+      ticket,
+      sansLeveeParPr: true,
+      explication: `Le contrôle de CI de la PR #${pr.numero} est rouge pour la ${max + 1}e fois (session reprise ${max} fois) : ${ci.url}. Le ticket est rendu : corriger la PR à la main.`,
+    };
+  }
+  return actionDeReprise(situation, {
+    motif: "ci",
+    ticket,
+    entree,
+    message: messageDeReprise({
+      motif: "ci",
+      ticket,
+      pr: pr.numero,
+      url: ci.url,
+      reprise: faites + 1,
+      reprisesMax: max,
+    }),
+    changements: { reprises: faites + 1 },
   });
 }
 
@@ -365,9 +401,12 @@ export function decider(situation) {
       aCloturer.add(t.numero);
     } else if (pr?.etat === "OPEN") {
       const verdict = verdicts[t.numero];
+      const ci = verdict?.points?.find((p) => p.id === "ci");
       if (verdict?.fusionnable) {
         actions.push({ type: "cloturer", ticket: t.numero, pr: pr.numero });
         aCloturer.add(t.numero);
+      } else if (ci?.etat === "rouge") {
+        actions.push(repriseCiRouge(situation, t.numero, entree, pr, ci));
       } else {
         actions.push({
           type: "attendre",
