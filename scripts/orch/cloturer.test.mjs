@@ -53,6 +53,7 @@ const situation = (surcharge = {}) => ({
   session: { id: "ab12cd34", etat: "done" },
   worktreeExiste: true,
   entreeEtat: true,
+  brancheCheckoutPrincipal: "develop",
   ...surcharge,
 });
 
@@ -307,9 +308,58 @@ describe("decider : migration", () => {
     expect(t).not.toContain("listerMigrations");
   });
 
+  it("ne repousse pas une migration dont le commentaire de clôture est posé, même sans entrée d'état", () => {
+    const resultat = decider(
+      avecMigration({
+        pr: { ...avecMigration().pr, etat: "MERGED", fusionCommit: FUSION },
+        verdict: null,
+        developAJour: true,
+        issue: { etat: "CLOSED", cloture: true },
+        migrationPoussee: false,
+        entreeEtat: false,
+        worktreeExiste: false,
+        session: null,
+      }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+  });
+
   it("efface l'entrée d'état même quand la poussée vient de la créer", () => {
     const t = types(decider(avecMigration({ entreeEtat: false }), valeurs));
     expect(t.at(-1)).toBe("effacerEtat");
+  });
+});
+
+describe("decider : le checkout principal", () => {
+  it("refuse avant toute fusion quand le checkout principal n'est pas sur develop", () => {
+    const resultat = decider(
+      situation({ brancheCheckoutPrincipal: "ticket-99" }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.join("\n")).toContain("ticket-99");
+    expect(resultat.refus.join("\n")).toContain("develop");
+  });
+
+  it("refuse aussi la reprise qui doit mettre develop à jour", () => {
+    const resultat = decider(
+      apresFusion({ brancheCheckoutPrincipal: "ticket-99" }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.length).toBeGreaterThan(0);
+  });
+
+  it("n'exige pas develop quand il est déjà à jour", () => {
+    const resultat = decider(
+      apresFusion({
+        developAJour: true,
+        brancheCheckoutPrincipal: "ticket-99",
+      }),
+      valeurs,
+    );
+    expect(resultat.refus).toEqual([]);
   });
 });
 
