@@ -1,3 +1,5 @@
+import { jourDeParis } from "../e2e/jours";
+
 // L'heure et le jour de la résidence (Europe/Paris) pour les tests base, et de quoi simuler la
 // nuit où le jour d'UTC n'est pas encore celui de Paris, quelle que soit l'heure du test.
 
@@ -11,13 +13,8 @@ const HORLOGE_PARIS = new Intl.DateTimeFormat("sv-SE", {
   hourCycle: "h23",
 });
 
-/** Le jour `AAAA-MM-JJ` de Paris, décalé de `jours` (négatif : passé) par rapport à aujourd'hui. */
-export function jourParis(jours = 0) {
-  return HORLOGE_PARIS.format(new Date(Date.now() + jours * 86_400_000)).slice(
-    0,
-    10,
-  );
-}
+/** Le jour `AAAA-MM-JJ` de Paris décalé de `jours` jours civils : le même calcul que les tests navigateur (ticket #202). */
+export const jourParis = jourDeParis;
 
 /**
  * Un créneau du jour de Paris qui se termine à `minutes` de maintenant (négatif : déjà terminé),

@@ -7,6 +7,7 @@ import {
   retirerDemo,
 } from "../../scripts/demo-comptes.mjs";
 import { clientAdmin, connecter, nouveauResident } from "./clients";
+import { jourParis } from "./paris";
 
 // Un modèle à part : ces tests ne touchent ni aux vrais comptes fakossa+ ni aux autres fichiers.
 const modele = {
@@ -105,7 +106,7 @@ describe("amorcerDemo : activités", () => {
   });
 
   it("propose des activités à venir et des activités passées", async () => {
-    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const aujourdhui = jourParis();
     const activites = await activitesDemo();
     expect(activites.some((a) => a.date_activite > aujourdhui)).toBe(true);
     expect(activites.some((a) => a.date_activite < aujourdhui)).toBe(true);
@@ -127,7 +128,7 @@ describe("amorcerDemo : activités", () => {
   });
 
   it("laisse des retours sur une activité passée", async () => {
-    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const aujourdhui = jourParis();
     const passees = (await activitesDemo())
       .filter((a) => a.date_activite < aujourdhui)
       .map((a) => a.id);
@@ -186,7 +187,7 @@ describe("amorcerDemo : annonces", () => {
         (annonces.data ?? []).map((a) => a.id),
       );
     expect(sondages.data).toHaveLength(2);
-    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const aujourdhui = jourParis();
     expect(sondages.data!.some((s) => s.echeance < aujourdhui)).toBe(true);
     expect(sondages.data!.some((s) => s.echeance >= aujourdhui)).toBe(true);
 

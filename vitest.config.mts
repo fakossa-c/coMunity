@@ -15,6 +15,7 @@ export default defineConfig({
             "src/**/*.test.ts",
             "scripts/**/*.test.mjs",
             "tests/e2e/**/*.unit.ts",
+            "tests/db/**/*.unit.ts",
           ],
           environment: "node",
         },

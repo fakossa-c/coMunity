@@ -11,21 +11,18 @@ import {
   type Compte,
   publierApresJev,
 } from "./clients";
-import { creneauFinissantDans } from "./paris";
+import { creneauFinissantDans, jourParis } from "./paris";
 
 // Ticket #41 : un résident supprime son compte. Ses informations, ses inscriptions et ses
 // réponses aux sondages sont effacées ; ses activités à venir avec des inscrits sont annulées,
 // les autres supprimées ; ses activités passées restent sans organisateur ; ses retours restent,
 // anonymes ; les photos des activités retirées quittent le bucket public.
 
-const jour = (jours: number) =>
-  new Date(Date.now() + jours * 86_400_000).toISOString().slice(0, 10);
-
 const ACTIVITE = {
   titre: "Goûter crêpes",
   categorie: "moments_partages" as const,
   pictogramme: "waving_hand",
-  date_activite: jour(30),
+  date_activite: jourParis(30),
   heure_debut: "16:00",
   heure_fin: "18:30",
   lieu: "Jardin partagé",
@@ -213,7 +210,7 @@ describe("le compte disparaît", () => {
         annonce_id: annonce.data.id,
         question: "Quel créneau ?",
         options: ["7h à 21h", "6h à 23h"],
-        echeance: jour(7),
+        echeance: jourParis(7),
       })
       .select("id")
       .single();
