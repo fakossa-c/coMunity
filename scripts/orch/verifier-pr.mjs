@@ -54,8 +54,8 @@ export function fermeturesDepuisCorps(corps) {
 
 const court = (sha) => sha.slice(0, 7);
 const liste = (numeros) => numeros.map((n) => `#${n}`).join(", ");
-const ok = (id, detail) => ({ id, ok: true, detail });
-const refus = (id, detail) => ({ id, ok: false, detail });
+const ok = (id, detail, plus = {}) => ({ id, ok: true, detail, ...plus });
+const refus = (id, detail, plus = {}) => ({ id, ok: false, detail, ...plus });
 
 // --- Points -----------------------------------------------------------------------------------
 
@@ -124,6 +124,9 @@ function etatDuRun(run) {
   return run.conclusion === "success" ? "vert" : `rouge (${run.conclusion})`;
 }
 
+/** Le même état, en un mot que la boucle lit : `vert`, `rouge` ou `en cours`. */
+const mot = (run) => etatDuRun(run).replace(/ \(.*\)$/, "");
+
 function pointCi(pr, controles, valeurs) {
   const nom = valeurs.controleCi?.trim();
   if (!nom) {
@@ -141,19 +144,22 @@ function pointCi(pr, controles, valeurs) {
       return refus(
         "ci",
         `contrôle ${nom} absent : aucune exécution sur le commit de tête ${tete}`,
+        { etat: "absent" },
       );
     }
     const ancien = dernierRun(anterieurs);
     return refus(
       "ci",
       `contrôle ${nom} ${etatDuRun(ancien)} sur un commit antérieur (${court(ancien.sha)}), aucune exécution sur le commit de tête ${tete}`,
+      { etat: "absent" },
     );
   }
   const run = dernierRun(surLaTete);
-  const etat = etatDuRun(run);
+  const detail = `contrôle ${nom} ${etatDuRun(run)} sur le commit de tête ${tete}`;
+  const plus = { etat: mot(run), url: run.url };
   return run.statut === "completed" && run.conclusion === "success"
-    ? ok("ci", `contrôle ${nom} ${etat} sur le commit de tête ${tete}`)
-    : refus("ci", `contrôle ${nom} ${etat} sur le commit de tête ${tete}`);
+    ? ok("ci", detail, plus)
+    : refus("ci", detail, plus);
 }
 
 function pointLabels(pr, issue, ticket) {
@@ -300,7 +306,7 @@ function controlesDuCommit(gh, depot, sha) {
       "--paginate",
       `repos/${depot}/commits/${sha}/check-runs`,
       "--jq",
-      ".check_runs[] | {id, nom: .name, statut: .status, conclusion}",
+      ".check_runs[] | {id, nom: .name, statut: .status, conclusion, url: .html_url}",
     ),
   ).map((c) => ({ ...c, sha }));
 }
