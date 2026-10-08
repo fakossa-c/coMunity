@@ -342,6 +342,28 @@ describe("decider : le contrôle de CI", () => {
     ).toBe(false);
   });
 
+  it("range le contrôle du commit de tête dans un état lisible par la boucle, avec le lien du run", () => {
+    const url = "https://github.com/fakossa-c/coMunity/actions/runs/9";
+    expect(ci([controle({ conclusion: "failure", url })])).toMatchObject({
+      etat: "rouge",
+      url,
+    });
+    expect(ci([controle({ conclusion: "timed_out", url })]).etat).toBe(
+      "rouge",
+    );
+    expect(ci([controle({ url })])).toMatchObject({ etat: "vert", url });
+    expect(
+      ci([controle({ statut: "in_progress", conclusion: null, url })]).etat,
+    ).toBe("en cours");
+  });
+
+  it("ne dit pas rouge ni vert d'un contrôle absent de la tête, même rouge sur un commit antérieur", () => {
+    expect(ci([]).etat).toBe("absent");
+    expect(
+      ci([controle({ sha: ANCIEN, conclusion: "failure" })]).etat,
+    ).toBe("absent");
+  });
+
   it("n'exige aucun contrôle quand le nom est vide, et le dit", () => {
     for (const controleCi of ["", "  "]) {
       const verdict = decider(situation({ controles: [] }), {
