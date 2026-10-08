@@ -12,6 +12,7 @@ import {
   supprimerComptes,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #17 : le conseil syndical suit ce qui anime la résidence depuis son tableau de bord. Les
 // chiffres exacts se vérifient dans tests/db/tableau-de-bord.test.ts, sur un jeu de données fixe ;
@@ -32,11 +33,6 @@ async function seConnecter(page: Page, email: string) {
   await expect(page).not.toHaveURL(/connexion/);
 }
 
-/** Hier : une activité qui a eu lieu, dans toutes les périodes du tableau de bord. */
-function hier() {
-  return new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
 /** Une activité d'hier au titre unique, deux participants qui l'ont notée 5, et un membre du conseil syndical connecté. */
 async function activiteReussie(page: Page) {
   const [createur, participant1, participant2, syndic] = await Promise.all([
@@ -54,7 +50,7 @@ async function activiteReussie(page: Page) {
   const titre = `Repas de quartier ${randomUUID().slice(0, 6)}`;
   const identifiant = await nouvelleActivite(createur.id, {
     titre,
-    date_activite: hier(),
+    date_activite: jourDeParis(-1),
     capacite_max: 6,
   });
   await inscrireResident(identifiant, participant1.id, 1);

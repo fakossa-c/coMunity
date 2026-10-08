@@ -14,6 +14,7 @@ import {
   titreAccueil,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 const emails: string[] = [];
 
@@ -55,9 +56,7 @@ test("un résident validé crée une activité et la retrouve dans le catalogue"
     .getByLabel("Mot d'accueil")
     .fill("On apprend à composter ensemble, dans la cour.");
   await continuerProposer(page);
-  const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const dansUnMois = jourDeParis(30);
   await choisirDate(page, dansUnMois);
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
@@ -106,13 +105,6 @@ function styleCalcule(cible: Locator, propriete: string) {
   );
 }
 
-/** La date `AAAA-MM-JJ` dans `jours` jours (négatif : dans le passé), en UTC comme la base. */
-function dansJours(jours: number) {
-  return new Date(Date.now() + jours * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-}
-
 const segments = (page: Page) =>
   page.getByRole("navigation", { name: "Mes activités" });
 const segment = (page: Page, nom: string) =>
@@ -156,7 +148,7 @@ async function residentAvecActivites(suffixe: number | string = Date.now()) {
   ] as const) {
     const identifiant = await nouvelleActivite(organisateurId, {
       titre: titres[cle],
-      date_activite: dansJours(jours),
+      date_activite: jourDeParis(jours),
     });
     identifiants[cle] = identifiant;
     if (inscrit) await inscrireResident(identifiant, resident.id);
@@ -399,12 +391,12 @@ test("les cartes d'« Activités » se rangent en trois colonnes sur ordinateur,
   for (const [rang, jours] of [1, 2, 3, 4].entries()) {
     const identifiant = await nouvelleActivite(organisateur.id, {
       titre: `Rendez-vous ${rang} ${suffixe}`,
-      date_activite: dansJours(jours),
+      date_activite: jourDeParis(jours),
     });
     await inscrireResident(identifiant, resident.id);
     await nouvelleActivite(resident.id, {
       titre: `Mon rendez-vous ${rang} ${suffixe}`,
-      date_activite: dansJours(jours),
+      date_activite: jourDeParis(jours),
     });
   }
   await seConnecter(page, resident.email);

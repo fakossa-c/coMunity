@@ -5,6 +5,7 @@ import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import { libelleJour, libelleMois, moisDe } from "../../src/lib/calendrier";
+import { jourDeParis } from "./jours";
 import { aujourdhui } from "../../src/lib/partage-activite";
 
 const local = lireSupabaseLocal();
@@ -142,9 +143,7 @@ export async function nouvelleActivite(
   organisateur: string,
   activite: Partial<Record<string, string | string[] | number | null>> = {},
 ) {
-  const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const dansUnMois = jourDeParis(30);
   const { data, error } = await clientAdmin()
     .from("activite")
     .insert({

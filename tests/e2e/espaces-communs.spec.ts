@@ -18,6 +18,7 @@ import {
   supprimerComptes,
   supprimerEspacesCommuns,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #11 : les espaces communs gérés par le conseil syndical, et leurs règles appliquées par
 // l'assistant dans le parcours de création.
@@ -38,12 +39,6 @@ async function seConnecter(page: Page, email: string) {
   await expect(page).not.toHaveURL(/connexion/);
 }
 
-function dansUnMois() {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-}
-
 function listeDesEspaces(page: Page) {
   return page.getByRole("list", { name: "Espaces communs" });
 }
@@ -55,7 +50,7 @@ async function commencerProposition(page: Page, titre: string) {
   await page.getByLabel("Titre de l'activité").fill(titre);
   await continuerProposer(page);
   await etapeProposer(page, 2);
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
 }
 
 test("le conseil syndical ajoute, modifie puis supprime un espace commun", async ({
@@ -286,7 +281,7 @@ test("un créateur choisit un espace commun : ses consignes, ses règles, puis l
   espaces.push(espace.nom);
   await nouvelleActivite(resident.id, {
     titre: "Atelier tricot",
-    date_activite: dansUnMois(),
+    date_activite: jourDeParis(30),
     heure_debut: "19:00",
     heure_fin: "20:00",
     espace_commun_id: espace.id,

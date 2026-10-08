@@ -10,6 +10,7 @@ import {
   nouvelleActivite,
   supprimerComptes,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #12 : le créateur modifie, duplique, supprime ou annule son activité.
 
@@ -41,12 +42,6 @@ async function createurAvecActivite(
 
 function continuer(page: Page) {
   return page.getByRole("button", { name: "Continuer" }).click();
-}
-
-function il(jours: number) {
-  return new Date(Date.now() + jours * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
 }
 
 test("le créateur modifie son activité dans le parcours pré-rempli", async ({
@@ -108,7 +103,7 @@ test("modifier reprend le jour et les heures, même hors du pas de 15 minutes", 
   page,
 }) => {
   const { identifiant } = await createurAvecActivite(page, {
-    date_activite: il(10),
+    date_activite: jourDeParis(10),
     heure_debut: "16:10",
     heure_fin: "18:20",
   });
@@ -121,7 +116,7 @@ test("modifier reprend le jour et les heures, même hors du pas de 15 minutes", 
     page
       .getByRole("group", { name: "Date", exact: true })
       .getByRole("button", { pressed: true }),
-  ).toHaveAccessibleName(libelleJour(il(10)));
+  ).toHaveAccessibleName(libelleJour(jourDeParis(10)));
   await expect(page.getByLabel("Heure de début")).toHaveValue("16:10");
   await expect(page.getByLabel("Heure de fin")).toHaveValue("18:20");
   // Sans y toucher, l'activité s'enregistre avec ses heures d'origine.
@@ -159,7 +154,7 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
   page,
 }) => {
   const { identifiant } = await createurAvecActivite(page, {
-    date_activite: il(-30),
+    date_activite: jourDeParis(-30),
     capacite_max: "12",
   });
 
@@ -176,7 +171,7 @@ test("dupliquer recopie tout sauf la date, même depuis une activité passée", 
       .getByRole("button", { pressed: true }),
   ).toHaveCount(0);
   await expect(page.getByLabel("Heure de début")).toHaveValue("16:00");
-  await choisirDate(page, il(20));
+  await choisirDate(page, jourDeParis(20));
   await continuerProposer(page);
   await expect(page.getByLabel("Nombre de places")).toHaveValue("12");
   await continuerProposer(page);
@@ -285,7 +280,7 @@ test("J'organise liste mes activités à venir, annulées comprises ; les passé
   await annulerActivite(annulee);
   await nouvelleActivite(createur.id, {
     titre: "Vide-grenier passé",
-    date_activite: il(-15),
+    date_activite: jourDeParis(-15),
     capacite_min: "3",
   });
 
