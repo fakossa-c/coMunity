@@ -6,7 +6,6 @@ import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import { libelleJour, libelleMois, moisDe } from "../../src/lib/calendrier";
 import { jourDeParis } from "./jours";
-import { aujourdhui } from "../../src/lib/partage-activite";
 
 const local = lireSupabaseLocal();
 
@@ -171,7 +170,7 @@ export async function nouvelleActivite(
 export async function nouvelleActiviteEnTete(organisateur: string) {
   return nouvelleActivite(organisateur, {
     titre: `En tête ${Date.now()}`,
-    date_activite: aujourdhui(),
+    date_activite: jourDeParis(0),
     heure_debut: "00:05",
     heure_fin: "23:59",
   });
