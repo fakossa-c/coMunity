@@ -54,7 +54,10 @@ function section(corps, titre) {
 export function fichiersDepuisCorps(corps) {
   const texte = section(corps, "Fichiers");
   if (texte === null) return null;
-  return [...texte.matchAll(/`([^`\n]+)`/g)].map((m) => m[1].trim());
+  // Un chemin contient un `/` ou un `.` : `claude-md` ou `npm test` n'en sont pas.
+  return [...texte.matchAll(/`([^`\n]+)`/g)]
+    .map((m) => m[1].trim())
+    .filter((chemin) => /[/.]/.test(chemin));
 }
 
 /** Les bloqueurs écrits dans le corps : la section `## Blocked by` ou une ligne `Blocked by: …`. */
@@ -207,6 +210,7 @@ function raisonsBloqueurs(candidat, situation, issues) {
 /** Les raisons propres à un ticket : son état, ses bloqueurs, ce qui occupe ses fichiers. */
 function raisonsDuTicket(candidat, situation, issues, occupees) {
   const raisons = [];
+  if (candidat.introuvable) return ["ticket introuvable"];
   if (candidat.etat !== "OPEN") raisons.push("ticket fermé");
   if (candidat.assignes.length > 0) {
     raisons.push(`déjà assigné à ${candidat.assignes.join(", ")}`);
@@ -214,8 +218,10 @@ function raisonsDuTicket(candidat, situation, issues, occupees) {
   raisons.push(...raisonsBloqueurs(candidat, situation, issues));
 
   const fichiers = fichiersDepuisCorps(candidat.corps);
-  if (fichiers === null) {
-    raisons.push("section ## Fichiers absente : recouvrement non vérifiable");
+  if (!fichiers?.length) {
+    raisons.push(
+      "section ## Fichiers absente ou sans chemin : recouvrement non vérifiable",
+    );
   }
 
   for (const occupation of occupees) {
@@ -291,6 +297,7 @@ export function decider(situation, valeurs) {
         numero,
         titre: "(ticket introuvable)",
         etat: "CLOSED",
+        introuvable: true,
         assignes: [],
         corps: "",
       };
@@ -313,7 +320,9 @@ export function decider(situation, valeurs) {
         }
         if (raisons.length === 0) retenus.push({ numero, fichiers, migration });
       }
-      if (candidat.etat === "OPEN") raisons.push(...raisonsBudget);
+      // Le budget ne s'ajoute qu'à un ticket sans autre obstacle : il dit ce qui l'empêcherait de
+      // partir une fois libre, sans noyer la vraie raison des autres.
+      if (raisons.length === 0) raisons.push(...raisonsBudget);
       return {
         numero,
         titre: candidat.titre,
@@ -347,7 +356,7 @@ export function formater(resultat, libelle) {
   if (tickets.length === 0) return `${entete}\n  Aucun ticket candidat.`;
   const lignes = tickets.map((t) =>
     t.lancable
-      ? `  #${t.numero} lançable - ${t.titre}`
+      ? `  #${t.numero} lançable${resultat.aLancer.includes(t.numero) ? "" : " (au-delà du budget : attend un créneau)"} - ${t.titre}`
       : `  #${t.numero} exclu - ${t.titre} : ${t.raisons.join(" ; ")}`,
   );
   return [entete, ...lignes].join("\n");
@@ -355,6 +364,8 @@ export function formater(resultat, libelle) {
 
 // --- Lecture du monde -------------------------------------------------------------------------
 
+const LIMITE_ISSUES = 500;
+const LIMITE_PRS = 100;
 const CHAMPS_ISSUE = "number,title,state,assignees,labels,body";
 
 const issueDepuisGh = (brute) => ({
@@ -394,9 +405,12 @@ function lire({ mode, valeurs, racine, env, home }) {
     const issue = issueDepuisGh(brute);
     issues.set(issue.numero, issue);
   };
+  // Une issue illisible (supprimée, transférée) ne fait pas échouer la commande : `decider` la
+  // traite en ticket introuvable (candidat) ou ne la compte pas (reste d'un ancien état).
   const exiger = (numeros) => {
     for (const numero of numeros) {
-      if (!issues.has(numero)) {
+      if (issues.has(numero)) continue;
+      try {
         connaitre(
           json(
             gh(
@@ -409,6 +423,10 @@ function lire({ mode, valeurs, racine, env, home }) {
               CHAMPS_ISSUE,
             ),
           ),
+        );
+      } catch (erreur) {
+        avertir(
+          `issue #${numero} illisible (${erreur.message.split("\n")[0]}).`,
         );
       }
     }
@@ -423,11 +441,16 @@ function lire({ mode, valeurs, racine, env, home }) {
       "--state",
       "open",
       "--limit",
-      "500",
+      String(LIMITE_ISSUES),
       "--json",
       CHAMPS_ISSUE,
     ),
   ).forEach(connaitre);
+  if (issues.size >= LIMITE_ISSUES) {
+    avertir(
+      `${LIMITE_ISSUES} issues ouvertes lues : la liste est peut-être tronquée.`,
+    );
+  }
 
   let sousIssues = [];
   if (mode.type === "spec") {
@@ -467,7 +490,7 @@ function lire({ mode, valeurs, racine, env, home }) {
   }
   exiger(
     candidats.flatMap((n) =>
-      natifs[n]?.length > 0 ? [] : bloqueursDepuisCorps(issues.get(n).corps),
+      natifs[n]?.length > 0 ? [] : bloqueursDepuisCorps(issues.get(n)?.corps),
     ),
   );
 
@@ -480,7 +503,7 @@ function lire({ mode, valeurs, racine, env, home }) {
       "--state",
       "open",
       "--limit",
-      "100",
+      String(LIMITE_PRS),
       "--json",
       "number,title,headRefName,files,closingIssuesReferences",
     ),
@@ -495,6 +518,11 @@ function lire({ mode, valeurs, racine, env, home }) {
     ],
     fichiers: pr.files.map((f) => f.path),
   }));
+  if (prs.length >= LIMITE_PRS) {
+    avertir(
+      `${LIMITE_PRS} PR ouvertes lues : la liste est peut-être tronquée.`,
+    );
+  }
 
   const worktrees = executer("git", [
     "-C",

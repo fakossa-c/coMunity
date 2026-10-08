@@ -144,6 +144,14 @@ describe("fichiersDepuisCorps", () => {
     expect(fichiersDepuisCorps("## What to build\n\nRien.")).toBeNull();
     expect(fichiersDepuisCorps("## Fichiers\n\nÀ définir.\n")).toEqual([]);
   });
+
+  it("ignore ce qui entre accents graves sans être un chemin (nom de skill, commande)", () => {
+    expect(
+      fichiersDepuisCorps(
+        "## Fichiers\n\n- `CLAUDE.md`, `claude-md`, `npm test`, `scripts/orch/*`\n",
+      ),
+    ).toEqual(["CLAUDE.md", "scripts/orch/*"]);
+  });
 });
 
 describe("bloqueursDepuisCorps", () => {
@@ -339,6 +347,21 @@ describe("decider : ticket lui-même", () => {
     );
     expect(ticket(r, 212).lancable).toBe(false);
     expect(raisons(r, 212)).toContain("## Fichiers");
+  });
+
+  it("section ## Fichiers sans aucun chemin : exclu de la même façon", () => {
+    const r = decider(
+      situation({ issues: [issue(212, { corps: corps({ fichiers: [] }) })] }),
+      valeurs,
+    );
+    expect(ticket(r, 212).lancable).toBe(false);
+    expect(raisons(r, 212)).toContain("## Fichiers");
+  });
+
+  it("ticket demandé mais introuvable : exclu avec cette raison", () => {
+    const r = decider(situation({ issues: [], candidats: [99999] }), valeurs);
+    expect(ticket(r, 99999).lancable).toBe(false);
+    expect(raisons(r, 99999)).toBe("ticket introuvable");
   });
 
   it("son propre worktree, sa propre session ou sa propre PR : exclu, c'est déjà pris", () => {
@@ -624,7 +647,7 @@ describe("decider : budget", () => {
     expect(raisons(r, 212)).toMatch(/Docker/);
   });
 
-  it("une exclusion de fond (bloqueur) reste la raison d'un ticket, et le budget ne la remplace pas", () => {
+  it("un ticket exclu pour une autre raison ne porte pas la raison de budget : la vraie raison reste seule", () => {
     const r = decider(
       situation({
         issues: [issue(212, { corps: corps({ bloque: [210] }) }), issue(210)],
@@ -633,7 +656,7 @@ describe("decider : budget", () => {
       valeurs,
     );
     expect(raisons(r, 212)).toContain("#210");
-    expect(raisons(r, 212)).toMatch(/Supabase/);
+    expect(raisons(r, 212)).not.toMatch(/Supabase/);
   });
 
   it("aucun ticket lançable : aucun lancement possible, même avec du budget", () => {
@@ -673,6 +696,25 @@ describe("formater", () => {
     expect(i213).toBeLessThan(i214);
     expect(lignes[i212]).toContain("lançable");
     expect(texte).toContain("fakossa-c");
+  });
+
+  it("budget partiel : les lançables au-delà du budget le disent", () => {
+    const partiel = decider(
+      situation({
+        issues: [
+          issue(212, { corps: corps({ fichiers: ["a.ts"] }) }),
+          issue(213, { corps: corps({ fichiers: ["b.ts"] }) }),
+        ],
+        candidats: [212, 213],
+        memoireDisponibleMo: 2500,
+      }),
+      valeurs,
+    );
+    const lignes = formater(partiel, "x").split("\n");
+    expect(lignes.find((l) => l.includes("#212"))).not.toContain("budget");
+    expect(lignes.find((l) => l.includes("#213"))).toContain(
+      "au-delà du budget",
+    );
   });
 
   it("le résultat se sérialise tel quel pour --json", () => {
