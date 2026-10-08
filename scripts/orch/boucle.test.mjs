@@ -443,7 +443,9 @@ describe("formaterRapport", () => {
       enAttenteDeReponse: [{ ticket: 3, titre: "Trois" }],
       rendus: [{ ticket: 4, titre: "Quatre" }],
     });
-    expect(texte).toContain("En attente de votre réponse (needs-info) : #3 Trois");
+    expect(texte).toContain(
+      "En attente de votre réponse (needs-info) : #3 Trois",
+    );
     expect(texte).toContain("Rendus (ready-for-human) : #4 Quatre");
   });
 
