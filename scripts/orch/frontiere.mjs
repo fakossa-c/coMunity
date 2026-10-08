@@ -163,21 +163,24 @@ function occupations(situation, issues) {
       numero: pr.numero,
     });
   }
-  for (const wt of situation.worktrees.filter((w) => ouvert(w.ticket))) {
-    liste.push({
-      nature: `worktree ${wt.nom}`,
-      tickets: [wt.ticket],
-      fichiers: fichiersTickets([wt.ticket]),
-      genre: "worktree",
-    });
-  }
+  // Un ticket en vol qui a aussi son worktree ne fait qu'une occupation : même ticket, mêmes
+  // fichiers, une seule ligne dans la sortie.
   const enVol = new Set(situation.enVol.map((v) => v.ticket));
-  for (const ticket of [...enVol].filter(ouvert)) {
+  const worktrees = new Map(
+    situation.worktrees
+      .filter((w) => ouvert(w.ticket))
+      .map((w) => [w.ticket, w.nom]),
+  );
+  for (const ticket of [...new Set([...enVol, ...worktrees.keys()])]) {
+    if (!ouvert(ticket)) continue;
+    const nom = worktrees.get(ticket);
     liste.push({
-      nature: `ticket #${ticket} en vol`,
+      nature: enVol.has(ticket)
+        ? `ticket #${ticket} en vol${nom ? ` (worktree ${nom})` : ""}`
+        : `worktree ${nom}`,
       tickets: [ticket],
       fichiers: fichiersTickets([ticket]),
-      genre: "vol",
+      genre: enVol.has(ticket) ? "vol" : "worktree",
     });
   }
   return liste.map((o) => ({ ...o, migration: estMigration(o.fichiers) }));

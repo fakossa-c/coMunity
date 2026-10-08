@@ -6,6 +6,7 @@ import {
   fichiersCommuns,
   fichiersDepuisCorps,
   formater,
+  modeDepuisOptions,
   recoupe,
   selectionner,
   supabasesDemarres,
@@ -448,7 +449,7 @@ describe("decider : recouvrement de fichiers", () => {
     expect(ticket(r, 212).lancable).toBe(true);
   });
 
-  it("le même ticket en vol, avec son worktree et sa PR, n'est nommé qu'une fois par source", () => {
+  it("le même ticket en vol, avec son worktree, n'est nommé qu'une fois, worktree compris", () => {
     const r = decider(
       situation({
         issues: [
@@ -460,7 +461,9 @@ describe("decider : recouvrement de fichiers", () => {
       }),
       valeurs,
     );
-    expect(ticket(r, 212).raisons).toHaveLength(2);
+    expect(ticket(r, 212).raisons).toHaveLength(1);
+    expect(raisons(r, 212)).toContain("ticket #215 en vol");
+    expect(raisons(r, 212)).toContain("worktree ticket-215");
   });
 
   it("deux candidats qui se recouvrent : le plus petit numéro part, l'autre attend", () => {
@@ -676,5 +679,30 @@ describe("formater", () => {
     expect(json.lancementsPossibles).toBe(1);
     expect(json.aLancer).toEqual([212]);
     expect(json.tickets.map((t) => t.numero)).toEqual([212, 213, 214]);
+  });
+});
+
+describe("modeDepuisOptions", () => {
+  it("un seul mode à la fois", () => {
+    expect(modeDepuisOptions({ spec: "208" })).toEqual({
+      type: "spec",
+      numero: 208,
+    });
+    expect(modeDepuisOptions({ spec: "#208" })).toEqual({
+      type: "spec",
+      numero: 208,
+    });
+    expect(modeDepuisOptions({ tickets: "213, #214,215" })).toEqual({
+      type: "tickets",
+      numeros: [213, 214, 215],
+    });
+    expect(modeDepuisOptions({ tous: true })).toEqual({ type: "tous" });
+  });
+
+  it("aucun mode, plusieurs modes ou une valeur illisible : refusé", () => {
+    expect(modeDepuisOptions({ tous: false })).toBeNull();
+    expect(modeDepuisOptions({ spec: "208", tous: true })).toBeNull();
+    expect(modeDepuisOptions({ spec: "abc" })).toBeNull();
+    expect(modeDepuisOptions({ tickets: "rien" })).toBeNull();
   });
 });
