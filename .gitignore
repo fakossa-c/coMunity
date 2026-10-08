@@ -57,3 +57,6 @@ z-prompt
 
 # valeurs d'orchestration propres à une machine
 /.claude/orchestration.local.json
+
+# marqueur du dernier npm test vert (écrit par posttest, lu par le hook de fin de tour)
+/.claude/test-vert.json
