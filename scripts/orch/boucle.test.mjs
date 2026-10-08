@@ -8,11 +8,15 @@ import {
   capturer,
   decider,
   decisionVerrou,
+  doitVerifier,
   evenementsCloture,
   evenementsLancement,
   formaterRapport,
+  leveeAnomalie,
   ligneJournal,
   prendreVerrou,
+  prRetenue,
+  rendreApresEchecsDeCloture,
   rendreVerrou,
 } from "./boucle.mjs";
 
@@ -1042,5 +1046,100 @@ describe("appartientALaSelection", () => {
     expect(appartientALaSelection({ type: "tous" }, issue(6), new Set())).toBe(
       true,
     );
+  });
+});
+
+// --- Décisions de la couche de lecture et d'exécution -----------------------------------------
+
+describe("prRetenue", () => {
+  it("retient la PR ouverte, même si une ancienne a été fusionnée", () => {
+    expect(
+      prRetenue([
+        { number: 10, state: "MERGED" },
+        { number: 12, state: "OPEN" },
+      ]),
+    ).toEqual({ numero: 12, etat: "OPEN" });
+  });
+
+  it("à défaut, retient la dernière PR fusionnée", () => {
+    expect(
+      prRetenue([
+        { number: 10, state: "MERGED" },
+        { number: 14, state: "MERGED" },
+        { number: 11, state: "CLOSED" },
+      ]),
+    ).toEqual({ numero: 14, etat: "MERGED" });
+  });
+
+  it("ignore une PR fermée sans fusion", () => {
+    expect(prRetenue([{ number: 11, state: "CLOSED" }])).toBeNull();
+    expect(prRetenue([])).toBeNull();
+  });
+});
+
+describe("doitVerifier", () => {
+  const base = {
+    ticket: ticket(217),
+    entree: entree(217),
+    pr: prOuverte(217),
+    sessions: [session(217, "done")],
+  };
+
+  it("vérifie la PR ouverte d'un ticket dont la session est terminée", () => {
+    expect(doitVerifier(base)).toBe(true);
+  });
+
+  it("ne vérifie pas tant que la session travaille", () => {
+    expect(doitVerifier({ ...base, sessions: [session(217, "working")] })).toBe(
+      false,
+    );
+  });
+
+  it("ne vérifie pas un ticket laissé de côté par un label", () => {
+    for (const etiquette of ["needs-info", "ready-for-human"]) {
+      expect(
+        doitVerifier({
+          ...base,
+          ticket: ticket(217, { etiquettes: [etiquette] }),
+        }),
+      ).toBe(false);
+    }
+  });
+
+  it("ne vérifie ni une PR fusionnée ni l'absence de PR", () => {
+    expect(doitVerifier({ ...base, pr: { numero: 517, etat: "MERGED" } })).toBe(
+      false,
+    );
+    expect(doitVerifier({ ...base, pr: null })).toBe(false);
+  });
+});
+
+describe("leveeAnomalie", () => {
+  it("lève l'anomalie quand un label est posé depuis la lecture du tour", () => {
+    expect(
+      leveeAnomalie({ etiquettes: ["needs-info"], prsOuvertes: [] }),
+    ).toMatch(/label/);
+  });
+
+  it("lève l'anomalie quand une PR est ouverte depuis la lecture du tour", () => {
+    expect(
+      leveeAnomalie({ etiquettes: [], prsOuvertes: [{ number: 520 }] }),
+    ).toMatch(/PR #520/);
+  });
+
+  it("confirme l'anomalie quand rien n'a changé", () => {
+    expect(
+      leveeAnomalie({ etiquettes: ["ready-for-agent"], prsOuvertes: [] }),
+    ).toBeNull();
+  });
+});
+
+describe("rendreApresEchecsDeCloture", () => {
+  it("réessaie les deux premières fois, rend le ticket à la troisième", () => {
+    expect([1, 2, 3].map(rendreApresEchecsDeCloture)).toEqual([
+      false,
+      false,
+      true,
+    ]);
   });
 });
