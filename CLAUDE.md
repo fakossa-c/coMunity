@@ -31,6 +31,7 @@
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
 - `node scripts/orch/lancer.mjs <n> [--dry-run] [--en-parallele 205,207]` : lance la session de fond du ticket (assignation, tableau, worktree, Supabase isolé et démarré, prompt, session `ticket-<n>`). Il démarre le Supabase du worktree : un seul à la fois. Valeurs du projet dans `.claude/orchestration.json`, valeurs de la machine dans `.claude/orchestration.local.json` (ignoré par git).
+- `node scripts/orch/cloturer.mjs <n> [--dry-run]` : clôt un ticket dont la PR est fusionnable (vérification `verifier-pr.mjs`, fusion sur le commit de tête, `develop` à jour, poussée des migrations si la PR porte le label `migration` et que `pousserMigrationsApresFusion` le permet, ticket et spec fermés, session, Supabase et worktree retirés). Elle écrit sur GitHub, Docker et le Supabase distant : l'essayer en `--dry-run` sur un ticket déjà clos. Relancée après un échec, elle reprend sans refaire ce qui est fait.
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
 - Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
 - `npm run syndic:amorcer -- <email> <mot-de-passe> <prénom> <nom>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.

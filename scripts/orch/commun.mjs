@@ -34,6 +34,7 @@ const VALEURS_DU_PROJET = [
   "dureeMaxSessionMinutes",
   "delaiInactiviteMinutes",
   "reprisesMax",
+  "pousserMigrationsApresFusion",
 ];
 const COMMANDES_DU_PROJET = [
   "isolation",

@@ -29,6 +29,7 @@ const projet = {
   dureeMaxSessionMinutes: 180,
   delaiInactiviteMinutes: 30,
   reprisesMax: 2,
+  pousserMigrationsApresFusion: true,
 };
 
 describe("fusionnerValeurs", () => {
@@ -64,6 +65,18 @@ describe("fusionnerValeurs", () => {
     expect(() => fusionnerValeurs(incomplet, null)).toThrow(
       /brancheIntegration/,
     );
+  });
+
+  it("exige la valeur qui autorise ou non la poussée des migrations, même fausse", () => {
+    const { pousserMigrationsApresFusion, ...incomplet } = projet;
+    expect(pousserMigrationsApresFusion).toBe(true);
+    expect(() => fusionnerValeurs(incomplet, null)).toThrow(
+      /pousserMigrationsApresFusion/,
+    );
+    expect(
+      fusionnerValeurs({ ...projet, pousserMigrationsApresFusion: false }, null)
+        .pousserMigrationsApresFusion,
+    ).toBe(false);
   });
 
   it("nomme la commande du projet qui manque", () => {

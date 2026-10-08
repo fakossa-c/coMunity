@@ -18,5 +18,6 @@
   "controleCi": "Tests",
   "dureeMaxSessionMinutes": 180,
   "delaiInactiviteMinutes": 30,
-  "reprisesMax": 2
+  "reprisesMax": 2,
+  "pousserMigrationsApresFusion": true
 }
