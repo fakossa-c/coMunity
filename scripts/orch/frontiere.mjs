@@ -23,16 +23,20 @@ import { parseArgs } from "node:util";
 import {
   cheminsEtat,
   envGh,
+  estMigration,
   executer,
   lireEtat,
   lireValeurs,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
+  recoupe,
   specDepuisCorps,
 } from "./commun.mjs";
 
+// Le décodage des chemins vit dans commun.mjs depuis que la vérification de PR (#211) s'en sert.
+export { estMigration, recoupe };
+
 const ETIQUETTE_PRETE = "ready-for-agent";
-const DOSSIER_MIGRATIONS = "supabase/migrations";
 // Une session `done` ou `stopped` ne travaille plus : sa PR, si elle existe, porte ses fichiers.
 const ETATS_SESSION_FINIE = ["done", "stopped"];
 
@@ -71,26 +75,9 @@ export function bloqueursDepuisCorps(corps) {
 
 // --- Chemins ----------------------------------------------------------------------------------
 
-const normaliser = (chemin) =>
-  chemin.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
-
-/** Deux chemins se recoupent s'ils sont identiques ou si l'un est le dossier de l'autre. Un motif
- * avec `*` se compare par ce qui précède l'étoile : prudent, il recoupe plus qu'il ne faut. */
-export function recoupe(a, b) {
-  const [x, y] = [normaliser(a), normaliser(b)];
-  if (x.includes("*") || y.includes("*")) {
-    const [px, py] = [x, y].map((c) => c.split("*")[0]);
-    return px.startsWith(py) || py.startsWith(px);
-  }
-  return x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`);
-}
-
 /** Les chemins de `a` qui en recoupent un de `b`. */
 export const fichiersCommuns = (a, b) =>
   a.filter((chemin) => b.some((autre) => recoupe(chemin, autre)));
-
-export const estMigration = (fichiers) =>
-  fichiers.some((chemin) => recoupe(chemin, DOSSIER_MIGRATIONS));
 
 const abreger = (fichiers) =>
   fichiers.length > 3
