@@ -24,7 +24,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { clientNavigateur } from "@/lib/supabase/navigateur";
+import { deposerFichier } from "@/lib/envoi-photos";
 import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import {
   enregistrerFiche,
@@ -107,12 +107,12 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
       if (choisie) {
         const depot = await preparerDepotPhoto();
         if (!depot.ok) return setResultat(depot);
-        const { error } = await clientNavigateur()
-          .storage.from(BUCKET_SYNDIC)
-          .uploadToSignedUrl(depot.chemin, depot.token, choisie.compresse, {
-            contentType: choisie.compresse.type,
-          });
-        if (error)
+        const deposee = await deposerFichier(
+          BUCKET_SYNDIC,
+          depot,
+          choisie.compresse,
+        );
+        if (!deposee)
           return setResultat({
             ok: false,
             message:
