@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decider,
+  boucle,
   decisionVerrou,
   formaterRapport,
   ligneJournal,
@@ -458,5 +459,304 @@ describe("formaterRapport", () => {
     });
     expect(texte).toContain("En attente de votre réponse (needs-info) : aucun");
     expect(texte).toContain("Rendus (ready-for-human) : aucun");
+  });
+});
+
+// --- La boucle --------------------------------------------------------------------------------
+
+/** Un monde inventé : trois tickets d'une spec, 3 bloqué par 1 et 2. Les ports le lisent comme la
+ * boucle lit GitHub, et le modifient comme les scripts des tickets précédents. */
+function creerMonde(surcharge = {}) {
+  return {
+    tickets: {
+      1: { titre: "Un", etat: "OPEN", etiquettes: [] },
+      2: { titre: "Deux", etat: "OPEN", etiquettes: [] },
+      3: { titre: "Trois", etat: "OPEN", etiquettes: [] },
+    },
+    bloqueurs: { 3: [1, 2] },
+    entrees: {},
+    sessions: {},
+    prs: {},
+    verdicts: {},
+    propre: true,
+    arret: false,
+    actionsExecutees: [],
+    attentes: 0,
+    ...surcharge,
+  };
+}
+
+function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
+  const lignes = [];
+  let erreursRestantes = erreurs;
+  return {
+    lignes,
+    journal: (ligne) => lignes.push(ligne),
+    maintenant: () => new Date("2026-10-08T21:00:00.000Z"),
+    afficher: () => {},
+    arretDemande: () => monde.arret,
+    attendre: async () => {
+      monde.attentes += 1;
+      apresAttente(monde);
+    },
+    lireSituation: async () => {
+      if (erreursRestantes > 0) {
+        erreursRestantes -= 1;
+        throw new Error("gh a répondu 502");
+      }
+      const tickets = Object.entries(monde.tickets)
+        .filter(([n, t]) => t.etat === "OPEN" || monde.entrees[n])
+        .map(([n, t]) => ({ numero: Number(n), ...t }));
+      const lancables = tickets.filter(
+        (t) =>
+          t.etat === "OPEN" &&
+          !monde.entrees[t.numero] &&
+          (monde.bloqueurs[t.numero] ?? []).every(
+            (b) => monde.tickets[b].etat === "CLOSED",
+          ),
+      );
+      return {
+        checkoutPrincipalPropre: monde.propre,
+        tickets,
+        etat: { version: 1, tickets: monde.entrees },
+        sessions: Object.entries(monde.sessions).map(([n, state]) => ({
+          id: `s${n}`,
+          name: `ticket-${n}`,
+          state,
+        })),
+        prs: monde.prs,
+        verdicts: monde.verdicts,
+        frontiere: {
+          aLancer: lancables.map((t) => t.numero),
+          tickets: lancables.map((t) => ({
+            numero: t.numero,
+            titre: t.titre,
+            lancable: true,
+            raisons: [],
+          })),
+        },
+      };
+    },
+    executer: async (action, { dryRun }) => {
+      monde.actionsExecutees.push({ ...action, dryRun });
+      if (dryRun) return { ok: true, evenements: [] };
+      const n = action.ticket;
+      switch (action.type) {
+        case "lancer":
+          monde.entrees[n] = { session: `s${n}`, nom: `ticket-${n}` };
+          monde.sessions[n] = "working";
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "lancement", ticket: n, detail: `ticket-${n}` },
+            ],
+          };
+        case "cloturer":
+          delete monde.entrees[n];
+          delete monde.sessions[n];
+          monde.tickets[n].etat = "CLOSED";
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "fusion", ticket: n, detail: `PR ${action.pr}` },
+              { evenement: "cloture", ticket: n, detail: "clôturé" },
+            ],
+          };
+        case "rendreHumain":
+          monde.tickets[n].etiquettes.push("ready-for-human");
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "anomalie", ticket: n, detail: action.explication },
+            ],
+          };
+        case "attendre":
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "attente", ticket: n, detail: action.raison },
+            ],
+          };
+        default:
+          throw new Error(action.type);
+      }
+    },
+  };
+}
+
+/** Les sessions qui travaillent finissent, chacune avec une PR vérifiée. */
+const toutesTerminent = (monde) => {
+  for (const [n, state] of Object.entries(monde.sessions)) {
+    if (state !== "working") continue;
+    monde.sessions[n] = "done";
+    monde.prs[n] = { numero: 500 + Number(n), etat: "OPEN" };
+    monde.verdicts[n] = { fusionnable: true, raisons: [] };
+  }
+};
+
+const evenements = (lignes) =>
+  lignes
+    .map((l) => l.replace(/^\S+ /, "").split(" ").slice(0, 2).join(" "))
+    .filter((e) => !e.startsWith("rapport") && !e.startsWith("demarrage"));
+
+const lancerBoucle = (ports, options = {}) =>
+  boucle({
+    ports,
+    intervalleMs: 1000,
+    libelleMode: "spec #208",
+    ...options,
+  });
+
+describe("boucle", () => {
+  it("lance les deux tickets parallèles, puis le troisième quand ses bloqueurs sont clos, clôture chacun et s'arrête", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde, { apresAttente: toutesTerminent });
+    const code = await lancerBoucle(ports);
+    expect(code).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "lancement #1",
+      "lancement #2",
+      "fusion #1",
+      "cloture #1",
+      "fusion #2",
+      "cloture #2",
+      "lancement #3",
+      "fusion #3",
+      "cloture #3",
+      "arret termine",
+    ]);
+    // Le troisième ticket part dès la clôture des deux premiers, sans attendre l'intervalle.
+    expect(monde.attentes).toBe(2);
+  });
+
+  it("refuse de continuer et s'arrête avec le message quand le checkout principal est sale", async () => {
+    const monde = creerMonde({ propre: false });
+    const ports = portsDuMonde(monde);
+    const code = await lancerBoucle(ports);
+    expect(code).toBe(2);
+    expect(monde.actionsExecutees).toEqual([]);
+    expect(ports.lignes.join("\n")).toMatch(
+      /arret checkout-sale.*checkout principal/,
+    );
+  });
+
+  it("s'arrête à Ctrl-C après l'action en cours, puis une relance ne relance pas le ticket déjà pris", async () => {
+    const monde = creerMonde();
+    const premiere = portsDuMonde(monde);
+    const executer = premiere.executer;
+    premiere.executer = async (...args) => {
+      const resultat = await executer(...args);
+      monde.arret = true;
+      return resultat;
+    };
+    expect(await lancerBoucle(premiere)).toBe(0);
+    expect(monde.actionsExecutees.map((a) => a.ticket)).toEqual([1]);
+    expect(premiere.lignes.join("\n")).toMatch(/arret interrompu/);
+
+    monde.arret = false;
+    monde.actionsExecutees = [];
+    const seconde = portsDuMonde(monde, {
+      apresAttente: (m) => {
+        m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(seconde)).toBe(0);
+    expect(monde.actionsExecutees.map((a) => a.ticket)).toEqual([2]);
+  });
+
+  it("rend à l'utilisateur une session terminée sans PR ni label sans arrêter la salve", async () => {
+    const monde = creerMonde({
+      entrees: { 1: { session: "s1", nom: "ticket-1" } },
+      sessions: { 1: "done" },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: (m) => {
+        m.arret = true;
+      },
+    });
+    const code = await lancerBoucle(ports);
+    expect(code).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "anomalie #1",
+      "lancement #2",
+      "arret interrompu",
+    ]);
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+  });
+
+  it("attend une PR non fusionnable sans remplir le journal, puis la clôture quand elle l'est", async () => {
+    const monde = creerMonde({
+      tickets: { 1: { titre: "Un", etat: "OPEN", etiquettes: [] } },
+      bloqueurs: {},
+      entrees: { 1: { session: "s1", nom: "ticket-1" } },
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: {
+        1: { fusionnable: false, raisons: ["ci : contrôle Tests en cours"] },
+      },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: (m) => {
+        if (m.attentes === 3) {
+          m.verdicts[1] = { fusionnable: true, raisons: [] };
+        }
+      },
+    });
+    const code = await lancerBoucle(ports);
+    expect(code).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "attente #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+    expect(monde.attentes).toBe(3);
+  });
+
+  it("n'écrit le rapport dans le journal que lorsqu'il change", async () => {
+    const monde = creerMonde({
+      tickets: { 1: { titre: "Un", etat: "OPEN", etiquettes: ["needs-info"] } },
+      bloqueurs: {},
+      entrees: { 1: { session: "s1", nom: "ticket-1" } },
+      sessions: { 1: "done" },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: (m) => {
+        if (m.attentes === 3) m.arret = true;
+      },
+    });
+    await lancerBoucle(ports);
+    const rapports = ports.lignes.filter((l) => l.includes(" rapport "));
+    expect(rapports).toHaveLength(1);
+    expect(rapports[0]).toContain("needs-info");
+  });
+
+  it("réessaie au tour suivant quand une lecture échoue", async () => {
+    const monde = creerMonde({
+      tickets: { 1: { titre: "Un", etat: "CLOSED", etiquettes: [] } },
+    });
+    const ports = portsDuMonde(monde, { erreurs: 1 });
+    const code = await lancerBoucle(ports);
+    expect(code).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "erreur lecture",
+      "arret termine",
+    ]);
+    expect(ports.lignes[1]).toContain("gh a répondu 502");
+  });
+
+  it("en mode répétition, décide un seul tour sans rien modifier", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde);
+    const code = await lancerBoucle(ports, { dryRun: true });
+    expect(code).toBe(0);
+    expect(
+      monde.actionsExecutees.map((a) => [a.type, a.ticket, a.dryRun]),
+    ).toEqual([
+      ["lancer", 1, true],
+      ["lancer", 2, true],
+    ]);
+    expect(monde.attentes).toBe(0);
+    expect(monde.entrees).toEqual({});
   });
 });
