@@ -118,6 +118,27 @@ export function specDepuisCorps(corps) {
   return numero ? { numero: Number(numero) } : null;
 }
 
+// --- Chemins ---------------------------------------------------------------------------
+
+const DOSSIER_MIGRATIONS = "supabase/migrations";
+
+const normaliser = (chemin) =>
+  chemin.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
+
+/** Deux chemins se recoupent s'ils sont identiques ou si l'un est le dossier de l'autre. Un motif
+ * avec `*` se compare par ce qui précède l'étoile : prudent, il recoupe plus qu'il ne faut. */
+export function recoupe(a, b) {
+  const [x, y] = [normaliser(a), normaliser(b)];
+  if (x.includes("*") || y.includes("*")) {
+    const [px, py] = [x, y].map((c) => c.split("*")[0]);
+    return px.startsWith(py) || py.startsWith(px);
+  }
+  return x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`);
+}
+
+export const estMigration = (fichiers) =>
+  fichiers.some((chemin) => recoupe(chemin, DOSSIER_MIGRATIONS));
+
 // --- Disque et processus ---------------------------------------------------------------
 
 export function lireJson(fichier) {
