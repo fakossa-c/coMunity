@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decider,
+  enRetardSeulement,
   fermeturesDepuisCorps,
   formater,
   titreCiteLeTicket,
@@ -473,6 +474,46 @@ describe("decider : la branche à jour avec la base", () => {
       expect(point(verdict, "a-jour").ok).toBe(true);
     },
   );
+});
+
+describe("enRetardSeulement", () => {
+  it("est vrai quand le retard est le seul manquement", () => {
+    const verdict = decider(
+      situation({ pr: pr({ etatFusion: "BEHIND" }) }),
+      valeurs,
+    );
+    expect(enRetardSeulement(verdict)).toBe(true);
+  });
+
+  it("est faux quand la PR est fusionnable", () => {
+    expect(enRetardSeulement(decider(situation(), valeurs))).toBe(false);
+  });
+
+  it("est faux quand un autre manquement s'ajoute au retard : contrôle absent sur la tête, conflit, titre", () => {
+    for (const surcharge of [
+      { controles: [] },
+      { controles: [controle({ conclusion: "failure" })] },
+      { pr: pr({ etatFusion: "BEHIND", fusion: "CONFLICTING" }) },
+      { pr: pr({ etatFusion: "BEHIND", titre: "Sans numéro" }) },
+    ]) {
+      const verdict = decider(
+        situation({ pr: pr({ etatFusion: "BEHIND" }), ...surcharge }),
+        valeurs,
+      );
+      expect(enRetardSeulement(verdict)).toBe(false);
+    }
+  });
+
+  it("est faux sans PR unique et pour un verdict illisible", () => {
+    expect(
+      enRetardSeulement(
+        decider(situation({ prs: [], pr: null, controles: [] }), valeurs),
+      ),
+    ).toBe(false);
+    expect(enRetardSeulement({ fusionnable: false, raisons: ["x"] })).toBe(
+      false,
+    );
+  });
 });
 
 describe("decider : plusieurs manquements", () => {

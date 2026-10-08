@@ -16,7 +16,8 @@
 // (il cite `#<n>`), closes (« Closes #<n> » vers ce ticket et lui seul), migration (label si et
 // seulement si des fichiers de supabase/migrations changent), ci (contrôle du fichier de valeurs
 // réussi sur le commit de tête exact), labels (`needs-info` ou `ready-for-human` sur le ticket ou
-// la PR), conflit (état « mergeable » de GitHub).
+// la PR), conflit (état « mergeable » de GitHub), a-jour (la branche contient le dernier commit de
+// la base : état `BEHIND` de GitHub, que la protection de branche `strict` rend bloquant).
 import { dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
@@ -196,6 +197,26 @@ function pointConflit(pr, valeurs) {
   );
 }
 
+/** Une PR en retard sur la base (`mergeStateStatus` BEHIND) est refusée à la fusion dès que la
+ * protection exige une branche à jour. Seul BEHIND refuse ici : les autres états (conflit, contrôle
+ * manquant, etc.) ont leur point. */
+function pointAJour(pr, valeurs) {
+  const branche = valeurs.brancheIntegration;
+  return pr.etatFusion === "BEHIND"
+    ? refus(
+        "a-jour",
+        `branche en retard sur ${branche} : la mettre à jour avec ${branche}, puis attendre le contrôle du nouveau commit de tête`,
+      )
+    : ok("a-jour", `branche à jour avec ${branche}`);
+}
+
+/** Le seul manquement du verdict est-il le retard sur la base ? Alors la mise à jour de la branche
+ * suffit à rendre la PR fusionnable, une fois le contrôle revenu sur le nouveau commit de tête. */
+export function enRetardSeulement(verdict) {
+  const refuses = (verdict?.points ?? []).filter((p) => !p.ok);
+  return refuses.length > 0 && refuses.every((p) => p.id === "a-jour");
+}
+
 // --- Décision ---------------------------------------------------------------------------------
 
 const POINTS = [
@@ -207,6 +228,7 @@ const POINTS = [
   "ci",
   "labels",
   "conflit",
+  "a-jour",
 ];
 
 /** Le verdict sur la PR d'un ticket. Pure : `situation` est déjà lue, rien n'est exécuté.
@@ -216,7 +238,9 @@ const POINTS = [
  *    prs      : [numéro]   PR ouvertes dont la branche est `ticket-<n>`
  *    pr       : { numero, titre, corps, base, tete, etiquettes, fichiers, fermeture, fusion } | null
  *               `fichiers` : chemins modifiés (anciens noms compris) ; `fermeture` : tickets que
- *               GitHub lie à la PR ; `fusion` : MERGEABLE | CONFLICTING | UNKNOWN ;
+ *               GitHub lie à la PR ; `fusion` : MERGEABLE | CONFLICTING | UNKNOWN ; `etatFusion` :
+ *               le `mergeStateStatus` de GitHub (BEHIND, BLOCKED, CLEAN, DIRTY, DRAFT, HAS_HOOKS,
+ *               UNSTABLE, UNKNOWN) ;
  *               null quand `prs` n'a pas exactement un élément
  *    issue    : { etiquettes } | null   le ticket relu à l'instant (null : illisible)
  *    controles: [{ id, nom, sha, statut, conclusion }]   contrôles du commit de tête, et des
@@ -239,6 +263,7 @@ export function decider(situation, valeurs) {
       pointCi(pr, controles, valeurs),
       pointLabels(pr, issue, ticket),
       pointConflit(pr, valeurs),
+      pointAJour(pr, valeurs),
     ];
   } else {
     const detail =
@@ -296,7 +321,7 @@ const lignesJson = (texte) =>
 const attendre = (ms) => new Promise((fin) => setTimeout(fin, ms));
 
 const CHAMPS_PR =
-  "number,title,body,baseRefName,headRefOid,labels,mergeable,closingIssuesReferences,commits";
+  "number,title,body,baseRefName,headRefOid,labels,mergeable,mergeStateStatus,closingIssuesReferences,commits";
 
 /** Les contrôles (check runs) d'un commit, du plus récent au plus ancien run. */
 function controlesDuCommit(gh, depot, sha) {
@@ -311,14 +336,16 @@ function controlesDuCommit(gh, depot, sha) {
   ).map((c) => ({ ...c, sha }));
 }
 
-/** `mergeable` reste UNKNOWN le temps que GitHub le calcule : quelques lectures avant de conclure. */
+/** `mergeable` et `mergeStateStatus` restent UNKNOWN le temps que GitHub les calcule : quelques lectures avant de conclure. */
 async function lirePr(gh, depot, numero) {
   let brute;
   for (let essai = 0; essai < LECTURES_FUSION; essai++) {
     brute = json(
       gh("pr", "view", String(numero), "--repo", depot, "--json", CHAMPS_PR),
     );
-    if (brute.mergeable !== "UNKNOWN") break;
+    if (brute.mergeable !== "UNKNOWN" && brute.mergeStateStatus !== "UNKNOWN") {
+      break;
+    }
     if (essai < LECTURES_FUSION - 1) await attendre(ATTENTE_FUSION_MS);
   }
   return brute;
@@ -383,6 +410,7 @@ async function lire({ ticket, valeurs, env }) {
     fichiers,
     fermeture: brute.closingIssuesReferences.map((r) => r.number),
     fusion: brute.mergeable,
+    etatFusion: brute.mergeStateStatus,
   };
 
   const nom = valeurs.controleCi?.trim();
