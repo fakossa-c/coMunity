@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import {
   appartientALaSelection,
   boucle,
+  bornesDepuisValeurs,
   capturer,
+  cheminTranscript,
+  commentairesDepuisGh,
   decider,
   decisionVerrou,
   doitVerifier,
@@ -2366,5 +2369,86 @@ describe("boucle : durée et inactivité", () => {
       "anomalie #1",
       "arret interrompu",
     ]);
+  });
+});
+
+// --- Lecture : bornes, transcript, commentaires -----------------------------------------------
+
+describe("bornesDepuisValeurs", () => {
+  it("convertit les valeurs du projet en millisecondes et nomme le propriétaire du dépôt", () => {
+    expect(
+      bornesDepuisValeurs({
+        depot: "fakossa-c/coMunity",
+        dureeMaxSessionMinutes: 180,
+        delaiInactiviteMinutes: 30,
+        reprisesMax: 2,
+        echecsSessionMax: 3,
+        attenteRepriseMinutes: 10,
+      }),
+    ).toEqual({
+      dureeMaxMs: 180 * MINUTE,
+      inactiviteMs: 30 * MINUTE,
+      reprisesCiMax: 2,
+      echecsMax: 3,
+      attenteMs: 10 * MINUTE,
+      proprietaire: "fakossa-c",
+    });
+  });
+});
+
+describe("cheminTranscript", () => {
+  it("range le transcript sous le dossier du projet, nommé d'après le dossier de la session", () => {
+    expect(
+      cheminTranscript({
+        home: "/home/ubuntu",
+        cwd: "/home/ubuntu/Projets perso/coMunity/.claude/worktrees/ticket-217",
+        sessionId: "935dc5aa-bf0f-4c96-aa22-433ba05ef985",
+      }),
+    ).toBe(
+      join(
+        "/home/ubuntu",
+        ".claude",
+        "projects",
+        "-home-ubuntu-Projets-perso-coMunity--claude-worktrees-ticket-217",
+        "935dc5aa-bf0f-4c96-aa22-433ba05ef985.jsonl",
+      ),
+    );
+  });
+});
+
+describe("commentairesDepuisGh", () => {
+  it("garde l'identifiant, l'auteur, le corps, la date et le lien de chaque commentaire", () => {
+    expect(
+      commentairesDepuisGh([
+        {
+          id: "IC_kwDOA",
+          author: { login: "fakossa-c" },
+          body: "Oui.",
+          createdAt: "2026-10-08T21:12:00Z",
+          url: "https://github.com/fakossa-c/coMunity/issues/217#issuecomment-1",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "IC_kwDOA",
+        auteur: "fakossa-c",
+        corps: "Oui.",
+        creeLe: "2026-10-08T21:12:00Z",
+        url: "https://github.com/fakossa-c/coMunity/issues/217#issuecomment-1",
+      },
+    ]);
+  });
+
+  it("garde un commentaire dont le compte a été supprimé, sans auteur connu", () => {
+    const [c] = commentairesDepuisGh([
+      {
+        id: "IC_2",
+        author: null,
+        body: "x",
+        createdAt: "2026-10-08T21:12:00Z",
+        url: "u",
+      },
+    ]);
+    expect(c.auteur).toBe("");
   });
 });
