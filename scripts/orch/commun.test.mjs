@@ -93,16 +93,17 @@ describe("fusionnerValeurs", () => {
   });
 
   it("exige les bornes des reprises : échecs de session et première attente", () => {
-    const { echecsSessionMax, attenteRepriseMinutes, ...incomplet } = projet;
-    expect(echecsSessionMax).toBe(3);
-    expect(attenteRepriseMinutes).toBe(10);
-    expect(() => fusionnerValeurs(incomplet, null)).toThrow(/echecsSessionMax/);
-    const { echecsSessionMax: _, ...sansEchecs } = projet;
-    expect(() => fusionnerValeurs(sansEchecs, null)).toThrow(
+    expect(projet.echecsSessionMax).toBe(3);
+    expect(projet.attenteRepriseMinutes).toBe(10);
+    const sans = (cle) => {
+      const copie = { ...projet };
+      delete copie[cle];
+      return copie;
+    };
+    expect(() => fusionnerValeurs(sans("echecsSessionMax"), null)).toThrow(
       /echecsSessionMax/,
     );
-    const { attenteRepriseMinutes: __, ...sansAttente } = projet;
-    expect(() => fusionnerValeurs(sansAttente, null)).toThrow(
+    expect(() => fusionnerValeurs(sans("attenteRepriseMinutes"), null)).toThrow(
       /attenteRepriseMinutes/,
     );
   });

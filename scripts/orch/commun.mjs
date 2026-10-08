@@ -106,15 +106,14 @@ export function ajouterSession(etat, ticket, { id, nom, demarreA }) {
 /** Un nouvel état où `ticket` pointe sur une nouvelle session (reprise sans transcript, relance) :
  * les compteurs du ticket restent, l'attente d'une reprise tombe. */
 export function remplacerSession(etat, ticket, { id, nom, demarreA }) {
-  const { reprendreApres: _attente, ...reste } =
-    etat.tickets[String(ticket)] ?? {};
-  return {
-    ...etat,
-    tickets: {
-      ...etat.tickets,
-      [String(ticket)]: { ...reste, session: id, nom, demarreA },
-    },
+  const entree = {
+    ...etat.tickets[String(ticket)],
+    session: id,
+    nom,
+    demarreA,
   };
+  delete entree.reprendreApres;
+  return { ...etat, tickets: { ...etat.tickets, [String(ticket)]: entree } };
 }
 
 /** Un nouvel état où les champs de l'entrée de `ticket` changent ; un champ à `undefined` est

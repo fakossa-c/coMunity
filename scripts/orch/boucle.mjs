@@ -27,7 +27,7 @@ import {
 } from "./commun.mjs";
 import { main as cloturer, trouverSession } from "./cloturer.mjs";
 import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
-import { brancheTicket, main as lancer } from "./lancer.mjs";
+import { brancheTicket, dossierWorktree, main as lancer } from "./lancer.mjs";
 import { main as verifierPr } from "./verifier-pr.mjs";
 
 // L'heure de démarrage de la machine se déduit de l'uptime, à quelques secondes près.
@@ -1069,8 +1069,12 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
     : branche !== valeurs.brancheIntegration
       ? `sur « ${branche || "HEAD détachée"} », pas sur ${valeurs.brancheIntegration}`
       : null;
+  const maintenant = new Date();
+  const bornes = bornesDepuisValeurs(valeurs);
   if (detail) {
     return {
+      maintenant,
+      bornes,
       checkoutPrincipalPropre: false,
       checkoutPrincipalDetail: detail,
       tickets: [],
@@ -1078,6 +1082,10 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
       sessions: [],
       prs: {},
       verdicts: {},
+      commentaires: {},
+      activites: {},
+      transcripts: {},
+      specs: {},
       frontiere: null,
     };
   }
@@ -1115,6 +1123,7 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
 
   const enVol = Object.keys(etat.tickets).map(Number);
   const tickets = [];
+  const specs = {};
   for (const numero of new Set([...candidats, ...enVol])) {
     let issue = ouvertes.get(numero);
     // Un candidat fermé qui n'est pas en vol n'a plus rien à faire ; un ticket en vol fermé reste à
@@ -1134,6 +1143,7 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
       ),
     );
     if (!appartientALaSelection(mode, issue, candidats)) continue;
+    specs[numero] = specDepuisCorps(issue.corps)?.numero ?? null;
     tickets.push({
       numero,
       titre: issue.titre,
@@ -1144,9 +1154,19 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
 
   const prs = {};
   const verdicts = {};
+  const commentaires = {};
+  const activites = {};
+  const transcripts = {};
   for (const t of tickets) {
     const entree = etat.tickets[String(t.numero)];
+    if (t.etat === "OPEN" && t.etiquettes.includes(ETIQUETTE_QUESTION)) {
+      commentaires[t.numero] = lireCommentaires(gh, depot, t.numero);
+    }
     if (!entree) continue;
+    const session = sessionDuTicket(sessions, entree);
+    const transcript = lireTranscript(session, home);
+    transcripts[t.numero] = transcript.existe;
+    if (transcript.modifieLe) activites[t.numero] = transcript.modifieLe;
     const trouvees = json(
       gh(
         "pr",
@@ -1164,24 +1184,55 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
     const retenue = prRetenue(trouvees);
     prs[t.numero] = retenue;
 
+    // La question d'une session qui a fini son tour sans PR se relit dans les commentaires : le
+    // label a pu être retiré avec une réponse.
+    if (
+      !retenue &&
+      !commentaires[t.numero] &&
+      etatDeSession(sessions, entree).terminee
+    ) {
+      commentaires[t.numero] = lireCommentaires(gh, depot, t.numero);
+    }
+
     if (doitVerifier({ ticket: t, entree, pr: retenue, sessions })) {
       verdicts[t.numero] = await verdictDeVerification(t.numero);
     }
   }
 
   return {
+    maintenant,
+    bornes,
     checkoutPrincipalPropre: true,
     tickets,
     etat,
     sessions,
     prs,
     verdicts,
+    commentaires,
+    activites,
+    transcripts,
+    specs,
     frontiere: {
       aLancer: resultatFrontiere.aLancer,
       tickets: resultatFrontiere.tickets,
     },
   };
 }
+
+const lireCommentaires = (gh, depot, ticket) =>
+  commentairesDepuisGh(
+    json(
+      gh(
+        "issue",
+        "view",
+        String(ticket),
+        "--repo",
+        depot,
+        "--json",
+        "comments",
+      ),
+    ).comments,
+  );
 
 /** Le verdict de verifier-pr.mjs, appelé comme une fonction : il sort en 1 quand la PR n'est pas
  * fusionnable mais écrit son verdict JSON ; seule une sortie sans JSON est illisible. */
@@ -1213,7 +1264,7 @@ const evenementsDeRepetition = (ticket, lecture) => ({
 /** Passe le ticket `ready-for-human` avec l'explication en commentaire, après avoir relu le tracker :
  * un label ou une PR apparus depuis la lecture du tour lèvent l'anomalie. */
 async function rendreAuHumain(
-  { ticket, explication },
+  { ticket, explication, sansLeveeParPr = false },
   { valeurs, env, dryRun },
 ) {
   const gh = (...args) => executer("gh", args, { env });
@@ -1247,7 +1298,12 @@ async function rendreAuHumain(
       "number",
     ),
   );
-  const levee = leveeAnomalie({ etiquettes, prsOuvertes: ouvertes });
+  // Une session arrêtée pour sa durée, son inactivité ou une saisie attendue est rendue même avec
+  // une PR ouverte ; seul un label posé entre-temps lève la décision.
+  const levee = leveeAnomalie({
+    etiquettes,
+    prsOuvertes: sansLeveeParPr ? [] : ouvertes,
+  });
   if (levee) {
     return {
       ok: true,
@@ -1277,6 +1333,148 @@ async function rendreAuHumain(
   return {
     ok: true,
     evenements: [{ evenement: "anomalie", ticket, detail: explication }],
+  };
+}
+
+const ECHECS_REPRISE_MAX = 3;
+
+const repetition = (ticket, detail) => ({
+  ok: true,
+  evenements: [{ evenement: "repetition", ticket, detail }],
+});
+
+/** Écrit dans l'état ce que l'action change (compteurs, heure de reprise). */
+function ecrireEtatApres(action, { valeurs, home, session }) {
+  const fichier = cheminsEtat({ home, projet: valeurs.projet }).fichier;
+  ecrireJson(
+    fichier,
+    etatApres(lireEtat(fichier), action, { maintenant: new Date(), session }),
+  );
+}
+
+function noterEtat(action, { valeurs, home, dryRun }) {
+  const { ticket, raison } = action;
+  if (dryRun) return repetition(ticket, `noterait : ${raison}`);
+  ecrireEtatApres(action, { valeurs, home });
+  return {
+    ok: true,
+    evenements: [{ evenement: "echec", ticket, detail: raison }],
+  };
+}
+
+function arreterSession(action, { dryRun }) {
+  const { ticket, session, raison } = action;
+  if (dryRun) {
+    return repetition(ticket, `arrêterait la session ${session} (${raison})`);
+  }
+  let detail = `session ${session} arrêtée (${raison})`;
+  try {
+    executer("claude", ["stop", session]);
+  } catch (erreur) {
+    // Déjà arrêtée, ou disparue : le ticket est rendu quand même.
+    detail += ` ; \`claude stop\` a répondu : ${tronquer(erreur.stderr?.toString().trim() || erreur.message)}`;
+  }
+  return {
+    ok: true,
+    evenements: [{ evenement: "arret-session", ticket, detail }],
+  };
+}
+
+/** La reprise d'une session de fond (`claude --bg --resume`, même identifiant, nom et mode de
+ * permission repassés : le mode n'est pas restauré à la reprise), ou sa relance dans une nouvelle
+ * session (lancer.mjs --relancer) quand le transcript manque. La boucle ne suppose jamais qu'un
+ * processus est vivant. `memoire.echecsReprise` compte les échecs d'affilée : au troisième, le
+ * ticket est rendu. */
+async function reprendreOuRelancer(action, contexte) {
+  const { ticket, motif } = action;
+  const { valeurs, env, dryRun, racine } = contexte;
+  const relance = action.type === "relancer";
+  const dossier = dossierWorktree(racine, valeurs, ticket);
+  if (dryRun) {
+    return repetition(
+      ticket,
+      relance
+        ? `relancerait le ticket dans une nouvelle session (${motif})`
+        : `reprendrait la session ${action.session} (${motif}) : ${tronquer(action.message)}`,
+    );
+  }
+
+  let echec = null;
+  let idSession;
+  if (relance) {
+    const lecture = await capturer(() =>
+      lancer([String(ticket), "--relancer", "--message", action.message]),
+    );
+    if (lecture.code !== 0) echec = lecture.erreurs || lecture.sortie;
+    idSession = lecture.sortie.match(/Session \S+ lancée \((\w+)\)/)?.[1];
+  } else {
+    try {
+      const sessions = json(executer("claude", ["agents", "--json", "--all"]));
+      const complete = sessions.find((s) => s.id === action.session)?.sessionId;
+      if (!complete) throw new Error(`session ${action.session} introuvable`);
+      idSession = idDepuisSortieBg(
+        executer(
+          "claude",
+          [
+            "--bg",
+            "--resume",
+            complete,
+            "-n",
+            action.nom,
+            "--permission-mode",
+            "auto",
+            "--model",
+            valeurs.modeleSession,
+            "--strict-mcp-config",
+            action.message,
+          ],
+          { cwd: dossier, env },
+        ),
+      );
+    } catch (erreur) {
+      echec = erreur.message;
+    }
+  }
+
+  const echecs = contexte.memoire.echecsReprise;
+  if (echec) {
+    echecs.set(ticket, (echecs.get(ticket) ?? 0) + 1);
+    const evenements = [
+      {
+        evenement: "echec",
+        ticket,
+        detail: `${relance ? "relance" : "reprise"} (${motif}) : ${tronquer(echec)}`,
+      },
+    ];
+    if (echecs.get(ticket) >= ECHECS_REPRISE_MAX) {
+      const rendu = await rendreAuHumain(
+        {
+          ticket,
+          sansLeveeParPr: true,
+          explication: `La ${relance ? "relance" : "reprise"} de la session (${motif}) a échoué ${ECHECS_REPRISE_MAX} fois de suite : ${tronquer(echec)}`,
+        },
+        contexte,
+      );
+      evenements.push(...rendu.evenements);
+      echecs.delete(ticket);
+    }
+    return { ok: false, evenements };
+  }
+  echecs.delete(ticket);
+  // Une relance a déjà remplacé la session dans l'état (lancer.mjs) : il reste les compteurs.
+  ecrireEtatApres(relance ? { ...action, type: "noterEtat" } : action, {
+    ...contexte,
+    session: relance ? undefined : idSession,
+  });
+  return {
+    ok: true,
+    evenements: [
+      {
+        evenement: relance ? "relance" : "reprise",
+        ticket,
+        detail: `${motif} : session ${idSession ?? action.session}`,
+      },
+    ],
   };
 }
 
@@ -1342,6 +1540,13 @@ async function executerAction(action, { dryRun }, contexte) {
     }
     case "rendreHumain":
       return rendreAuHumain(action, options);
+    case "noterEtat":
+      return noterEtat(action, options);
+    case "arreterSession":
+      return arreterSession(action, options);
+    case "reprendre":
+    case "relancer":
+      return reprendreOuRelancer(action, options);
     default:
       throw new Error(`Action inconnue : ${action.type}`);
   }
@@ -1395,7 +1600,9 @@ export function portsReels({
     valeurs,
     env,
     arretDemande: signaux.arretDemande,
-    memoire: { echecsCloture: new Map() },
+    racine,
+    home,
+    memoire: { echecsCloture: new Map(), echecsReprise: new Map() },
   };
   return {
     maintenant: () => new Date(),
