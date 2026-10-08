@@ -31,7 +31,11 @@ import {
   lireValeurs,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
+  specDepuisCorps,
 } from "./commun.mjs";
+
+// Le décodage vit dans commun.mjs depuis que la frontière (#213) s'en sert aussi.
+export { specDepuisCorps };
 
 export const brancheTicket = (numero) => `ticket-${numero}`;
 
@@ -259,12 +263,6 @@ export function decrire(action) {
 }
 
 // --- Lecture ----------------------------------------------------------------------------------
-
-/** Le numéro de la spec, lu dans la section « ## Parent » du ticket (format de /to-tickets). */
-export function specDepuisCorps(corps) {
-  const numero = corps?.match(/^##\s*Parent\s*\n+\s*(?:Spec\s*)?#(\d+)/im)?.[1];
-  return numero ? { numero: Number(numero) } : null;
-}
 
 /** « 205,207 » ou « #205 #207 » → [205, 207]. */
 export function numerosDepuisOption(texte) {

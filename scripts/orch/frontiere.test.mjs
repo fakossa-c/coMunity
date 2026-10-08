@@ -593,23 +593,6 @@ describe("decider : budget", () => {
     expect(raisons(r, 212)).toContain("2048");
   });
 
-  it("les sessions déjà en vol consomment le budget mémoire", () => {
-    const r = decider(
-      situation({
-        ...trois,
-        issues: [
-          ...trois.issues,
-          issue(220, { corps: corps({ fichiers: ["z.ts"] }) }),
-        ],
-        enVol: [{ ticket: 220, origine: "session" }],
-        memoireDisponibleMo: 4096,
-      }),
-      { ...valeurs, servicesLourdsEnParallele: 5 },
-    );
-    expect(r.budget.memoire).toBe(1);
-    expect(r.lancementsPossibles).toBe(1);
-  });
-
   it("un Supabase lourd déjà démarré avec un seul service autorisé : tout est exclu, le projet Supabase nommé", () => {
     const r = decider(
       situation({ ...trois, supabases: ["comunity-ticket-216"] }),

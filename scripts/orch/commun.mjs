@@ -112,6 +112,12 @@ export function idDepuisSortieBg(sortie) {
   return id;
 }
 
+/** Le numéro de la spec, lu dans la section « ## Parent » du ticket (format de /to-tickets). */
+export function specDepuisCorps(corps) {
+  const numero = corps?.match(/^##\s*Parent\s*\n+\s*(?:Spec\s*)?#(\d+)/im)?.[1];
+  return numero ? { numero: Number(numero) } : null;
+}
+
 // --- Disque et processus ---------------------------------------------------------------
 
 export function lireJson(fichier) {
