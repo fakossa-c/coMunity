@@ -128,16 +128,23 @@ export function verifierCible({ url, distant }) {
   }
 }
 
-const jour = (aujourdhui, decalage) =>
-  new Date(
-    Date.UTC(
-      aujourdhui.getUTCFullYear(),
-      aujourdhui.getUTCMonth(),
-      aujourdhui.getUTCDate() + decalage,
-    ),
-  )
+const JOUR_DE_PARIS = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "Europe/Paris",
+});
+
+/**
+ * Le jour `AAAA-MM-JJ` dans `decalage` jours, compté depuis le jour de Paris : celui de
+ * l'application et de `jour_reference()` (ticket #86). Le jour d'UTC retarde d'un jour entre
+ * minuit et 2h à Paris en heure d'été (1h en heure d'hiver).
+ */
+export const jour = (aujourdhui, decalage) => {
+  const [annee, mois, quantieme] = JOUR_DE_PARIS.format(aujourdhui)
+    .split("-")
+    .map(Number);
+  return new Date(Date.UTC(annee, mois - 1, quantieme + decalage))
     .toISOString()
     .slice(0, 10);
+};
 
 /** Les activités de démonstration : `decalage` en jours par rapport à aujourd'hui. */
 const ACTIVITES = [
