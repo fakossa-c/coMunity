@@ -4,6 +4,7 @@ import {
   MODELE_DEMO,
   adresseDemo,
   estAdresseDemo,
+  jour,
   verifierCible,
 } from "./demo-comptes.mjs";
 
@@ -121,5 +122,30 @@ describe("COMPTES", () => {
   it("n'a pas deux fois le même username", () => {
     const noms = COMPTES.map((c) => c.username);
     expect(new Set(noms).size).toBe(noms.length);
+  });
+});
+
+describe("jour", () => {
+  it("compte depuis le jour de Paris entre minuit et 2h à Paris, quand UTC est encore la veille", () => {
+    // 22h30 UTC le 14 juillet = 00h30 à Paris (UTC+2) le 15.
+    const nuitEte = new Date("2026-07-14T22:30:00Z");
+    expect(jour(nuitEte, 0)).toBe("2026-07-15");
+    expect(jour(nuitEte, 2)).toBe("2026-07-17");
+    expect(jour(nuitEte, -1)).toBe("2026-07-14");
+    // 23h30 UTC le 14 janvier = 00h30 à Paris (UTC+1) le 15.
+    expect(jour(new Date("2026-01-14T23:30:00Z"), 0)).toBe("2026-01-15");
+  });
+
+  it("passe d'un mois sur l'autre et du changement d'heure sans décaler le jour", () => {
+    // 23h30 UTC le 28 mars = 00h30 à Paris le 29, jour du passage à l'heure d'été.
+    const veilleChangement = new Date("2026-03-28T23:30:00Z");
+    expect(jour(veilleChangement, 0)).toBe("2026-03-29");
+    expect(jour(veilleChangement, 3)).toBe("2026-04-01");
+    expect(jour(new Date("2026-10-24T22:30:00Z"), 1)).toBe("2026-10-26");
+  });
+
+  it("donne le même jour qu'UTC en journée", () => {
+    expect(jour(new Date("2026-07-14T10:00:00Z"), 0)).toBe("2026-07-14");
+    expect(jour(new Date("2026-07-14T10:00:00Z"), 5)).toBe("2026-07-19");
   });
 });
