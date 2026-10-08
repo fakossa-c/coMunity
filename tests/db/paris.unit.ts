@@ -1,10 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-// Les fichiers déjà passés au jour de Paris (ticket #202). Un fichier s'ajoute ici quand il est corrigé.
+// Les fichiers déjà passés au jour de Paris (tickets #202 et #204). Un fichier s'ajoute ici quand il est corrigé.
 const FICHIERS_AU_JOUR_DE_PARIS = [
   "demo-comptes.test.ts",
   "suppression-compte.test.ts",
+  "tableau-de-bord.test.ts",
+  "moderation-activites.test.ts",
+  "gestion-activite.test.ts",
+  "parcours-creation.test.ts",
+  "photos-activite.test.ts",
+  "pre-moderation-jev.test.ts",
 ];
 
 describe("tests base : les jours viennent de paris.ts", () => {
