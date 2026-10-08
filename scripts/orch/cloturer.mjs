@@ -110,6 +110,7 @@ export function texteEchec({ ticket, action, message, faites }) {
  *    verdict       : le JSON de verifier-pr.mjs ({ fusionnable, tete, raisons }) pour une PR ouverte,
  *                    null pour une PR déjà fusionnée
  *    developAJour  : le `develop` du checkout principal contient la fusion
+ *    brancheCheckoutPrincipal : la branche du checkout principal (`develop` pour le mettre à jour)
  *    migrationPoussee : la poussée distante est déjà faite (notée dans l'état)
  *    issue         : { etat, cloture }  `cloture` : le commentaire de clôture est posé
  *    spec          : { numero, titre, etat, tickets: [{ numero, titre, etat }] } | null
@@ -145,6 +146,18 @@ export function decider(situation, valeurs) {
   }
 
   const branche = valeurs.brancheIntegration;
+  const doitMettreDevelopAJour = aFusionner || !situation.developAJour;
+  if (
+    doitMettreDevelopAJour &&
+    situation.brancheCheckoutPrincipal !== branche
+  ) {
+    return {
+      refus: [
+        `Le checkout principal est sur « ${situation.brancheCheckoutPrincipal || "(HEAD détachée)"} », pas sur ${branche} : s'y placer avant de clôturer, pour que ${branche} se mette à jour après la fusion.`,
+      ],
+      actions: [],
+    };
+  }
   const nomBranche = brancheTicket(ticket);
   const dossier = dossierWorktree(situation.racine, valeurs, ticket);
   const fichierEtat = cheminsEtat({
@@ -152,17 +165,18 @@ export function decider(situation, valeurs) {
     projet: valeurs.projet,
   }).fichier;
   const migration = pr.etiquettes.includes(ETIQUETTE_MIGRATION);
+  // Le commentaire de clôture se pose après la poussée : s'il existe, la migration est partie,
+  // même si l'entrée d'état qui le notait est déjà effacée.
+  const dejaPoussee = situation.migrationPoussee || issue.cloture;
   const pousser =
-    migration &&
-    valeurs.pousserMigrationsApresFusion !== false &&
-    !situation.migrationPoussee;
+    migration && valeurs.pousserMigrationsApresFusion && !dejaPoussee;
   const commandePoussee = valeurs.commandes.migrationDistante;
 
   const actions = [];
   if (aFusionner) {
     actions.push({ type: "fusionner", pr: pr.numero, tete: verdict.tete });
   }
-  if (aFusionner || !situation.developAJour) {
+  if (doitMettreDevelopAJour) {
     actions.push({ type: "majDevelop", racine: situation.racine, branche });
   }
   if (pousser) {
@@ -182,8 +196,7 @@ export function decider(situation, valeurs) {
   }
 
   if (!issue.cloture) {
-    const migrationRestante =
-      migration && !pousser && !situation.migrationPoussee;
+    const migrationRestante = migration && !pousser && !dejaPoussee;
     const reste =
       situation.reste ??
       (migrationRestante
@@ -440,6 +453,7 @@ function lire({ ticket, options, racine, sources, valeurs, env, home }) {
     pr,
     verdict,
     developAJour,
+    brancheCheckoutPrincipal: brancheCourante(racine),
     migrationPoussee: entree?.migrationPoussee === true,
     issue,
     spec: numeroSpec ? lireSpec(gh, valeurs, numeroSpec) : null,
