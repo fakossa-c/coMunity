@@ -15,6 +15,7 @@ import {
   supprimerEspacesCommuns,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #9 : le parcours de création en 4 étapes, du bouton « Proposer » à la fiche publiée.
 
@@ -32,12 +33,6 @@ async function seConnecter(page: Page, email: string) {
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).not.toHaveURL(/connexion/);
-}
-
-function dansUnMois() {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
 }
 
 function etape(page: Page, numero: number) {
@@ -61,7 +56,7 @@ async function saisirJusquAuRecapitulatif(page: Page, titre: string) {
   await continuer(page);
 
   await etape(page, 2);
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");
@@ -137,7 +132,7 @@ test("sur mobile, un résident propose une activité en quatre étapes, sans per
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Choisissez une date.",
   );
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await continuer(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Indiquez l'heure de début.",
@@ -291,7 +286,7 @@ test("sur mobile, le minimum de participants démarre à 1, et les conseils de l
   await page.getByLabel("Titre de l'activité").fill(titre);
   await continuer(page);
   await etape(page, 2);
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await page.getByLabel("Heure de début").selectOption("10:00");
   await saisirLieuLibre(page, "Cour intérieure");
   await continuer(page);
@@ -478,7 +473,7 @@ async function remplirLeNecessaire(
     await page.getByLabel("Description", { exact: true }).fill(description);
   await continuerProposer(page);
   await etapeProposer(page, 2);
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await page.getByLabel("Heure de début").selectOption("10:00");
   await saisirLieuLibre(page, "Cour intérieure");
   await continuerProposer(page);
@@ -597,7 +592,7 @@ test.describe("sur ordinateur : une page unique", () => {
       .getByLabel("Catégorie")
       .selectOption({ label: "Jardin et nature" });
     await expect(apercu(page)).toContainText("Jardin et nature");
-    await choisirDate(page, dansUnMois());
+    await choisirDate(page, jourDeParis(30));
     await page.getByLabel("Heure de début").selectOption("10:00");
     await page.getByLabel("Heure de fin").selectOption("11:30");
     await expect(apercu(page)).toContainText("De 10h00 à 11h30");
@@ -641,7 +636,7 @@ test.describe("sur ordinateur : une page unique", () => {
     await expect(page.getByRole("main").getByRole("alert")).toContainText(
       "Choisissez une date.",
     );
-    await choisirDate(page, dansUnMois());
+    await choisirDate(page, jourDeParis(30));
     await page.getByLabel("Heure de début").selectOption("10:00");
     await saisirLieuLibre(page, "Cour intérieure");
     await publier.click();
@@ -676,7 +671,7 @@ test.describe("sur ordinateur : une page unique", () => {
     await expect(page.getByRole("main")).toContainText("22 / 300");
 
     // Les heures : la fin suit le début tant que le créateur ne l'a pas choisie.
-    await choisirDate(page, dansUnMois());
+    await choisirDate(page, jourDeParis(30));
     const debut = page.getByLabel("Heure de début");
     const fin = page.getByLabel("Heure de fin");
     await debut.selectOption("10:00");
@@ -758,7 +753,7 @@ test.describe("sur ordinateur : une page unique", () => {
   }) => {
     await ouvrirProposer(page);
     await page.getByLabel("Titre de l'activité").fill("Atelier tricot");
-    await choisirDate(page, dansUnMois());
+    await choisirDate(page, jourDeParis(30));
     await page.getByLabel("Heure de début").selectOption("21:00");
     await page.getByLabel("Heure de fin").selectOption("22:30");
     await saisirLieuLibre(page, "Chez Danielle, 2e étage");
@@ -846,7 +841,7 @@ test.describe("le champ Description, sur mobile comme sur ordinateur", () => {
     });
     await continuerProposer(page);
     await etapeProposer(page, 2);
-    await choisirDate(page, dansUnMois());
+    await choisirDate(page, jourDeParis(30));
     await page.getByLabel("Heure de début").selectOption("10:00");
     await saisirLieuLibre(page, "Cour intérieure");
     await continuerProposer(page);

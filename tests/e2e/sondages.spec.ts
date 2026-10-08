@@ -13,6 +13,7 @@ import {
   supprimerComptes,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #39 : le conseil syndical joint un sondage à choix unique à une annonce ; un résident
 // validé répond une fois, avant la date limite, puis lit les résultats.
@@ -37,10 +38,6 @@ function titreUnique(titre: string) {
   const complet = `${titre} ${randomUUID().slice(0, 6)}`;
   titres.push(complet);
   return complet;
-}
-
-function jour(jours: number) {
-  return new Date(Date.now() + jours * 86_400_000).toISOString().slice(0, 10);
 }
 
 function carte(page: Page, titre: string) {
@@ -90,7 +87,7 @@ test("le conseil syndical publie un sondage, un résident répond et lit les ré
   );
   await page
     .getByLabel("Date limite des réponses", { exact: true })
-    .fill(jour(7));
+    .fill(jourDeParis(7));
   await page.screenshot({
     path: test.info().outputPath("formulaire-sondage.png"),
     fullPage: true,
@@ -176,7 +173,7 @@ test("un résident en attente voit le sondage sans pouvoir répondre ni lire les
   const votant = await nouveauResident("valide");
   emails.push(attente.email, votant.email);
   const titre = titreUnique("Sondage jardin");
-  const { sondage } = await annonceAvecSondage(jour(5), titre);
+  const { sondage } = await annonceAvecSondage(jourDeParis(5), titre);
   await nouvelleReponseSondage(sondage.id, votant.id, 1);
 
   await seConnecter(page, attente.email);
@@ -204,7 +201,7 @@ test("après la date limite, tout le monde lit les résultats et personne ne ré
   const absent = await nouveauResident("valide");
   emails.push(attente.email, votant.email, absent.email);
   const titre = titreUnique("Sondage terminé");
-  const { sondage } = await annonceAvecSondage(jour(-1), titre);
+  const { sondage } = await annonceAvecSondage(jourDeParis(-1), titre);
   await nouvelleReponseSondage(sondage.id, votant.id, 2);
   await nouvelleReponseSondage(sondage.id, attente.id, 2);
 
@@ -234,7 +231,7 @@ test("le sondage reste modifiable seulement à la création : la modification l'
   const syndic = await nouveauSyndic();
   emails.push(syndic.email);
   const titre = titreUnique("Sondage figé");
-  const { annonce } = await annonceAvecSondage(jour(5), titre);
+  const { annonce } = await annonceAvecSondage(jourDeParis(5), titre);
 
   await seConnecter(page, syndic.email);
   await page.goto(`/syndic/annonces/${annonce.id}`);
@@ -256,7 +253,7 @@ test("le conseil syndical qui n'a pas encore répondu lit les résultats et peut
   const votant = await nouveauResident("valide");
   emails.push(syndic.email, votant.email);
   const titre = titreUnique("Sondage du conseil");
-  const { sondage } = await annonceAvecSondage(jour(5), titre);
+  const { sondage } = await annonceAvecSondage(jourDeParis(5), titre);
   await nouvelleReponseSondage(sondage.id, votant.id, 3);
 
   await seConnecter(page, syndic.email);
@@ -282,7 +279,7 @@ test("un résident répond depuis le lien public de l'annonce, un visiteur n'y v
   const resident = await nouveauResident("valide");
   emails.push(resident.email);
   const titre = titreUnique("Sondage partagé");
-  const { annonce } = await annonceAvecSondage(jour(5), titre);
+  const { annonce } = await annonceAvecSondage(jourDeParis(5), titre);
   const lien = `/annonces/${annonce.identifiant_public}`;
 
   await page.goto(lien);
@@ -321,8 +318,8 @@ for (const [nom, reglages] of [
     await reglerAffichage(resident.id, reglages);
     const aVoter = titreUnique("Sondage à voter");
     const vote = titreUnique("Sondage voté");
-    await annonceAvecSondage(jour(5), aVoter);
-    const { sondage } = await annonceAvecSondage(jour(5), vote);
+    await annonceAvecSondage(jourDeParis(5), aVoter);
+    const { sondage } = await annonceAvecSondage(jourDeParis(5), vote);
     await nouvelleReponseSondage(sondage.id, resident.id, 2);
 
     await seConnecter(page, resident.email);

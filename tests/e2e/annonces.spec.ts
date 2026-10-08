@@ -10,6 +10,7 @@ import {
   supprimerComptes,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #13 : le conseil syndical publie, épingle, modifie, duplique et supprime des annonces ;
 // les résidents les lisent dans l'onglet Annonces ; chaque annonce a un lien public.
@@ -34,10 +35,6 @@ function titreUnique(titre: string) {
   const complet = `${titre} ${randomUUID().slice(0, 6)}`;
   titres.push(complet);
   return complet;
-}
-
-function jour(jours: number) {
-  return new Date(Date.now() + jours * 86_400_000).toISOString().slice(0, 10);
 }
 
 function carte(page: Page, titre: string) {
@@ -82,7 +79,7 @@ test("le conseil syndical publie une annonce épinglée, un résident la voit en
   await page.getByLabel("Date ou période").fill("Jeudi 12 novembre à 18h30");
   await page.getByLabel("Lieu").fill("Salle commune");
   await page.getByRole("checkbox", { name: /Épingler/ }).check();
-  await page.getByLabel("Expire le").fill(jour(30));
+  await page.getByLabel("Expire le").fill(jourDeParis(30));
   await page.screenshot({
     path: test.info().outputPath("formulaire-annonce.png"),
     fullPage: true,
@@ -196,11 +193,11 @@ test("une annonce expirée quitte la liste, mais son lien s'ouvre toujours", asy
   emails.push(resident.email);
   const expiree = await nouvelleAnnonce({
     titre: titreUnique("Coupure d'eau"),
-    expire_le: jour(-2),
+    expire_le: jourDeParis(-2),
   });
   const encore = await nouvelleAnnonce({
     titre: titreUnique("Fête des voisins"),
-    expire_le: jour(0),
+    expire_le: jourDeParis(0),
   });
 
   await seConnecter(page, resident.email);
@@ -470,7 +467,7 @@ test("les écrans des annonces n'ont aucune violation critique", async ({
     quand: "Jeudi 12 novembre à 18h30",
     lieu: "Salle commune",
     epinglee: true,
-    expire_le: jour(-1),
+    expire_le: jourDeParis(-1),
   });
   await nouvelleAnnonce({ titre: titreUnique("Annonce en cours") });
 
@@ -499,7 +496,7 @@ test("le conseil syndical corrige une annonce expirée sans changer son expirati
   emails.push(syndic.email);
   const titre = titreUnique("Coupure d'eau terminée");
   const corrige = titreUnique("Coupure d'eau terminée, merci");
-  const annonce = await nouvelleAnnonce({ titre, expire_le: jour(-5) });
+  const annonce = await nouvelleAnnonce({ titre, expire_le: jourDeParis(-5) });
 
   await seConnecter(page, syndic.email);
   await page.goto(`/syndic/annonces/${annonce.id}`);
@@ -514,7 +511,7 @@ test("le conseil syndical corrige une annonce expirée sans changer son expirati
   await ligneDeGestion(page, corrige)
     .getByRole("link", { name: /^Modifier/ })
     .click();
-  await page.getByLabel("Expire le").fill(jour(-1));
+  await page.getByLabel("Expire le").fill(jourDeParis(-1));
   await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Cette date est déjà passée",

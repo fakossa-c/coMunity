@@ -14,6 +14,7 @@ import {
   saisirLieuLibre,
   supprimerComptes,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #20 : Jev présélectionne la catégorie et le pictogramme, signale ce qui manque et met en
 // relecture ce qu'il juge non conforme. Un faux OpenRouter (tests/e2e/faux-jev.mjs) répond à sa
@@ -43,12 +44,6 @@ async function pageConnectee(browser: Browser, email: string) {
   const page = await contexte.newPage();
   await seConnecter(page, email);
   return page;
-}
-
-function dansUnMois() {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
 }
 
 function continuer(page: Page) {
@@ -87,7 +82,7 @@ async function commencer(
  */
 async function jusquAuRecapitulatif(page: Page) {
   await etapeProposer(page, 2);
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Chez Danielle, 2e étage");

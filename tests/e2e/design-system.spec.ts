@@ -10,6 +10,7 @@ import {
   supprimerComptes,
   titreAccueil,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 const AIDE_MOT_DE_PASSE = `Au moins ${LONGUEUR_MINIMALE_MOT_DE_PASSE} caractères.`;
 
@@ -231,9 +232,7 @@ test.describe("couleur d'une catégorie d'activité", () => {
     const resident = await nouveauResident("valide");
     emails.push(resident.email);
     const suffixe = Date.now();
-    const dans3Jours = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const dans3Jours = jourDeParis(3);
     const culture = {
       titre: `Ciné-club ${suffixe}`,
       identifiant: await nouvelleActivite(resident.id, {

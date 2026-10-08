@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { amorcerSyndic } from "../../scripts/amorcer-syndic.mjs";
 import { lireSupabaseLocal } from "../../scripts/supabase-local.mjs";
 import { libelleJour, libelleMois, moisDe } from "../../src/lib/calendrier";
-import { aujourdhui } from "../../src/lib/partage-activite";
+import { jourDeParis } from "./jours";
 
 const local = lireSupabaseLocal();
 
@@ -142,9 +142,7 @@ export async function nouvelleActivite(
   organisateur: string,
   activite: Partial<Record<string, string | string[] | number | null>> = {},
 ) {
-  const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const dansUnMois = jourDeParis(30);
   const { data, error } = await clientAdmin()
     .from("activite")
     .insert({
@@ -172,7 +170,7 @@ export async function nouvelleActivite(
 export async function nouvelleActiviteEnTete(organisateur: string) {
   return nouvelleActivite(organisateur, {
     titre: `En tête ${Date.now()}`,
-    date_activite: aujourdhui(),
+    date_activite: jourDeParis(0),
     heure_debut: "00:05",
     heure_fin: "23:59",
   });
@@ -604,6 +602,11 @@ export async function supprimerFichesSyndic(prenoms: string[]) {
  */
 export async function choisirDate(page: Page, date: string) {
   const calendrier = page.getByRole("group", { name: "Date", exact: true });
+  // Le mois n'est testé qu'une fois le calendrier rendu : sinon un jour du mois affiché passerait
+  // pour un mois à venir, et la boucle ferait défiler le calendrier jusqu'à l'avoir perdu.
+  await expect(
+    calendrier.getByRole("button", { name: "Mois suivant" }),
+  ).toBeVisible();
   const mois = calendrier.getByText(libelleMois(moisDe(date)), { exact: true });
   for (let i = 0; i < 24 && !(await mois.isVisible()); i++)
     await calendrier.getByRole("button", { name: "Mois suivant" }).click();

@@ -14,6 +14,7 @@ import {
   saisirLieuLibre,
   supprimerComptes,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #10 : jusqu'à 5 photos par activité, compressées dans le navigateur, montrées en galerie
 // sur la fiche, en tête de la carte de l'Accueil et dans l'aperçu du lien.
@@ -30,12 +31,6 @@ async function seConnecter(page: Page, email: string) {
   await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).not.toHaveURL(/connexion/);
-}
-
-function dansUnMois() {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
 }
 
 /** Une grande photo de bruit, comme en sort un téléphone : lourde, bien au-delà de la limite de côté. */
@@ -72,7 +67,7 @@ async function saisirJusquAuRecapitulatif(
   }
   await continuerLaProposition(page, 2);
 
-  await choisirDate(page, dansUnMois());
+  await choisirDate(page, jourDeParis(30));
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");
   await saisirLieuLibre(page, "Cour intérieure");

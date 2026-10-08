@@ -3,12 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   debutDeSemaine,
   finDeSemaine,
-  jourDecale,
   libelleJour,
   libelleMois,
   moisDe,
 } from "../../src/lib/calendrier";
-import { aujourdhui } from "../../src/lib/partage-activite";
 import {
   choisirDate,
   continuerProposer,
@@ -17,6 +15,7 @@ import {
   nouveauResident,
   supprimerComptes,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 // Ticket #113 : le calendrier tactile de l'étape « Date et lieu » de Proposer.
 
@@ -25,10 +24,6 @@ const emails: string[] = [];
 test.afterEach(async () => {
   await supprimerComptes(emails.splice(0));
 });
-
-function il(jours: number) {
-  return jourDecale(aujourdhui(), jours);
-}
 
 /** Un résident connecté, sur l'étape « Date et lieu » de Proposer. */
 async function surLEtapeDateEtLieu(page: Page) {
@@ -54,7 +49,7 @@ test("le calendrier se parcourt au clavier et annonce le jour choisi", async ({
   page,
 }) => {
   const calendrier = await surLEtapeDateEtLieu(page);
-  const depart = il(30);
+  const depart = jourDeParis(30);
   await choisirDate(page, depart);
   await expect(jour(calendrier, depart)).toHaveAttribute(
     "aria-pressed",
@@ -71,9 +66,9 @@ test("le calendrier se parcourt au clavier et annonce le jour choisi", async ({
 
   // Flèches : un jour, une semaine, d'un mois sur l'autre.
   await page.keyboard.press("ArrowRight");
-  await expect(jour(calendrier, il(31))).toBeFocused();
+  await expect(jour(calendrier, jourDeParis(31))).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(jour(calendrier, il(38))).toBeFocused();
+  await expect(jour(calendrier, jourDeParis(38))).toBeFocused();
   await page.keyboard.press("ArrowUp");
   await page.keyboard.press("ArrowLeft");
   await expect(jour(calendrier, depart)).toBeFocused();
@@ -97,11 +92,37 @@ test("le calendrier se parcourt au clavier et annonce le jour choisi", async ({
   );
 });
 
+// Ticket #198 : un jour du mois déjà affiché se choisit sans changer de mois. `choisirDate` ne
+// doit pas cliquer « Mois suivant » parce que le calendrier n'est pas encore rendu.
+test("choisirDate choisit un jour du mois affiché, tout juste après « Continuer »", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  await page.goto("/connexion");
+  await page.getByLabel("Adresse email").fill(resident.email);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(MOT_DE_PASSE);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await expect(page).not.toHaveURL(/connexion/);
+  await page.goto("/proposer");
+  await page.getByLabel("Titre de l'activité").fill("Atelier compost");
+  await continuerProposer(page);
+
+  const aujourdhui = jourDeParis(0);
+  await choisirDate(page, aujourdhui);
+  const calendrier = page.getByRole("group", { name: "Date", exact: true });
+  await expect(calendrier).toContainText(libelleMois(moisDe(aujourdhui)));
+  await expect(jour(calendrier, aujourdhui)).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
 test("aujourd'hui est repéré, les jours passés sont refusés", async ({
   page,
 }) => {
   const calendrier = await surLEtapeDateEtLieu(page);
-  const aujourdhui = il(0);
+  const aujourdhui = jourDeParis(0);
 
   await expect(jour(calendrier, aujourdhui)).toHaveAttribute(
     "aria-current",
@@ -114,8 +135,8 @@ test("aujourd'hui est repéré, les jours passés sont refusés", async ({
   await precedent.click({ force: true });
   await expect(calendrier).toContainText(libelleMois(moisDe(aujourdhui)));
   // La veille, quand elle est dans le même mois, ne se choisit pas.
-  if (il(-1).slice(0, 7) === aujourdhui.slice(0, 7))
-    await expect(jour(calendrier, il(-1))).toBeDisabled();
+  if (jourDeParis(-1).slice(0, 7) === aujourdhui.slice(0, 7))
+    await expect(jour(calendrier, jourDeParis(-1))).toBeDisabled();
 
   // Début ne mène jamais à un jour passé.
   await jour(calendrier, aujourdhui).focus();
@@ -159,7 +180,7 @@ for (const reglage of ["clair", "sombre", "grands caractères"] as const) {
       if (reglage === "grands caractères")
         racine.setAttribute("data-taille", "grands");
     }, reglage);
-    await choisirDate(page, il(30));
+    await choisirDate(page, jourDeParis(30));
     await calendrier.getByRole("button", { name: "Mois suivant" }).click();
 
     const resultat = await new AxeBuilder({ page }).include("main").analyze();

@@ -15,6 +15,7 @@ import {
   supprimerComptes,
   verifierSansDefilementHorizontal,
 } from "./outils";
+import { jourDeParis } from "./jours";
 
 const emails: string[] = [];
 
@@ -211,9 +212,7 @@ test("après publication, le créateur récupère le lien et le message WhatsApp
     .getByLabel("Catégorie")
     .selectOption({ label: "Jardin et nature" });
   await continuerProposer(page);
-  const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const dansUnMois = jourDeParis(30);
   await choisirDate(page, dansUnMois);
   await page.getByLabel("Heure de début").selectOption("10:00");
   await page.getByLabel("Heure de fin").selectOption("11:30");

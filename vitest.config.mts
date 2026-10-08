@@ -11,7 +11,11 @@ export default defineConfig({
         extends: true,
         test: {
           name: "unit",
-          include: ["src/**/*.test.ts", "scripts/**/*.test.mjs"],
+          include: [
+            "src/**/*.test.ts",
+            "scripts/**/*.test.mjs",
+            "tests/e2e/**/*.unit.ts",
+          ],
           environment: "node",
         },
       },
