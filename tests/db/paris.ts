@@ -1,3 +1,6 @@
+import { jourDecale } from "../../src/lib/calendrier";
+import { aujourdhui } from "../../src/lib/partage-activite";
+
 // L'heure et le jour de la résidence (Europe/Paris) pour les tests base, et de quoi simuler la
 // nuit où le jour d'UTC n'est pas encore celui de Paris, quelle que soit l'heure du test.
 
@@ -11,12 +14,13 @@ const HORLOGE_PARIS = new Intl.DateTimeFormat("sv-SE", {
   hourCycle: "h23",
 });
 
-/** Le jour `AAAA-MM-JJ` de Paris, décalé de `jours` (négatif : passé) par rapport à aujourd'hui. */
-export function jourParis(jours = 0) {
-  return HORLOGE_PARIS.format(new Date(Date.now() + jours * 86_400_000)).slice(
-    0,
-    10,
-  );
+/**
+ * Le jour `AAAA-MM-JJ` de Paris, décalé de `jours` jours civils (négatif : passé) par rapport à
+ * `maintenant`. Un calcul sur `toISOString()` donnerait le jour d'UTC, en retard d'un jour entre
+ * minuit et 2h à Paris (ticket #202).
+ */
+export function jourParis(jours = 0, maintenant = new Date()) {
+  return jourDecale(aujourdhui(maintenant), jours);
 }
 
 /**
