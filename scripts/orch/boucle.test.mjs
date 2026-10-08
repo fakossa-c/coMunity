@@ -1612,3 +1612,127 @@ describe("decider : portée de la question", () => {
     );
   });
 });
+
+// --- CI rouge : reprises ----------------------------------------------------------------------
+
+const URL_RUN = "https://github.com/fakossa-c/coMunity/actions/runs/777";
+const TETE_PR = "c1b4a9a11b95cba3e48d7062626dfd8ad45f2894";
+
+/** Le verdict d'une PR dont tout est en règle sauf le contrôle de CI, rouge. */
+const verdictCiRouge = {
+  fusionnable: false,
+  tete: TETE_PR,
+  raisons: [
+    "ci : contrôle Tests rouge (failure) sur le commit de tête c1b4a9a",
+  ],
+  points: [
+    {
+      id: "ci",
+      ok: false,
+      etat: "rouge",
+      url: URL_RUN,
+      detail: "contrôle Tests rouge (failure) sur le commit de tête c1b4a9a",
+    },
+  ],
+};
+
+const ciRouge = (surcharge = {}, reprises = 0) =>
+  situation({
+    sessions: [session(217, "done")],
+    etat: { version: 1, tickets: { 217: entree(217, { reprises }) } },
+    prs: { 217: prOuverte(217) },
+    verdicts: { 217: verdictCiRouge },
+    ...surcharge,
+  });
+
+describe("decider : CI rouge", () => {
+  it("reprend la session avec le lien du run, en comptant la reprise", () => {
+    const resultat = decider(ciRouge());
+    expect(resultat.actions).toHaveLength(1);
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendre",
+      motif: "ci",
+      ticket: 217,
+      session: "s217",
+      changements: { reprises: 1 },
+    });
+    expect(resultat.actions[0].message).toContain(URL_RUN);
+    expect(resultat.actions[0].message).toContain("#517");
+  });
+
+  it("reprend une deuxième fois, la dernière permise", () => {
+    const resultat = decider(ciRouge({}, 1));
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendre",
+      motif: "ci",
+      changements: { reprises: 2 },
+    });
+  });
+
+  it("au troisième échec, rend le ticket avec le lien du run, PR ouverte ou non", () => {
+    const resultat = decider(ciRouge({}, 2));
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+    expect(resultat.actions[0].explication).toContain(URL_RUN);
+    expect(resultat.actions[0].explication).toMatch(/trois|3/);
+    expect(resultat.actions[0].sansLeveeParPr).toBe(true);
+  });
+
+  it("clôture normalement une CI rouge puis verte", () => {
+    const resultat = decider(ciRouge({ verdicts: { 217: verdictVert } }, 1));
+    expect(types(resultat)).toEqual(["cloturer"]);
+  });
+
+  it("n'agit pas tant que la CI tourne ou qu'un autre point de la vérification refuse", () => {
+    const enCours = {
+      ...verdictCiRouge,
+      points: [{ ...verdictCiRouge.points[0], etat: "en cours" }],
+    };
+    const titre = {
+      fusionnable: false,
+      raisons: ["titre : ne cite pas #217"],
+      points: [{ id: "titre", ok: false, detail: "ne cite pas #217" }],
+    };
+    for (const verdict of [enCours, titre]) {
+      const resultat = decider(ciRouge({ verdicts: { 217: verdict } }));
+      expect(types(resultat)).toEqual(["attendre"]);
+    }
+  });
+
+  it("ne touche pas la session tant qu'elle travaille", () => {
+    const resultat = decider(ciRouge({ sessions: [session(217, "working")] }));
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("lance une nouvelle session quand le transcript manque", () => {
+    const resultat = decider(ciRouge({ transcripts: { 217: false } }));
+    expect(resultat.actions[0]).toMatchObject({
+      type: "relancer",
+      motif: "ci",
+      changements: { reprises: 1 },
+    });
+    expect(resultat.actions[0].message).toContain(URL_RUN);
+  });
+
+  it("compte les reprises par ticket", () => {
+    const resultat = decider(
+      ciRouge({
+        tickets: [ticket(217), ticket(218)],
+        etat: {
+          version: 1,
+          tickets: {
+            217: entree(217, { reprises: 2 }),
+            218: entree(218, { reprises: 0 }),
+          },
+        },
+        sessions: [session(217, "done"), session(218, "done")],
+        prs: { 217: prOuverte(217), 218: prOuverte(218) },
+        verdicts: { 217: verdictCiRouge, 218: verdictCiRouge },
+      }),
+    );
+    expect(types(resultat)).toEqual(["rendreHumain", "reprendre"]);
+    expect(resultat.actions[1]).toMatchObject({
+      ticket: 218,
+      changements: { reprises: 1 },
+    });
+  });
+});
