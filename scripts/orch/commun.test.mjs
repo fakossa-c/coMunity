@@ -21,6 +21,8 @@ const projet = {
     demarrage: "npx supabase start",
     variablesLocales: "npm run env:local",
     arret: "npx supabase stop",
+    migrationDistante: "npm run db:pousser",
+    lienPreview: "vercel link --yes --project comunity",
   },
   modeleSession: "sonnet",
   controleCi: "",
