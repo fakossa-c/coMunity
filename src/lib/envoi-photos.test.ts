@@ -57,4 +57,63 @@ describe("envoyerPhotos", () => {
       ),
     ).toEqual([null, null]);
   });
+
+  it("rend null pour chaque photo quand le client ne se charge pas", async () => {
+    vi.doMock("@supabase/supabase-js", () => {
+      throw new Error("réseau coupé");
+    });
+    const { envoyerPhotos } = await import("./envoi-photos");
+    const photo = new Blob(["a"], { type: "image/jpeg" });
+
+    expect(
+      await envoyerPhotos([{ chemin: "act/1.jpg", token: "t1" }], [photo]),
+    ).toEqual([null]);
+  });
+});
+
+describe("deposerFichier", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:1");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "cle");
+    uploadToSignedUrl.mockReset();
+    vi.resetModules();
+    vi.doMock("@supabase/supabase-js", () => ({
+      createClient: () => ({
+        storage: { from: () => ({ uploadToSignedUrl }) },
+      }),
+    }));
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  const fichier = new File(["a"], "plan.pdf", { type: "application/pdf" });
+  const depot = { chemin: "annonces/1.pdf", token: "t1" };
+
+  it("dépose le fichier avec son jeton et rend true", async () => {
+    uploadToSignedUrl.mockResolvedValue({ error: null });
+    const { deposerFichier } = await import("./envoi-photos");
+
+    expect(await deposerFichier("annonces", depot, fichier)).toBe(true);
+    expect(uploadToSignedUrl).toHaveBeenCalledWith(
+      "annonces/1.pdf",
+      "t1",
+      fichier,
+      { contentType: "application/pdf" },
+    );
+  });
+
+  it("rend false quand le dépôt est refusé", async () => {
+    uploadToSignedUrl.mockResolvedValue({ error: new Error("refusé") });
+    const { deposerFichier } = await import("./envoi-photos");
+
+    expect(await deposerFichier("annonces", depot, fichier)).toBe(false);
+  });
+
+  it("rend false, sans lever, quand le client ne se charge pas", async () => {
+    vi.doMock("@supabase/supabase-js", () => {
+      throw new Error("réseau coupé");
+    });
+    const { deposerFichier } = await import("./envoi-photos");
+
+    expect(await deposerFichier("annonces", depot, fichier)).toBe(false);
+  });
 });
