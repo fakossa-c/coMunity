@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   decider,
@@ -5,6 +8,8 @@ import {
   decisionVerrou,
   formaterRapport,
   ligneJournal,
+  prendreVerrou,
+  rendreVerrou,
 } from "./boucle.mjs";
 
 describe("decisionVerrou", () => {
@@ -758,5 +763,78 @@ describe("boucle", () => {
     ]);
     expect(monde.attentes).toBe(0);
     expect(monde.entrees).toEqual({});
+  });
+});
+
+// --- Verrou sur le disque ---------------------------------------------------------------------
+
+describe("verrou sur le disque", () => {
+  const dossier = () => mkdtempSync(join(tmpdir(), "boucle-verrou-"));
+
+  it("refuse une deuxième boucle tant que la première tient le verrou, et le rend à sa sortie", () => {
+    const fichier = join(dossier(), "boucle.verrou.json");
+    const premiere = prendreVerrou({
+      fichier,
+      pid: 1111,
+      mode: "spec #208",
+      maintenant: new Date("2026-10-08T20:00:00.000Z"),
+      pidVivant: () => true,
+    });
+    expect(premiere.ok).toBe(true);
+
+    const seconde = prendreVerrou({
+      fichier,
+      pid: 2222,
+      mode: "spec #209",
+      maintenant: new Date("2026-10-08T20:05:00.000Z"),
+      pidVivant: (pid) => pid === 1111,
+    });
+    expect(seconde.ok).toBe(false);
+    expect(seconde.raison).toMatch(/1111/);
+
+    rendreVerrou({ fichier, pid: 1111 });
+    expect(
+      prendreVerrou({
+        fichier,
+        pid: 2222,
+        mode: "spec #209",
+        maintenant: new Date("2026-10-08T20:10:00.000Z"),
+        pidVivant: () => false,
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("reprend le verrou d'une boucle morte", () => {
+    const fichier = join(dossier(), "boucle.verrou.json");
+    prendreVerrou({
+      fichier,
+      pid: 1111,
+      mode: "spec #208",
+      maintenant: new Date("2026-10-08T20:00:00.000Z"),
+      pidVivant: () => false,
+    });
+    const reprise = prendreVerrou({
+      fichier,
+      pid: 2222,
+      mode: "spec #208",
+      maintenant: new Date("2026-10-08T21:00:00.000Z"),
+      pidVivant: () => false,
+    });
+    expect(reprise.ok).toBe(true);
+    expect(reprise.raison).toMatch(/repris/);
+    expect(JSON.parse(readFileSync(fichier, "utf8")).pid).toBe(2222);
+  });
+
+  it("ne rend pas le verrou d'une autre boucle", () => {
+    const fichier = join(dossier(), "boucle.verrou.json");
+    prendreVerrou({
+      fichier,
+      pid: 1111,
+      mode: "spec #208",
+      maintenant: new Date(),
+      pidVivant: () => false,
+    });
+    rendreVerrou({ fichier, pid: 9999 });
+    expect(JSON.parse(readFileSync(fichier, "utf8")).pid).toBe(1111);
   });
 });
