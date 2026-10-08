@@ -136,8 +136,9 @@ export function FormulaireAnnonce({ annonce }: Props) {
           taille: fichier.size,
         });
         if (!depot.ok) return setResultat(depot);
-        const { error } = await clientNavigateur()
-          .storage.from(BUCKET_ANNONCES)
+        const supabase = await clientNavigateur();
+        const { error } = await supabase.storage
+          .from(BUCKET_ANNONCES)
           .uploadToSignedUrl(depot.chemin, depot.token, fichier, {
             contentType: fichier.type,
           });

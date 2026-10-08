@@ -15,7 +15,7 @@ export async function envoyerPhotos(
   photos: Blob[],
   bucket = BUCKET_PHOTOS_ACTIVITE,
 ): Promise<(string | null)[]> {
-  const supabase = clientNavigateur();
+  const supabase = await clientNavigateur();
   return Promise.all(
     photos.map(async (photo, i) => {
       const depot = depots[i];

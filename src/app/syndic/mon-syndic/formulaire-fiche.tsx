@@ -107,8 +107,9 @@ export function FormulaireFiche({ comptes, fiche }: Props) {
       if (choisie) {
         const depot = await preparerDepotPhoto();
         if (!depot.ok) return setResultat(depot);
-        const { error } = await clientNavigateur()
-          .storage.from(BUCKET_SYNDIC)
+        const supabase = await clientNavigateur();
+        const { error } = await supabase.storage
+          .from(BUCKET_SYNDIC)
           .uploadToSignedUrl(depot.chemin, depot.token, choisie.compresse, {
             contentType: choisie.compresse.type,
           });
