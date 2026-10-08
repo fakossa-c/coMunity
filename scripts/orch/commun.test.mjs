@@ -30,6 +30,7 @@ const projet = {
   delaiInactiviteMinutes: 30,
   reprisesMax: 2,
   pousserMigrationsApresFusion: true,
+  intervalleBoucleSecondes: 300,
 };
 
 describe("fusionnerValeurs", () => {
@@ -79,6 +80,14 @@ describe("fusionnerValeurs", () => {
     ).toBe(false);
   });
 
+  it("exige l'intervalle de la boucle", () => {
+    const { intervalleBoucleSecondes, ...incomplet } = projet;
+    expect(intervalleBoucleSecondes).toBe(300);
+    expect(() => fusionnerValeurs(incomplet, null)).toThrow(
+      /intervalleBoucleSecondes/,
+    );
+  });
+
   it("nomme la commande du projet qui manque", () => {
     const { arret, ...commandes } = projet.commandes;
     expect(arret).toBeDefined();
@@ -89,6 +98,17 @@ describe("fusionnerValeurs", () => {
 });
 
 describe("cheminsEtat", () => {
+  it("laisse un dossier d'état passé en option remplacer celui de la config globale", () => {
+    const chemins = cheminsEtat({
+      home: "/home/ubuntu",
+      projet: "comunity",
+      env: { ORCH_DOSSIER_ETAT: "/tmp/essai-boucle" },
+    });
+    expect(chemins.dossier).toBe("/tmp/essai-boucle");
+    expect(chemins.fichier).toBe(join("/tmp/essai-boucle", "etat.json"));
+    expect(chemins.prompts).toBe(join("/tmp/essai-boucle", "prompts"));
+  });
+
   it("range l'état du projet dans la config globale, hors du dépôt", () => {
     const chemins = cheminsEtat({ home: "/home/ubuntu", projet: "comunity" });
     const dossier = join(
