@@ -98,6 +98,22 @@ describe("resumer", () => {
     expect(resumer(reponse).aJourAvecLaBase).toBe(false);
   });
 
+  it("repère un réglage de revue que la commande ne pose pas", () => {
+    const reponse = reponsePosee({
+      required_pull_request_reviews: {
+        required_approving_review_count: 0,
+        dismiss_stale_reviews: true,
+        require_code_owner_reviews: true,
+      },
+      required_signatures: { enabled: true },
+    });
+    expect(resumer(reponse).autres).toEqual([
+      "dismiss_stale_reviews",
+      "require_code_owner_reviews",
+      "required_signatures",
+    ]);
+  });
+
   it("repère un réglage que la commande ne pose pas", () => {
     const reponse = reponsePosee({
       required_linear_history: { enabled: true },
