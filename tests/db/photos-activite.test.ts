@@ -9,14 +9,13 @@ import {
   type Compte,
   publierApresJev,
 } from "./clients";
+import { jourParis } from "./paris";
 
 // Ticket #10 : jusqu'à 5 photos par activité, dans le bucket public `activites`. Le créateur et
 // le conseil syndical les déposent et les retirent, tout le monde les lit ; la liste ordonnée
 // vit dans `activite.photos`, que seule la fonction `definir_photos_activite` écrit.
 
-const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-  .toISOString()
-  .slice(0, 10);
+const dansUnMois = jourParis(30);
 
 const ACTIVITE = {
   titre: "Goûter crêpes",

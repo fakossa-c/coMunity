@@ -8,14 +8,13 @@ import {
   publierApresJev,
   type Compte,
 } from "./clients";
+import { jourParis } from "./paris";
 
 // Ticket #101 : une activité n'est jamais publique avant l'avis de Jev. Créée ou modifiée par son
 // créateur avec sa session (clé publiable), elle passe en relecture ; seul le serveur, avec la clé
 // secrète, la publie ou la laisse au conseil syndical une fois Jev entendu.
 
-const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-  .toISOString()
-  .slice(0, 10);
+const dansUnMois = jourParis(30);
 
 const ACTIVITE = {
   titre: "Goûter crêpes",
