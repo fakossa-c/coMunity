@@ -157,6 +157,7 @@ const bornes = {
   dureeMaxMs: 180 * MINUTE,
   inactiviteMs: 30 * MINUTE,
   reprisesCiMax: 2,
+  misesAJourBrancheMax: 3,
   echecsMax: 3,
   attenteMs: 10 * MINUTE,
   proprietaire: "fakossa-c",
@@ -692,6 +693,20 @@ function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
             ok: true,
             evenements: [
               { evenement: "attente", ticket: n, detail: action.raison },
+            ],
+          };
+        case "mettreAJourBranche":
+          monde.entrees = etatApres(
+            { version: 1, tickets: monde.entrees },
+            action,
+            { maintenant: monde.maintenant },
+          ).tickets;
+          monde.misesAJour = [...(monde.misesAJour ?? []), n];
+          monde.apresMiseAJour?.(monde, n);
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "maj-branche", ticket: n, detail: action.tete },
             ],
           };
         case "reprendre":
@@ -2401,6 +2416,7 @@ describe("bornesDepuisValeurs", () => {
         dureeMaxSessionMinutes: 180,
         delaiInactiviteMinutes: 30,
         reprisesMax: 2,
+        misesAJourBrancheMax: 3,
         echecsSessionMax: 3,
         attenteRepriseMinutes: 10,
       }),
@@ -2408,6 +2424,7 @@ describe("bornesDepuisValeurs", () => {
       dureeMaxMs: 180 * MINUTE,
       inactiviteMs: 30 * MINUTE,
       reprisesCiMax: 2,
+      misesAJourBrancheMax: 3,
       echecsMax: 3,
       attenteMs: 10 * MINUTE,
       proprietaire: "fakossa-c",
@@ -2591,5 +2608,261 @@ describe("boucle : arrêt de session raté", () => {
       "arreterSession",
     ]);
     expect(monde.entrees[1].inactivites).toBeUndefined();
+  });
+});
+
+// --- PR en retard sur la base (#235) ----------------------------------------------------------
+
+/** Le verdict d'une PR verte sur sa tête dont le seul manquement est le retard sur develop. */
+const verdictEnRetard = {
+  fusionnable: false,
+  tete: TETE_PR,
+  raisons: ["a-jour : branche en retard sur develop"],
+  points: [
+    { id: "ci", ok: true, etat: "vert", detail: "contrôle Tests vert" },
+    { id: "a-jour", ok: false, detail: "branche en retard sur develop" },
+  ],
+};
+
+/** Le même verdict une fois la branche mise à jour : le contrôle n'a pas encore tourné sur la
+ * nouvelle tête. */
+const verdictCiAbsente = {
+  fusionnable: false,
+  tete: "d2c5bab22c06dcb4f59e8173737e0f3bf9e0f3a5",
+  raisons: [
+    "ci : contrôle Tests absent : aucune exécution sur le commit de tête",
+  ],
+  points: [
+    {
+      id: "ci",
+      ok: false,
+      etat: "absent",
+      detail: "contrôle Tests absent : aucune exécution sur le commit de tête",
+    },
+    { id: "a-jour", ok: true, detail: "branche à jour avec develop" },
+  ],
+};
+
+const enRetard = (surcharge = {}, misesAJour = 0) =>
+  situation({
+    sessions: [session(217, "done")],
+    etat: {
+      version: 1,
+      tickets: {
+        217: entree(217, { misesAJourBranche: misesAJour }),
+      },
+    },
+    prs: { 217: prOuverte(217) },
+    verdicts: { 217: verdictEnRetard },
+    ...surcharge,
+  });
+
+describe("decider : PR en retard sur develop", () => {
+  it("met la branche à jour sur le commit vérifié, en comptant la mise à jour, sans clôturer", () => {
+    const resultat = decider(enRetard());
+    expect(resultat.actions).toEqual([
+      {
+        type: "mettreAJourBranche",
+        ticket: 217,
+        pr: 517,
+        tete: TETE_PR,
+        changements: { misesAJourBranche: 1 },
+      },
+    ]);
+  });
+
+  it("autorise la troisième mise à jour, la dernière permise", () => {
+    const resultat = decider(enRetard({}, 2));
+    expect(resultat.actions[0]).toMatchObject({
+      type: "mettreAJourBranche",
+      changements: { misesAJourBranche: 3 },
+    });
+  });
+
+  it("rend le ticket au-delà, avec le nombre de mises à jour dans l'explication", () => {
+    const resultat = decider(enRetard({}, 3));
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+    expect(resultat.actions[0].explication).toMatch(/3 fois/);
+    expect(resultat.actions[0].explication).toContain("#517");
+    expect(resultat.actions[0].sansLeveeParPr).toBe(true);
+  });
+
+  it("attend le contrôle du nouveau commit de tête au lieu de clôturer", () => {
+    const resultat = decider(
+      enRetard({ verdicts: { 217: verdictCiAbsente } }, 1),
+    );
+    expect(types(resultat)).toEqual(["attendre"]);
+    expect(resultat.actions[0].raison).toContain("ci :");
+  });
+
+  it("n'y touche pas quand un autre manquement s'ajoute au retard", () => {
+    const titre = {
+      fusionnable: false,
+      tete: TETE_PR,
+      raisons: ["titre : ne cite pas #217", "a-jour : branche en retard"],
+      points: [
+        { id: "titre", ok: false, detail: "ne cite pas #217" },
+        { id: "a-jour", ok: false, detail: "branche en retard" },
+      ],
+    };
+    const resultat = decider(enRetard({ verdicts: { 217: titre } }));
+    expect(types(resultat)).toEqual(["attendre"]);
+  });
+
+  it("laisse la CI rouge à la session : la reprise passe avant la mise à jour", () => {
+    const rougeEtEnRetard = {
+      ...verdictCiRouge,
+      raisons: [...verdictCiRouge.raisons, "a-jour : branche en retard"],
+      points: [
+        ...verdictCiRouge.points,
+        { id: "a-jour", ok: false, detail: "branche en retard" },
+      ],
+    };
+    const resultat = decider(enRetard({ verdicts: { 217: rougeEtEnRetard } }));
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendre",
+      motif: "ci",
+    });
+  });
+
+  it("compte les mises à jour par ticket", () => {
+    const resultat = decider(
+      enRetard({
+        tickets: [ticket(217), ticket(218)],
+        etat: {
+          version: 1,
+          tickets: {
+            217: entree(217, { misesAJourBranche: 3 }),
+            218: entree(218, { misesAJourBranche: 0 }),
+          },
+        },
+        sessions: [session(217, "done"), session(218, "done")],
+        prs: { 217: prOuverte(217), 218: prOuverte(218) },
+        verdicts: { 217: verdictEnRetard, 218: verdictEnRetard },
+      }),
+    );
+    expect(types(resultat)).toEqual(["rendreHumain", "mettreAJourBranche"]);
+    expect(resultat.actions[1]).toMatchObject({
+      ticket: 218,
+      changements: { misesAJourBranche: 1 },
+    });
+  });
+
+  it("ne libère pas les tickets que la mise à jour retient : ils restent en vol pour la frontière", () => {
+    const resultat = decider(enRetard());
+    expect(resultat.rapport.enVol.map((v) => v.ticket)).toEqual([217]);
+  });
+});
+
+describe("decider : reprise sur CI rouge après une mise à jour de la branche", () => {
+  it("dit à la session de récupérer le commit de mise à jour avant de pousser", () => {
+    const resultat = decider(
+      ciRouge({
+        etat: {
+          version: 1,
+          tickets: { 217: entree(217, { misesAJourBranche: 1 }) },
+        },
+      }),
+    );
+    expect(resultat.actions[0].message).toContain("git pull --no-rebase");
+  });
+
+  it("n'en parle pas quand la branche n'a jamais été mise à jour", () => {
+    const resultat = decider(ciRouge());
+    expect(resultat.actions[0].message).not.toContain("git pull");
+  });
+});
+
+describe("etatApres : mise à jour de la branche", () => {
+  it("note le compteur sans relancer la durée de la session", () => {
+    const avant = {
+      version: 1,
+      tickets: { 217: entree(217, { demarreA: "2026-10-08T20:00:00.000Z" }) },
+    };
+    const apres = etatApres(
+      avant,
+      {
+        type: "mettreAJourBranche",
+        ticket: 217,
+        changements: { misesAJourBranche: 1 },
+      },
+      { maintenant: MAINTENANT },
+    );
+    expect(apres.tickets["217"]).toMatchObject({
+      demarreA: "2026-10-08T20:00:00.000Z",
+      misesAJourBranche: 1,
+    });
+  });
+});
+
+describe("evenementsCloture : clôture suspendue", () => {
+  it("note la mise à jour de la branche, sans fusion ni clôture, et ne compte pas d'échec", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 3,
+      sortie: [
+        "1/2 Compter une mise à jour de branche pour #212 dans /etat.json",
+        "2/2 Mettre à jour la branche de la PR #231 avec la base (commit de tête attendu c1b4a9a), sans fusionner",
+        "",
+        "Clôture suspendue : La PR #231 était en retard sur develop",
+      ].join("\n"),
+      erreurs: "",
+    });
+    expect(resultat.ok).toBe(true);
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual([
+      "maj-branche",
+    ]);
+  });
+});
+
+describe("boucle : PR en retard sur develop", () => {
+  it("met la branche à jour, attend le contrôle du nouveau commit de tête, puis clôture", async () => {
+    const monde = monde1({
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: { 1: verdictEnRetard },
+      apresMiseAJour: (m, n) => {
+        m.verdicts[n] = verdictCiAbsente;
+      },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([
+        () => {},
+        (m) => {
+          m.verdicts[1] = verdictVert;
+        },
+      ]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "maj-branche #1",
+      "attente #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+    expect(monde.misesAJour).toEqual([1]);
+    expect(monde.entrees[1]).toBeUndefined();
+  });
+
+  it("rend le ticket quand la branche reste en retard après trois mises à jour", async () => {
+    const monde = monde1({
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: { 1: verdictEnRetard },
+    });
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([() => {}, () => {}, () => {}, () => {}]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "maj-branche #1",
+      "maj-branche #1",
+      "maj-branche #1",
+      "anomalie #1",
+      "arret interrompu",
+    ]);
+    expect(monde.misesAJour).toEqual([1, 1, 1]);
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
   });
 });
