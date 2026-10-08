@@ -35,8 +35,9 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
 
+      # Studio ne sert à aucun test : un conteneur et une image de moins à tirer.
       - name: Démarrer le Supabase local
-        run: npx supabase start
+        run: npx supabase start -x studio
 
       - name: Écrire les variables locales
         run: npm run env:local

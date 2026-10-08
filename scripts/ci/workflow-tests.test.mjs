@@ -13,7 +13,7 @@ const workflow = existsSync(".github/workflows/tests.yml")
   : "";
 const valeurs = JSON.parse(lire(".claude/orchestration.json"));
 
-/** Les noms de job (clé `name:` à deux niveaux d'indentation sous `jobs:`). */
+/** Les noms de job (clé `name:` à quatre espaces, sous `jobs:` puis l'identifiant du job). */
 function nomsDesJobs(texte) {
   return [...texte.matchAll(/^ {4}name: (.+)$/gm)].map((m) =>
     m[1].trim().replace(/^["']|["']$/g, ""),
@@ -73,31 +73,33 @@ describe("le workflow des tests", () => {
 });
 
 describe("la fixture des polices simulées", () => {
+  // Copie des réponses de l'API CSS de Google Fonts (UA Chrome/104, comme next/font). Pour la
+  // régénérer après un changement de `src/app/polices.ts` : récupérer chaque URL avec curl.
   const fixture = JSON.parse(lire(".github/polices-simulees.json"));
   const source = lire("src/app/polices.ts");
 
-  it("répond à chaque police Google que l'application importe", () => {
-    const familles = [...source.matchAll(/^ {2}([A-Z][A-Za-z_]+),$/gm)].map(
-      (m) => m[1].replaceAll("_", "+"),
-    );
-    expect(familles.length).toBeGreaterThan(0);
-    for (const famille of familles) {
-      expect(
-        Object.keys(fixture).some((url) => url.includes(`family=${famille}:`)),
-      ).toBe(true);
-    }
+  /** L'URL exacte que next/font demande pour chaque police Google du fichier : sa clé dans la fixture. */
+  function urlsDemandees() {
+    return [
+      ...source.matchAll(
+        /= ([A-Z][A-Za-z_]+)\(\{[\s\S]*?weight: \[([^\]]+)\]/g,
+      ),
+    ].map(([, famille, graisses]) => {
+      const poids = graisses
+        .replaceAll('"', "")
+        .split(",")
+        .map((g) => g.trim());
+      return `https://fonts.googleapis.com/css2?family=${famille.replaceAll("_", "+")}:wght@${poids.join(";")}&display=swap`;
+    });
+  }
+
+  it("répond, par l'URL exacte, à chaque police Google que l'application importe", () => {
+    const urls = urlsDemandees();
+    expect(urls).toHaveLength(2);
+    for (const url of urls) expect(fixture).toHaveProperty([url]);
   });
 
-  it("couvre chaque graisse demandée", () => {
-    for (const [, liste] of source.matchAll(/weight: \[([^\]]+)\]/g)) {
-      for (const graisse of liste.replaceAll('"', "").split(",")) {
-        const g = graisse.trim();
-        expect(
-          Object.values(fixture).some((css) =>
-            css.includes(`font-weight: ${g};`),
-          ),
-        ).toBe(true);
-      }
-    }
+  it("ne garde que des polices que l'application importe", () => {
+    expect(Object.keys(fixture).sort()).toEqual(urlsDemandees().sort());
   });
 });
