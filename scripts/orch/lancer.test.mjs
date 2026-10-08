@@ -457,3 +457,71 @@ describe("worktreeEnregistre", () => {
     expect(worktreeEnregistre(sortie, "/depot/coMunity/ticket-9")).toBe(false);
   });
 });
+
+describe("decider : relance dans une nouvelle session", () => {
+  const relance = {
+    ...situation,
+    worktreeExiste: true,
+    brancheExiste: true,
+    ticket: { ...situation.ticket, assignes: ["fakossa-c"] },
+    relance: {
+      message: "Reprise : la session précédente était inactive depuis 30 min.",
+    },
+  };
+
+  it("ne refait ni l'assignation, ni le worktree, ni l'isolation, ni le service", () => {
+    const resultat = decider(relance, valeurs);
+    expect(resultat.refus).toEqual([]);
+    expect(types(resultat)).toEqual([
+      "ecrirePrompt",
+      "lancerSession",
+      "enregistrerSession",
+      "verifierSession",
+    ]);
+  });
+
+  it("lance la session sous le même nom, dans le worktree existant, mode de permission repassé", () => {
+    const lancer = decider(relance, valeurs).actions.find(
+      (a) => a.type === "lancerSession",
+    );
+    expect(lancer).toMatchObject({
+      nom: "ticket-210",
+      modePermission: "auto",
+      sansMcp: true,
+      dossier: join("/depot", "coMunity", ".claude", "worktrees", "ticket-210"),
+    });
+  });
+
+  it("garde le prompt du premier lancement et y ajoute le message de reprise", () => {
+    const ecrire = decider(relance, valeurs).actions.find(
+      (a) => a.type === "ecrirePrompt",
+    );
+    expect(ecrire.contenu).toContain("Ticket #210");
+    expect(ecrire.contenu).toContain("depuis 30 min");
+    expect(ecrire.contenu).toMatch(/branche ticket-210/);
+    expect(ecrire.contenu).toMatch(/git log/);
+  });
+
+  it("enregistre la session en gardant les compteurs du ticket", () => {
+    const enregistrer = decider(relance, valeurs).actions.find(
+      (a) => a.type === "enregistrerSession",
+    );
+    expect(enregistrer.relance).toBe(true);
+  });
+
+  it("refuse une relance sans worktree à reprendre", () => {
+    const resultat = decider({ ...relance, worktreeExiste: false }, valeurs);
+    expect(resultat.refus).toEqual([
+      expect.stringMatching(/worktree.*reprendre/),
+    ]);
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("refuse une relance sur un ticket fermé", () => {
+    const resultat = decider(
+      { ...relance, ticket: { ...relance.ticket, etat: "CLOSED" } },
+      valeurs,
+    );
+    expect(resultat.refus).toEqual([expect.stringMatching(/fermé/)]);
+  });
+});

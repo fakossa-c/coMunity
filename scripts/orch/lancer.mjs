@@ -1,7 +1,11 @@
 // Lance la session de fond d'un ticket, prête à travailler, en une commande (spec #208, ticket #210).
 //
 // Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207]
-//                                      [--orchestrateur <nom>]
+//                                      [--orchestrateur <nom>] [--relancer --message <texte>]
+//
+// --relancer : nouvelle session pour un ticket déjà pris (la boucle, quand une session n'a plus de
+// transcript à reprendre ou s'est tue trop longtemps). Même worktree, même branche, même nom ; le
+// prompt du premier lancement part avec le message en plus, et les compteurs du ticket restent.
 //
 // Pourquoi : l'orchestrateur enchaînait ces étapes à la main et c'est là qu'il se trompait (prompt
 // cassé par une apostrophe, identifiant de session perdu, `cd` qui le déplace). Ici le prompt passe
@@ -31,11 +35,15 @@ import {
   lireValeurs,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
+  remplacerSession,
   specDepuisCorps,
 } from "./commun.mjs";
 
 // Le décodage vit dans commun.mjs depuis que la frontière (#213) s'en sert aussi.
 export { specDepuisCorps };
+
+// Le mode de permission des sessions de ticket, aussi repassé par la boucle à chaque reprise.
+export const MODE_PERMISSION = "auto";
 
 export const brancheTicket = (numero) => `ticket-${numero}`;
 
@@ -134,6 +142,16 @@ export function construirePrompt(modele, variables) {
   return prompt;
 }
 
+/** Ce que la session relancée lit en plus du prompt du premier lancement : le travail déjà fait est
+ * sur la branche, le message dit pourquoi elle reprend. */
+function texteRelance({ numero, branche, message }) {
+  return `## Reprise
+
+Ce n'est pas le premier lancement du ticket #${numero} : la branche ${branche} et le worktree existent déjà, avec le travail déjà commité. Ne recrée ni la branche, ni le worktree. Relis \`git log\` et \`git status\`, le ticket et ses commentaires avant de continuer.
+
+${message}`;
+}
+
 // --- Décision ---------------------------------------------------------------------------------
 
 /** Ce qu'il faut faire pour lancer le ticket, ou pourquoi on refuse. Pure : `situation` est déjà
@@ -144,23 +162,33 @@ export function decider(situation, valeurs) {
   const branche = brancheTicket(numero);
   const dossier = dossierWorktree(racine, valeurs, numero);
 
+  const relance = situation.relance ?? null;
   const refus = [];
   if (ticket.etat !== "OPEN") refus.push(`Le ticket #${numero} est fermé.`);
-  if (ticket.assignes.length > 0) {
-    refus.push(
-      `Le ticket #${numero} est déjà assigné à ${ticket.assignes.join(", ")}.`,
-    );
-  }
-  if (situation.arbreSale) {
-    refus.push(
-      "Le checkout principal a des modifications non commitées : les commiter ou les écarter avant de lancer.",
-    );
-  }
-  if (situation.worktreeExiste) {
-    refus.push(`Le worktree ${dossier} existe déjà.`);
-  }
-  if (situation.brancheExiste) {
-    refus.push(`La branche ${branche} existe déjà.`);
+  if (relance) {
+    // Une relance reprend un ticket déjà pris : son worktree et sa branche doivent exister.
+    if (!situation.worktreeExiste) {
+      refus.push(
+        `Aucun worktree à reprendre pour le ticket #${numero} : ${dossier}.`,
+      );
+    }
+  } else {
+    if (ticket.assignes.length > 0) {
+      refus.push(
+        `Le ticket #${numero} est déjà assigné à ${ticket.assignes.join(", ")}.`,
+      );
+    }
+    if (situation.arbreSale) {
+      refus.push(
+        "Le checkout principal a des modifications non commitées : les commiter ou les écarter avant de lancer.",
+      );
+    }
+    if (situation.worktreeExiste) {
+      refus.push(`Le worktree ${dossier} existe déjà.`);
+    }
+    if (situation.brancheExiste) {
+      refus.push(`La branche ${branche} existe déjà.`);
+    }
   }
   if (refus.length > 0) return { refus, actions: [] };
 
@@ -186,8 +214,38 @@ export function decider(situation, valeurs) {
     commandeLienPreview: valeurs.commandes.lienPreview,
     compteGh: valeurs.compteGh,
   });
+  const prompt = relance
+    ? `${contenu}\n\n${texteRelance({ numero, branche, message: relance.message })}`
+    : contenu;
 
   const { commandes } = valeurs;
+  const session = {
+    type: "lancerSession",
+    nom: branche,
+    modele: valeurs.modeleSession,
+    modePermission: MODE_PERMISSION,
+    sansMcp: true,
+    dossier,
+    fichierPrompt,
+    instruction: `Ton prompt de session est dans le fichier ${fichierPrompt} : lis-le en entier avec l'outil Read, puis suis-le à la lettre.`,
+  };
+  if (relance) {
+    return {
+      refus: [],
+      actions: [
+        { type: "ecrirePrompt", fichier: fichierPrompt, contenu: prompt },
+        session,
+        {
+          type: "enregistrerSession",
+          ticket: numero,
+          nom: branche,
+          fichierEtat: chemins.fichier,
+          relance: true,
+        },
+        { type: "verifierSession", nom: branche },
+      ],
+    };
+  }
   return {
     refus: [],
     actions: [
@@ -209,16 +267,7 @@ export function decider(situation, valeurs) {
         dossier,
       },
       { type: "ecrirePrompt", fichier: fichierPrompt, contenu },
-      {
-        type: "lancerSession",
-        nom: branche,
-        modele: valeurs.modeleSession,
-        modePermission: "auto",
-        sansMcp: true,
-        dossier,
-        fichierPrompt,
-        instruction: `Ton prompt de session est dans le fichier ${fichierPrompt} : lis-le en entier avec l'outil Read, puis suis-le à la lettre.`,
-      },
+      session,
       {
         type: "enregistrerSession",
         ticket: numero,
@@ -254,7 +303,9 @@ export function decrire(action) {
     case "lancerSession":
       return `Lancer la session de fond ${action.nom} (modèle ${action.modele}, mode ${action.modePermission}, sans serveur MCP) dans ${action.dossier}`;
     case "enregistrerSession":
-      return `Enregistrer l'identifiant de la session ${action.nom} dans ${action.fichierEtat}`;
+      return action.relance
+        ? `Remplacer la session de ${action.nom} dans ${action.fichierEtat}, compteurs gardés`
+        : `Enregistrer l'identifiant de la session ${action.nom} dans ${action.fichierEtat}`;
     case "verifierSession":
       return `Vérifier la session ${action.nom} dans le listage JSON (claude agents --json)`;
     default:
@@ -321,6 +372,13 @@ function lire({ numero, options, racine, valeurs, env, home }) {
     brancheExiste,
     enParallele: numerosDepuisOption(options["en-parallele"]),
     orchestrateur: options.orchestrateur ?? `orch-${valeurs.projet}`,
+    relance: options.relancer
+      ? {
+          message:
+            options.message ??
+            "La session précédente de ce ticket s'est arrêtée : reprends-le.",
+        }
+      : null,
     racine,
     home,
     modelePrompt: readFileSync(cheminModelePrompt(home), "utf8"),
@@ -421,7 +479,8 @@ export async function executerAction(action, { racine, sources, env, suivi }) {
       return;
     }
     case "enregistrerSession": {
-      const etat = ajouterSession(lireEtat(action.fichierEtat), action.ticket, {
+      const ajouter = action.relance ? remplacerSession : ajouterSession;
+      const etat = ajouter(lireEtat(action.fichierEtat), action.ticket, {
         id: suivi.idSession,
         nom: action.nom,
         demarreA: suivi.demarreA,
@@ -438,7 +497,7 @@ export async function executerAction(action, { racine, sources, env, suivi }) {
 }
 
 const USAGE =
-  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--orchestrateur <nom>]";
+  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--orchestrateur <nom>] [--relancer --message <texte>]";
 
 export async function main(argv) {
   const { values: options, positionals } = parseArgs({
@@ -448,6 +507,8 @@ export async function main(argv) {
       "dry-run": { type: "boolean", default: false },
       "en-parallele": { type: "string" },
       orchestrateur: { type: "string" },
+      relancer: { type: "boolean", default: false },
+      message: { type: "string" },
     },
   });
   if (!/^\d+$/.test(positionals[0] ?? "")) {

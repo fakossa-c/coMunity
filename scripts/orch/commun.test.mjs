@@ -6,6 +6,8 @@ import {
   etatVide,
   fusionnerValeurs,
   idDepuisSortieBg,
+  modifierEntree,
+  remplacerSession,
 } from "./commun.mjs";
 
 const projet = {
@@ -29,6 +31,8 @@ const projet = {
   dureeMaxSessionMinutes: 180,
   delaiInactiviteMinutes: 30,
   reprisesMax: 2,
+  echecsSessionMax: 3,
+  attenteRepriseMinutes: 10,
   pousserMigrationsApresFusion: true,
   intervalleBoucleSecondes: 300,
 };
@@ -85,6 +89,22 @@ describe("fusionnerValeurs", () => {
     expect(intervalleBoucleSecondes).toBe(300);
     expect(() => fusionnerValeurs(incomplet, null)).toThrow(
       /intervalleBoucleSecondes/,
+    );
+  });
+
+  it("exige les bornes des reprises : échecs de session et première attente", () => {
+    expect(projet.echecsSessionMax).toBe(3);
+    expect(projet.attenteRepriseMinutes).toBe(10);
+    const sans = (cle) => {
+      const copie = { ...projet };
+      delete copie[cle];
+      return copie;
+    };
+    expect(() => fusionnerValeurs(sans("echecsSessionMax"), null)).toThrow(
+      /echecsSessionMax/,
+    );
+    expect(() => fusionnerValeurs(sans("attenteRepriseMinutes"), null)).toThrow(
+      /attenteRepriseMinutes/,
     );
   });
 
@@ -152,6 +172,86 @@ describe("ajouterSession", () => {
     });
     expect(Object.keys(apres.tickets)).toEqual(["205", "210"]);
     expect(Object.keys(avant.tickets)).toEqual(["205"]);
+  });
+});
+
+describe("remplacerSession", () => {
+  const avant = {
+    version: 1,
+    tickets: {
+      217: {
+        session: "aaaaaaaa",
+        nom: "ticket-217",
+        demarreA: "2026-10-08T10:00:00.000Z",
+        reprises: 1,
+        echecs: 2,
+        inactivites: 1,
+        reprendreApres: "2026-10-08T12:00:00.000Z",
+        questionRepondue: 42,
+      },
+    },
+  };
+
+  it("pointe le ticket sur la nouvelle session et garde ses compteurs", () => {
+    const apres = remplacerSession(avant, 217, {
+      id: "bbbbbbbb",
+      nom: "ticket-217",
+      demarreA: "2026-10-08T13:00:00.000Z",
+    });
+    expect(apres.tickets["217"]).toEqual({
+      session: "bbbbbbbb",
+      nom: "ticket-217",
+      demarreA: "2026-10-08T13:00:00.000Z",
+      reprises: 1,
+      echecs: 2,
+      inactivites: 1,
+      questionRepondue: 42,
+    });
+  });
+
+  it("ne modifie pas l'état reçu", () => {
+    remplacerSession(avant, 217, {
+      id: "bbbbbbbb",
+      nom: "ticket-217",
+      demarreA: "2026-10-08T13:00:00.000Z",
+    });
+    expect(avant.tickets["217"].session).toBe("aaaaaaaa");
+  });
+});
+
+describe("modifierEntree", () => {
+  const avant = {
+    version: 1,
+    tickets: {
+      217: { session: "aaaaaaaa", nom: "ticket-217", reprises: 0 },
+      218: { session: "cccccccc", nom: "ticket-218", reprises: 0 },
+    },
+  };
+
+  it("change les champs donnés du seul ticket visé", () => {
+    const apres = modifierEntree(avant, 217, { reprises: 1, echecs: 1 });
+    expect(apres.tickets["217"]).toEqual({
+      session: "aaaaaaaa",
+      nom: "ticket-217",
+      reprises: 1,
+      echecs: 1,
+    });
+    expect(apres.tickets["218"]).toEqual(avant.tickets["218"]);
+    expect(avant.tickets["217"].reprises).toBe(0);
+  });
+
+  it("retire un champ mis à undefined", () => {
+    const avecAttente = modifierEntree(avant, 217, {
+      reprendreApres: "2026-10-08T12:00:00.000Z",
+    });
+    const apres = modifierEntree(avecAttente, 217, {
+      reprendreApres: undefined,
+    });
+    expect("reprendreApres" in apres.tickets["217"]).toBe(false);
+  });
+
+  it("ne crée pas l'entrée d'un ticket que la boucle ne suit pas", () => {
+    expect(modifierEntree(avant, 999, { reprises: 1 })).toEqual(avant);
   });
 });
 
