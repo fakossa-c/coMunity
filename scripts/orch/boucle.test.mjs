@@ -1557,7 +1557,14 @@ describe("decider : reprise après une question", () => {
       creeLe: "2026-10-08T19:00:00.000Z",
     });
     const resultat = decider(
-      questionRepondue({ commentaires: { 217: [ancienne, reponse217] } }),
+      questionRepondue({
+        commentaires: {
+          217: [
+            ancienne,
+            { ...reponse217, creeLe: "2026-10-08T19:30:00.000Z" },
+          ],
+        },
+      }),
     );
     expect(types(resultat)).toEqual(["rendreHumain"]);
   });

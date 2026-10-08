@@ -140,31 +140,42 @@ export function ligneJournal({ evenement, ticket, detail }, maintenant) {
 
 // La boucle signe ses commentaires ; ils ne sont ni une question ni une réponse.
 const MARQUE_BOUCLE = "**Boucle de livraison**";
-const MOTIF_PORTEE = /\bport[ée]e[\s*:]*(ticket|spec)\b/i;
+// La portée tient seule sur sa ligne (« Portée : ticket »), éventuellement en gras ou en citation :
+// une réponse qui la cite dans une phrase n'est pas une question.
+const MOTIF_PORTEE =
+  /^[ \t>*_-]*port[ée]e[ \t*_]*:[ \t*_]*(ticket|spec)[ \t*_.]*$/im;
 
 const delaBoucle = (c) => c.corps.trimStart().startsWith(MARQUE_BOUCLE);
 const apres = (iso, reference) => new Date(iso) > new Date(reference);
 
 /** La question que la session a posée sur son ticket : le dernier commentaire du propriétaire, posté
  * depuis le début de la session, qui déclare « Portée : ticket » ou « Portée : spec ». Le compte de
- * la session est celui du propriétaire ; un commentaire d'un autre compte ne déclare rien. */
-export function lireQuestion(commentaires, { proprietaire, depuis }) {
-  const question = commentaires
+ * la session est celui du propriétaire ; un commentaire d'un autre compte ne déclare rien.
+ * Avec `repli`, une session qui a oublié la portée a quand même posé sa question : c'est alors le
+ * premier commentaire du propriétaire depuis le début de la session, de portée `spec` (doute :
+ * spec). */
+export function lireQuestion(
+  commentaires,
+  { proprietaire, depuis, repli = false },
+) {
+  const duProprietaire = commentaires
     .filter(
       (c) =>
-        c.auteur === proprietaire &&
-        !delaBoucle(c) &&
-        !apres(depuis, c.creeLe) &&
-        MOTIF_PORTEE.test(c.corps),
+        c.auteur === proprietaire && !delaBoucle(c) && !apres(depuis, c.creeLe),
     )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
+    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe));
+  const declaree = duProprietaire
+    .filter((c) => MOTIF_PORTEE.test(c.corps))
     .at(-1);
+  const question = declaree ?? (repli ? duProprietaire[0] : undefined);
   if (!question) return null;
   return {
     id: question.id,
     url: question.url,
     creeLe: question.creeLe,
-    portee: question.corps.match(MOTIF_PORTEE)[1].toLowerCase(),
+    portee: declaree
+      ? question.corps.match(MOTIF_PORTEE)[1].toLowerCase()
+      : "spec",
   };
 }
 
@@ -257,6 +268,7 @@ function repriseApresQuestion(situation, ticket, entree) {
   const question = lireQuestion(commentaires, {
     proprietaire,
     depuis: entree.demarreA,
+    repli: true,
   });
   if (!question || question.id === entree.questionRepondue) return null;
   const { reponse, autresComptes } = reponseA(question, commentaires, {
@@ -529,7 +541,11 @@ export function decider(situation) {
       attend,
     } = etatDeSession(sessions, entree);
     rapport.enVol.push({ ...identite, session: etatSession });
-    if (bloquee) {
+    // Une PR prête à fusionner passe avant une saisie attendue : la clôture arrête la session.
+    const prPrete =
+      pr?.etat === "MERGED" ||
+      (pr?.etat === "OPEN" && verdicts[t.numero]?.fusionnable === true);
+    if (bloquee && !prPrete) {
       actions.push(
         {
           type: "arreterSession",
@@ -546,11 +562,13 @@ export function decider(situation) {
       );
       continue;
     }
-    if (!terminee) {
+    if (!terminee && !bloquee) {
       actions.push(...bornesDeLaSession(situation, t.numero, entree));
       continue;
     }
 
+    const reprise =
+      pr === null ? repriseApresQuestion(situation, t.numero, entree) : null;
     if (pr?.etat === "MERGED") {
       actions.push({ type: "cloturer", ticket: t.numero, pr: pr.numero });
       aCloturer.add(t.numero);
@@ -571,8 +589,8 @@ export function decider(situation) {
             : `PR #${pr.numero} : vérification manquante`,
         });
       }
-    } else if (repriseApresQuestion(situation, t.numero, entree)) {
-      actions.push(repriseApresQuestion(situation, t.numero, entree));
+    } else if (reprise) {
+      actions.push(reprise);
     } else if (etatSession === "done") {
       actions.push({
         type: "rendreHumain",
@@ -784,15 +802,21 @@ export async function boucle({
 
     let cloture = false;
     let interrompu = false;
+    const arretsRates = new Set();
     for (const action of resultat.actions) {
       if (ports.arretDemande()) {
         interrompu = true;
         break;
       }
+      // Une session qu'on n'a pas pu arrêter peut tourner encore : rien d'autre n'est fait sur son
+      // ticket (ni relance dans son worktree, ni retour à l'utilisateur) avant le tour suivant.
+      if (arretsRates.has(action.ticket)) continue;
       const { ok, evenements } = await ports.executer(action, { dryRun });
       for (const evenement of evenements) {
         noterSiNouveau(evenement);
       }
+      if (!ok && action.type === "arreterSession")
+        arretsRates.add(action.ticket);
       if (ok && action.type === "cloturer") cloture = true;
     }
 
@@ -954,11 +978,12 @@ export function prRetenue(prs) {
 /** La PR d'un ticket est-elle à vérifier ce tour ? Ouverte, sur un ticket ouvert qu'aucun label ne
  * met de côté, une fois la session terminée. */
 export function doitVerifier({ ticket, entree, pr, sessions }) {
+  const { terminee, bloquee } = etatDeSession(sessions, entree);
   return (
     pr?.etat === "OPEN" &&
     ticket.etat === "OPEN" &&
     !ticket.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e)) &&
-    etatDeSession(sessions, entree).terminee
+    (terminee || bloquee)
   );
 }
 
@@ -1362,22 +1387,54 @@ function noterEtat(action, { valeurs, home, dryRun }) {
   };
 }
 
+/** Arrête la session de fond. Un arrêt refusé n'est pas grave si la session ne tourne plus ; si elle
+ * tourne encore, l'action échoue et la boucle ne touche pas à ce ticket ce tour-ci. */
 function arreterSession(action, { dryRun }) {
   const { ticket, session, raison } = action;
   if (dryRun) {
     return repetition(ticket, `arrêterait la session ${session} (${raison})`);
   }
-  let detail = `session ${session} arrêtée (${raison})`;
   try {
     executer("claude", ["stop", session]);
   } catch (erreur) {
-    // Déjà arrêtée, ou disparue : le ticket est rendu quand même.
-    detail += ` ; \`claude stop\` a répondu : ${tronquer(erreur.stderr?.toString().trim() || erreur.message)}`;
+    const message = tronquer(
+      erreur.stderr?.toString().trim() || erreur.message,
+    );
+    if (sessionEnCours(session)) {
+      return {
+        ok: false,
+        evenements: [
+          {
+            evenement: "echec",
+            ticket,
+            detail: `session ${session} non arrêtée (${raison}) : ${message}`,
+          },
+        ],
+      };
+    }
   }
   return {
     ok: true,
-    evenements: [{ evenement: "arret-session", ticket, detail }],
+    evenements: [
+      {
+        evenement: "arret-session",
+        ticket,
+        detail: `session ${session} arrêtée (${raison})`,
+      },
+    ],
   };
+}
+
+/** La session tourne-t-elle encore ? En cas de doute (listage illisible), oui. */
+function sessionEnCours(id) {
+  try {
+    const trouvee = json(
+      executer("claude", ["agents", "--json", "--all"]),
+    ).find((s) => s.id === id);
+    return trouvee ? ["working", "blocked"].includes(trouvee.state) : false;
+  } catch {
+    return true;
+  }
 }
 
 /** La reprise d'une session de fond (`claude --bg --resume`, même identifiant, nom et mode de
