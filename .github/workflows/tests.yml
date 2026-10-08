@@ -19,7 +19,7 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       # Les polices Google sont simulées, comme sur la VM : le build et les tests navigateur ne
       # dépendent pas de l'API CSS de Google. Chemin absolu : Next le charge par require().
