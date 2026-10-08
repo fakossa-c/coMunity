@@ -42,6 +42,9 @@ import {
 // Le décodage vit dans commun.mjs depuis que la frontière (#213) s'en sert aussi.
 export { specDepuisCorps };
 
+// Le mode de permission des sessions de ticket, aussi repassé par la boucle à chaque reprise.
+export const MODE_PERMISSION = "auto";
+
 export const brancheTicket = (numero) => `ticket-${numero}`;
 
 export const dossierWorktree = (racine, valeurs, numero) =>
@@ -220,7 +223,7 @@ export function decider(situation, valeurs) {
     type: "lancerSession",
     nom: branche,
     modele: valeurs.modeleSession,
-    modePermission: "auto",
+    modePermission: MODE_PERMISSION,
     sansMcp: true,
     dossier,
     fichierPrompt,

@@ -204,7 +204,8 @@ export function reponseA(question, commentaires, { proprietaire }) {
 const ETIQUETTE_QUESTION = "needs-info";
 const ETIQUETTE_RENDU = "ready-for-human";
 const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
-// Une session `done`, `stopped` ou introuvable ne travaille plus : son résultat est sur le tracker.
+// Une session `done`, `stopped`, `failed` ou introuvable ne travaille plus : son résultat est sur le
+// tracker (ou, sans PR ni label, elle est à reprendre).
 const ETATS_SESSION_FINIE = ["done", "stopped", "failed"];
 
 const parNumero = (a, b) => a.numero - b.numero;
@@ -224,7 +225,7 @@ export function messageDeReprise({
   reprise,
   reprisesMax,
   etatSession,
-  minutes: inactivite,
+  delaiMinutes,
 }) {
   const autres =
     autresComptes > 0
@@ -237,7 +238,7 @@ export function messageDeReprise({
     return `${debut} Relis la réponse sur le ticket, applique-la et continue jusqu'à la PR, selon le contrat de fin de session de ton prompt. ${MESSAGE_DONNEES}${autres}`;
   }
   if (motif === "inactivite") {
-    return `L'ancienne session du ticket #${ticket} est restée sans nouvelle sortie plus de ${inactivite} min (inactivité) : elle a été arrêtée. Reprends le ticket dans cette nouvelle session, selon le contrat de fin de session. ${MESSAGE_DONNEES}`;
+    return `L'ancienne session du ticket #${ticket} est restée sans nouvelle sortie plus de ${delaiMinutes} min (inactivité) : elle a été arrêtée. Reprends le ticket dans cette nouvelle session, selon le contrat de fin de session. ${MESSAGE_DONNEES}`;
   }
   if (motif === "echec") {
     return `Ta session s'est interrompue (état ${etatSession}) avant d'ouvrir la PR du ticket #${ticket}, par exemple à la limite de l'abonnement. Reprends où tu en étais : relis \`git log\` et \`git status\` du worktree, le ticket et ses commentaires, puis continue jusqu'à la PR. Rien de commité n'est perdu. ${MESSAGE_DONNEES}`;
@@ -288,7 +289,15 @@ function repriseApresQuestion(situation, ticket, entree) {
   });
 }
 
-const minutes = (ms) => Math.round(ms / 60_000);
+/** Rend le ticket à l'utilisateur sans que la PR ouverte lève la décision (session arrêtée). */
+const rendre = (ticket, explication) => ({
+  type: "rendreHumain",
+  ticket,
+  sansLeveeParPr: true,
+  explication,
+});
+
+const enMinutes = (ms) => Math.round(ms / 60_000);
 
 /** Les bornes d'une session qui travaille : la durée maximale (depuis son dernier démarrage ou sa
  * dernière reprise) rend le ticket ; une session sans nouvelle sortie depuis le délai d'inactivité
@@ -306,12 +315,10 @@ function bornesDeLaSession(situation, ticket, entree) {
   if (maintenant - demarreA > bornes.dureeMaxMs) {
     return [
       arret("durée maximale dépassée"),
-      {
-        type: "rendreHumain",
+      rendre(
         ticket,
-        sansLeveeParPr: true,
-        explication: `La session ${entree.nom} a dépassé la durée maximale (${minutes(bornes.dureeMaxMs)} min, démarrée à ${entree.demarreA}) : elle est arrêtée, son travail commité reste sur la branche. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
-      },
+        `La session ${entree.nom} a dépassé la durée maximale (${enMinutes(bornes.dureeMaxMs)} min, démarrée à ${entree.demarreA}) : elle est arrêtée, son travail commité reste sur la branche. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+      ),
     ];
   }
   const sortie = situation.activites[ticket];
@@ -322,12 +329,10 @@ function bornesDeLaSession(situation, ticket, entree) {
   if (inactivites >= 1) {
     return [
       arret("inactivité"),
-      {
-        type: "rendreHumain",
+      rendre(
         ticket,
-        sansLeveeParPr: true,
-        explication: `La session ${entree.nom} a dépassé le délai d'inactivité (${minutes(bornes.inactiviteMs)} min sans nouvelle sortie) pour la deuxième fois (relancée une fois déjà) : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
-      },
+        `La session ${entree.nom} a dépassé le délai d'inactivité (${enMinutes(bornes.inactiviteMs)} min sans nouvelle sortie) pour la deuxième fois (relancée une fois déjà) : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+      ),
     ];
   }
   return [
@@ -339,7 +344,7 @@ function bornesDeLaSession(situation, ticket, entree) {
       message: messageDeReprise({
         motif: "inactivite",
         ticket,
-        minutes: minutes(bornes.inactiviteMs),
+        delaiMinutes: enMinutes(bornes.inactiviteMs),
       }),
       changements: { inactivites: inactivites + 1 },
     },
@@ -369,12 +374,10 @@ function reprisePossible(situation, ticket, entree, etatSession) {
   }
   const echecs = (entree.echecs ?? 0) + 1;
   if (echecs >= bornes.echecsMax) {
-    return {
-      type: "rendreHumain",
+    return rendre(
       ticket,
-      sansLeveeParPr: true,
-      explication: `La session ${entree.nom} s'est interrompue : ${echecs} échecs (dernier état : ${etatSession}) sans PR ni label : limite de l'abonnement ou erreur répétée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
-    };
+      `La session ${entree.nom} s'est interrompue : ${echecs} échecs (dernier état : ${etatSession}) sans PR ni label : limite de l'abonnement ou erreur répétée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+    );
   }
   return {
     type: "noterEtat",
@@ -395,12 +398,10 @@ function repriseCiRouge(situation, ticket, entree, pr, ci) {
   const faites = entree.reprises ?? 0;
   const max = situation.bornes.reprisesCiMax;
   if (faites >= max) {
-    return {
-      type: "rendreHumain",
+    return rendre(
       ticket,
-      sansLeveeParPr: true,
-      explication: `Le contrôle de CI de la PR #${pr.numero} est rouge pour la ${max + 1}e fois (session reprise ${max} fois) : ${ci.url}. Le ticket est rendu : corriger la PR à la main.`,
-    };
+      `Le contrôle de CI de la PR #${pr.numero} est rouge pour la ${max + 1}e fois (session reprise ${max} fois) : ${ci.url}. Le ticket est rendu : corriger la PR à la main.`,
+    );
   }
   return actionDeReprise(situation, {
     motif: "ci",
@@ -553,12 +554,10 @@ export function decider(situation) {
           session: entree.session,
           raison: "attend une saisie",
         },
-        {
-          type: "rendreHumain",
-          ticket: t.numero,
-          sansLeveeParPr: true,
-          explication: `La session ${entree.nom} attendait une saisie (${attend ?? "non précisée"}) et n'a personne à qui la demander : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`), ou répondre par un commentaire puis relancer.`,
-        },
+        rendre(
+          t.numero,
+          `La session ${entree.nom} attendait une saisie (${attend ?? "non précisée"}) et n'a personne à qui la demander : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`), ou répondre par un commentaire puis relancer.`,
+        ),
       );
       continue;
     }
@@ -1479,7 +1478,7 @@ async function reprendreOuRelancer(action, contexte) {
             "-n",
             action.nom,
             "--permission-mode",
-            "auto",
+            MODE_PERMISSION,
             "--model",
             valeurs.modeleSession,
             "--strict-mcp-config",
