@@ -44,6 +44,26 @@ describe("verdict avant outil", () => {
     }
   });
 
+  it("refuse nohup, setsid et disown, même sans &", () => {
+    for (const command of [
+      "nohup npm run dev",
+      "setsid npm run dev",
+      "npm run dev; disown",
+    ]) {
+      expect(verdict(session("Bash", { command }))).toMatch(/arrière-plan/);
+    }
+  });
+
+  it("ne confond pas un & ou un nohup entre guillemets, échappés compris, avec un détachement", () => {
+    for (const command of [
+      String.raw`node -e "console.log(\"a & b\")"`,
+      String.raw`echo "dit \"x\" & y"`,
+      'grep "nohup" journal.txt',
+    ]) {
+      expect(verdict(session("Bash", { command }))).toBeNull();
+    }
+  });
+
   it("laisse passer une commande au premier plan", () => {
     for (const command of [
       "npm test",
