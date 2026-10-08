@@ -1,4 +1,6 @@
 // La boucle de livraison (spec #208, ticket #216).
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 // --- Verrou -----------------------------------------------------------------------------------
 
@@ -18,6 +20,55 @@ export function decisionVerrou({ verrou, pidVivant }) {
     action: "reprendre",
     raison: `Verrou d'une boucle qui ne tourne plus (${qui}) : repris.`,
   };
+}
+
+/** Prend le verrou du dépôt : le fichier est créé d'un coup (`wx`), donc deux boucles qui démarrent
+ * ensemble n'ont jamais toutes les deux le verrou. Rend { ok, raison }. */
+export function prendreVerrou({ fichier, pid, mode, maintenant, pidVivant }) {
+  const contenu = { pid, depuis: maintenant.toISOString(), mode };
+  const ecrire = () => {
+    mkdirSync(dirname(fichier), { recursive: true });
+    writeFileSync(fichier, `${JSON.stringify(contenu)}\n`, { flag: "wx" });
+  };
+  try {
+    ecrire();
+    return { ok: true };
+  } catch (erreur) {
+    if (erreur.code !== "EEXIST") throw erreur;
+  }
+  let verrou = null;
+  try {
+    verrou = JSON.parse(readFileSync(fichier, "utf8"));
+  } catch {
+    // Verrou illisible (écriture interrompue) : traité comme celui d'une boucle morte.
+  }
+  const decision = decisionVerrou({
+    verrou: verrou ?? { pid: "?", depuis: "?", mode: "?" },
+    pidVivant: verrou ? pidVivant(verrou.pid) : false,
+  });
+  if (decision.action === "refuser")
+    return { ok: false, raison: decision.raison };
+  unlinkSync(fichier);
+  try {
+    ecrire();
+  } catch (erreur) {
+    if (erreur.code !== "EEXIST") throw erreur;
+    return {
+      ok: false,
+      raison: "Une autre boucle vient de prendre le verrou.",
+    };
+  }
+  return { ok: true, raison: decision.raison };
+}
+
+/** Rend le verrou, s'il est bien celui de cette boucle. */
+export function rendreVerrou({ fichier, pid }) {
+  try {
+    if (JSON.parse(readFileSync(fichier, "utf8")).pid === pid)
+      unlinkSync(fichier);
+  } catch {
+    // Déjà rendu, ou illisible : rien à rendre.
+  }
 }
 
 // --- Journal ----------------------------------------------------------------------------------
