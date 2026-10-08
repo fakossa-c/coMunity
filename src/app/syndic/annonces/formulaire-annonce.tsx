@@ -32,7 +32,7 @@ import {
   type ErreurFormulaire,
   type Resultat,
 } from "@/lib/resultat";
-import { clientNavigateur } from "@/lib/supabase/navigateur";
+import { deposerFichier } from "@/lib/envoi-photos";
 import { BlocFormulaire, CLASSES_FORMULAIRE } from "../colonne-formulaire";
 import { enregistrerAnnonce, preparerDepot } from "./actions";
 import { FormulaireSondage, SondagePublie } from "./formulaire-sondage";
@@ -136,13 +136,8 @@ export function FormulaireAnnonce({ annonce }: Props) {
           taille: fichier.size,
         });
         if (!depot.ok) return setResultat(depot);
-        const supabase = await clientNavigateur();
-        const { error } = await supabase.storage
-          .from(BUCKET_ANNONCES)
-          .uploadToSignedUrl(depot.chemin, depot.token, fichier, {
-            contentType: fichier.type,
-          });
-        if (error)
+        const deposee = await deposerFichier(BUCKET_ANNONCES, depot, fichier);
+        if (!deposee)
           return setResultat({
             ok: false,
             message: `Le fichier « ${fichier.name} » n'a pas pu être envoyé. Réessayez dans un instant.`,
