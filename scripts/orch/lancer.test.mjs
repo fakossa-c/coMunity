@@ -6,6 +6,7 @@ import {
   decrire,
   numerosDepuisOption,
   specDepuisCorps,
+  worktreeEnregistre,
 } from "./lancer.mjs";
 
 const valeurs = {
@@ -342,6 +343,38 @@ describe("construirePrompt", () => {
     expect(contenu).not.toMatch(/<[^>]+>/);
   });
 
+  it("ajoute la spec au prompt quand le gabarit n'a pas de place pour elle", () => {
+    const contenu = construirePrompt(
+      "```\nTicket #<n> (<titre>).\n```",
+      base(),
+    );
+    expect(contenu).toContain("spec #208");
+    expect(contenu).toContain(base().specLien);
+  });
+
+  it("n'ajoute pas la spec une seconde fois quand le gabarit la cite déjà", () => {
+    const contenu = construirePrompt("```\nSpec : {{specLien}}\n```", base());
+    expect(contenu.split(base().specLien)).toHaveLength(2);
+  });
+
+  it("n'ajoute rien quand le ticket n'a pas de spec", () => {
+    const contenu = construirePrompt("```\nTicket #<n>.\n```", {
+      ...base(),
+      specNumero: "aucune",
+      specLien: "aucun",
+    });
+    expect(contenu).toBe("Ticket #210.");
+  });
+
+  it("refuse un gabarit à l'ancien format qui garde un <…> qu'aucune valeur ne remplit", () => {
+    expect(() =>
+      construirePrompt(
+        "```\nTicket #<n>, base <commande inédite>.\n```",
+        base(),
+      ),
+    ).toThrow(/<commande inédite>/);
+  });
+
   it("dit que la prise du ticket et l'installation sont déjà faites, au lieu de les demander", () => {
     const ancien = [
       "```",
@@ -393,5 +426,34 @@ describe("lecture du ticket et des options", () => {
     expect(numerosDepuisOption("205,207")).toEqual([205, 207]);
     expect(numerosDepuisOption("#205 #207")).toEqual([205, 207]);
     expect(numerosDepuisOption(undefined)).toEqual([]);
+  });
+});
+
+describe("worktreeEnregistre", () => {
+  const sortie = [
+    "worktree /depot/coMunity",
+    "HEAD abc",
+    "branch refs/heads/develop",
+    "",
+    "worktree C:/Users/f/coMunity/.claude/worktrees/ticket-210",
+    "HEAD def",
+    "",
+  ].join("\n");
+
+  it("reconnaît un worktree que git liste, même si le dossier a disparu", () => {
+    expect(worktreeEnregistre(sortie, "/depot/coMunity")).toBe(true);
+  });
+
+  it("compare sans tenir compte du sens des barres (git écrit /, path.join écrit \\ sous Windows)", () => {
+    expect(
+      worktreeEnregistre(
+        sortie,
+        "C:\\Users\\f\\coMunity\\.claude\\worktrees\\ticket-210",
+      ),
+    ).toBe(true);
+  });
+
+  it("rend false pour un dossier que git ne liste pas", () => {
+    expect(worktreeEnregistre(sortie, "/depot/coMunity/ticket-9")).toBe(false);
   });
 });

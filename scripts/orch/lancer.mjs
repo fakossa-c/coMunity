@@ -492,3 +492,7 @@ if (
     },
   );
 }
+
+export const worktreeEnregistre = () => {
+  throw new Error("à faire");
+};
