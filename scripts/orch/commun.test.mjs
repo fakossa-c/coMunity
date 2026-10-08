@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ajouterSession,
+  argsMiseAJourBranche,
   cheminsEtat,
   etatVide,
   fusionnerValeurs,
@@ -31,13 +32,40 @@ const projet = {
   dureeMaxSessionMinutes: 180,
   delaiInactiviteMinutes: 30,
   reprisesMax: 2,
+  misesAJourBrancheMax: 3,
   echecsSessionMax: 3,
   attenteRepriseMinutes: 10,
   pousserMigrationsApresFusion: true,
   intervalleBoucleSecondes: 300,
 };
 
+describe("argsMiseAJourBranche", () => {
+  it("appelle l'API de mise à jour de la branche avec le commit de tête attendu", () => {
+    expect(
+      argsMiseAJourBranche({
+        depot: "fakossa-c/coMunity",
+        pr: 236,
+        tete: "c1b4a9a11b95cba3e48d7062626dfd8ad45f2894",
+      }),
+    ).toEqual([
+      "api",
+      "--method",
+      "PUT",
+      "repos/fakossa-c/coMunity/pulls/236/update-branch",
+      "-f",
+      "expected_head_sha=c1b4a9a11b95cba3e48d7062626dfd8ad45f2894",
+    ]);
+  });
+});
+
 describe("fusionnerValeurs", () => {
+  it("exige le nombre maximal de mises à jour de branche par ticket", () => {
+    const { misesAJourBrancheMax, ...sans } = projet;
+    expect(() => fusionnerValeurs(sans, null)).toThrow(
+      /misesAJourBrancheMax/,
+    );
+  });
+
   it("rend les valeurs du projet avec les valeurs de machine par défaut", () => {
     const valeurs = fusionnerValeurs(projet, null);
     expect(valeurs.brancheIntegration).toBe("develop");
