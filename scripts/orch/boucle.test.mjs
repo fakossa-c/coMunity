@@ -6,6 +6,8 @@ import {
   decider,
   boucle,
   decisionVerrou,
+  evenementsCloture,
+  evenementsLancement,
   formaterRapport,
   ligneJournal,
   prendreVerrou,
@@ -836,5 +838,207 @@ describe("verrou sur le disque", () => {
     });
     rendreVerrou({ fichier, pid: 9999 });
     expect(JSON.parse(readFileSync(fichier, "utf8")).pid).toBe(1111);
+  });
+});
+
+// --- Lecture de ce que rendent les scripts des tickets précédents ----------------------------
+
+describe("capturer", () => {
+  it("rend le code, la sortie et les erreurs d'une fonction, sans rien laisser à l'écran", async () => {
+    const avant = console.log;
+    const resultat = await capturer(async () => {
+      console.log("une ligne", 3);
+      console.error("une erreur");
+      return 1;
+    });
+    expect(resultat).toEqual({
+      code: 1,
+      sortie: "une ligne 3",
+      erreurs: "une erreur",
+    });
+    expect(console.log).toBe(avant);
+  });
+
+  it("rend une exception comme un échec, console rétablie", async () => {
+    const avant = console.error;
+    const resultat = await capturer(() => {
+      throw new Error("gh est introuvable");
+    });
+    expect(resultat.code).toBe(1);
+    expect(resultat.erreurs).toContain("gh est introuvable");
+    expect(console.error).toBe(avant);
+  });
+});
+
+describe("evenementsLancement", () => {
+  it("note la session lancée avec son identifiant", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 0,
+      sortie:
+        "1/12 Assigner\n\nSession ticket-218 lancée (4ddefc4a) : claude attach 4ddefc4a",
+      erreurs: "",
+    });
+    expect(resultat.ok).toBe(true);
+    expect(resultat.pris).toBe(true);
+    expect(resultat.evenements).toEqual([
+      {
+        evenement: "lancement",
+        ticket: 218,
+        detail: "session ticket-218 lancée (4ddefc4a)",
+      },
+    ]);
+  });
+
+  it("un refus ne prend pas le ticket : il sera réessayé au tour suivant", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 1,
+      sortie: "",
+      erreurs:
+        "Refus : Le checkout principal a des modifications non commitées.",
+    });
+    expect(resultat.ok).toBe(false);
+    expect(resultat.pris).toBe(false);
+    expect(resultat.evenements[0].evenement).toBe("echec");
+    expect(resultat.evenements[0].detail).toContain("Refus");
+  });
+
+  it("un échec après l'assignation laisse un ticket pris sans session", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 1,
+      sortie: "",
+      erreurs:
+        "Échec à l'étape 5 (isoler) : Command failed\nÉtapes faites : assigner, statut, recuperer, creerWorktree.",
+    });
+    expect(resultat.pris).toBe(true);
+    expect(resultat.ok).toBe(false);
+  });
+
+  it("un échec à l'assignation elle-même ne prend rien", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 1,
+      sortie: "",
+      erreurs: "Échec à l'étape 1 (assigner) : gh a répondu 502",
+    });
+    expect(resultat.pris).toBe(false);
+  });
+});
+
+describe("evenementsCloture", () => {
+  const etapes = [
+    "1/9 Fusionner la PR #231 (gh pr merge --merge) sur le commit de tête c1b4a9a",
+    "2/9 Mettre develop à jour dans le checkout principal (/depot)",
+    "3/9 Passer le ticket #212 « Done » sur le tableau",
+  ].join("\n");
+
+  it("note la vérification, la fusion et la clôture d'une clôture réussie", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 0,
+      sortie: `${etapes}\n\nTicket #212 clôturé.`,
+      erreurs: "",
+    });
+    expect(resultat.ok).toBe(true);
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual([
+      "verification",
+      "fusion",
+      "cloture",
+    ]);
+  });
+
+  it("ne note pas de fusion quand la clôture échoue à l'étape de fusion", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 1,
+      sortie: etapes.split("\n")[0],
+      erreurs: "Échec à l'étape 1 (fusionner) : merge refused",
+    });
+    expect(resultat.ok).toBe(false);
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual([
+      "verification",
+      "echec",
+    ]);
+  });
+
+  it("note la fusion faite quand la clôture échoue plus loin", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 1,
+      sortie: etapes,
+      erreurs: "Échec à l'étape 2 (majDevelop) : checkout sale",
+    });
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual([
+      "verification",
+      "fusion",
+      "echec",
+    ]);
+  });
+
+  it("note le refus de la vérification interne sans verification ni fusion", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 1,
+      sortie: "",
+      erreurs: "La PR de #212 n'est pas fusionnable :\n  ci : rouge",
+    });
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual(["echec"]);
+    expect(resultat.evenements[0].detail).toContain("ci : rouge");
+  });
+
+  it("note une clôture déjà entièrement faite", () => {
+    const resultat = evenementsCloture({
+      ticket: 212,
+      code: 0,
+      sortie: "Le ticket #212 est déjà entièrement clôturé.",
+      erreurs: "",
+    });
+    expect(resultat.ok).toBe(true);
+    expect(resultat.evenements.map((e) => e.evenement)).toEqual(["cloture"]);
+  });
+});
+
+describe("appartientALaSelection", () => {
+  const issue = (numero, corps = "") => ({ numero, corps });
+
+  it("retient les sous-issues de la spec, par la frontière ou par la ligne Parent", () => {
+    const mode = { type: "spec", numero: 208 };
+    expect(
+      appartientALaSelection(
+        mode,
+        issue(216, "## Parent\n\nSpec #208"),
+        new Set(),
+      ),
+    ).toBe(true);
+    expect(appartientALaSelection(mode, issue(300), new Set([300]))).toBe(true);
+    expect(
+      appartientALaSelection(
+        mode,
+        issue(150, "## Parent\n\nSpec #168"),
+        new Set(),
+      ),
+    ).toBe(false);
+  });
+
+  it("retient les tickets nommés, et tout en mode tous", () => {
+    expect(
+      appartientALaSelection(
+        { type: "tickets", numeros: [4, 5] },
+        issue(5),
+        new Set(),
+      ),
+    ).toBe(true);
+    expect(
+      appartientALaSelection(
+        { type: "tickets", numeros: [4, 5] },
+        issue(6),
+        new Set(),
+      ),
+    ).toBe(false);
+    expect(appartientALaSelection({ type: "tous" }, issue(6), new Set())).toBe(
+      true,
+    );
   });
 });
