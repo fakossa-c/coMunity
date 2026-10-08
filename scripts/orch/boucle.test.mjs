@@ -573,6 +573,10 @@ function creerMonde(surcharge = {}) {
     sessions: {},
     prs: {},
     verdicts: {},
+    commentaires: {},
+    activites: {},
+    transcripts: {},
+    specs: {},
     propre: true,
     arret: false,
     actionsExecutees: [],
@@ -611,6 +615,12 @@ function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
           ),
       );
       return {
+        maintenant: MAINTENANT,
+        bornes,
+        commentaires: monde.commentaires,
+        activites: monde.activites,
+        transcripts: monde.transcripts,
+        specs: monde.specs,
         checkoutPrincipalPropre: monde.propre,
         tickets,
         etat: { version: 1, tickets: monde.entrees },
