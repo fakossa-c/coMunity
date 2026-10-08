@@ -11,9 +11,10 @@
 // pas de push forcé, pas de suppression de la branche, règles appliquées aux administrateurs.
 //
 // État d'avant : à la rédaction du ticket, ni `develop` ni `main` n'étaient protégées. `--retirer`
-// supprime la protection de chaque branche, ce qui rend cet état. Pour ne jamais défaire ou écraser
-// une protection qu'elle n'a pas posée, `--poser` refuse (sans rien poser) une branche dont les
-// réglages existent et diffèrent des siens : `--etat` les montre.
+// supprime la protection de chaque branche, ce qui rend cet état, même si quelqu'un l'a modifiée à
+// la main depuis (`--etat` la montre d'abord). Pour ne jamais écraser une protection qu'elle n'a pas
+// posée, `--poser` refuse (sans rien poser) une branche dont les réglages existent et diffèrent des
+// siens.
 //
 // Même architecture que lancer.mjs et verifier-pr.mjs : `lire` (gh, lecture seule), `decider`
 // (pure : les protections lues en entrée, les appels à faire en sortie), `executer` (faire, ou
@@ -36,6 +37,13 @@ const AUTRES_REGLAGES = [
   "required_conversation_resolution",
   "lock_branch",
   "allow_fork_syncing",
+  "required_signatures",
+];
+// Réglages de revue d'une PR que la commande ne pose pas.
+const REGLAGES_DE_REVUE = [
+  "dismiss_stale_reviews",
+  "require_code_owner_reviews",
+  "require_last_push_approval",
 ];
 const USAGE =
   "Usage : node scripts/orch/proteger-branches.mjs --poser | --retirer | --etat [--dry-run]";
@@ -79,7 +87,10 @@ export function resumer(reponse) {
     pullRequestObligatoire: Boolean(revues),
     approbations: revues?.required_approving_review_count ?? 0,
     restrictionsDePush: Boolean(reponse.restrictions),
-    autres: AUTRES_REGLAGES.filter((nom) => actif(reponse[nom])),
+    autres: [
+      ...REGLAGES_DE_REVUE.filter((nom) => revues?.[nom] === true),
+      ...AUTRES_REGLAGES.filter((nom) => actif(reponse[nom])),
+    ],
   };
 }
 
