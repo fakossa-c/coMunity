@@ -7,6 +7,7 @@ import {
   fichiersDepuisCorps,
   formater,
   modeDepuisOptions,
+  numeroDepuisNomTicket,
   recoupe,
   selectionner,
   supabasesDemarres,
@@ -704,5 +705,17 @@ describe("modeDepuisOptions", () => {
     expect(modeDepuisOptions({ spec: "208", tous: true })).toBeNull();
     expect(modeDepuisOptions({ spec: "abc" })).toBeNull();
     expect(modeDepuisOptions({ tickets: "rien" })).toBeNull();
+  });
+});
+
+describe("numeroDepuisNomTicket", () => {
+  it("le numéro d'une branche, d'un worktree ou d'une session ticket-<n>", () => {
+    expect(numeroDepuisNomTicket("ticket-213")).toBe(213);
+  });
+
+  it("tout autre nom : null", () => {
+    expect(numeroDepuisNomTicket("develop")).toBeNull();
+    expect(numeroDepuisNomTicket("ticket-213-bis")).toBeNull();
+    expect(numeroDepuisNomTicket("orch-comunity")).toBeNull();
   });
 });

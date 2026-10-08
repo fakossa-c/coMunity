@@ -368,6 +368,12 @@ const issueDepuisGh = (brute) => ({
 
 const json = (texte) => JSON.parse(texte);
 
+/** Le numéro d'un nom `ticket-<n>` (branche, worktree ou session de ticket), sinon null. */
+export const numeroDepuisNomTicket = (nom) => {
+  const numero = nom.match(/^ticket-(\d+)$/)?.[1];
+  return numero === undefined ? null : Number(numero);
+};
+
 /** Mémoire réellement disponible : `MemAvailable` sous Linux (le cache de fichiers se libère), la
  * mémoire libre du système ailleurs. */
 export function memoireDisponibleMo() {
@@ -484,9 +490,7 @@ function lire({ mode, valeurs, racine, env, home }) {
     tickets: [
       ...new Set([
         ...pr.closingIssuesReferences.map((r) => r.number),
-        ...(pr.headRefName.match(/^ticket-(\d+)$/)
-          ? [Number(pr.headRefName.slice(7))]
-          : []),
+        ...[numeroDepuisNomTicket(pr.headRefName)].filter((n) => n !== null),
       ]),
     ],
     fichiers: pr.files.map((f) => f.path),
@@ -502,17 +506,17 @@ function lire({ mode, valeurs, racine, env, home }) {
     .split("\n")
     .filter((ligne) => ligne.startsWith("worktree "))
     .map((ligne) => basename(ligne.slice(9)))
-    .filter((nom) => /^ticket-\d+$/.test(nom))
-    .map((nom) => ({ ticket: Number(nom.slice(7)), nom }));
+    .filter((nom) => numeroDepuisNomTicket(nom) !== null)
+    .map((nom) => ({ ticket: numeroDepuisNomTicket(nom), nom }));
 
   const enVol = Object.keys(
     lireEtat(cheminsEtat({ home, projet: valeurs.projet }).fichier).tickets,
   ).map((ticket) => ({ ticket: Number(ticket), origine: "état" }));
   try {
-    for (const s of json(executer("claude", ["agents", "--json"]))) {
-      const ticket = s.name?.match(/^ticket-(\d+)$/)?.[1];
-      if (ticket && !ETATS_SESSION_FINIE.includes(s.state)) {
-        enVol.push({ ticket: Number(ticket), origine: "session" });
+    for (const s of json(executer("claude", ["agents", "--json", "--all"]))) {
+      const ticket = numeroDepuisNomTicket(s.name ?? "");
+      if (ticket !== null && !ETATS_SESSION_FINIE.includes(s.state)) {
+        enVol.push({ ticket, origine: "session" });
       }
     }
   } catch (erreur) {
