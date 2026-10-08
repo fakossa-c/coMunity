@@ -42,6 +42,37 @@ describe("decisionVerrou", () => {
     expect(decision.raison).toContain("2026-10-08T20:00:00.000Z");
   });
 
+  it("reprend le verrou posé avant le dernier démarrage de la machine, même si son pid est réutilisé", () => {
+    const verrou = {
+      pid: 1111,
+      depuis: "2026-10-08T20:00:00.000Z",
+      mode: "spec #208",
+      boot: 1_790_000_000,
+    };
+    const decision = decisionVerrou({
+      verrou,
+      pidVivant: true,
+      moi: { pid: 4242, boot: 1_790_090_000 },
+    });
+    expect(decision.action).toBe("reprendre");
+    expect(decision.raison).toMatch(/redémarr/);
+  });
+
+  it("respecte le verrou d'une boucle de la même session de la machine", () => {
+    const verrou = {
+      pid: 1111,
+      depuis: "2026-10-08T20:00:00.000Z",
+      mode: "spec #208",
+      boot: 1_790_000_000,
+    };
+    const decision = decisionVerrou({
+      verrou,
+      pidVivant: true,
+      moi: { pid: 4242, boot: 1_790_000_030 },
+    });
+    expect(decision.action).toBe("refuser");
+  });
+
   it("reprend le verrou d'une boucle morte sans s'être arrêtée proprement", () => {
     const verrou = {
       pid: 1111,
@@ -256,19 +287,34 @@ describe("decider : tickets en vol", () => {
     expect(resultat.actions[0].explication).toMatch(/done/);
   });
 
-  it("traite une session arrêtée ou disparue comme une session terminée", () => {
+  it("clôture la PR vérifiée d'une session arrêtée ou disparue, mais ne la rend pas sans PR (reprise : ticket suivant)", () => {
     for (const sessions of [[session(217, "stopped")], []]) {
-      const resultat = decider(situation({ sessions }));
-      expect(types(resultat)).toEqual(["rendreHumain"]);
+      const avecPr = decider(
+        situation({
+          sessions,
+          prs: { 217: prOuverte(217) },
+          verdicts: { 217: verdictVert },
+        }),
+      );
+      expect(types(avecPr)).toEqual(["cloturer"]);
+
+      const sansPr = decider(situation({ sessions }));
+      expect(sansPr.actions).toEqual([]);
+      expect(sansPr.rapport.enVol).toHaveLength(1);
     }
-    const disparue = decider(
+  });
+
+  it("retrouve la session par son identifiant avant son nom, parmi les anciennes sessions du même ticket", () => {
+    const resultat = decider(
       situation({
-        sessions: [],
-        prs: { 217: prOuverte(217) },
-        verdicts: { 217: verdictVert },
+        sessions: [
+          { id: "ancienne", name: "ticket-217", state: "done" },
+          session(217, "working"),
+        ],
       }),
     );
-    expect(types(disparue)).toEqual(["cloturer"]);
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.rapport.enVol[0].session).toBe("working");
   });
 
   it("laisse de côté un ticket qui attend une réponse, PR ou non", () => {
@@ -369,6 +415,23 @@ describe("decider : lancements", () => {
       }),
     );
     expect(types(resultat)).toEqual(["cloturer", "lancer"]);
+  });
+
+  it("ne lance pas un ticket que son label met de côté, même si la frontière l'autorise", () => {
+    for (const etiquette of ["needs-info", "ready-for-human"]) {
+      const resultat = decider(
+        situation({
+          tickets: [ticket(217), ticket(218, { etiquettes: [etiquette] })],
+          frontiere: {
+            aLancer: [218],
+            tickets: [
+              { numero: 218, titre: "Ticket 218", lancable: true, raisons: [] },
+            ],
+          },
+        }),
+      );
+      expect(types(resultat)).not.toContain("lancer");
+    }
   });
 
   it("n'a rien à lancer sans lecture de la frontière", () => {
@@ -756,6 +819,20 @@ describe("boucle", () => {
       "arret termine",
     ]);
     expect(ports.lignes[1]).toContain("gh a répondu 502");
+  });
+
+  it("n'écrit qu'une fois la même erreur de lecture ou le même échec d'un tour à l'autre", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde, {
+      erreurs: 3,
+      apresAttente: (m) => {
+        if (m.attentes === 3) m.arret = true;
+      },
+    });
+    await lancerBoucle(ports);
+    expect(
+      ports.lignes.filter((l) => l.includes(" erreur lecture ")),
+    ).toHaveLength(1);
   });
 
   it("en mode répétition, décide un seul tour sans rien modifier", async () => {
