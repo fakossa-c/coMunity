@@ -60,10 +60,9 @@ describe("argsMiseAJourBranche", () => {
 
 describe("fusionnerValeurs", () => {
   it("exige le nombre maximal de mises à jour de branche par ticket", () => {
-    const { misesAJourBrancheMax, ...sans } = projet;
-    expect(() => fusionnerValeurs(sans, null)).toThrow(
-      /misesAJourBrancheMax/,
-    );
+    const sans = { ...projet };
+    delete sans.misesAJourBrancheMax;
+    expect(() => fusionnerValeurs(sans, null)).toThrow(/misesAJourBrancheMax/);
   });
 
   it("rend les valeurs du projet avec les valeurs de machine par défaut", () => {
