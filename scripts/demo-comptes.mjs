@@ -135,7 +135,7 @@ const JOUR_DE_PARIS = new Intl.DateTimeFormat("sv-SE", {
 /**
  * Le jour `AAAA-MM-JJ` dans `decalage` jours, compté depuis le jour de Paris : celui de
  * l'application et de `jour_reference()` (ticket #86). Le jour d'UTC retarde d'un jour entre
- * minuit et 2h à Paris.
+ * minuit et 2h à Paris en heure d'été (1h en heure d'hiver).
  */
 export const jour = (aujourdhui, decalage) => {
   const [annee, mois, quantieme] = JOUR_DE_PARIS.format(aujourdhui)
