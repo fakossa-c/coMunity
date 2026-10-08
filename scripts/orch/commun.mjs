@@ -78,11 +78,7 @@ export function fusionnerValeurs(projet, local) {
 
 /** Le dossier d'état du projet, dans la config globale : l'état n'est jamais dans le dépôt.
  * `ORCH_DOSSIER_ETAT` le remplace, pour qu'un essai de la boucle ne touche jamais l'état réel. */
-export function cheminsEtat({
-  home = homedir(),
-  projet,
-  env = process.env,
-}) {
+export function cheminsEtat({ home = homedir(), projet, env = process.env }) {
   const dossier =
     env.ORCH_DOSSIER_ETAT || join(home, ".claude", "state", "orch", projet);
   return {
