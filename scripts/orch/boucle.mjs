@@ -6,7 +6,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, uptime } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { format, parseArgs } from "node:util";
@@ -25,14 +25,29 @@ import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import { brancheTicket, main as lancer } from "./lancer.mjs";
 import { main as verifierPr } from "./verifier-pr.mjs";
 
+// L'heure de démarrage de la machine se déduit de l'uptime, à quelques secondes près.
+const TOLERANCE_DEMARRAGE_S = 120;
+
 // --- Verrou -----------------------------------------------------------------------------------
 
 /** Ce que fait une boucle qui démarre devant le verrou du dépôt. Pure : `verrou` est le contenu du
  * fichier de verrou (ou null) et `pidVivant` dit si le processus qu'il nomme tourne encore. Un
  * verrou dont le processus est mort (arrêt brutal, machine éteinte) est repris, pas respecté. */
-export function decisionVerrou({ verrou, pidVivant }) {
+export function decisionVerrou({ verrou, pidVivant, moi }) {
   if (!verrou) return { action: "prendre" };
   const qui = `pid ${verrou.pid}, lancée le ${verrou.depuis}, ${verrou.mode}`;
+  // Un numéro de processus se réutilise après un redémarrage : un verrou posé avant le dernier
+  // démarrage de la machine n'est plus celui d'une boucle vivante.
+  if (
+    verrou.boot !== undefined &&
+    moi?.boot !== undefined &&
+    Math.abs(verrou.boot - moi.boot) > TOLERANCE_DEMARRAGE_S
+  ) {
+    return {
+      action: "reprendre",
+      raison: `Verrou posé avant le dernier redémarrage de la machine (${qui}) : repris.`,
+    };
+  }
   if (pidVivant) {
     return {
       action: "refuser",
@@ -47,8 +62,15 @@ export function decisionVerrou({ verrou, pidVivant }) {
 
 /** Prend le verrou du dépôt : le fichier est créé d'un coup (`wx`), donc deux boucles qui démarrent
  * ensemble n'ont jamais toutes les deux le verrou. Rend { ok, raison }. */
-export function prendreVerrou({ fichier, pid, mode, maintenant, pidVivant }) {
-  const contenu = { pid, depuis: maintenant.toISOString(), mode };
+export function prendreVerrou({
+  fichier,
+  pid,
+  mode,
+  maintenant,
+  pidVivant,
+  boot,
+}) {
+  const contenu = { pid, depuis: maintenant.toISOString(), mode, boot };
   const ecrire = () => {
     mkdirSync(dirname(fichier), { recursive: true });
     writeFileSync(fichier, `${JSON.stringify(contenu)}\n`, { flag: "wx" });
@@ -68,6 +90,7 @@ export function prendreVerrou({ fichier, pid, mode, maintenant, pidVivant }) {
   const decision = decisionVerrou({
     verrou: verrou ?? { pid: "?", depuis: "?", mode: "?" },
     pidVivant: verrou ? pidVivant(verrou.pid) : false,
+    moi: { pid, boot },
   });
   if (decision.action === "refuser")
     return { ok: false, raison: decision.raison };
@@ -112,6 +135,7 @@ export function ligneJournal({ evenement, ticket, detail }, maintenant) {
 
 const ETIQUETTE_QUESTION = "needs-info";
 const ETIQUETTE_RENDU = "ready-for-human";
+const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
 // Une session `done`, `stopped` ou introuvable ne travaille plus : son résultat est sur le tracker.
 const ETATS_SESSION_FINIE = ["done", "stopped"];
 
@@ -120,8 +144,12 @@ const parNumero = (a, b) => a.numero - b.numero;
 /** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), et
  * si elle ne travaille plus. */
 export function etatDeSession(sessions, entree) {
+  // `claude agents --all` garde les anciennes sessions du même nom : l'identifiant gardé dans
+  // l'état passe avant le nom.
+  const parId = sessions.filter((s) => s.id === entree.session);
   const etat =
-    trouverSession(sessions, entree, entree.nom)?.state ?? "introuvable";
+    trouverSession(parId.length > 0 ? parId : sessions, entree, entree.nom)
+      ?.state ?? "introuvable";
   return {
     etat,
     terminee: ETATS_SESSION_FINIE.includes(etat) || etat === "introuvable",
@@ -213,7 +241,8 @@ export function decider(situation) {
             : `PR #${pr.numero} : vérification manquante`,
         });
       }
-    } else {
+    } else if (etatSession === "done") {
+      // `stopped` et `introuvable` sans PR : la reprise de la session (ticket suivant) décidera.
       actions.push({
         type: "rendreHumain",
         ticket: t.numero,
@@ -260,7 +289,15 @@ export function decider(situation) {
 
   if (arret?.motif === "checkout-sale") return { arret, actions: [], rapport };
 
-  const aLancer = arret ? [] : (situation.frontiere?.aLancer ?? []);
+  // Un ticket que son label met de côté n'est pas lancé, même si la frontière l'autorise.
+  const misDeCote = new Set(
+    situation.tickets
+      .filter((t) => t.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e)))
+      .map((t) => t.numero),
+  );
+  const aLancer = arret
+    ? []
+    : (situation.frontiere?.aLancer ?? []).filter((n) => !misDeCote.has(n));
   const occupes = enVolOuverts.filter((n) => !aCloturer.has(n));
   for (const numero of aLancer) {
     actions.push({
@@ -292,6 +329,7 @@ export function formaterRapport(rapport) {
 // Après une clôture, un ticket est peut-être libéré : on relit tout de suite plutôt que d'attendre
 // l'intervalle. Le plafond évite qu'une boucle de clôtures ne tienne le processus sans fin.
 const TOURS_IMMEDIATS_MAX = 10;
+const EVENEMENTS_QUI_DURENT = ["attente", "echec", "erreur"];
 
 /** Fait tourner les tours jusqu'à l'arrêt. Les ports portent tout ce qui touche le monde :
  *
@@ -319,7 +357,16 @@ export async function boucle({
     detail: `${libelleMode}${dryRun ? " (répétition : rien n'est modifié)" : ""}`,
   });
 
-  const raisonsDejaNotees = new Map();
+  // Ce qui dure (attente, échec, erreur) se dit une fois, pas à chaque tour.
+  const dernierDetail = new Map();
+  const noterSiNouveau = (evenement) => {
+    if (EVENEMENTS_QUI_DURENT.includes(evenement.evenement)) {
+      const cle = `${evenement.evenement}:${evenement.ticket ?? ""}`;
+      if (dernierDetail.get(cle) === evenement.detail) return;
+      dernierDetail.set(cle, evenement.detail);
+    }
+    noter(evenement);
+  };
   let dernierRapport = null;
   let toursImmediats = 0;
 
@@ -337,12 +384,16 @@ export async function boucle({
     try {
       resultat = decider(await ports.lireSituation());
     } catch (erreur) {
-      noter({ evenement: "erreur", detail: `lecture : ${erreur.message}` });
+      noterSiNouveau({
+        evenement: "erreur",
+        detail: `lecture : ${erreur.message}`,
+      });
       if (dryRun) return 1;
       await ports.attendre(intervalleMs);
       continue;
     }
 
+    dernierDetail.delete("erreur:");
     const texte = formaterRapport(resultat.rapport);
     ports.afficher(texte);
     if (texte !== dernierRapport) {
@@ -367,14 +418,7 @@ export async function boucle({
       }
       const { ok, evenements } = await ports.executer(action, { dryRun });
       for (const evenement of evenements) {
-        // Une attente qui dure se dit une fois, pas à chaque tour.
-        if (evenement.evenement === "attente") {
-          if (raisonsDejaNotees.get(evenement.ticket) === evenement.detail) {
-            continue;
-          }
-          raisonsDejaNotees.set(evenement.ticket, evenement.detail);
-        }
-        noter(evenement);
+        noterSiNouveau(evenement);
       }
       if (ok && action.type === "cloturer") cloture = true;
     }
@@ -509,7 +553,6 @@ export function appartientALaSelection(mode, issue, candidats) {
 
 // --- Lecture du monde -------------------------------------------------------------------------
 
-const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
 const LIMITE_ISSUES = 500;
 const CHAMPS_ISSUE = "number,title,state,labels,body";
 const ECHECS_CLOTURE_MAX = 3;
@@ -836,7 +879,7 @@ async function executerAction(action, { dryRun }, contexte) {
         const rendu = await rendreAuHumain(
           {
             ticket,
-            explication: `Le lancement de la session a échoué après la prise du ticket (assigné, « In Progress ») : ${tronquer(lecture.erreurs)}`,
+            explication: `Le lancement de la session ${contexte.arretDemande() ? "a été interrompu (Ctrl-C)" : "a échoué"} après la prise du ticket (assigné, « In Progress »), sans session enregistrée dans l'état ; une session peut tourner malgré tout (\`claude agents\`) : ${tronquer(lecture.erreurs)}`,
           },
           options,
         );
@@ -920,7 +963,12 @@ export function portsReels({
   fichierJournal,
   signaux,
 }) {
-  const contexte = { valeurs, env, memoire: { echecsCloture: new Map() } };
+  const contexte = {
+    valeurs,
+    env,
+    arretDemande: signaux.arretDemande,
+    memoire: { echecsCloture: new Map() },
+  };
   return {
     maintenant: () => new Date(),
     arretDemande: signaux.arretDemande,
@@ -974,6 +1022,7 @@ export async function main(argv) {
       pid: process.pid,
       mode: libelleMode(mode),
       maintenant: new Date(),
+      boot: Math.round(Date.now() / 1000 - uptime()),
       pidVivant: (pid) => {
         try {
           process.kill(pid, 0);
