@@ -4,6 +4,8 @@
 - `main` = production. La fusion `develop` → `main` est décidée par l'utilisateur.
 - Hors-produit (l'agent fusionne lui-même) : PR qui ne touche que `CLAUDE.md`, `docs/` ou l'outillage (CI, hooks, config de lint et de test).
 - Utilisateurs réels : aucun, jusqu'à l'ouverture aux résidents. D'ici là, l'agent fusionne aussi les PR de tickets et pousse les migrations distantes sans confirmation.
+- Protection de `develop` et de `main`, quand elle est posée : la seule voie est une PR dont le contrôle `Tests` est vert sur un commit à jour avec la base ; ni push direct, ni push forcé, administrateurs compris. Une PR en retard sur `develop` se met à jour avant sa fusion.
+- `node scripts/orch/proteger-branches.mjs --etat` affiche les réglages des deux branches ; `--poser` les pose, `--retirer` remet l'état d'avant (aucune protection), `--dry-run` montre les appels sans les envoyer. Poser ou retirer change un réglage du dépôt qui vaut pour tous : l'utilisateur le décide. Une fusion urgente que la CI bloque : `--retirer`, fusion, puis `--poser`.
 
 ## Supabase distant
 
