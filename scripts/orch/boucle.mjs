@@ -211,3 +211,106 @@ export function formaterRapport(rapport) {
     `Rendus (ready-for-human) : ${liste(rapport.rendus, (r) => `#${r.ticket} ${r.titre}`)}`,
   ].join("\n");
 }
+
+// --- La boucle --------------------------------------------------------------------------------
+
+// Après une clôture, un ticket est peut-être libéré : on relit tout de suite plutôt que d'attendre
+// l'intervalle. Le plafond évite qu'une boucle de clôtures ne tienne le processus sans fin.
+const TOURS_IMMEDIATS_MAX = 10;
+
+/** Fait tourner les tours jusqu'à l'arrêt. Les ports portent tout ce qui touche le monde :
+ *
+ *  ports = {
+ *    maintenant()          : Date
+ *    arretDemande()        : Ctrl-C reçu
+ *    attendre(ms)          : pause entre deux tours (rendue dès qu'un arrêt est demandé)
+ *    lireSituation()       : la `situation` de `decider`, lue sur GitHub, git et claude
+ *    executer(action, { dryRun }) : fait l'action, rend { ok, evenements }
+ *    journal(ligne)        : une ligne de journal
+ *    afficher(texte)       : le rapport du tour, à l'écran
+ *  }
+ *
+ * Rend le code de sortie : 0 (fini, ou interrompu par Ctrl-C), 2 (checkout principal sale). */
+export async function boucle({
+  ports,
+  intervalleMs,
+  libelleMode,
+  dryRun = false,
+}) {
+  const noter = (evenement) =>
+    ports.journal(ligneJournal(evenement, ports.maintenant()));
+  noter({
+    evenement: "demarrage",
+    detail: `${libelleMode}${dryRun ? " (répétition : rien n'est modifié)" : ""}`,
+  });
+
+  const raisonsDejaNotees = new Map();
+  let dernierRapport = null;
+  let toursImmediats = 0;
+
+  for (;;) {
+    if (ports.arretDemande()) {
+      noter({
+        evenement: "arret",
+        detail:
+          "interrompu : les sessions en vol continuent, relancer la boucle pour reprendre",
+      });
+      return 0;
+    }
+
+    let resultat;
+    try {
+      resultat = decider(await ports.lireSituation());
+    } catch (erreur) {
+      noter({ evenement: "erreur", detail: `lecture : ${erreur.message}` });
+      if (dryRun) return 1;
+      await ports.attendre(intervalleMs);
+      continue;
+    }
+
+    const texte = formaterRapport(resultat.rapport);
+    ports.afficher(texte);
+    if (texte !== dernierRapport) {
+      noter({ evenement: "rapport", detail: texte.replaceAll("\n", " | ") });
+      dernierRapport = texte;
+    }
+
+    if (resultat.arret) {
+      noter({
+        evenement: "arret",
+        detail: `${resultat.arret.motif} : ${resultat.arret.raison}`,
+      });
+      return resultat.arret.code;
+    }
+
+    let cloture = false;
+    let interrompu = false;
+    for (const action of resultat.actions) {
+      if (ports.arretDemande()) {
+        interrompu = true;
+        break;
+      }
+      const { ok, evenements } = await ports.executer(action, { dryRun });
+      for (const evenement of evenements) {
+        // Une attente qui dure se dit une fois, pas à chaque tour.
+        if (evenement.evenement === "attente") {
+          if (raisonsDejaNotees.get(evenement.ticket) === evenement.detail) {
+            continue;
+          }
+          raisonsDejaNotees.set(evenement.ticket, evenement.detail);
+        }
+        noter(evenement);
+      }
+      if (ok && action.type === "cloturer") cloture = true;
+    }
+
+    if (dryRun) return 0;
+    if (interrompu) continue;
+    if (cloture && toursImmediats < TOURS_IMMEDIATS_MAX) {
+      toursImmediats += 1;
+      continue;
+    }
+    toursImmediats = 0;
+    await ports.attendre(intervalleMs);
+  }
+}
