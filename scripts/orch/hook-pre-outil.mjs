@@ -20,7 +20,11 @@ const ESPERLUETTE_SEULE = /(?<![&>|])&(?![&>])/;
 
 /** La commande avec le contenu de ses guillemets vidé : un `&` dans une URL entre guillemets ne
  * détache rien. */
-const sansGuillemets = (commande) => commande.replace(/"[^"]*"|'[^']*'/g, '""');
+const sansGuillemets = (commande) =>
+  commande.replace(/"(?:\\.|[^"\\])*"|'[^']*'/g, '""');
+
+// Les commandes qui détachent un processus du shell, sans `&`.
+const DETACHEUR = /(?<![\w-])(?:nohup|setsid|disown)(?![\w-])/;
 
 /** La raison du refus, ou null si l'outil peut passer. `ticket` est le numéro du ticket de la
  * session, ou null hors d'un worktree de ticket. */
@@ -30,9 +34,11 @@ export function verdict({ ticket, outil, entree }) {
     return `Outil d'attente refusé dans une session de ticket (#${ticket}) : attendre un processus de fond a coincé des sessions des dizaines de minutes. ${CONSIGNE}`;
   }
   if (!OUTILS_SHELL.has(outil)) return null;
+  const commande = sansGuillemets(entree?.command ?? "");
   const detache =
     entree?.run_in_background === true ||
-    ESPERLUETTE_SEULE.test(sansGuillemets(entree?.command ?? ""));
+    ESPERLUETTE_SEULE.test(commande) ||
+    DETACHEUR.test(commande);
   if (detache) {
     return `Commande lancée en arrière-plan refusée dans une session de ticket (#${ticket}) : une commande de fond encore en cours en fin de tour fait perdre le travail, et l'attendre coince la session. ${CONSIGNE}`;
   }

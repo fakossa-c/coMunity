@@ -120,13 +120,13 @@ if (process.argv[1]?.endsWith("hook-fin-de-tour.mjs")) {
     const entree = JSON.parse(readFileSync(0, "utf8"));
     const git = contexteGit(entree.cwd);
     const ticket = ticketDuWorktree(git);
+    const hookDejaBloque = entree.stop_hook_active === true;
+    // Hors worktree de ticket ou après un refus : le verdict est connu sans lire GitHub.
+    if (ticket === null || hookDejaBloque) process.exit(0);
     raison = verdict({
       ticket,
-      hookDejaBloque: entree.stop_hook_active === true,
-      // Inutile d'interroger GitHub quand le verdict est déjà rendu d'avance.
-      ...(ticket === null || entree.stop_hook_active === true
-        ? { labels: [], pr: true }
-        : lireGithub({ racine: git.racine, ticket, branche: git.branche })),
+      hookDejaBloque,
+      ...lireGithub({ racine: git.racine, ticket, branche: git.branche }),
       branche: git.branche,
       arbreSale: git.arbreSale,
       commitTete: git.commitTete,
