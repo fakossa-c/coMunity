@@ -1895,3 +1895,109 @@ describe("decider : session en attente d'une saisie", () => {
     expect(resultat.actions).toEqual([]);
   });
 });
+
+// --- Bornes : durée maximale et inactivité ----------------------------------------------------
+
+const il_y_a = (minutes) =>
+  new Date(MAINTENANT.getTime() - minutes * MINUTE).toISOString();
+
+/** Le ticket 217 a une session qui travaille, démarrée et active aux heures données. */
+const enTravail = (compteurs = {}, activite, surcharge = {}) =>
+  situation({
+    etat: { version: 1, tickets: { 217: entree(217, compteurs) } },
+    activites: activite === undefined ? {} : { 217: activite },
+    ...surcharge,
+  });
+
+describe("decider : durée maximale", () => {
+  it("arrête la session qui dépasse la durée maximale et rend le ticket avec la raison", () => {
+    const resultat = decider(enTravail({ demarreA: il_y_a(181) }));
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+    expect(resultat.actions[0]).toMatchObject({
+      ticket: 217,
+      session: "s217",
+    });
+    expect(resultat.actions[1].explication).toMatch(/durée maximale/);
+    expect(resultat.actions[1].explication).toContain("180");
+    expect(resultat.actions[1].sansLeveeParPr).toBe(true);
+  });
+
+  it("laisse travailler une session sous la durée maximale", () => {
+    expect(decider(enTravail({ demarreA: il_y_a(179) })).actions).toEqual([]);
+  });
+
+  it("compte la durée depuis la dernière reprise de la session, pas depuis le premier lancement", () => {
+    const resultat = decider(enTravail({ demarreA: il_y_a(5) }));
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("la durée l'emporte sur l'inactivité", () => {
+    const resultat = decider(enTravail({ demarreA: il_y_a(200) }, il_y_a(60)));
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+  });
+});
+
+describe("decider : inactivité", () => {
+  it("arrête la session sans nouvelle sortie depuis le délai et relance le ticket dans une nouvelle session", () => {
+    const resultat = decider(enTravail({}, il_y_a(31)));
+    expect(types(resultat)).toEqual(["arreterSession", "relancer"]);
+    expect(resultat.actions[1]).toMatchObject({
+      motif: "inactivite",
+      ticket: 217,
+      changements: { inactivites: 1 },
+    });
+    expect(resultat.actions[1].message).toMatch(/inactiv/);
+  });
+
+  it("la deuxième fois, rend le ticket avec la raison", () => {
+    const resultat = decider(enTravail({ inactivites: 1 }, il_y_a(31)));
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+    expect(resultat.actions[1].explication).toMatch(/inactiv/);
+    expect(resultat.actions[1].explication).toContain("30");
+  });
+
+  it("laisse une session qui a produit une sortie récemment", () => {
+    expect(decider(enTravail({}, il_y_a(29))).actions).toEqual([]);
+  });
+
+  it("ne juge pas l'inactivité d'une session dont la dernière sortie est inconnue", () => {
+    expect(decider(enTravail({}, null)).actions).toEqual([]);
+    expect(decider(enTravail({})).actions).toEqual([]);
+  });
+
+  it("compte l'inactivité depuis le démarrage de la session quand sa dernière sortie est plus ancienne", () => {
+    const resultat = decider(enTravail({ demarreA: il_y_a(5) }, il_y_a(90)));
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("ne s'applique pas à une session terminée", () => {
+    const resultat = decider(
+      enTravail({}, il_y_a(300), { sessions: [session(217, "done")] }),
+    );
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+    expect(resultat.actions[0].explication).toMatch(/sans PR ni label/);
+  });
+
+  it("compte les relances par ticket", () => {
+    const resultat = decider(
+      enTravail({ inactivites: 1 }, il_y_a(31), {
+        tickets: [ticket(217), ticket(218)],
+        etat: {
+          version: 1,
+          tickets: {
+            217: entree(217, { inactivites: 1 }),
+            218: entree(218),
+          },
+        },
+        sessions: [session(217, "working"), session(218, "working")],
+        activites: { 217: il_y_a(31), 218: il_y_a(31) },
+      }),
+    );
+    expect(types(resultat)).toEqual([
+      "arreterSession",
+      "rendreHumain",
+      "arreterSession",
+      "relancer",
+    ]);
+  });
+});
