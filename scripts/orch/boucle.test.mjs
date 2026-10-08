@@ -306,7 +306,7 @@ describe("decider : tickets en vol", () => {
     expect(resultat.actions[0].explication).toMatch(/done/);
   });
 
-  it("clôture la PR vérifiée d'une session arrêtée ou disparue, mais ne la rend pas sans PR (reprise : ticket suivant)", () => {
+  it("clôture la PR vérifiée d'une session arrêtée ou disparue, et la garde en vol sans PR (sa reprise est décidée plus bas)", () => {
     for (const sessions of [[session(217, "stopped")], []]) {
       const avecPr = decider(
         situation({
@@ -318,7 +318,7 @@ describe("decider : tickets en vol", () => {
       expect(types(avecPr)).toEqual(["cloturer"]);
 
       const sansPr = decider(situation({ sessions }));
-      expect(sansPr.actions).toEqual([]);
+      expect(types(sansPr)).not.toContain("rendreHumain");
       expect(sansPr.rapport.enVol).toHaveLength(1);
     }
   });

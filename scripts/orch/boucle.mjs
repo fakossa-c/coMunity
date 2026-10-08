@@ -207,6 +207,7 @@ export function messageDeReprise({
   url,
   reprise,
   reprisesMax,
+  etatSession,
 }) {
   const autres =
     autresComptes > 0
@@ -217,6 +218,9 @@ export function messageDeReprise({
       ? `Le propriétaire du dépôt a répondu à ta question sur le ticket #${ticket} : ${reponse.url}.`
       : `Le label \`needs-info\` du ticket #${ticket} a été retiré sans commentaire de réponse du propriétaire après ta question : relis le ticket et ses commentaires.`;
     return `${debut} Relis la réponse sur le ticket, applique-la et continue jusqu'à la PR, selon le contrat de fin de session de ton prompt. ${MESSAGE_DONNEES}${autres}`;
+  }
+  if (motif === "echec") {
+    return `Ta session s'est interrompue (état ${etatSession}) avant d'ouvrir la PR du ticket #${ticket}, par exemple à la limite de l'abonnement. Reprends où tu en étais : relis \`git log\` et \`git status\` du worktree, le ticket et ses commentaires, puis continue jusqu'à la PR. Rien de commité n'est perdu. ${MESSAGE_DONNEES}`;
   }
   if (motif === "ci") {
     return `Le contrôle de CI de ta PR #${pr} est rouge : ${url}. Lis le journal du run (\`gh run view\`), corrige la cause sur la branche du ticket #${ticket}, relance la suite de tests en local (par morceaux), pousse, puis arrête-toi sans surveiller la CI : la boucle la relit. Reprise ${reprise} sur ${reprisesMax} au plus ; au-delà, le ticket est rendu. ${MESSAGE_DONNEES}`;
@@ -261,6 +265,49 @@ function repriseApresQuestion(situation, ticket, entree) {
     }),
     changements: { questionRepondue: question.id, reprendreApres: undefined },
   });
+}
+
+/** Une session interrompue (échec, limite de l'abonnement, arrêt du superviseur) sans PR ni label :
+ * l'échec est noté avec l'heure de la reprise (le délai double à chaque échec), la session est
+ * reprise une fois l'heure passée, et le ticket est rendu au `echecsMax`-ième échec. */
+function reprisePossible(situation, ticket, entree, etatSession) {
+  const { maintenant, bornes } = situation;
+  if (entree.reprendreApres) {
+    if (new Date(entree.reprendreApres) > maintenant) {
+      return {
+        type: "attendre",
+        ticket,
+        raison: `session ${entree.nom} (${etatSession}) : reprise après ${entree.reprendreApres}`,
+      };
+    }
+    return actionDeReprise(situation, {
+      motif: "echec",
+      ticket,
+      entree,
+      message: messageDeReprise({ motif: "echec", ticket, etatSession }),
+      changements: { reprendreApres: undefined },
+    });
+  }
+  const echecs = (entree.echecs ?? 0) + 1;
+  if (echecs >= bornes.echecsMax) {
+    return {
+      type: "rendreHumain",
+      ticket,
+      sansLeveeParPr: true,
+      explication: `La session ${entree.nom} s'est interrompue : ${echecs} échecs (dernier état : ${etatSession}) sans PR ni label : limite de l'abonnement ou erreur répétée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+    };
+  }
+  return {
+    type: "noterEtat",
+    ticket,
+    raison: `session ${entree.nom} ${etatSession} sans PR ni label : échec ${echecs} sur ${bornes.echecsMax}, reprise après attente`,
+    changements: {
+      echecs,
+      reprendreApres: new Date(
+        maintenant.getTime() + bornes.attenteMs * 2 ** (echecs - 1),
+      ).toISOString(),
+    },
+  };
 }
 
 /** CI rouge sur la PR : la session est reprise avec le lien du run, `reprisesCiMax` fois au plus ;
@@ -312,18 +359,30 @@ function specsGelees(situation) {
   return gelees;
 }
 
-/** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), et
- * si elle ne travaille plus. */
+const MOTIF_SAISIE = /input needed|needs input|waiting for input/i;
+
+/** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), si
+ * elle ne travaille plus, et si elle attend une saisie (`blocked`, ou « input needed ») avec ce
+ * qu'elle attend quand `claude agents` le dit. */
 export function etatDeSession(sessions, entree) {
   // `claude agents --all` garde les anciennes sessions du même nom : l'identifiant gardé dans
   // l'état passe avant le nom.
   const parId = sessions.filter((s) => s.id === entree.session);
-  const etat =
-    trouverSession(parId.length > 0 ? parId : sessions, entree, entree.nom)
-      ?.state ?? "introuvable";
+  const trouvee = trouverSession(
+    parId.length > 0 ? parId : sessions,
+    entree,
+    entree.nom,
+  );
+  const etat = trouvee?.state ?? "introuvable";
+  const bloquee =
+    etat === "blocked" || MOTIF_SAISIE.test(`${etat} ${trouvee?.status ?? ""}`);
   return {
     etat,
-    terminee: ETATS_SESSION_FINIE.includes(etat) || etat === "introuvable",
+    bloquee,
+    attend: trouvee?.waitingFor ?? null,
+    terminee:
+      !bloquee &&
+      (ETATS_SESSION_FINIE.includes(etat) || etat === "introuvable"),
   };
 }
 
@@ -392,8 +451,30 @@ export function decider(situation) {
     }
 
     vus.add(t.numero);
-    const { etat: etatSession, terminee } = etatDeSession(sessions, entree);
+    const {
+      etat: etatSession,
+      terminee,
+      bloquee,
+      attend,
+    } = etatDeSession(sessions, entree);
     rapport.enVol.push({ ...identite, session: etatSession });
+    if (bloquee) {
+      actions.push(
+        {
+          type: "arreterSession",
+          ticket: t.numero,
+          session: entree.session,
+          raison: "attend une saisie",
+        },
+        {
+          type: "rendreHumain",
+          ticket: t.numero,
+          sansLeveeParPr: true,
+          explication: `La session ${entree.nom} attendait une saisie (${attend ?? "non précisée"}) et n'a personne à qui la demander : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`), ou répondre par un commentaire puis relancer.`,
+        },
+      );
+      continue;
+    }
     if (!terminee) continue;
 
     if (pr?.etat === "MERGED") {
@@ -419,12 +500,14 @@ export function decider(situation) {
     } else if (repriseApresQuestion(situation, t.numero, entree)) {
       actions.push(repriseApresQuestion(situation, t.numero, entree));
     } else if (etatSession === "done") {
-      // `stopped` et `introuvable` sans PR : la reprise de la session (ticket suivant) décidera.
       actions.push({
         type: "rendreHumain",
         ticket: t.numero,
         explication: `La session ${entree.nom} (état ${etatSession}) s'est terminée sans PR ni label : ni PR ouverte pour la branche, ni \`${ETIQUETTE_QUESTION}\`, ni \`${ETIQUETTE_RENDU}\`. La boucle ne sait pas ce qu'elle a fait ; reprendre le ticket à la main (\`claude attach ${entree.session}\` pour relire la session).`,
       });
+    } else {
+      // `failed`, `stopped` (arrêtée par le superviseur) ou `introuvable`, sans PR : interrompue.
+      actions.push(reprisePossible(situation, t.numero, entree, etatSession));
     }
   }
 
