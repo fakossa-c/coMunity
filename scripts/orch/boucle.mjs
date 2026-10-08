@@ -3,6 +3,7 @@ import {
   appendFileSync,
   mkdirSync,
   readFileSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -12,8 +13,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { format, parseArgs } from "node:util";
 import {
   cheminsEtat,
+  ecrireJson,
   envGh,
   executer,
+  idDepuisSortieBg,
   lireEtat,
   lireValeurs,
   modifierEntree,
@@ -423,20 +426,24 @@ function specsGelees(situation) {
   return gelees;
 }
 
+/** La session du ticket dans `claude agents --json --all`, ou null. `--all` garde les anciennes
+ * sessions du même nom : l'identifiant gardé dans l'état passe avant le nom. */
+export function sessionDuTicket(sessions, entree) {
+  const parId = sessions.filter((s) => s.id === entree.session);
+  return trouverSession(
+    parId.length > 0 ? parId : sessions,
+    entree,
+    entree.nom,
+  );
+}
+
 const MOTIF_SAISIE = /input needed|needs input|waiting for input/i;
 
 /** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), si
  * elle ne travaille plus, et si elle attend une saisie (`blocked`, ou « input needed ») avec ce
  * qu'elle attend quand `claude agents` le dit. */
 export function etatDeSession(sessions, entree) {
-  // `claude agents --all` garde les anciennes sessions du même nom : l'identifiant gardé dans
-  // l'état passe avant le nom.
-  const parId = sessions.filter((s) => s.id === entree.session);
-  const trouvee = trouverSession(
-    parId.length > 0 ? parId : sessions,
-    entree,
-    entree.nom,
-  );
+  const trouvee = sessionDuTicket(sessions, entree);
   const etat = trouvee?.state ?? "introuvable";
   const bloquee =
     etat === "blocked" || MOTIF_SAISIE.test(`${etat} ${trouvee?.status ?? ""}`);
@@ -970,6 +977,61 @@ export function leveeAnomalie({ etiquettes, prsOuvertes }) {
 /** Le ticket est-il rendu après ce nombre d'échecs de clôture d'affilée ? */
 export const rendreApresEchecsDeCloture = (echecs) =>
   echecs >= ECHECS_CLOTURE_MAX;
+
+/** Les bornes du fichier de valeurs, en millisecondes ; le propriétaire du dépôt est le seul dont
+ * les commentaires comptent comme consignes. */
+export function bornesDepuisValeurs(valeurs) {
+  return {
+    dureeMaxMs: valeurs.dureeMaxSessionMinutes * 60_000,
+    inactiviteMs: valeurs.delaiInactiviteMinutes * 60_000,
+    reprisesCiMax: valeurs.reprisesMax,
+    echecsMax: valeurs.echecsSessionMax,
+    attenteMs: valeurs.attenteRepriseMinutes * 60_000,
+    proprietaire: valeurs.depot.split("/")[0],
+  };
+}
+
+/** Où Claude Code range le transcript d'une session : sous le dossier du projet, nommé d'après le
+ * dossier de la session dont les caractères non alphanumériques deviennent des tirets. Sa dernière
+ * écriture est la dernière sortie de la session ; son absence interdit de la reprendre. */
+export function cheminTranscript({ home, cwd, sessionId }) {
+  return join(
+    home,
+    ".claude",
+    "projects",
+    cwd.replace(/[^a-zA-Z0-9]/g, "-"),
+    `${sessionId}.jsonl`,
+  );
+}
+
+/** Les commentaires de `gh issue view --json comments`, dans la forme que lit la décision. */
+export function commentairesDepuisGh(bruts) {
+  return bruts.map((c) => ({
+    id: c.id,
+    auteur: c.author?.login ?? "",
+    corps: c.body,
+    creeLe: c.createdAt,
+    url: c.url,
+  }));
+}
+
+/** Le transcript de la session : { existe, modifieLe }. Une session que `claude agents` ne liste
+ * plus n'a pas de transcript à reprendre. */
+function lireTranscript(session, home) {
+  if (!session?.sessionId || !session.cwd) return { existe: false };
+  try {
+    const stat = statSync(
+      cheminTranscript({
+        home,
+        cwd: session.cwd,
+        sessionId: session.sessionId,
+      }),
+    );
+    return { existe: true, modifieLe: stat.mtime.toISOString() };
+  } catch {
+    return { existe: false };
+  }
+}
 
 /** Les options de frontiere.mjs pour le mode de la boucle. */
 const optionsFrontiere = (mode) =>
