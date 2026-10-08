@@ -1,8 +1,29 @@
 // La boucle de livraison (spec #208, ticket #216).
-import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
-import { format } from "node:util";
-import { specDepuisCorps } from "./commun.mjs";
+import {
+  appendFileSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { format, parseArgs } from "node:util";
+import {
+  cheminsEtat,
+  envGh,
+  executer,
+  lireEtat,
+  lireValeurs,
+  racineCheckoutCourant,
+  racineCheckoutPrincipal,
+  specDepuisCorps,
+} from "./commun.mjs";
+import { main as cloturer } from "./cloturer.mjs";
+import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
+import { brancheTicket, main as lancer } from "./lancer.mjs";
+import { main as verifierPr } from "./verifier-pr.mjs";
 
 // --- Verrou -----------------------------------------------------------------------------------
 
@@ -101,6 +122,16 @@ const sessionDuTicket = (sessions, entree) =>
   sessions.find((s) => s.id === entree.session || s.name === entree.nom) ??
   null;
 
+/** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), et
+ * si elle ne travaille plus. */
+export function etatDeSession(sessions, entree) {
+  const etat = sessionDuTicket(sessions, entree)?.state ?? "introuvable";
+  return {
+    etat,
+    terminee: ETATS_SESSION_FINIE.includes(etat) || etat === "introuvable",
+  };
+}
+
 /** Ce que la boucle fait de chaque ticket suivi, et pourquoi elle s'arrête. Pure : `situation` est
  * déjà lue, rien n'est exécuté.
  *
@@ -165,11 +196,7 @@ export function decider(situation) {
     }
 
     vus.add(t.numero);
-    const session = sessionDuTicket(sessions, entree);
-    const etatSession = session?.state ?? "introuvable";
-    const terminee =
-      ETATS_SESSION_FINIE.includes(etatSession) ||
-      etatSession === "introuvable";
+    const { etat: etatSession, terminee } = etatDeSession(sessions, entree);
     rapport.enVol.push({ ...identite, session: etatSession });
     if (!terminee) continue;
 
@@ -221,8 +248,7 @@ export function decider(situation) {
       return {
         motif: "checkout-sale",
         code: 2,
-        raison:
-          "Le checkout principal a des modifications non commitées : la boucle s'arrête. Les sessions en cours continuent ; relancer la boucle une fois le checkout nettoyé.",
+        raison: `Le checkout principal n'est pas propre (${situation.checkoutPrincipalDetail ?? "modifications non commitées"}) : la boucle s'arrête. Les sessions en cours continuent ; relancer la boucle une fois le checkout remis en état.`,
       };
     }
     if (ouverts.length === 0 && vus.size === 0) {
@@ -478,5 +504,500 @@ export function appartientALaSelection(mode, issue, candidats) {
   return (
     candidats.has(issue.numero) ||
     specDepuisCorps(issue.corps)?.numero === mode.numero
+  );
+}
+
+// --- Lecture du monde -------------------------------------------------------------------------
+
+const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
+const LIMITE_ISSUES = 500;
+const CHAMPS_ISSUE = "number,title,state,labels,body";
+const ECHECS_CLOTURE_MAX = 3;
+
+const json = (texte) => JSON.parse(texte);
+const issueDepuisGh = (brute) => ({
+  numero: brute.number,
+  titre: brute.title,
+  etat: brute.state,
+  etiquettes: brute.labels.map((l) => l.name),
+  corps: brute.body ?? "",
+});
+
+/** Les options de frontiere.mjs pour le mode de la boucle. */
+const optionsFrontiere = (mode) =>
+  ({
+    spec: ["--spec", String(mode.numero)],
+    tickets: ["--tickets", (mode.numeros ?? []).join(",")],
+    tous: ["--tous"],
+  })[mode.type];
+
+export const libelleMode = (mode) =>
+  ({
+    spec: `spec #${mode.numero}`,
+    tickets: `tickets ${(mode.numeros ?? []).map((n) => `#${n}`).join(", ")}`,
+    tous: "tous les tickets ready-for-agent",
+  })[mode.type];
+
+/** La situation d'un tour, lue sur git, claude et GitHub. Les sessions se lisent avant le tracker :
+ * une session vue `done` a posé ses labels avant, et la lecture du tracker qui suit les voit. */
+async function lireSituation({ mode, valeurs, racine, env, home }) {
+  const gh = (...args) => executer("gh", args, { env });
+  const depot = valeurs.depot;
+
+  const branche = executer("git", [
+    "-C",
+    racine,
+    "branch",
+    "--show-current",
+  ]).trim();
+  const sale =
+    executer("git", ["-C", racine, "status", "--porcelain"]).trim() !== "";
+  // La clôture met `develop` à jour dans le checkout principal : sur une autre branche, elle
+  // échouerait à chaque ticket. L'arrêt dit pourquoi, plutôt que de rendre des tickets à tort.
+  const detail = sale
+    ? "modifications non commitées"
+    : branche !== valeurs.brancheIntegration
+      ? `sur « ${branche || "HEAD détachée"} », pas sur ${valeurs.brancheIntegration}`
+      : null;
+  if (detail) {
+    return {
+      checkoutPrincipalPropre: false,
+      checkoutPrincipalDetail: detail,
+      tickets: [],
+      etat: { tickets: {} },
+      sessions: [],
+      prs: {},
+      verdicts: {},
+      frontiere: null,
+    };
+  }
+
+  const sessions = json(executer("claude", ["agents", "--json", "--all"]));
+  const etat = lireEtat(cheminsEtat({ home, projet: valeurs.projet }).fichier);
+
+  const ouvertes = new Map(
+    json(
+      gh(
+        "issue",
+        "list",
+        "--repo",
+        depot,
+        "--state",
+        "open",
+        "--limit",
+        String(LIMITE_ISSUES),
+        "--json",
+        CHAMPS_ISSUE,
+      ),
+    )
+      .map(issueDepuisGh)
+      .map((i) => [i.numero, i]),
+  );
+
+  const lecture = await capturer(() =>
+    frontiere([...optionsFrontiere(mode), "--json"]),
+  );
+  if (lecture.code !== 0) {
+    throw new Error(`frontière : ${lecture.erreurs || lecture.sortie}`);
+  }
+  const resultatFrontiere = json(lecture.sortie);
+  const candidats = new Set(resultatFrontiere.tickets.map((t) => t.numero));
+
+  const enVol = Object.keys(etat.tickets).map(Number);
+  const tickets = [];
+  for (const numero of new Set([...candidats, ...enVol])) {
+    let issue = ouvertes.get(numero);
+    // Un candidat fermé qui n'est pas en vol n'a plus rien à faire ; un ticket en vol fermé reste à
+    // clôturer (PR fusionnée à la main, ou clôture interrompue).
+    if (!issue && !enVol.includes(numero)) continue;
+    issue ??= issueDepuisGh(
+      json(
+        gh(
+          "issue",
+          "view",
+          String(numero),
+          "--repo",
+          depot,
+          "--json",
+          CHAMPS_ISSUE,
+        ),
+      ),
+    );
+    if (!appartientALaSelection(mode, issue, candidats)) continue;
+    tickets.push({
+      numero,
+      titre: issue.titre,
+      etat: issue.etat,
+      etiquettes: issue.etiquettes,
+    });
+  }
+
+  const prs = {};
+  const verdicts = {};
+  for (const t of tickets) {
+    const entree = etat.tickets[String(t.numero)];
+    if (!entree) continue;
+    const trouvees = json(
+      gh(
+        "pr",
+        "list",
+        "--repo",
+        depot,
+        "--head",
+        brancheTicket(t.numero),
+        "--state",
+        "all",
+        "--json",
+        "number,state",
+      ),
+    );
+    const retenue =
+      trouvees.find((p) => p.state === "OPEN") ??
+      trouvees
+        .filter((p) => p.state === "MERGED")
+        .sort((a, b) => b.number - a.number)[0] ??
+      null;
+    prs[t.numero] = retenue
+      ? { numero: retenue.number, etat: retenue.state }
+      : null;
+
+    const aPart = t.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e));
+    if (
+      retenue?.state === "OPEN" &&
+      t.etat === "OPEN" &&
+      !aPart &&
+      etatDeSession(sessions, entree).terminee
+    ) {
+      verdicts[t.numero] = await verdictDeVerification(t.numero);
+    }
+  }
+
+  return {
+    checkoutPrincipalPropre: true,
+    tickets,
+    etat,
+    sessions,
+    prs,
+    verdicts,
+    frontiere: {
+      aLancer: resultatFrontiere.aLancer,
+      tickets: resultatFrontiere.tickets,
+    },
+  };
+}
+
+/** Le verdict de verifier-pr.mjs, appelé comme une fonction : il sort en 1 quand la PR n'est pas
+ * fusionnable mais écrit son verdict JSON ; seule une sortie sans JSON est illisible. */
+async function verdictDeVerification(ticket) {
+  const lecture = await capturer(() => verifierPr([String(ticket), "--json"]));
+  try {
+    return json(lecture.sortie);
+  } catch {
+    return {
+      fusionnable: false,
+      raisons: [
+        `vérification illisible : ${lecture.erreurs || lecture.sortie || "aucune sortie"}`,
+      ],
+    };
+  }
+}
+
+// --- Exécution --------------------------------------------------------------------------------
+
+const repetition = (ticket, lecture) => ({
+  ok: true,
+  evenements: [lecture.sortie, lecture.erreurs]
+    .join("\n")
+    .split("\n")
+    .filter((ligne) => ligne.trim() !== "")
+    .map((detail) => ({ evenement: "repetition", ticket, detail })),
+});
+
+/** Passe le ticket `ready-for-human` avec l'explication en commentaire, après avoir relu le tracker :
+ * un label ou une PR apparus depuis la lecture du tour lèvent l'anomalie. */
+async function rendreAuHumain(
+  { ticket, explication },
+  { valeurs, env, dryRun },
+) {
+  const gh = (...args) => executer("gh", args, { env });
+  const depot = valeurs.depot;
+  if (dryRun) {
+    return {
+      ok: true,
+      evenements: [
+        {
+          evenement: "repetition",
+          ticket,
+          detail: `passerait le ticket ${ETIQUETTE_RENDU} : ${explication}`,
+        },
+      ],
+    };
+  }
+  const etiquettes = json(
+    gh("issue", "view", String(ticket), "--repo", depot, "--json", "labels"),
+  ).labels.map((l) => l.name);
+  const ouvertes = json(
+    gh(
+      "pr",
+      "list",
+      "--repo",
+      depot,
+      "--head",
+      brancheTicket(ticket),
+      "--state",
+      "open",
+      "--json",
+      "number",
+    ),
+  );
+  const levee = etiquettes.some((e) => ETIQUETTES_A_PART.includes(e))
+    ? "un label est posé depuis la lecture du tour"
+    : ouvertes.length > 0
+      ? `la PR #${ouvertes[0].number} est ouverte depuis la lecture du tour`
+      : null;
+  if (levee) {
+    return {
+      ok: true,
+      evenements: [
+        { evenement: "anomalie", ticket, detail: `levée : ${levee}` },
+      ],
+    };
+  }
+  gh(
+    "issue",
+    "edit",
+    String(ticket),
+    "--repo",
+    depot,
+    "--add-label",
+    ETIQUETTE_RENDU,
+  );
+  gh(
+    "issue",
+    "comment",
+    String(ticket),
+    "--repo",
+    depot,
+    "--body",
+    `**Boucle de livraison** : ${explication}\n\nLe ticket est rendu (\`${ETIQUETTE_RENDU}\`) : le reprendre à la main, puis retirer le label.`,
+  );
+  return {
+    ok: true,
+    evenements: [{ evenement: "anomalie", ticket, detail: explication }],
+  };
+}
+
+/** Fait une action du tour. `memoire.echecsCloture` compte les clôtures qui échouent d'affilée :
+ * à la troisième, le ticket est rendu plutôt que réessayé (et commenté) à chaque tour. */
+async function executerAction(action, { dryRun }, contexte) {
+  const { ticket } = action;
+  const options = { ...contexte, dryRun };
+  switch (action.type) {
+    case "attendre":
+      return {
+        ok: true,
+        evenements: [{ evenement: "attente", ticket, detail: action.raison }],
+      };
+    case "lancer": {
+      const args = [
+        String(ticket),
+        ...(action.enParallele.length > 0
+          ? ["--en-parallele", action.enParallele.join(",")]
+          : []),
+        ...(dryRun ? ["--dry-run"] : []),
+      ];
+      const lecture = await capturer(() => lancer(args));
+      if (dryRun) return repetition(ticket, lecture);
+      const resultat = evenementsLancement({ ticket, ...lecture });
+      if (!resultat.ok && resultat.pris) {
+        // Assigné et « In Progress » mais sans session : plus aucun autre tour ne le reprendra.
+        const rendu = await rendreAuHumain(
+          {
+            ticket,
+            explication: `Le lancement de la session a échoué après la prise du ticket (assigné, « In Progress ») : ${court(lecture.erreurs)}`,
+          },
+          options,
+        );
+        resultat.evenements.push(...rendu.evenements);
+      }
+      return resultat;
+    }
+    case "cloturer": {
+      const lecture = await capturer(() =>
+        cloturer([String(ticket), ...(dryRun ? ["--dry-run"] : [])]),
+      );
+      if (dryRun) return repetition(ticket, lecture);
+      const resultat = evenementsCloture({ ticket, ...lecture });
+      const echecs = contexte.memoire.echecsCloture;
+      if (resultat.ok) {
+        echecs.delete(ticket);
+      } else {
+        echecs.set(ticket, (echecs.get(ticket) ?? 0) + 1);
+        if (echecs.get(ticket) >= ECHECS_CLOTURE_MAX) {
+          const rendu = await rendreAuHumain(
+            {
+              ticket,
+              explication: `La clôture a échoué ${ECHECS_CLOTURE_MAX} fois de suite : ${court(lecture.erreurs)} Reprendre avec \`node scripts/orch/cloturer.mjs ${ticket}\`.`,
+            },
+            options,
+          );
+          resultat.evenements.push(...rendu.evenements);
+          echecs.delete(ticket);
+        }
+      }
+      return resultat;
+    }
+    case "rendreHumain":
+      return rendreAuHumain(action, options);
+    default:
+      throw new Error(`Action inconnue : ${action.type}`);
+  }
+}
+
+// --- Commande ---------------------------------------------------------------------------------
+
+const USAGE =
+  "Usage : node scripts/orch/boucle.mjs (--spec <n> | --tickets a,b,c | --tous) [--dry-run] [--etat <dossier>]";
+
+/** Ctrl-C (ou SIGTERM) demande l'arrêt : la boucle finit l'action en cours puis s'arrête, les
+ * sessions de fond continuent. Un deuxième signal sort tout de suite. */
+function ecouterArret() {
+  let arret = false;
+  let reveil = null;
+  const demander = () => {
+    if (arret) process.exit(130);
+    arret = true;
+    reveil?.();
+  };
+  process.on("SIGINT", demander);
+  process.on("SIGTERM", demander);
+  return {
+    arretDemande: () => arret,
+    attendre: (ms) =>
+      arret
+        ? Promise.resolve()
+        : new Promise((fin) => {
+            const minuteur = setTimeout(fin, ms);
+            reveil = () => {
+              clearTimeout(minuteur);
+              fin();
+            };
+          }),
+  };
+}
+
+/** Les ports de la boucle sur le vrai monde : git, claude, GitHub, les scripts des tickets
+ * précédents, le journal sur disque (sauf en répétition) et l'écran. */
+export function portsReels({
+  mode,
+  valeurs,
+  racine,
+  env,
+  home,
+  dryRun,
+  fichierJournal,
+  signaux,
+}) {
+  const contexte = { valeurs, env, memoire: { echecsCloture: new Map() } };
+  return {
+    maintenant: () => new Date(),
+    arretDemande: signaux.arretDemande,
+    attendre: signaux.attendre,
+    lireSituation: () => lireSituation({ mode, valeurs, racine, env, home }),
+    executer: (action, opts) => executerAction(action, opts, contexte),
+    journal: (ligne) => {
+      process.stdout.write(`${ligne}\n`);
+      if (!dryRun) {
+        mkdirSync(dirname(fichierJournal), { recursive: true });
+        appendFileSync(fichierJournal, `${ligne}\n`);
+      }
+    },
+    afficher: (texte) => process.stdout.write(`${texte}\n`),
+  };
+}
+
+export async function main(argv) {
+  const { values: options } = parseArgs({
+    args: argv,
+    options: {
+      spec: { type: "string" },
+      tickets: { type: "string" },
+      tous: { type: "boolean", default: false },
+      "dry-run": { type: "boolean", default: false },
+      etat: { type: "string" },
+    },
+  });
+  const mode = modeDepuisOptions(options);
+  if (!mode) {
+    console.error(USAGE);
+    return 1;
+  }
+  // Le dossier d'état d'un essai remplace l'état réel pour tous les scripts appelés.
+  if (options.etat) process.env.ORCH_DOSSIER_ETAT = options.etat;
+
+  const ici = dirname(fileURLToPath(import.meta.url));
+  const sources = racineCheckoutCourant(ici);
+  const racine = racineCheckoutPrincipal(ici);
+  const valeurs = lireValeurs(sources);
+  const home = homedir();
+  const env = envGh(valeurs.compteGh);
+  const dryRun = options["dry-run"];
+  const dossier = cheminsEtat({ home, projet: valeurs.projet }).dossier;
+
+  const fichierVerrou = join(dossier, "boucle.verrou.json");
+  const fichierJournal = join(dossier, "boucle.log");
+  if (!dryRun) {
+    const verrou = prendreVerrou({
+      fichier: fichierVerrou,
+      pid: process.pid,
+      mode: libelleMode(mode),
+      maintenant: new Date(),
+      pidVivant: (pid) => {
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch (erreur) {
+          return erreur.code === "EPERM";
+        }
+      },
+    });
+    if (!verrou.ok) {
+      console.error(verrou.raison);
+      return 1;
+    }
+    if (verrou.raison) console.log(verrou.raison);
+    process.on("exit", () =>
+      rendreVerrou({ fichier: fichierVerrou, pid: process.pid }),
+    );
+  }
+
+  const ports = portsReels({
+    mode,
+    valeurs,
+    racine,
+    env,
+    home,
+    dryRun,
+    fichierJournal,
+    signaux: ecouterArret(),
+  });
+  return boucle({
+    ports,
+    intervalleMs: valeurs.intervalleBoucleSecondes * 1000,
+    libelleMode: libelleMode(mode),
+    dryRun,
+  });
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main(process.argv.slice(2)).then(
+    (code) => process.exit(code),
+    (erreur) => {
+      console.error(erreur.message);
+      process.exit(1);
+    },
   );
 }
