@@ -686,6 +686,7 @@ export function formaterRapport(rapport) {
     `En attente de lancement : ${enumerer(rapport.enAttente, (a) => `#${a.ticket} ${a.titre} - ${a.raisons.join(", ")}`)}`,
     `En attente de votre réponse (needs-info) : ${enumerer(rapport.enAttenteDeReponse, (q) => `#${q.ticket} ${q.titre}`)}`,
     `Rendus (ready-for-human) : ${enumerer(rapport.rendus, (r) => `#${r.ticket} ${r.titre}`)}`,
+    `Lancements gelés : ${enumerer(rapport.gels, (g) => `${g.spec === null ? "tickets sans spec" : `spec #${g.spec}`} (question de #${g.ticket}, portée spec)`)}`,
   ].join("\n");
 }
 
