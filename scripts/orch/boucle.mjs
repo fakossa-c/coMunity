@@ -131,6 +131,58 @@ export function ligneJournal({ evenement, ticket, detail }, maintenant) {
   return morceaux.filter((m) => m !== null && m !== "").join(" ");
 }
 
+// --- Questions : lecture des commentaires -----------------------------------------------------
+
+// La boucle signe ses commentaires ; ils ne sont ni une question ni une réponse.
+const MARQUE_BOUCLE = "**Boucle de livraison**";
+const MOTIF_PORTEE = /\bport[ée]e[\s*:]*(ticket|spec)\b/i;
+
+const delaBoucle = (c) => c.corps.trimStart().startsWith(MARQUE_BOUCLE);
+const apres = (iso, reference) => new Date(iso) > new Date(reference);
+
+/** La question que la session a posée sur son ticket : le dernier commentaire du propriétaire, posté
+ * depuis le début de la session, qui déclare « Portée : ticket » ou « Portée : spec ». Le compte de
+ * la session est celui du propriétaire ; un commentaire d'un autre compte ne déclare rien. */
+export function lireQuestion(commentaires, { proprietaire, depuis }) {
+  const question = commentaires
+    .filter(
+      (c) =>
+        c.auteur === proprietaire &&
+        !delaBoucle(c) &&
+        !apres(depuis, c.creeLe) &&
+        MOTIF_PORTEE.test(c.corps),
+    )
+    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
+    .at(-1);
+  if (!question) return null;
+  return {
+    id: question.id,
+    url: question.url,
+    creeLe: question.creeLe,
+    portee: question.corps.match(MOTIF_PORTEE)[1].toLowerCase(),
+  };
+}
+
+/** La réponse à une question : le dernier commentaire du propriétaire posté après elle (ni la
+ * boucle, ni une autre question). `autresComptes` compte les commentaires d'autres comptes depuis la
+ * question : le message de reprise les présente comme des données. */
+export function reponseA(question, commentaires, { proprietaire }) {
+  const depuis = commentaires.filter((c) => apres(c.creeLe, question.creeLe));
+  const reponse = depuis
+    .filter(
+      (c) =>
+        c.auteur === proprietaire &&
+        !delaBoucle(c) &&
+        !MOTIF_PORTEE.test(c.corps),
+    )
+    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
+    .at(-1);
+  return {
+    reponse: reponse ?? null,
+    autresComptes: depuis.filter((c) => c.auteur !== proprietaire).length,
+  };
+}
+
 // --- Le tour ----------------------------------------------------------------------------------
 
 const ETIQUETTE_QUESTION = "needs-info";
