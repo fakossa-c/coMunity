@@ -530,6 +530,7 @@ describe("formaterRapport", () => {
       enAttente: [],
       enAttenteDeReponse: [{ ticket: 3, titre: "Trois" }],
       rendus: [{ ticket: 4, titre: "Quatre" }],
+      gels: [],
     });
     expect(texte).toContain(
       "En attente de votre réponse (needs-info) : #3 Trois",
@@ -543,9 +544,24 @@ describe("formaterRapport", () => {
       enAttente: [],
       enAttenteDeReponse: [],
       rendus: [],
+      gels: [],
     });
     expect(texte).toContain("En attente de votre réponse (needs-info) : aucun");
     expect(texte).toContain("Rendus (ready-for-human) : aucun");
+    expect(texte).toContain("Lancements gelés : aucun");
+  });
+
+  it("dit quelle spec une question gèle, et à cause de quel ticket", () => {
+    const texte = formaterRapport({
+      enVol: [],
+      enAttente: [],
+      enAttenteDeReponse: [{ ticket: 217, titre: "Deux cent dix-sept" }],
+      rendus: [],
+      gels: [{ ticket: 217, spec: 208 }],
+    });
+    expect(texte).toContain(
+      "Lancements gelés : spec #208 (question de #217, portée spec)",
+    );
   });
 });
 
