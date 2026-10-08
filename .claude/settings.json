@@ -9,6 +9,25 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/garde-supabase.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Monitor|TaskOutput",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/orch/hook-pre-outil.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/orch/hook-fin-de-tour.mjs\""
+          }
+        ]
       }
     ]
   }

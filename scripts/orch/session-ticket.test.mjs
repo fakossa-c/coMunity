@@ -49,7 +49,9 @@ describe("marqueur du dernier npm test vert", () => {
   const ecritA = "2026-10-08T12:00:00.000Z";
 
   it("garde le commit et l'état de l'arbre au moment du test", () => {
-    expect(marqueurDeTest({ commit: "abc123", arbreSale: false, ecritA })).toEqual({
+    expect(
+      marqueurDeTest({ commit: "abc123", arbreSale: false, ecritA }),
+    ).toEqual({
       commit: "abc123",
       arbreSale: false,
       ecritA,
@@ -57,17 +59,29 @@ describe("marqueur du dernier npm test vert", () => {
   });
 
   it("est frais quand il porte sur le commit de tête et sur un arbre propre", () => {
-    const marqueur = marqueurDeTest({ commit: "abc123", arbreSale: false, ecritA });
+    const marqueur = marqueurDeTest({
+      commit: "abc123",
+      arbreSale: false,
+      ecritA,
+    });
     expect(marqueurFrais(marqueur, "abc123")).toBe(true);
   });
 
   it("est périmé dès qu'un commit postérieur change la tête", () => {
-    const marqueur = marqueurDeTest({ commit: "abc123", arbreSale: false, ecritA });
+    const marqueur = marqueurDeTest({
+      commit: "abc123",
+      arbreSale: false,
+      ecritA,
+    });
     expect(marqueurFrais(marqueur, "def456")).toBe(false);
   });
 
   it("ne vaut rien s'il a été écrit sur un arbre avec des modifications non commitées", () => {
-    const marqueur = marqueurDeTest({ commit: "abc123", arbreSale: true, ecritA });
+    const marqueur = marqueurDeTest({
+      commit: "abc123",
+      arbreSale: true,
+      ecritA,
+    });
     expect(marqueurFrais(marqueur, "abc123")).toBe(false);
   });
 

@@ -26,7 +26,10 @@ describe("verdict avant outil", () => {
   it("refuse aussi une commande PowerShell lancée en arrière-plan", () => {
     expect(
       verdict(
-        session("PowerShell", { command: "npm run dev", run_in_background: true }),
+        session("PowerShell", {
+          command: "npm run dev",
+          run_in_background: true,
+        }),
       ),
     ).toMatch(/arrière-plan/);
   });
