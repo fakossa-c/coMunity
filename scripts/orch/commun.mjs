@@ -138,6 +138,16 @@ export function racineDepot(depuis) {
   return dirname(resolve(commun));
 }
 
+/** La racine du checkout (principal ou worktree) qui contient `depuis`. */
+export function racineCheckout(depuis) {
+  return resolve(
+    execFileSync("git", ["-C", depuis, "rev-parse", "--show-toplevel"], {
+      encoding: "utf8",
+    }).trim(),
+  );
+}
+
+/** Les valeurs du checkout `racine` : le fichier versionné suit la branche de ce checkout. */
 export function lireValeurs(racine) {
   const projet = lireJson(join(racine, ".claude", "orchestration.json"));
   if (!projet) {

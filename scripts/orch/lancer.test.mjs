@@ -1,6 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { construirePrompt, decider, decrire } from "./lancer.mjs";
+import {
+  construirePrompt,
+  decider,
+  decrire,
+  numerosDepuisOption,
+  specDepuisCorps,
+} from "./lancer.mjs";
 
 const valeurs = {
   projet: "comunity",
@@ -335,6 +341,17 @@ describe("construirePrompt", () => {
     expect(contenu).toContain("depuis `develop`");
     expect(contenu).not.toMatch(/<[^>]+>/);
   });
+
+  it("dit que la prise du ticket et l'installation sont déjà faites, au lieu de les demander", () => {
+    const ancien = [
+      "```",
+      "2. Gate étape 3 : t'assigner le ticket, puis dans ce dossier : installer les dépendances, <procédure d'isolation Docker du projet>, <démarrer le service si feu vert>.",
+      "```",
+    ].join("\n");
+    const contenu = construirePrompt(ancien, base());
+    expect(contenu).toMatch(/faite par le lancement/);
+    expect(contenu).not.toMatch(/t'assigner/);
+  });
 });
 
 function base() {
@@ -351,5 +368,30 @@ function base() {
     brancheTicket: "ticket-210",
     brancheIntegration: "develop",
     commandeArret: "npx supabase stop",
+    commandeMigration: "npm run db:pousser",
+    commandeLienPreview: "vercel link --yes --project comunity",
+    compteGh: "fakossa-c",
   };
 }
+
+describe("lecture du ticket et des options", () => {
+  it("lit la spec dans la section Parent du ticket", () => {
+    expect(
+      specDepuisCorps("## Parent\n\nSpec #208\n\n## What to build"),
+    ).toEqual({
+      numero: 208,
+    });
+    expect(specDepuisCorps("## Parent\n\n#208")).toEqual({ numero: 208 });
+  });
+
+  it("rend null pour un ticket sans parent", () => {
+    expect(specDepuisCorps("## What to build\n\nSpec #3 est citée")).toBeNull();
+    expect(specDepuisCorps(null)).toBeNull();
+  });
+
+  it("lit la liste des tickets en parallèle, séparés par virgule ou espace", () => {
+    expect(numerosDepuisOption("205,207")).toEqual([205, 207]);
+    expect(numerosDepuisOption("#205 #207")).toEqual([205, 207]);
+    expect(numerosDepuisOption(undefined)).toEqual([]);
+  });
+});

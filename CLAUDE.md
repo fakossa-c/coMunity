@@ -30,6 +30,7 @@
 - Preview : `vercel curl` avec le lien `.vercel/project.json` (recopié par l'isolation du worktree ; absent, `vercel link --yes --project comunity`, sinon un projet fantôme est créé au nom du dossier). Sous Windows, depuis PowerShell : Git Bash convertit le chemin `/` en chemin Windows.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.
+- `node scripts/orch/lancer.mjs <n> [--dry-run] [--en-parallele 205,207]` : lance la session de fond du ticket (assignation, tableau, worktree, Supabase isolé et démarré, prompt, session `ticket-<n>`). Il démarre le Supabase du worktree : un seul à la fois. Valeurs du projet dans `.claude/orchestration.json`, valeurs de la machine dans `.claude/orchestration.local.json` (ignoré par git).
 - `npx supabase db reset` : rejoue les migrations de `supabase/migrations/` et `supabase/seed.sql`.
 - Une modification de `supabase/config.toml` (modèles d'email, limites d'Auth) ne s'applique qu'après `npx supabase stop` puis `npx supabase start`.
 - `npm run syndic:amorcer -- <email> <mot-de-passe> <prénom> <nom>` : crée le premier membre du syndic (lit `.env.local`). Les suivants arrivent par invitation depuis l'espace syndic.
