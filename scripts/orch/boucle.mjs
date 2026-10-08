@@ -16,8 +16,10 @@ import {
   executer,
   lireEtat,
   lireValeurs,
+  modifierEntree,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
+  remplacerSession,
   specDepuisCorps,
 } from "./commun.mjs";
 import { main as cloturer, trouverSession } from "./cloturer.mjs";
@@ -648,6 +650,30 @@ export function decider(situation) {
     });
   }
   return { arret, actions, rapport };
+}
+
+/** L'état après une action faite : `noterEtat` change les compteurs ; une reprise relance la durée
+ * de la session (et suit l'identifiant que `claude` a rendu s'il a changé) ; une relance pointe sur
+ * la nouvelle session. Les compteurs et les champs de `changements` s'y ajoutent. Pure. */
+export function etatApres(etat, action, { maintenant, session } = {}) {
+  const { ticket, changements } = action;
+  const demarreA = maintenant?.toISOString();
+  if (action.type === "noterEtat") {
+    return modifierEntree(etat, ticket, changements);
+  }
+  const entree = etat.tickets[String(ticket)];
+  const apres =
+    action.type === "relancer"
+      ? remplacerSession(etat, ticket, {
+          id: session ?? entree.session,
+          nom: entree.nom,
+          demarreA,
+        })
+      : modifierEntree(etat, ticket, {
+          demarreA,
+          ...(session ? { session } : {}),
+        });
+  return modifierEntree(apres, ticket, changements);
 }
 
 const enumerer = (elements, texte) =>
