@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ajouterSession,
   argsMiseAJourBranche,
+  explicationRefusMiseAJour,
   cheminsEtat,
   etatVide,
   fusionnerValeurs,
@@ -55,6 +56,22 @@ describe("argsMiseAJourBranche", () => {
       "-f",
       "expected_head_sha=c1b4a9a11b95cba3e48d7062626dfd8ad45f2894",
     ]);
+  });
+});
+
+describe("explicationRefusMiseAJour", () => {
+  it("explique le refus de GitHub quand le commit de tête a changé depuis la vérification", () => {
+    const texte = explicationRefusMiseAJour(
+      "gh: Expected head sha didn’t match current head ref. (HTTP 422)",
+    );
+    expect(texte).toContain("HTTP 422");
+    expect(texte).toMatch(/a poussé|commit de tête a changé/);
+  });
+
+  it("rend les autres messages tels quels", () => {
+    expect(explicationRefusMiseAJour("gh: Bad credentials (HTTP 401)")).toBe(
+      "gh: Bad credentials (HTTP 401)",
+    );
   });
 });
 

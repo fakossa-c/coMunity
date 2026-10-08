@@ -310,6 +310,15 @@ describe("decider : une PR en retard sur develop", () => {
     expect(types(resultat)).toContain("mettreAJourBranche");
   });
 
+  it("refuse de mettre la branche à jour d'un ticket que l'état ne suit pas : sans compteur, la borne ne tiendrait pas", () => {
+    const resultat = decider(
+      situation({ verdict: verdictEnRetard(), entreeEtat: false }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.join("\n")).toMatch(/gh pr update-branch 231/);
+  });
+
   it("n'y touche pas quand la PR est déjà fusionnée", () => {
     expect(types(decider(apresFusion(), valeurs))).not.toContain(
       "mettreAJourBranche",
