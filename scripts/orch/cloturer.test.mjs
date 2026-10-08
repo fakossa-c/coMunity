@@ -8,6 +8,7 @@ import {
   marqueurCloture,
   resumeSpec,
   texteEchec,
+  trouverSession,
 } from "./cloturer.mjs";
 
 const valeurs = {
@@ -537,5 +538,30 @@ describe("decrire", () => {
 
   it("refuse une action inconnue", () => {
     expect(() => decrire({ type: "inconnue" })).toThrow(/inconnue/);
+  });
+});
+
+describe("trouverSession", () => {
+  const interactive = { kind: "interactive", name: "ticket-212" };
+  const fond = { id: "ab12cd34", name: "ticket-212", state: "done" };
+
+  it("trouve la session par l'identifiant gardé dans l'état", () => {
+    const renommee = { id: "ab12cd34", name: "autre nom" };
+    expect(
+      trouverSession([renommee], { session: "ab12cd34" }, "ticket-212"),
+    ).toBe(renommee);
+  });
+
+  it("à défaut d'état, la trouve par son nom", () => {
+    expect(trouverSession([fond], null, "ticket-212")).toBe(fond);
+  });
+
+  it("ne prend jamais une session sans identifiant pour celle d'un ticket sans état", () => {
+    expect(trouverSession([interactive], null, "ticket-211")).toBeNull();
+    expect(trouverSession([interactive], null, "ticket-212")).toBeNull();
+  });
+
+  it("rend null quand aucune session ne correspond", () => {
+    expect(trouverSession([fond], null, "ticket-211")).toBeNull();
   });
 });
