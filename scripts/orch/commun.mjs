@@ -129,7 +129,7 @@ export function ecrireJson(fichier, contenu) {
 export const lireEtat = (fichier) => lireJson(fichier) ?? etatVide();
 
 /** La racine du checkout principal, même quand le script tourne depuis un worktree. */
-export function racineDepot(depuis) {
+export function racineCheckoutPrincipal(depuis) {
   const commun = execFileSync(
     "git",
     ["-C", depuis, "rev-parse", "--path-format=absolute", "--git-common-dir"],
@@ -139,7 +139,7 @@ export function racineDepot(depuis) {
 }
 
 /** La racine du checkout (principal ou worktree) qui contient `depuis`. */
-export function racineCheckout(depuis) {
+export function racineCheckoutCourant(depuis) {
   return resolve(
     execFileSync("git", ["-C", depuis, "rev-parse", "--show-toplevel"], {
       encoding: "utf8",

@@ -29,8 +29,8 @@ import {
   idDepuisSortieBg,
   lireEtat,
   lireValeurs,
-  racineCheckout,
-  racineDepot,
+  racineCheckoutCourant,
+  racineCheckoutPrincipal,
 } from "./commun.mjs";
 
 export const brancheTicket = (numero) => `ticket-${numero}`;
@@ -84,7 +84,7 @@ function ancienFormat(v) {
     ["<fichiers>", "ceux de la section `## Fichiers` de leurs tickets"],
     ["<dossier>", v.dossier],
     // Le titre de l'issue que la session ouvre, pas celui du ticket.
-    ["issue #m ouverte : <titre>", "issue #m ouverte : <titre de l'issue>"],
+    ["issue #m ouverte : <titre>", "issue #m ouverte : « titre de l'issue »"],
     ["<titre>", v.titre],
     ["<nom>", v.depot],
     ["<n>", String(v.ticket)],
@@ -101,15 +101,33 @@ export function construirePrompt(modele, variables) {
     .sort((a, b) => b.length - a.length)
     .map(echapper);
   const motif = new RegExp([MOTIF_VARIABLE, ...cles].join("|"), "g");
+  let ancienUtilise = false;
   // Une seule passe, et une fonction de remplacement : la valeur insérée n'est jamais relue
   // (un titre qui contient `<n>` ou `$&` reste tel quel).
-  return bloc.replace(motif, (trouve, nom) => {
-    if (nom === undefined) return ancien.get(trouve);
+  let prompt = bloc.replace(motif, (trouve, nom) => {
+    if (nom === undefined) {
+      ancienUtilise = true;
+      return ancien.get(trouve);
+    }
     if (!(nom in variables)) {
       throw new Error(`Variable inconnue dans PROMPT-SESSION.md : {{${nom}}}`);
     }
     return String(variables[nom]);
   });
+  // Un gabarit à l'ancien format garde un `<…>` qu'aucune valeur ne remplit : le prompt ne part pas.
+  const trou = ancienUtilise && prompt.match(/<[^<>\n]+>/)?.[0];
+  if (trou)
+    throw new Error(
+      `Gabarit PROMPT-SESSION.md : ${trou} n'est rempli par aucune valeur`,
+    );
+  // L'ancien gabarit n'a pas de place pour la spec : elle ferme le prompt plutôt que de manquer.
+  if (
+    variables.specNumero !== "aucune" &&
+    !prompt.includes(variables.specLien)
+  ) {
+    prompt += `\n\nSpec parente : spec #${variables.specNumero}, ${variables.specLien}.`;
+  }
+  return prompt;
 }
 
 // --- Décision ---------------------------------------------------------------------------------
@@ -253,6 +271,16 @@ export function numerosDepuisOption(texte) {
   return (texte?.match(/\d+/g) ?? []).map(Number);
 }
 
+const sansAntislash = (chemin) => chemin.replace(/\\/g, "/");
+
+/** Git liste les worktrees avec des `/` même sous Windows, où `path.join` écrit des `\\`. */
+export function worktreeEnregistre(sortiePorcelain, dossier) {
+  const cible = sansAntislash(dossier);
+  return sortiePorcelain
+    .split("\n")
+    .some((ligne) => ligne === `worktree ${cible}`);
+}
+
 function lire({ numero, options, racine, valeurs, env, home }) {
   const git = (...args) => executer("git", ["-C", racine, ...args]);
   const issue = JSON.parse(
@@ -291,8 +319,7 @@ function lire({ numero, options, racine, valeurs, env, home }) {
     spec: specDepuisCorps(issue.body),
     arbreSale: git("status", "--porcelain").trim() !== "",
     worktreeExiste:
-      existsSync(dossier) ||
-      worktrees.split("\n").some((l) => l === `worktree ${dossier}`),
+      existsSync(dossier) || worktreeEnregistre(worktrees, dossier),
     brancheExiste,
     enParallele: numerosDepuisOption(options["en-parallele"]),
     orchestrateur: options.orchestrateur ?? `orch-${valeurs.projet}`,
@@ -433,8 +460,8 @@ export async function main(argv) {
   const ici = dirname(fileURLToPath(import.meta.url));
   // Le code et les valeurs sont ceux du checkout où le script se trouve ; les worktrees, eux, se
   // créent toujours depuis le checkout principal.
-  const sources = racineCheckout(ici);
-  const racine = racineDepot(ici);
+  const sources = racineCheckoutCourant(ici);
+  const racine = racineCheckoutPrincipal(ici);
   const valeurs = lireValeurs(sources);
   const env = envGh(valeurs.compteGh);
   const home = homedir();
@@ -464,7 +491,7 @@ export async function main(argv) {
         `\nÉchec à l'étape ${i + 1} (${action.type}) : ${erreur.message}`,
       );
       console.error(
-        `Étapes faites : ${
+        `${suivi.idSession ? `Session déjà lancée : ${suivi.idSession} (claude attach ${suivi.idSession}). ` : ""}Étapes faites : ${
           actions
             .slice(0, i)
             .map((a) => a.type)
@@ -492,7 +519,3 @@ if (
     },
   );
 }
-
-export const worktreeEnregistre = () => {
-  throw new Error("à faire");
-};
