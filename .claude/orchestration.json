@@ -19,5 +19,6 @@
   "dureeMaxSessionMinutes": 180,
   "delaiInactiviteMinutes": 30,
   "reprisesMax": 2,
-  "pousserMigrationsApresFusion": true
+  "pousserMigrationsApresFusion": true,
+  "intervalleBoucleSecondes": 300
 }
