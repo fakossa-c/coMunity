@@ -26,7 +26,7 @@
 - Worktree : juste après sa création, dans son dossier, `node scripts/isoler-supabase-worktree.mjs` (conteneur Docker et ports propres, Studio coupé, `config.toml` masqué pour git, lien Vercel recopié), puis `npx supabase start` et `npm run env:local`. Sans cette isolation, tous les checkouts pilotent le même conteneur, et un hook du projet bloque `supabase start`, `stop` et `db reset`.
 - Chaque Supabase local démarré occupe environ 300 Mo : `npx supabase stop` dans le worktree dès sa PR ouverte.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
-- `npm test` : suite complète (format Prettier, unitaires, base de données, navigateur mobile et desktop ; un écart de format se corrige avec `npm run format`). À lancer avant d'ouvrir une PR : c'est la seule barrière, aucun workflow GitHub ne lance les tests.
+- `npm test` : suite complète (format Prettier, unitaires, base de données, navigateur mobile et desktop ; un écart de format se corrige avec `npm run format`). À lancer avant d'ouvrir une PR, pour un retour rapide ; la barrière est le contrôle `Tests` de GitHub Actions (`.github/workflows/tests.yml`), qui relance la même suite sur chaque PR vers `develop` et `main`.
 - Preview : `vercel curl` avec le lien `.vercel/project.json` (recopié par l'isolation du worktree ; absent, `vercel link --yes --project comunity`, sinon un projet fantôme est créé au nom du dossier). Sous Windows, depuis PowerShell : Git Bash convertit le chemin `/` en chemin Windows.
 - Ciblées : `npm run test:unit`, `npm run test:db`, `npm run test:e2e`, ou `npx vitest run <fichier>`.
 - `npm run typecheck`, `npm run lint`, `npm run format`.

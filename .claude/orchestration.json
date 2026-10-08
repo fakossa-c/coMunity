@@ -15,7 +15,7 @@
     "lienPreview": "vercel link --yes --project comunity"
   },
   "modeleSession": "sonnet",
-  "controleCi": "",
+  "controleCi": "Tests",
   "dureeMaxSessionMinutes": 180,
   "delaiInactiviteMinutes": 30,
   "reprisesMax": 2

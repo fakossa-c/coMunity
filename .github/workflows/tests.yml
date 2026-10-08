@@ -1,0 +1,48 @@
+name: Tests
+
+# La suite complète sur chaque PR vers develop et vers main (spec #208, ticket #214) : format,
+# unitaires, base de données sur un Supabase local, navigateur mobile et ordinateur. C'est la barrière
+# des PR : le nom du job est celui que le fichier de valeurs du projet (controleCi) fait exiger.
+on:
+  pull_request:
+    branches: [develop, main]
+
+# Un seul run à la fois par PR : un nouveau commit annule le run en cours.
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Les polices Google sont simulées, comme sur la VM : le build et les tests navigateur ne
+      # dépendent pas de l'API CSS de Google. Chemin absolu : Next le charge par require().
+      NEXT_FONT_GOOGLE_MOCKED_RESPONSES: ${{ github.workspace }}/.github/polices-simulees.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Démarrer le Supabase local
+        run: npx supabase start
+
+      - name: Écrire les variables locales
+        run: npm run env:local
+
+      - name: Installer les navigateurs Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Lancer la suite complète
+        run: npm test
