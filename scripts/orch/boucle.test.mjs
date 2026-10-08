@@ -3,8 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  decider,
+  appartientALaSelection,
   boucle,
+  capturer,
+  decider,
   decisionVerrou,
   evenementsCloture,
   evenementsLancement,

@@ -1,6 +1,8 @@
 // La boucle de livraison (spec #208, ticket #216).
 import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { format } from "node:util";
+import { specDepuisCorps } from "./commun.mjs";
 
 // --- Verrou -----------------------------------------------------------------------------------
 
@@ -364,4 +366,117 @@ export async function boucle({
     toursImmediats = 0;
     await ports.attendre(intervalleMs);
   }
+}
+
+// --- Lecture de ce que rendent les scripts des tickets précédents -----------------------------
+//
+// La boucle appelle `main` de lancer.mjs, cloturer.mjs, frontiere.mjs et verifier-pr.mjs comme des
+// fonctions (jamais comme des sous-processus). Ils parlent par `console` et par leur code de
+// retour : `capturer` recueille les deux, pour que la boucle en tire des lignes de journal.
+
+/** Exécute `fonction` en recueillant ce qu'elle écrit par console.log et console.error. Une
+ * exception est un échec (code 1) dont le message va dans les erreurs. */
+export async function capturer(fonction) {
+  const sortie = [];
+  const erreurs = [];
+  const { log, error } = console;
+  console.log = (...args) => sortie.push(format(...args));
+  console.error = (...args) => erreurs.push(format(...args));
+  let code;
+  try {
+    code = await fonction();
+  } catch (erreur) {
+    erreurs.push(erreur.message);
+    code = 1;
+  } finally {
+    console.log = log;
+    console.error = error;
+  }
+  return { code, sortie: sortie.join("\n"), erreurs: erreurs.join("\n") };
+}
+
+const DETAIL_MAX = 600;
+const court = (texte) =>
+  texte.length > DETAIL_MAX ? `${texte.slice(0, DETAIL_MAX)}…` : texte;
+const etapeEnEchec = (erreurs) =>
+  Number(erreurs.match(/Échec à l'étape (\d+)/)?.[1]) || null;
+
+/** Les lignes de journal d'un lancement, et si le ticket est pris (assigné) malgré un échec.
+ * Dépend des messages de lancer.mjs : « Session <nom> lancée (<id>) » et « Échec à l'étape <n> »,
+ * l'assignation étant l'étape 1. */
+export function evenementsLancement({ ticket, code, sortie, erreurs }) {
+  if (code === 0) {
+    const lancee = sortie.match(/Session (\S+) lancée \((\w+)\)/);
+    return {
+      ok: true,
+      pris: true,
+      evenements: [
+        {
+          evenement: "lancement",
+          ticket,
+          detail: lancee
+            ? `session ${lancee[1]} lancée (${lancee[2]})`
+            : "session lancée",
+        },
+      ],
+    };
+  }
+  return {
+    ok: false,
+    pris: (etapeEnEchec(erreurs) ?? 0) >= 2,
+    evenements: [
+      { evenement: "echec", ticket, detail: `lancement : ${court(erreurs)}` },
+    ],
+  };
+}
+
+/** Les lignes de journal d'une clôture. cloturer.mjs vérifie la PR avant de fusionner et affiche
+ * chaque étape avant de la faire (« 1/9 Fusionner la PR… ») : une étape de fusion annoncée dit que
+ * la vérification a réussi, et la fusion est faite si la clôture est allée jusqu'au bout ou
+ * jusqu'à une étape plus loin. */
+export function evenementsCloture({ ticket, code, sortie, erreurs }) {
+  const evenements = [];
+  const fusion = sortie.match(/^(\d+)\/\d+ Fusionner la PR/m);
+  if (fusion) {
+    evenements.push({
+      evenement: "verification",
+      ticket,
+      detail: "PR fusionnable, relue par la clôture avant la fusion",
+    });
+    const echec = etapeEnEchec(erreurs);
+    if (code === 0 || (echec && echec > Number(fusion[1]))) {
+      evenements.push({
+        evenement: "fusion",
+        ticket,
+        detail: "PR fusionnée",
+      });
+    }
+  }
+  evenements.push(
+    code === 0
+      ? {
+          evenement: "cloture",
+          ticket,
+          detail: /déjà entièrement clôturé/.test(sortie)
+            ? "déjà clôturé"
+            : "ticket clôturé",
+        }
+      : {
+          evenement: "echec",
+          ticket,
+          detail: `clôture : ${court(erreurs)}`,
+        },
+  );
+  return { ok: code === 0, evenements };
+}
+
+/** Le ticket fait-il partie de ce que la boucle suit ? `candidats` : les numéros que la frontière
+ * a retenus pour le mode (les sous-issues natives de la spec comprises). */
+export function appartientALaSelection(mode, issue, candidats) {
+  if (mode.type === "tous") return true;
+  if (mode.type === "tickets") return mode.numeros.includes(issue.numero);
+  return (
+    candidats.has(issue.numero) ||
+    specDepuisCorps(issue.corps)?.numero === mode.numero
+  );
 }
