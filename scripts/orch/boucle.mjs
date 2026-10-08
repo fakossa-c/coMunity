@@ -20,7 +20,7 @@ import {
   racineCheckoutPrincipal,
   specDepuisCorps,
 } from "./commun.mjs";
-import { main as cloturer } from "./cloturer.mjs";
+import { main as cloturer, trouverSession } from "./cloturer.mjs";
 import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import { brancheTicket, main as lancer } from "./lancer.mjs";
 import { main as verifierPr } from "./verifier-pr.mjs";
@@ -117,15 +117,11 @@ const ETATS_SESSION_FINIE = ["done", "stopped"];
 
 const parNumero = (a, b) => a.numero - b.numero;
 
-/** La session d'un ticket : par l'identifiant gardé dans l'état, sinon par son nom. */
-const sessionDuTicket = (sessions, entree) =>
-  sessions.find((s) => s.id === entree.session || s.name === entree.nom) ??
-  null;
-
 /** L'état de la session d'un ticket en vol (`introuvable` si `claude agents` ne la liste plus), et
  * si elle ne travaille plus. */
 export function etatDeSession(sessions, entree) {
-  const etat = sessionDuTicket(sessions, entree)?.state ?? "introuvable";
+  const etat =
+    trouverSession(sessions, entree, entree.nom)?.state ?? "introuvable";
   return {
     etat,
     terminee: ETATS_SESSION_FINIE.includes(etat) || etat === "introuvable",
@@ -278,16 +274,16 @@ export function decider(situation) {
   return { arret, actions, rapport };
 }
 
-const liste = (elements, texte) =>
+const enumerer = (elements, texte) =>
   elements.length === 0 ? "aucun" : elements.map(texte).join(" ; ");
 
 /** Le rapport de fin de tour : ce qui attend l'utilisateur et ce que la boucle lui a rendu. */
 export function formaterRapport(rapport) {
   return [
-    `En vol : ${liste(rapport.enVol, (v) => `#${v.ticket} ${v.titre} (${v.session})`)}`,
-    `En attente de lancement : ${liste(rapport.enAttente, (a) => `#${a.ticket} ${a.titre} - ${a.raisons.join(", ")}`)}`,
-    `En attente de votre réponse (needs-info) : ${liste(rapport.enAttenteDeReponse, (q) => `#${q.ticket} ${q.titre}`)}`,
-    `Rendus (ready-for-human) : ${liste(rapport.rendus, (r) => `#${r.ticket} ${r.titre}`)}`,
+    `En vol : ${enumerer(rapport.enVol, (v) => `#${v.ticket} ${v.titre} (${v.session})`)}`,
+    `En attente de lancement : ${enumerer(rapport.enAttente, (a) => `#${a.ticket} ${a.titre} - ${a.raisons.join(", ")}`)}`,
+    `En attente de votre réponse (needs-info) : ${enumerer(rapport.enAttenteDeReponse, (q) => `#${q.ticket} ${q.titre}`)}`,
+    `Rendus (ready-for-human) : ${enumerer(rapport.rendus, (r) => `#${r.ticket} ${r.titre}`)}`,
   ].join("\n");
 }
 
@@ -422,7 +418,7 @@ export async function capturer(fonction) {
 }
 
 const DETAIL_MAX = 600;
-const court = (texte) =>
+const tronquer = (texte) =>
   texte.length > DETAIL_MAX ? `${texte.slice(0, DETAIL_MAX)}…` : texte;
 const etapeEnEchec = (erreurs) =>
   Number(erreurs.match(/Échec à l'étape (\d+)/)?.[1]) || null;
@@ -451,7 +447,11 @@ export function evenementsLancement({ ticket, code, sortie, erreurs }) {
     ok: false,
     pris: (etapeEnEchec(erreurs) ?? 0) >= 2,
     evenements: [
-      { evenement: "echec", ticket, detail: `lancement : ${court(erreurs)}` },
+      {
+        evenement: "echec",
+        ticket,
+        detail: `lancement : ${tronquer(erreurs)}`,
+      },
     ],
   };
 }
@@ -490,7 +490,7 @@ export function evenementsCloture({ ticket, code, sortie, erreurs }) {
       : {
           evenement: "echec",
           ticket,
-          detail: `clôture : ${court(erreurs)}`,
+          detail: `clôture : ${tronquer(erreurs)}`,
         },
   );
   return { ok: code === 0, evenements };
@@ -522,6 +522,45 @@ const issueDepuisGh = (brute) => ({
   etiquettes: brute.labels.map((l) => l.name),
   corps: brute.body ?? "",
 });
+
+/** La PR d'un ticket : l'ouverte, à défaut la dernière fusionnée (celle de cloturer.mjs). `prs` :
+ * `gh pr list --head ticket-<n> --state all`. Une PR fermée sans fusion ne compte pas. */
+export function prRetenue(prs) {
+  const retenue =
+    prs.find((p) => p.state === "OPEN") ??
+    prs
+      .filter((p) => p.state === "MERGED")
+      .sort((a, b) => b.number - a.number)[0] ??
+    null;
+  return retenue ? { numero: retenue.number, etat: retenue.state } : null;
+}
+
+/** La PR d'un ticket est-elle à vérifier ce tour ? Ouverte, sur un ticket ouvert qu'aucun label ne
+ * met de côté, une fois la session terminée. */
+export function doitVerifier({ ticket, entree, pr, sessions }) {
+  return (
+    pr?.etat === "OPEN" &&
+    ticket.etat === "OPEN" &&
+    !ticket.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e)) &&
+    etatDeSession(sessions, entree).terminee
+  );
+}
+
+/** Pourquoi une anomalie ne tient plus, d'après le tracker relu juste avant d'agir ; null si elle
+ * tient. */
+export function leveeAnomalie({ etiquettes, prsOuvertes }) {
+  if (etiquettes.some((e) => ETIQUETTES_A_PART.includes(e))) {
+    return "un label est posé depuis la lecture du tour";
+  }
+  if (prsOuvertes.length > 0) {
+    return `la PR #${prsOuvertes[0].number} est ouverte depuis la lecture du tour`;
+  }
+  return null;
+}
+
+/** Le ticket est-il rendu après ce nombre d'échecs de clôture d'affilée ? */
+export const rendreApresEchecsDeCloture = (echecs) =>
+  echecs >= ECHECS_CLOTURE_MAX;
 
 /** Les options de frontiere.mjs pour le mode de la boucle. */
 const optionsFrontiere = (mode) =>
@@ -651,23 +690,10 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
         "number,state",
       ),
     );
-    const retenue =
-      trouvees.find((p) => p.state === "OPEN") ??
-      trouvees
-        .filter((p) => p.state === "MERGED")
-        .sort((a, b) => b.number - a.number)[0] ??
-      null;
-    prs[t.numero] = retenue
-      ? { numero: retenue.number, etat: retenue.state }
-      : null;
+    const retenue = prRetenue(trouvees);
+    prs[t.numero] = retenue;
 
-    const aPart = t.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e));
-    if (
-      retenue?.state === "OPEN" &&
-      t.etat === "OPEN" &&
-      !aPart &&
-      etatDeSession(sessions, entree).terminee
-    ) {
+    if (doitVerifier({ ticket: t, entree, pr: retenue, sessions })) {
       verdicts[t.numero] = await verdictDeVerification(t.numero);
     }
   }
@@ -704,7 +730,7 @@ async function verdictDeVerification(ticket) {
 
 // --- Exécution --------------------------------------------------------------------------------
 
-const repetition = (ticket, lecture) => ({
+const evenementsDeRepetition = (ticket, lecture) => ({
   ok: true,
   evenements: [lecture.sortie, lecture.erreurs]
     .join("\n")
@@ -750,11 +776,7 @@ async function rendreAuHumain(
       "number",
     ),
   );
-  const levee = etiquettes.some((e) => ETIQUETTES_A_PART.includes(e))
-    ? "un label est posé depuis la lecture du tour"
-    : ouvertes.length > 0
-      ? `la PR #${ouvertes[0].number} est ouverte depuis la lecture du tour`
-      : null;
+  const levee = leveeAnomalie({ etiquettes, prsOuvertes: ouvertes });
   if (levee) {
     return {
       ok: true,
@@ -807,14 +829,14 @@ async function executerAction(action, { dryRun }, contexte) {
         ...(dryRun ? ["--dry-run"] : []),
       ];
       const lecture = await capturer(() => lancer(args));
-      if (dryRun) return repetition(ticket, lecture);
+      if (dryRun) return evenementsDeRepetition(ticket, lecture);
       const resultat = evenementsLancement({ ticket, ...lecture });
       if (!resultat.ok && resultat.pris) {
         // Assigné et « In Progress » mais sans session : plus aucun autre tour ne le reprendra.
         const rendu = await rendreAuHumain(
           {
             ticket,
-            explication: `Le lancement de la session a échoué après la prise du ticket (assigné, « In Progress ») : ${court(lecture.erreurs)}`,
+            explication: `Le lancement de la session a échoué après la prise du ticket (assigné, « In Progress ») : ${tronquer(lecture.erreurs)}`,
           },
           options,
         );
@@ -826,18 +848,18 @@ async function executerAction(action, { dryRun }, contexte) {
       const lecture = await capturer(() =>
         cloturer([String(ticket), ...(dryRun ? ["--dry-run"] : [])]),
       );
-      if (dryRun) return repetition(ticket, lecture);
+      if (dryRun) return evenementsDeRepetition(ticket, lecture);
       const resultat = evenementsCloture({ ticket, ...lecture });
       const echecs = contexte.memoire.echecsCloture;
       if (resultat.ok) {
         echecs.delete(ticket);
       } else {
         echecs.set(ticket, (echecs.get(ticket) ?? 0) + 1);
-        if (echecs.get(ticket) >= ECHECS_CLOTURE_MAX) {
+        if (rendreApresEchecsDeCloture(echecs.get(ticket))) {
           const rendu = await rendreAuHumain(
             {
               ticket,
-              explication: `La clôture a échoué ${ECHECS_CLOTURE_MAX} fois de suite : ${court(lecture.erreurs)} Reprendre avec \`node scripts/orch/cloturer.mjs ${ticket}\`.`,
+              explication: `La clôture a échoué ${ECHECS_CLOTURE_MAX} fois de suite : ${tronquer(lecture.erreurs)} Reprendre avec \`node scripts/orch/cloturer.mjs ${ticket}\`.`,
             },
             options,
           );
