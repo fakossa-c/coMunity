@@ -22,7 +22,7 @@
 
 ## Commandes
 
-- Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx. Realtime et Storage y sont coupés, faute d'usage : le ticket qui stocke des fichiers réactive Storage dans `supabase/config.toml`.
+- Prérequis des tests base et navigateur : Docker Desktop lancé, puis `npx supabase start`. Le Supabase de coMunity écoute sur les ports 544xx (API `54421`, Studio `54423`, boîte mail `54424`) pour cohabiter avec un autre projet Supabase local sur 543xx. Storage y est activé (photo et PDF des annonces, photos des activités) ; Realtime y est coupé, faute d'usage : le ticket qui s'abonne à un canal le réactive dans `supabase/config.toml`.
 - Worktree : juste après sa création, dans son dossier, `node scripts/isoler-supabase-worktree.mjs` (conteneur Docker et ports propres, Studio coupé, `config.toml` masqué pour git, lien Vercel recopié), puis `npx supabase start` et `npm run env:local`. Sans cette isolation, tous les checkouts pilotent le même conteneur, et un hook du projet bloque `supabase start`, `stop` et `db reset`.
 - Chaque Supabase local démarré occupe environ 300 Mo : `npx supabase stop` dans le worktree dès sa PR ouverte.
 - `npm run env:local` : écrit `.env.local` avec l'URL, la clé publiable et la clé secrète du Supabase local. À relancer après chaque `npx supabase start` sur une machine neuve.
