@@ -54,3 +54,6 @@ next-env.d.ts
 
 # Divers
 z-prompt
+
+# valeurs d'orchestration propres à une machine
+/.claude/orchestration.local.json

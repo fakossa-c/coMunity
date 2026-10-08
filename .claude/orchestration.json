@@ -1,0 +1,22 @@
+{
+  "projet": "comunity",
+  "depot": "fakossa-c/coMunity",
+  "compteGh": "fakossa-c",
+  "brancheIntegration": "develop",
+  "dossierWorktrees": ".claude/worktrees",
+  "glossaire": "CONTEXT.md",
+  "commandes": {
+    "isolation": "node scripts/isoler-supabase-worktree.mjs",
+    "installation": "npm ci",
+    "demarrage": "npx supabase start",
+    "variablesLocales": "npm run env:local",
+    "arret": "npx supabase stop",
+    "migrationDistante": "npm run db:pousser",
+    "lienPreview": "vercel link --yes --project comunity"
+  },
+  "modeleSession": "sonnet",
+  "controleCi": "",
+  "dureeMaxSessionMinutes": 180,
+  "delaiInactiviteMinutes": 30,
+  "reprisesMax": 2
+}
