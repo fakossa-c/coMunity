@@ -390,15 +390,6 @@ describe("decider : tickets en vol", () => {
     expect(resultat.actions[0].raison).toMatch(/fermé sans PR fusionnée/);
     expect(resultat.arret.motif).toBe("termine");
   });
-
-  it("garde en vol une session en échec ou bloquée, sans agir (reprises et bornes : ticket suivant)", () => {
-    for (const state of ["failed", "blocked"]) {
-      const resultat = decider(situation({ sessions: [session(217, state)] }));
-      expect(resultat.actions).toEqual([]);
-      expect(resultat.rapport.enVol[0].session).toBe(state);
-      expect(resultat.arret).toBeNull();
-    }
-  });
 });
 
 describe("decider : lancements", () => {
@@ -1734,5 +1725,173 @@ describe("decider : CI rouge", () => {
       ticket: 218,
       changements: { reprises: 1 },
     });
+  });
+});
+
+// --- Sessions en échec, interrompues ou bloquées ----------------------------------------------
+
+const heure = (minutes) =>
+  new Date(MAINTENANT.getTime() + minutes * MINUTE).toISOString();
+
+/** Le ticket 217 a une session dans cet état, sans PR ni label. */
+const sessionEnEtat = (state, compteurs = {}, surcharge = {}) =>
+  situation({
+    sessions: [session(217, state)],
+    etat: { version: 1, tickets: { 217: entree(217, compteurs) } },
+    ...surcharge,
+  });
+
+describe("decider : session en échec (limite de l'abonnement, erreur)", () => {
+  it("note l'échec et l'heure de la reprise, sans reprendre tout de suite", () => {
+    const resultat = decider(sessionEnEtat("failed"));
+    expect(resultat.actions).toEqual([
+      {
+        type: "noterEtat",
+        ticket: 217,
+        raison: expect.stringContaining("échec 1 sur 3"),
+        changements: { echecs: 1, reprendreApres: heure(10) },
+      },
+    ]);
+  });
+
+  it("allonge l'attente à chaque échec : le délai double", () => {
+    const resultat = decider(sessionEnEtat("failed", { echecs: 1 }));
+    expect(resultat.actions[0].changements).toEqual({
+      echecs: 2,
+      reprendreApres: heure(20),
+    });
+  });
+
+  it("attend l'heure de la reprise sans rien faire d'autre, avec un détail stable d'un tour à l'autre", () => {
+    const compteurs = { echecs: 1, reprendreApres: heure(5) };
+    const un = decider(sessionEnEtat("failed", compteurs));
+    const deux = decider(
+      sessionEnEtat("failed", compteurs, {
+        maintenant: new Date(MAINTENANT.getTime() + MINUTE),
+      }),
+    );
+    expect(types(un)).toEqual(["attendre"]);
+    expect(un.actions[0].raison).toContain(heure(5));
+    expect(deux.actions).toEqual(un.actions);
+  });
+
+  it("reprend la même session une fois l'attente passée, sans perdre le compte des échecs", () => {
+    const resultat = decider(
+      sessionEnEtat("failed", { echecs: 1, reprendreApres: heure(-1) }),
+    );
+    expect(resultat.actions).toHaveLength(1);
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendre",
+      motif: "echec",
+      session: "s217",
+      changements: { reprendreApres: undefined },
+    });
+    expect(resultat.actions[0].message).toMatch(/commit/);
+  });
+
+  it("lance une nouvelle session quand le transcript manque", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "failed",
+        { echecs: 1, reprendreApres: heure(-1) },
+        { transcripts: { 217: false } },
+      ),
+    );
+    expect(resultat.actions[0]).toMatchObject({
+      type: "relancer",
+      motif: "echec",
+    });
+  });
+
+  it("après trois échecs, rend le ticket", () => {
+    const resultat = decider(sessionEnEtat("failed", { echecs: 2 }));
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+    expect(resultat.actions[0].explication).toMatch(/3 échecs|trois échecs/);
+  });
+
+  it("traite une session arrêtée ou disparue sans PR comme une session interrompue", () => {
+    for (const state of ["stopped", "introuvable"]) {
+      const sessions = state === "introuvable" ? [] : [session(217, state)];
+      const resultat = decider(sessionEnEtat(state, {}, { sessions }));
+      expect(types(resultat), state).toEqual(["noterEtat"]);
+    }
+  });
+
+  it("garde le verdict de la PR avant de parler d'échec : session en échec avec une PR fusionnable", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "failed",
+        {},
+        { prs: { 217: prOuverte(217) }, verdicts: { 217: verdictVert } },
+      ),
+    );
+    expect(types(resultat)).toEqual(["cloturer"]);
+  });
+
+  it("ne reprend pas une session qui a posé sa question et attend la réponse", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "failed",
+        {},
+        {
+          tickets: [ticket(217, { etiquettes: ["needs-info"] })],
+        },
+      ),
+    );
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("laisse la session terminée sans PR ni label à l'anomalie, pas à la reprise", () => {
+    const resultat = decider(sessionEnEtat("done"));
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+  });
+});
+
+describe("decider : session en attente d'une saisie", () => {
+  it("arrête la session et rend le ticket en disant ce qu'elle attendait", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "blocked",
+        {},
+        {
+          sessions: [
+            { ...session(217, "blocked"), waitingFor: "Choisir une option" },
+          ],
+        },
+      ),
+    );
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+    expect(resultat.actions[0]).toMatchObject({
+      ticket: 217,
+      session: "s217",
+    });
+    expect(resultat.actions[1].explication).toContain("Choisir une option");
+    expect(resultat.actions[1].sansLeveeParPr).toBe(true);
+  });
+
+  it("reconnaît aussi une session qui annonce attendre une saisie sans être `blocked`", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "working",
+        {},
+        {
+          sessions: [{ ...session(217, "working"), status: "input needed" }],
+        },
+      ),
+    );
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+  });
+
+  it("laisse un ticket qui attend sa réponse (needs-info) aux soins de l'utilisateur", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "blocked",
+        {},
+        {
+          tickets: [ticket(217, { etiquettes: ["needs-info"] })],
+        },
+      ),
+    );
+    expect(resultat.actions).toEqual([]);
   });
 });
