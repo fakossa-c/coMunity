@@ -5,6 +5,7 @@ import {
   publierApresJev,
   type Compte,
 } from "./clients";
+import { jourParis } from "./paris";
 
 // Ticket #9 : les champs que le parcours de création en 4 étapes ajoute à une activité.
 
@@ -140,9 +141,7 @@ describe("champs du parcours de création", () => {
 
   it("le catalogue livre les étiquettes de chaque activité", async () => {
     const resident = await nouveauResident("valide");
-    const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const dansUnMois = jourParis(30);
     const { data } = await publier(resident, {
       date_activite: dansUnMois,
       etiquettes: ["ascenseur", "animaux_acceptes"],

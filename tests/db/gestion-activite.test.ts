@@ -5,16 +5,13 @@ import {
   type Compte,
   publierApresJev,
 } from "./clients";
+import { jourParis } from "./paris";
 
 // Ticket #12 : le créateur modifie, annule ou supprime son activité ; une activité avec des
 // inscrits est annulée plutôt que supprimée, et les inscrits le voient.
 
-const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-  .toISOString()
-  .slice(0, 10);
-const ilYAUnMois = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  .toISOString()
-  .slice(0, 10);
+const dansUnMois = jourParis(30);
+const ilYAUnMois = jourParis(-30);
 
 const ACTIVITE = {
   titre: "Goûter crêpes",

@@ -6,7 +6,7 @@ import {
   nouveauSyndic,
   type Compte,
 } from "./clients";
-import { creneauFinissantDans } from "./paris";
+import { creneauFinissantDans, jourParis } from "./paris";
 
 // Ticket #17 : le conseil syndical suit ce qui anime la résidence. Les statistiques sont des
 // fonctions SQL réservées à ses membres ; les chiffres se vérifient sur un jeu de données fixe,
@@ -220,9 +220,7 @@ describe("tableau de bord du conseil syndical", () => {
     });
 
     it("ne compte pas les activités qui n'ont pas encore eu lieu", async () => {
-      const demain = new Date(Date.now() + 24 * 3600 * 1000)
-        .toISOString()
-        .slice(0, 10);
+      const demain = jourParis(1);
       const a = await activite(
         resident4,
         demain,

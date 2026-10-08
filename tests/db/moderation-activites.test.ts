@@ -6,6 +6,7 @@ import {
   publierApresJev,
   type Compte,
 } from "./clients";
+import { jourParis } from "./paris";
 
 // Ticket #14 : le conseil syndical modère les activités. Une activité en relecture ou masquée
 // n'est visible que de son créateur et du conseil syndical, lien public compris ; le conseil
@@ -13,9 +14,7 @@ import {
 // message. Une nouvelle activité naît en relecture et Jev la publie (ticket #101) : ici, un
 // `publier` sans objection de Jev.
 
-const dansUnMois = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-  .toISOString()
-  .slice(0, 10);
+const dansUnMois = jourParis(30);
 
 const ACTIVITE = {
   titre: "Goûter crêpes",
@@ -563,9 +562,7 @@ describe("le conseil syndical modifie ou annule toute activité", () => {
     const syndic = await nouveauSyndic();
     const inscrit = await nouveauResident("valide");
     const identifiant = await publier(createur, {
-      date_activite: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10),
+      date_activite: jourParis(-2),
     });
     await inscrire(inscrit, identifiant);
     await moderer(syndic, identifiant, "masquer", "Signalement");
