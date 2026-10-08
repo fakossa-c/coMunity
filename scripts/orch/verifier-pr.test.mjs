@@ -348,9 +348,7 @@ describe("decider : le contrôle de CI", () => {
       etat: "rouge",
       url,
     });
-    expect(ci([controle({ conclusion: "timed_out", url })]).etat).toBe(
-      "rouge",
-    );
+    expect(ci([controle({ conclusion: "timed_out", url })]).etat).toBe("rouge");
     expect(ci([controle({ url })])).toMatchObject({ etat: "vert", url });
     expect(
       ci([controle({ statut: "in_progress", conclusion: null, url })]).etat,
@@ -359,9 +357,9 @@ describe("decider : le contrôle de CI", () => {
 
   it("ne dit pas rouge ni vert d'un contrôle absent de la tête, même rouge sur un commit antérieur", () => {
     expect(ci([]).etat).toBe("absent");
-    expect(
-      ci([controle({ sha: ANCIEN, conclusion: "failure" })]).etat,
-    ).toBe("absent");
+    expect(ci([controle({ sha: ANCIEN, conclusion: "failure" })]).etat).toBe(
+      "absent",
+    );
   });
 
   it("n'exige aucun contrôle quand le nom est vide, et le dit", () => {

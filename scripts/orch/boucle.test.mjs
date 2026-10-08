@@ -721,6 +721,18 @@ function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
           };
         }
         case "arreterSession":
+          if (monde.arretImpossible) {
+            return {
+              ok: false,
+              evenements: [
+                {
+                  evenement: "echec",
+                  ticket: n,
+                  detail: "claude stop a échoué",
+                },
+              ],
+            };
+          }
           monde.sessions[n] = "stopped";
           return {
             ok: true,
@@ -2450,5 +2462,127 @@ describe("commentairesDepuisGh", () => {
       },
     ]);
     expect(c.auteur).toBe("");
+  });
+});
+
+// --- Revue : portée en ligne seule, question sans portée, session bloquée avec PR, arrêt raté ---
+
+describe("lireQuestion : la portée tient seule sur sa ligne", () => {
+  const lire = (commentaires) =>
+    lireQuestion(commentaires, { proprietaire: PROPRIETAIRE, depuis: DEBUT });
+
+  it("ne prend pas pour une question une réponse qui cite la portée dans une phrase", () => {
+    const question = lire([
+      commentaire(1, "Quelle table ?\nPortée : spec"),
+      commentaire(2, "Portée : ticket, d'accord, la table activites."),
+    ]);
+    expect(question).toMatchObject({ id: 1, portee: "spec" });
+  });
+
+  it("lit la portée en gras ou dans une citation", () => {
+    expect(lire([commentaire(1, "Q ?\n**Portée : ticket**")]).portee).toBe(
+      "ticket",
+    );
+    expect(lire([commentaire(1, "Q ?\n> Portée : spec")]).portee).toBe("spec");
+  });
+});
+
+describe("decider : question sans portée déclarée", () => {
+  it("reprend la session avec le dernier commentaire du propriétaire comme question, portée spec", () => {
+    const resultat = decider(
+      situation({
+        sessions: [session(217, "done")],
+        commentaires: {
+          217: [
+            commentaire(2, "Une question sans portée."),
+            commentaire(3, "Voici la réponse."),
+          ],
+        },
+      }),
+    );
+    expect(resultat.actions).toHaveLength(1);
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendre",
+      motif: "question",
+      changements: { questionRepondue: 2 },
+    });
+    expect(resultat.actions[0].message).toContain(commentaire(3, "").url);
+  });
+
+  it("ne reprend pas deux fois la même question sans portée", () => {
+    const resultat = decider(
+      situation({
+        sessions: [session(217, "done")],
+        etat: {
+          version: 1,
+          tickets: { 217: entree(217, { questionRepondue: 2 }) },
+        },
+        commentaires: { 217: [commentaire(2, "Une question sans portée.")] },
+      }),
+    );
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+  });
+
+  it("ne prend pas un commentaire de la boucle ni d'un autre compte pour la question", () => {
+    const resultat = decider(
+      situation({
+        sessions: [session(217, "done")],
+        commentaires: {
+          217: [
+            commentaire(2, "**Boucle de livraison** : rendu."),
+            commentaire(3, "Bonjour", { auteur: "intrus" }),
+          ],
+        },
+      }),
+    );
+    expect(types(resultat)).toEqual(["rendreHumain"]);
+  });
+});
+
+describe("decider : session en attente d'une saisie avec une PR", () => {
+  const bloqueeAvecPr = (verdict) =>
+    situation({
+      sessions: [session(217, "blocked")],
+      prs: { 217: prOuverte(217) },
+      verdicts: { 217: verdict },
+    });
+
+  it("clôture la PR fusionnable plutôt que de l'abandonner", () => {
+    const resultat = decider(bloqueeAvecPr(verdictVert));
+    expect(types(resultat)).toEqual(["cloturer"]);
+  });
+
+  it("arrête et rend la session quand la PR n'est pas fusionnable", () => {
+    const resultat = decider(
+      bloqueeAvecPr({
+        fusionnable: false,
+        raisons: ["titre : ne cite pas #217"],
+      }),
+    );
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+  });
+
+  it("vérifie la PR d'une session bloquée", () => {
+    expect(
+      doitVerifier({
+        ticket: ticket(217),
+        entree: entree(217),
+        pr: prOuverte(217),
+        sessions: [session(217, "blocked")],
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("boucle : arrêt de session raté", () => {
+  it("ne relance pas dans le même worktree tant que l'ancienne session n'est pas arrêtée", async () => {
+    const monde = monde1({ activites: { 1: il_y_a(60) } });
+    monde.arretImpossible = true;
+    const ports = portsDuMonde(monde, { apresAttente: parEtapes([]) });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(monde.actionsExecutees.map((a) => a.type)).toEqual([
+      "arreterSession",
+    ]);
+    expect(monde.entrees[1].inactivites).toBeUndefined();
   });
 });
