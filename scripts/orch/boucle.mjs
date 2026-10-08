@@ -12,10 +12,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { format, parseArgs } from "node:util";
 import {
+  argsMiseAJourBranche,
   cheminsEtat,
   ecrireJson,
   envGh,
   executer,
+  explicationRefusMiseAJour,
   idDepuisSortieBg,
   lireEtat,
   lireValeurs,
@@ -25,10 +27,14 @@ import {
   remplacerSession,
   specDepuisCorps,
 } from "./commun.mjs";
-import { main as cloturer, trouverSession } from "./cloturer.mjs";
+import {
+  CODE_CLOTURE_SUSPENDUE,
+  main as cloturer,
+  trouverSession,
+} from "./cloturer.mjs";
 import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import { brancheTicket, dossierWorktree, main as lancer } from "./lancer.mjs";
-import { main as verifierPr } from "./verifier-pr.mjs";
+import { enRetardSeulement, main as verifierPr } from "./verifier-pr.mjs";
 
 // L'heure de démarrage de la machine se déduit de l'uptime, à quelques secondes près.
 const TOLERANCE_DEMARRAGE_S = 120;
@@ -226,6 +232,7 @@ export function messageDeReprise({
   reprisesMax,
   etatSession,
   delaiMinutes,
+  apresMiseAJourDeBranche = false,
 }) {
   const autres =
     autresComptes > 0
@@ -244,7 +251,10 @@ export function messageDeReprise({
     return `Ta session s'est interrompue (état ${etatSession}) avant d'ouvrir la PR du ticket #${ticket}, par exemple à la limite de l'abonnement. Reprends où tu en étais : relis \`git log\` et \`git status\` du worktree, le ticket et ses commentaires, puis continue jusqu'à la PR. Rien de commité n'est perdu. ${MESSAGE_DONNEES}`;
   }
   if (motif === "ci") {
-    return `Le contrôle de CI de ta PR #${pr} est rouge : ${url}. Lis le journal du run (\`gh run view\`), corrige la cause sur la branche du ticket #${ticket}, relance la suite de tests en local (par morceaux), pousse, puis arrête-toi sans surveiller la CI : la boucle la relit. Reprise ${reprise} sur ${reprisesMax} au plus ; au-delà, le ticket est rendu. ${MESSAGE_DONNEES}`;
+    const miseAJour = apresMiseAJourDeBranche
+      ? " La boucle a mis la branche à jour avec la base sur GitHub (commit de fusion) : récupère-le (`git pull --no-rebase`) avant de corriger, sinon ton push sera refusé."
+      : "";
+    return `Le contrôle de CI de ta PR #${pr} est rouge : ${url}.${miseAJour} Lis le journal du run (\`gh run view\`), corrige la cause sur la branche du ticket #${ticket}, relance la suite de tests en local (par morceaux), pousse, puis arrête-toi sans surveiller la CI : la boucle la relit. Reprise ${reprise} sur ${reprisesMax} au plus ; au-delà, le ticket est rendu. ${MESSAGE_DONNEES}`;
   }
   throw new Error(`Motif de reprise inconnu : ${motif}`);
 }
@@ -414,9 +424,31 @@ function repriseCiRouge(situation, ticket, entree, pr, ci) {
       url: ci.url,
       reprise: faites + 1,
       reprisesMax: max,
+      apresMiseAJourDeBranche: (entree.misesAJourBranche ?? 0) > 0,
     }),
     changements: { reprises: faites + 1 },
   });
+}
+
+/** PR verte sur sa tête mais en retard sur la base : la branche est mise à jour (le contrôle de CI
+ * repart sur le nouveau commit de tête, que la vérification suivante attend), au plus
+ * `misesAJourBrancheMax` fois par ticket ; ensuite le ticket est rendu. */
+function miseAJourDeBranche(situation, ticket, entree, pr, verdict) {
+  const faites = entree.misesAJourBranche ?? 0;
+  const max = situation.bornes.misesAJourBrancheMax;
+  if (faites >= max) {
+    return rendre(
+      ticket,
+      `La PR #${pr.numero} est restée en retard sur la branche d'intégration après ${faites} fois où la boucle a mis sa branche à jour (maximum ${max}) : d'autres PR passent devant elle. La mettre à jour et la fusionner à la main.`,
+    );
+  }
+  return {
+    type: "mettreAJourBranche",
+    ticket,
+    pr: pr.numero,
+    tete: verdict.tete,
+    changements: { misesAJourBranche: faites + 1 },
+  };
 }
 
 /** Les specs gelées par une question de portée `spec` posée sur un de leurs tickets (needs-info) :
@@ -579,6 +611,10 @@ export function decider(situation) {
         aCloturer.add(t.numero);
       } else if (ci?.etat === "rouge") {
         actions.push(repriseCiRouge(situation, t.numero, entree, pr, ci));
+      } else if (enRetardSeulement(verdict)) {
+        actions.push(
+          miseAJourDeBranche(situation, t.numero, entree, pr, verdict),
+        );
       } else {
         actions.push({
           type: "attendre",
@@ -682,7 +718,7 @@ export function decider(situation) {
 export function etatApres(etat, action, { maintenant, session } = {}) {
   const { ticket, changements } = action;
   const demarreA = maintenant?.toISOString();
-  if (action.type === "noterEtat") {
+  if (action.type === "noterEtat" || action.type === "mettreAJourBranche") {
     return modifierEntree(etat, ticket, changements);
   }
   const entree = etat.tickets[String(ticket)];
@@ -901,6 +937,21 @@ export function evenementsLancement({ ticket, code, sortie, erreurs }) {
  * la vérification a réussi, et la fusion est faite si la clôture est allée jusqu'au bout ou
  * jusqu'à une étape plus loin. */
 export function evenementsCloture({ ticket, code, sortie, erreurs }) {
+  // Clôture suspendue : la PR était en retard sur la base, sa branche est mise à jour et la fusion
+  // attend le contrôle du nouveau commit de tête. Ni une clôture ni un échec.
+  if (code === CODE_CLOTURE_SUSPENDUE) {
+    return {
+      ok: true,
+      evenements: [
+        {
+          evenement: "maj-branche",
+          ticket,
+          detail:
+            "PR en retard sur la base : branche mise à jour, fusion après le contrôle du nouveau commit de tête",
+        },
+      ],
+    };
+  }
   const evenements = [];
   const fusion = sortie.match(/^(\d+)\/\d+ Fusionner la PR/m);
   if (fusion) {
@@ -1009,6 +1060,7 @@ export function bornesDepuisValeurs(valeurs) {
     dureeMaxMs: valeurs.dureeMaxSessionMinutes * 60_000,
     inactiviteMs: valeurs.delaiInactiviteMinutes * 60_000,
     reprisesCiMax: valeurs.reprisesMax,
+    misesAJourBrancheMax: valeurs.misesAJourBrancheMax,
     echecsMax: valeurs.echecsSessionMax,
     attenteMs: valeurs.attenteRepriseMinutes * 60_000,
     proprietaire: valeurs.depot.split("/")[0],
@@ -1386,6 +1438,46 @@ function noterEtat(action, { valeurs, home, dryRun }) {
   };
 }
 
+/** Met la branche de la PR à jour avec sa base, sur le commit de tête vérifié. Le compteur du ticket
+ * est écrit avant l'appel : une mise à jour qui échoue compte aussi, la borne tient même si GitHub
+ * répond mal. `expected_head_sha` fait refuser la mise à jour si la session a poussé depuis. */
+function mettreAJourBranche(action, { valeurs, env, home, dryRun }) {
+  const { ticket, pr, tete } = action;
+  if (dryRun) {
+    return repetition(
+      ticket,
+      `mettrait à jour la branche de la PR #${pr} avec la base (commit de tête ${tete.slice(0, 7)})`,
+    );
+  }
+  ecrireEtatApres(action, { valeurs, home });
+  try {
+    executer("gh", argsMiseAJourBranche({ depot: valeurs.depot, pr, tete }), {
+      env,
+    });
+  } catch (erreur) {
+    return {
+      ok: false,
+      evenements: [
+        {
+          evenement: "echec",
+          ticket,
+          detail: `mise à jour de la branche de la PR #${pr} : ${tronquer(explicationRefusMiseAJour(erreur.stderr?.toString().trim() || erreur.message))}`,
+        },
+      ],
+    };
+  }
+  return {
+    ok: true,
+    evenements: [
+      {
+        evenement: "maj-branche",
+        ticket,
+        detail: `branche de la PR #${pr} mise à jour avec la base (tête ${tete.slice(0, 7)}), en attente du contrôle du nouveau commit`,
+      },
+    ],
+  };
+}
+
 /** Arrête la session de fond. Un arrêt refusé n'est pas grave si la session ne tourne plus ; si elle
  * tourne encore, l'action échoue et la boucle ne touche pas à ce ticket ce tour-ci. */
 function arreterSession(action, { dryRun }) {
@@ -1598,6 +1690,8 @@ async function executerAction(action, { dryRun }, contexte) {
       return rendreAuHumain(action, options);
     case "noterEtat":
       return noterEtat(action, options);
+    case "mettreAJourBranche":
+      return mettreAJourBranche(action, options);
     case "arreterSession":
       return arreterSession(action, options);
     case "reprendre":

@@ -8,6 +8,11 @@
 // sur le commit vérifié, mise à jour de `develop`, poussée de la migration, clôture du ticket puis de
 // sa spec, retrait de la session, du service et du worktree.
 //
+// PR en retard sur `develop` (état BEHIND, que la protection `strict` rend bloquant) : si c'est son
+// seul manquement, la clôture met la branche à jour puis s'arrête (code 3) sans fusionner. Le
+// commit de tête change et le contrôle de CI repart (14 à 17 minutes) : la fusion se fait à la
+// clôture suivante, sur le commit que la vérification aura relu avec son contrôle vert.
+//
 // Relançable : la fonction de décision ne planifie que ce qui n'est pas encore fait, d'après ce que
 // la couche de lecture observe (PR fusionnée, `develop` qui contient la fusion, commentaire de
 // clôture posé, session, worktree et entrée d'état encore présents). Une étape qui échoue après la
@@ -23,13 +28,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import {
+  argsMiseAJourBranche,
   cheminsEtat,
   ecrireJson,
   envGh,
   executer,
   executerCommande,
+  explicationRefusMiseAJour,
   lireEtat,
   lireValeurs,
+  modifierEntree,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
   specDepuisCorps,
@@ -39,8 +47,12 @@ import {
   dossierWorktree,
   worktreeEnregistre,
 } from "./lancer.mjs";
+import { enRetardSeulement } from "./verifier-pr.mjs";
 
 const ETIQUETTE_MIGRATION = "migration";
+/** Code de sortie d'une clôture suspendue : la branche est mise à jour, la fusion attend le contrôle
+ * du nouveau commit de tête. Ni un succès (le ticket n'est pas clos) ni un échec. */
+export const CODE_CLOTURE_SUSPENDUE = 3;
 const ETATS_DE_SESSION_FINIS = ["done", "failed", "stopped"];
 // Ce qui se voit d'un résident ou de la base : le reste est de l'outillage, de la config ou des docs.
 const CHEMINS_DU_PRODUIT = /^(?:src|supabase|public)\//;
@@ -107,8 +119,9 @@ export function texteEchec({ ticket, action, message, faites }) {
  *  situation = {
  *    ticket, racine, home
  *    pr            : { numero, etat: OPEN | MERGED, titre, etiquettes, fichiers, fusionCommit } | null
- *    verdict       : le JSON de verifier-pr.mjs ({ fusionnable, tete, raisons }) pour une PR ouverte,
- *                    null pour une PR déjà fusionnée
+ *    verdict       : le JSON de verifier-pr.mjs ({ fusionnable, tete, raisons, points }) pour une
+ *                    PR ouverte, null pour une PR déjà fusionnée
+ *    misesAJourBranche : combien de fois la branche de ce ticket a déjà été mise à jour (état)
  *    developAJour  : le `develop` du checkout principal contient la fusion
  *    brancheCheckoutPrincipal : la branche du checkout principal (`develop` pour le mettre à jour)
  *    migrationPoussee : la poussée distante est déjà faite (notée dans l'état)
@@ -117,7 +130,10 @@ export function texteEchec({ ticket, action, message, faites }) {
  *    session       : { id, etat } | null   encore listée par `claude agents --json --all`
  *    worktreeExiste, entreeEtat
  *    changement, reste : textes imposés par l'appelant (facultatifs)
- *  } */
+ *  }
+ *
+ * Rend { refus, actions } et, quand la clôture s'arrête après la mise à jour de la branche d'une PR
+ * en retard, `suspendue` : pourquoi rien n'est fusionné ce coup-ci. */
 export function decider(situation, valeurs) {
   const { ticket, pr, verdict, issue, spec, session } = situation;
   if (!pr) {
@@ -133,6 +149,9 @@ export function decider(situation, valeurs) {
         refus: [`La vérification de la PR de #${ticket} manque.`],
         actions: [],
       };
+    }
+    if (!verdict.fusionnable && enRetardSeulement(verdict)) {
+      return planMiseAJourBranche(situation, valeurs);
     }
     if (!verdict.fusionnable) {
       return {
@@ -251,11 +270,54 @@ export function decider(situation, valeurs) {
   return { refus: [], actions };
 }
 
+/** PR verte sur son commit de tête mais en retard sur la base : mettre sa branche à jour, sans
+ * fusionner. Au-delà de `misesAJourBrancheMax` mises à jour du même ticket, c'est à l'utilisateur de
+ * trancher (une autre PR passe devant à chaque tour). */
+function planMiseAJourBranche(situation, valeurs) {
+  const { ticket, pr, verdict } = situation;
+  const faites = situation.misesAJourBranche ?? 0;
+  const branche = valeurs.brancheIntegration;
+  if (faites >= valeurs.misesAJourBrancheMax) {
+    return {
+      refus: [
+        `La branche de la PR #${pr.numero} (ticket #${ticket}) a déjà été mise à jour ${faites} fois avec ${branche} (maximum ${valeurs.misesAJourBrancheMax}) et reste en retard : la mettre à jour et la fusionner à la main.`,
+      ],
+      actions: [],
+    };
+  }
+  // Le compteur vit dans l'entrée d'état du ticket : sans elle (ticket lancé à la main), la borne
+  // ne tiendrait pas et la mise à jour pourrait se répéter sans fin.
+  if (!situation.entreeEtat) {
+    return {
+      refus: [
+        `La PR #${pr.numero} est en retard sur ${branche}, mais le ticket #${ticket} n'est pas suivi par l'état de la boucle : le nombre de mises à jour ne peut pas être compté. La mettre à jour à la main (\`gh pr update-branch ${pr.numero}\`), attendre le contrôle du nouveau commit de tête, puis relancer la clôture.`,
+      ],
+      actions: [],
+    };
+  }
+  const fichierEtat = cheminsEtat({
+    home: situation.home,
+    projet: valeurs.projet,
+  }).fichier;
+  return {
+    refus: [],
+    actions: [
+      { type: "noterMiseAJourBranche", ticket, fichierEtat },
+      { type: "mettreAJourBranche", pr: pr.numero, tete: verdict.tete },
+    ],
+    suspendue: `La PR #${pr.numero} était en retard sur ${branche} : sa branche est mise à jour, le contrôle de CI repart sur le nouveau commit de tête. Pas de fusion ce coup-ci : relancer la clôture une fois le contrôle vert sur ce commit (\`node scripts/orch/verifier-pr.mjs ${ticket}\`).`,
+  };
+}
+
 /** Une ligne par action, pour --dry-run et le suivi de l'exécution. */
 export function decrire(action) {
   switch (action.type) {
     case "fusionner":
       return `Fusionner la PR #${action.pr} (gh pr merge --merge) sur le commit de tête ${action.tete.slice(0, 7)}`;
+    case "noterMiseAJourBranche":
+      return `Compter une mise à jour de branche pour #${action.ticket} dans ${action.fichierEtat}`;
+    case "mettreAJourBranche":
+      return `Mettre à jour la branche de la PR #${action.pr} avec la base (commit de tête attendu ${action.tete.slice(0, 7)}), sans fusionner`;
     case "majDevelop":
       return `Mettre ${action.branche} à jour dans le checkout principal (${action.racine})`;
     case "listerMigrations":
@@ -455,6 +517,7 @@ function lire({ ticket, options, racine, sources, valeurs, env, home }) {
     developAJour,
     brancheCheckoutPrincipal: brancheCourante(racine),
     migrationPoussee: entree?.migrationPoussee === true,
+    misesAJourBranche: entree?.misesAJourBranche ?? 0,
     issue,
     spec: numeroSpec ? lireSpec(gh, valeurs, numeroSpec) : null,
     session: sessionTrouvee
@@ -493,6 +556,35 @@ export function executerAction(action, { sources, env, valeurs }) {
         "--match-head-commit",
         action.tete,
       );
+      return;
+    case "noterMiseAJourBranche": {
+      // Compté avant l'appel : une mise à jour qui échoue en cours de route compte aussi, pour que
+      // la borne tienne même si GitHub répond mal.
+      const etat = lireEtat(action.fichierEtat);
+      const faites =
+        etat.tickets[String(action.ticket)]?.misesAJourBranche ?? 0;
+      ecrireJson(
+        action.fichierEtat,
+        modifierEntree(etat, action.ticket, { misesAJourBranche: faites + 1 }),
+      );
+      return;
+    }
+    case "mettreAJourBranche":
+      try {
+        gh(
+          ...argsMiseAJourBranche({
+            depot: valeurs.depot,
+            pr: action.pr,
+            tete: action.tete,
+          }),
+        );
+      } catch (erreur) {
+        throw new Error(
+          explicationRefusMiseAJour(
+            erreur.stderr?.toString().trim() || erreur.message,
+          ),
+        );
+      }
       return;
     case "majDevelop": {
       const courante = brancheCourante(action.racine);
@@ -656,7 +748,7 @@ export async function main(argv) {
     env,
     home,
   });
-  const { refus, actions } = decider(situation, valeurs);
+  const { refus, actions, suspendue } = decider(situation, valeurs);
   if (refus.length > 0) {
     for (const ligne of refus) console.error(ligne);
     return 1;
@@ -670,6 +762,10 @@ export async function main(argv) {
       `Mode répétition (--dry-run) : la clôture de #${ticket} ferait, sans rien modifier :`,
     );
     actions.forEach((a, i) => console.log(`  ${i + 1}. ${decrire(a)}`));
+    if (suspendue)
+      console.log(
+        `Puis elle s'arrêterait (code ${CODE_CLOTURE_SUSPENDUE}) : ${suspendue}`,
+      );
     return 0;
   }
 
@@ -713,6 +809,10 @@ export async function main(argv) {
     }
     faites.push(action.type);
     if (action.type === "fusionner") fusionFaite = true;
+  }
+  if (suspendue) {
+    console.log(`\nClôture suspendue : ${suspendue}`);
+    return CODE_CLOTURE_SUSPENDUE;
   }
   console.log(`\nTicket #${ticket} clôturé.`);
   return 0;

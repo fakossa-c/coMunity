@@ -22,6 +22,7 @@ const valeurs = {
     migrationDistante: "npm run db:pousser",
   },
   pousserMigrationsApresFusion: true,
+  misesAJourBrancheMax: 3,
 };
 
 const RACINE = "/depot";
@@ -235,6 +236,93 @@ describe("decider : refus", () => {
     const resultat = decider(apresFusion(), valeurs);
     expect(resultat.refus).toEqual([]);
     expect(types(resultat)).not.toContain("fusionner");
+  });
+});
+
+/** Le verdict de verifier-pr.mjs d'une PR dont le seul manquement est le retard sur develop. */
+const verdictEnRetard = (surcharge = {}) => ({
+  fusionnable: false,
+  tete: TETE,
+  raisons: ["a-jour : branche en retard sur develop"],
+  points: [
+    { id: "ci", ok: true, detail: "contrôle Tests vert sur le commit de tête" },
+    { id: "a-jour", ok: false, detail: "branche en retard sur develop" },
+  ],
+  ...surcharge,
+});
+
+describe("decider : une PR en retard sur develop", () => {
+  it("met la branche à jour sur le commit de tête vérifié, sans fusionner ni rien clôturer", () => {
+    const resultat = decider(
+      situation({ verdict: verdictEnRetard() }),
+      valeurs,
+    );
+    expect(resultat.refus).toEqual([]);
+    expect(resultat.actions).toEqual([
+      expect.objectContaining({
+        type: "noterMiseAJourBranche",
+        ticket: 212,
+      }),
+      { type: "mettreAJourBranche", pr: 231, tete: TETE },
+    ]);
+    expect(resultat.suspendue).toMatch(/contrôle.*nouveau commit de tête/);
+  });
+
+  it("ne suspend rien pour une PR fusionnable", () => {
+    expect(decider(situation(), valeurs).suspendue).toBeUndefined();
+  });
+
+  it("refuse, comme avant, quand le retard s'ajoute à un autre manquement", () => {
+    const resultat = decider(
+      situation({
+        verdict: verdictEnRetard({
+          raisons: [
+            "ci : contrôle Tests absent",
+            "a-jour : branche en retard sur develop",
+          ],
+          points: [
+            { id: "ci", ok: false, detail: "contrôle Tests absent" },
+            { id: "a-jour", ok: false, detail: "branche en retard" },
+          ],
+        }),
+      }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.join("\n")).toContain("ci : contrôle Tests absent");
+  });
+
+  it("refuse une quatrième mise à jour du même ticket et dit pourquoi", () => {
+    const resultat = decider(
+      situation({ verdict: verdictEnRetard(), misesAJourBranche: 3 }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.join("\n")).toMatch(/3 fois/);
+  });
+
+  it("autorise la troisième mise à jour du même ticket", () => {
+    const resultat = decider(
+      situation({ verdict: verdictEnRetard(), misesAJourBranche: 2 }),
+      valeurs,
+    );
+    expect(resultat.refus).toEqual([]);
+    expect(types(resultat)).toContain("mettreAJourBranche");
+  });
+
+  it("refuse de mettre la branche à jour d'un ticket que l'état ne suit pas : sans compteur, la borne ne tiendrait pas", () => {
+    const resultat = decider(
+      situation({ verdict: verdictEnRetard(), entreeEtat: false }),
+      valeurs,
+    );
+    expect(resultat.actions).toEqual([]);
+    expect(resultat.refus.join("\n")).toMatch(/gh pr update-branch 231/);
+  });
+
+  it("n'y touche pas quand la PR est déjà fusionnée", () => {
+    expect(types(decider(apresFusion(), valeurs))).not.toContain(
+      "mettreAJourBranche",
+    );
   });
 });
 
@@ -584,6 +672,16 @@ describe("decrire", () => {
     for (const action of resultat.actions) {
       expect(decrire(action)).toEqual(expect.any(String));
     }
+  });
+
+  it("décrit la mise à jour de la branche", () => {
+    const { actions } = decider(
+      situation({ verdict: verdictEnRetard() }),
+      valeurs,
+    );
+    const textes = actions.map(decrire);
+    expect(textes.join("\n")).toMatch(/Mettre à jour la branche de la PR #231/);
+    expect(textes.join("\n")).toContain(TETE.slice(0, 7));
   });
 
   it("refuse une action inconnue", () => {

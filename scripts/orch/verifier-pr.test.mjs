@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decider,
+  enRetardSeulement,
   fermeturesDepuisCorps,
   formater,
   titreCiteLeTicket,
@@ -22,6 +23,7 @@ const pr = (surcharge = {}) => ({
   fichiers: ["scripts/orch/verifier-pr.mjs"],
   fermeture: [211],
   fusion: "MERGEABLE",
+  etatFusion: "CLEAN",
   ...surcharge,
 });
 
@@ -62,6 +64,7 @@ describe("decider : une PR conforme", () => {
       "ci",
       "labels",
       "conflit",
+      "a-jour",
     ]);
     expect(verdict.points.every((p) => p.ok)).toBe(true);
   });
@@ -86,7 +89,7 @@ describe("decider : la PR du ticket", () => {
       ok: false,
       detail: expect.stringMatching(/aucune PR ouverte.*ticket-211/),
     });
-    expect(verdict.points.filter((p) => !p.ok)).toHaveLength(8);
+    expect(verdict.points.filter((p) => !p.ok)).toHaveLength(9);
     expect(point(verdict, "base").detail).toMatch(/non vérifié/);
   });
 
@@ -438,6 +441,81 @@ describe("decider : les conflits avec la branche d'intégration", () => {
   });
 });
 
+describe("decider : la branche à jour avec la base", () => {
+  it("refuse une PR en retard sur la branche d'intégration (BEHIND) avec une raison claire", () => {
+    const verdict = decider(
+      situation({ pr: pr({ etatFusion: "BEHIND" }) }),
+      valeurs,
+    );
+    expect(verdict.fusionnable).toBe(false);
+    expect(point(verdict, "a-jour")).toMatchObject({
+      ok: false,
+      detail: expect.stringMatching(/en retard sur develop/),
+    });
+    expect(verdict.raisons).toEqual([
+      expect.stringMatching(/^a-jour : .*en retard sur develop/),
+    ]);
+  });
+
+  it("n'y voit pas un conflit : une PR en retard mais sans conflit ne refuse que ce point", () => {
+    const verdict = decider(
+      situation({ pr: pr({ etatFusion: "BEHIND", fusion: "MERGEABLE" }) }),
+      valeurs,
+    );
+    expect(verdict.points.filter((p) => !p.ok).map((p) => p.id)).toEqual([
+      "a-jour",
+    ]);
+  });
+
+  it.each(["CLEAN", "UNSTABLE", "HAS_HOOKS", "BLOCKED", "DIRTY"])(
+    "ne refuse pas l'état %s : les autres points le jugent",
+    (etatFusion) => {
+      const verdict = decider(situation({ pr: pr({ etatFusion }) }), valeurs);
+      expect(point(verdict, "a-jour").ok).toBe(true);
+    },
+  );
+});
+
+describe("enRetardSeulement", () => {
+  it("est vrai quand le retard est le seul manquement", () => {
+    const verdict = decider(
+      situation({ pr: pr({ etatFusion: "BEHIND" }) }),
+      valeurs,
+    );
+    expect(enRetardSeulement(verdict)).toBe(true);
+  });
+
+  it("est faux quand la PR est fusionnable", () => {
+    expect(enRetardSeulement(decider(situation(), valeurs))).toBe(false);
+  });
+
+  it("est faux quand un autre manquement s'ajoute au retard : contrôle absent sur la tête, conflit, titre", () => {
+    for (const surcharge of [
+      { controles: [] },
+      { controles: [controle({ conclusion: "failure" })] },
+      { pr: pr({ etatFusion: "BEHIND", fusion: "CONFLICTING" }) },
+      { pr: pr({ etatFusion: "BEHIND", titre: "Sans numéro" }) },
+    ]) {
+      const verdict = decider(
+        situation({ pr: pr({ etatFusion: "BEHIND" }), ...surcharge }),
+        valeurs,
+      );
+      expect(enRetardSeulement(verdict)).toBe(false);
+    }
+  });
+
+  it("est faux sans PR unique et pour un verdict illisible", () => {
+    expect(
+      enRetardSeulement(
+        decider(situation({ prs: [], pr: null, controles: [] }), valeurs),
+      ),
+    ).toBe(false);
+    expect(enRetardSeulement({ fusionnable: false, raisons: ["x"] })).toBe(
+      false,
+    );
+  });
+});
+
 describe("decider : plusieurs manquements", () => {
   it("les rend tous, un par point, dans l'ordre", () => {
     const verdict = decider(
@@ -467,7 +545,7 @@ describe("formater", () => {
     const texte = formater(decider(situation(), valeurs));
     expect(texte.split("\n")[0]).toMatch(/PR #230.*ticket #211.*fusionnable/);
     expect(texte.split("\n")[0]).not.toMatch(/non fusionnable/i);
-    expect(texte.split("\n")).toHaveLength(9);
+    expect(texte.split("\n")).toHaveLength(10);
   });
 
   it("dit non fusionnable et marque les points refusés", () => {

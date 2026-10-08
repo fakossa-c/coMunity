@@ -34,6 +34,7 @@ const VALEURS_DU_PROJET = [
   "dureeMaxSessionMinutes",
   "delaiInactiviteMinutes",
   "reprisesMax",
+  "misesAJourBrancheMax",
   "echecsSessionMax",
   "attenteRepriseMinutes",
   "pousserMigrationsApresFusion",
@@ -227,6 +228,28 @@ export function envGh(compte) {
     }).trim();
   }
   return env;
+}
+
+/** Les arguments de `gh` qui mettent la branche d'une PR à jour avec sa base (un commit de fusion
+ * de la base dans la branche, comme `gh pr update-branch`). `expected_head_sha` : GitHub refuse la
+ * mise à jour si la session a poussé depuis la lecture de `tete`, au lieu de l'écraser. */
+export function argsMiseAJourBranche({ depot, pr, tete }) {
+  return [
+    "api",
+    "--method",
+    "PUT",
+    `repos/${depot}/pulls/${pr}/update-branch`,
+    "-f",
+    `expected_head_sha=${tete}`,
+  ];
+}
+
+/** Le message d'un refus de `argsMiseAJourBranche`, avec sa cause probable quand GitHub répond que
+ * le commit de tête attendu n'est plus celui de la branche (la session a poussé depuis la lecture). */
+export function explicationRefusMiseAJour(message) {
+  return /expected head sha/i.test(message)
+    ? `${message} (le commit de tête a changé depuis la vérification : la session a poussé, la prochaine lecture reprend le nouveau commit)`
+    : message;
 }
 
 /** Lance un programme sans shell et rend sa sortie standard. */
