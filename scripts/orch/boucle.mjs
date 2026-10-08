@@ -208,6 +208,7 @@ export function messageDeReprise({
   reprise,
   reprisesMax,
   etatSession,
+  minutes: inactivite,
 }) {
   const autres =
     autresComptes > 0
@@ -218,6 +219,9 @@ export function messageDeReprise({
       ? `Le propriétaire du dépôt a répondu à ta question sur le ticket #${ticket} : ${reponse.url}.`
       : `Le label \`needs-info\` du ticket #${ticket} a été retiré sans commentaire de réponse du propriétaire après ta question : relis le ticket et ses commentaires.`;
     return `${debut} Relis la réponse sur le ticket, applique-la et continue jusqu'à la PR, selon le contrat de fin de session de ton prompt. ${MESSAGE_DONNEES}${autres}`;
+  }
+  if (motif === "inactivite") {
+    return `L'ancienne session du ticket #${ticket} est restée sans nouvelle sortie plus de ${inactivite} min (inactivité) : elle a été arrêtée. Reprends le ticket dans cette nouvelle session, selon le contrat de fin de session. ${MESSAGE_DONNEES}`;
   }
   if (motif === "echec") {
     return `Ta session s'est interrompue (état ${etatSession}) avant d'ouvrir la PR du ticket #${ticket}, par exemple à la limite de l'abonnement. Reprends où tu en étais : relis \`git log\` et \`git status\` du worktree, le ticket et ses commentaires, puis continue jusqu'à la PR. Rien de commité n'est perdu. ${MESSAGE_DONNEES}`;
@@ -265,6 +269,64 @@ function repriseApresQuestion(situation, ticket, entree) {
     }),
     changements: { questionRepondue: question.id, reprendreApres: undefined },
   });
+}
+
+const minutes = (ms) => Math.round(ms / 60_000);
+
+/** Les bornes d'une session qui travaille : la durée maximale (depuis son dernier démarrage ou sa
+ * dernière reprise) rend le ticket ; une session sans nouvelle sortie depuis le délai d'inactivité
+ * est arrêtée et relancée une fois dans une nouvelle session, puis rendue. Une dernière sortie
+ * inconnue ne se juge pas : la durée maximale reste la borne. */
+function bornesDeLaSession(situation, ticket, entree) {
+  const { maintenant, bornes } = situation;
+  const arret = (raison) => ({
+    type: "arreterSession",
+    ticket,
+    session: entree.session,
+    raison,
+  });
+  const demarreA = new Date(entree.demarreA);
+  if (maintenant - demarreA > bornes.dureeMaxMs) {
+    return [
+      arret("durée maximale dépassée"),
+      {
+        type: "rendreHumain",
+        ticket,
+        sansLeveeParPr: true,
+        explication: `La session ${entree.nom} a dépassé la durée maximale (${minutes(bornes.dureeMaxMs)} min, démarrée à ${entree.demarreA}) : elle est arrêtée, son travail commité reste sur la branche. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+      },
+    ];
+  }
+  const sortie = situation.activites[ticket];
+  if (!sortie) return [];
+  const derniere = Math.max(new Date(sortie), demarreA);
+  if (maintenant - derniere <= bornes.inactiviteMs) return [];
+  const inactivites = entree.inactivites ?? 0;
+  if (inactivites >= 1) {
+    return [
+      arret("inactivité"),
+      {
+        type: "rendreHumain",
+        ticket,
+        sansLeveeParPr: true,
+        explication: `La session ${entree.nom} a dépassé le délai d'inactivité (${minutes(bornes.inactiviteMs)} min sans nouvelle sortie) pour la deuxième fois (relancée une fois déjà) : elle est arrêtée. Reprendre le ticket à la main (\`claude attach ${entree.session}\`).`,
+      },
+    ];
+  }
+  return [
+    arret("inactivité"),
+    {
+      type: "relancer",
+      motif: "inactivite",
+      ticket,
+      message: messageDeReprise({
+        motif: "inactivite",
+        ticket,
+        minutes: minutes(bornes.inactiviteMs),
+      }),
+      changements: { inactivites: inactivites + 1 },
+    },
+  ];
 }
 
 /** Une session interrompue (échec, limite de l'abonnement, arrêt du superviseur) sans PR ni label :
@@ -475,7 +537,10 @@ export function decider(situation) {
       );
       continue;
     }
-    if (!terminee) continue;
+    if (!terminee) {
+      actions.push(...bornesDeLaSession(situation, t.numero, entree));
+      continue;
+    }
 
     if (pr?.etat === "MERGED") {
       actions.push({ type: "cloturer", ticket: t.numero, pr: pr.numero });
