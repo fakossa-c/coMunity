@@ -116,7 +116,13 @@ function pointMigration(pr) {
 }
 
 /** Le dernier run d'un contrôle (identifiant le plus grand : une relance remplace l'ancien). */
-const dernier = (runs) => runs.reduce((a, b) => (b.id > a.id ? b : a));
+const dernierRun = (runs) => runs.reduce((a, b) => (b.id > a.id ? b : a));
+
+/** L'état d'un run en un mot : seule la conclusion `success` est verte. */
+function etatDuRun(run) {
+  if (run.statut !== "completed") return `en cours (${run.statut})`;
+  return run.conclusion === "success" ? "vert" : `rouge (${run.conclusion})`;
+}
 
 function pointCi(pr, controles, valeurs) {
   const nom = valeurs.controleCi?.trim();
@@ -137,32 +143,17 @@ function pointCi(pr, controles, valeurs) {
         `contrôle ${nom} absent : aucune exécution sur le commit de tête ${tete}`,
       );
     }
-    const ancien = dernier(anterieurs);
-    const etat =
-      ancien.statut !== "completed"
-        ? "en cours"
-        : ancien.conclusion === "success"
-          ? "vert"
-          : `rouge (${ancien.conclusion})`;
+    const ancien = dernierRun(anterieurs);
     return refus(
       "ci",
-      `contrôle ${nom} ${etat} sur un commit antérieur (${court(ancien.sha)}), aucune exécution sur le commit de tête ${tete}`,
+      `contrôle ${nom} ${etatDuRun(ancien)} sur un commit antérieur (${court(ancien.sha)}), aucune exécution sur le commit de tête ${tete}`,
     );
   }
-  const run = dernier(surLaTete);
-  if (run.statut !== "completed") {
-    return refus(
-      "ci",
-      `contrôle ${nom} en cours (${run.statut}) sur le commit de tête ${tete}`,
-    );
-  }
-  if (run.conclusion !== "success") {
-    return refus(
-      "ci",
-      `contrôle ${nom} rouge (${run.conclusion}) sur le commit de tête ${tete}`,
-    );
-  }
-  return ok("ci", `contrôle ${nom} réussi sur le commit de tête ${tete}`);
+  const run = dernierRun(surLaTete);
+  const etat = etatDuRun(run);
+  return run.statut === "completed" && run.conclusion === "success"
+    ? ok("ci", `contrôle ${nom} ${etat} sur le commit de tête ${tete}`)
+    : refus("ci", `contrôle ${nom} ${etat} sur le commit de tête ${tete}`);
 }
 
 function pointLabels(pr, issue, ticket) {
@@ -251,7 +242,7 @@ export function decider(situation, valeurs) {
     points = POINTS.map((id) =>
       id === "pr"
         ? refus(id, detail)
-        : refus(id, "non vérifié : pas de PR unique"),
+        : { ...refus(id, "non vérifié : pas de PR unique"), verifie: false },
     );
   }
   const raisons = points
@@ -277,7 +268,7 @@ export function formater(verdict) {
       : `PR #${verdict.pr} du ticket #${verdict.ticket}`;
   // Sans PR unique, les autres points ne sont pas jugés : seul le point « pr » est un manquement.
   const manquements = verdict.points.filter(
-    (p) => !p.ok && !p.detail.startsWith("non vérifié"),
+    (p) => !p.ok && p.verifie !== false,
   ).length;
   const entete = verdict.fusionnable
     ? `${sujet} : fusionnable (commit de tête ${court(verdict.tete)})`
