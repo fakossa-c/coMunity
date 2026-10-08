@@ -34,6 +34,8 @@ const VALEURS_DU_PROJET = [
   "dureeMaxSessionMinutes",
   "delaiInactiviteMinutes",
   "reprisesMax",
+  "echecsSessionMax",
+  "attenteRepriseMinutes",
   "pousserMigrationsApresFusion",
   "intervalleBoucleSecondes",
 ];
@@ -99,6 +101,32 @@ export function ajouterSession(etat, ticket, { id, nom, demarreA }) {
       [String(ticket)]: { session: id, nom, demarreA, reprises: 0 },
     },
   };
+}
+
+/** Un nouvel état où `ticket` pointe sur une nouvelle session (reprise sans transcript, relance) :
+ * les compteurs du ticket restent, l'attente d'une reprise tombe. */
+export function remplacerSession(etat, ticket, { id, nom, demarreA }) {
+  const { reprendreApres: _attente, ...reste } =
+    etat.tickets[String(ticket)] ?? {};
+  return {
+    ...etat,
+    tickets: {
+      ...etat.tickets,
+      [String(ticket)]: { ...reste, session: id, nom, demarreA },
+    },
+  };
+}
+
+/** Un nouvel état où les champs de l'entrée de `ticket` changent ; un champ à `undefined` est
+ * retiré. Un ticket que l'état ne suit pas n'y entre pas. */
+export function modifierEntree(etat, ticket, changements) {
+  const entree = etat.tickets[String(ticket)];
+  if (!entree) return etat;
+  const modifiee = { ...entree, ...changements };
+  for (const [cle, valeur] of Object.entries(modifiee)) {
+    if (valeur === undefined) delete modifiee[cle];
+  }
+  return { ...etat, tickets: { ...etat.tickets, [String(ticket)]: modifiee } };
 }
 
 const SEQUENCES_ANSI = /\u001b\[[0-9;]*m/g;
