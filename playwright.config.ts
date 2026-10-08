@@ -34,6 +34,8 @@ export default defineConfig({
       env: {
         OPENROUTER_API_KEY: "cle-de-test",
         OPENROUTER_BASE_URL: `http://127.0.0.1:${portJev}`,
+        // Ouvre `/essai-erreur`, dont la lecture échoue à la demande (ecran-erreur.spec.ts).
+        ESSAI_ERREUR_E2E: "1",
       },
     },
   ],
