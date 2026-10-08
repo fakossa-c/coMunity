@@ -34,6 +34,7 @@ const VALEURS_DU_PROJET = [
   "dureeMaxSessionMinutes",
   "delaiInactiviteMinutes",
   "reprisesMax",
+  "misesAJourBrancheMax",
   "echecsSessionMax",
   "attenteRepriseMinutes",
   "pousserMigrationsApresFusion",
@@ -227,6 +228,20 @@ export function envGh(compte) {
     }).trim();
   }
   return env;
+}
+
+/** Les arguments de `gh` qui mettent la branche d'une PR à jour avec sa base (un commit de fusion
+ * de la base dans la branche, comme `gh pr update-branch`). `expected_head_sha` : GitHub refuse la
+ * mise à jour si la session a poussé depuis la lecture de `tete`, au lieu de l'écraser. */
+export function argsMiseAJourBranche({ depot, pr, tete }) {
+  return [
+    "api",
+    "--method",
+    "PUT",
+    `repos/${depot}/pulls/${pr}/update-branch`,
+    "-f",
+    `expected_head_sha=${tete}`,
+  ];
 }
 
 /** Lance un programme sans shell et rend sa sortie standard. */

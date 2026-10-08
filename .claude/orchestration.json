@@ -19,6 +19,7 @@
   "dureeMaxSessionMinutes": 180,
   "delaiInactiviteMinutes": 30,
   "reprisesMax": 2,
+  "misesAJourBrancheMax": 3,
   "echecsSessionMax": 3,
   "attenteRepriseMinutes": 10,
   "pousserMigrationsApresFusion": true,
