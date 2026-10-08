@@ -17,6 +17,7 @@ import {
   ecrireJson,
   envGh,
   executer,
+  explicationRefusMiseAJour,
   idDepuisSortieBg,
   lireEtat,
   lireValeurs,
@@ -231,7 +232,7 @@ export function messageDeReprise({
   reprisesMax,
   etatSession,
   delaiMinutes,
-  brancheMiseAJour = false,
+  apresMiseAJourDeBranche = false,
 }) {
   const autres =
     autresComptes > 0
@@ -250,7 +251,7 @@ export function messageDeReprise({
     return `Ta session s'est interrompue (état ${etatSession}) avant d'ouvrir la PR du ticket #${ticket}, par exemple à la limite de l'abonnement. Reprends où tu en étais : relis \`git log\` et \`git status\` du worktree, le ticket et ses commentaires, puis continue jusqu'à la PR. Rien de commité n'est perdu. ${MESSAGE_DONNEES}`;
   }
   if (motif === "ci") {
-    const miseAJour = brancheMiseAJour
+    const miseAJour = apresMiseAJourDeBranche
       ? " La boucle a mis la branche à jour avec la base sur GitHub (commit de fusion) : récupère-le (`git pull --no-rebase`) avant de corriger, sinon ton push sera refusé."
       : "";
     return `Le contrôle de CI de ta PR #${pr} est rouge : ${url}.${miseAJour} Lis le journal du run (\`gh run view\`), corrige la cause sur la branche du ticket #${ticket}, relance la suite de tests en local (par morceaux), pousse, puis arrête-toi sans surveiller la CI : la boucle la relit. Reprise ${reprise} sur ${reprisesMax} au plus ; au-delà, le ticket est rendu. ${MESSAGE_DONNEES}`;
@@ -423,7 +424,7 @@ function repriseCiRouge(situation, ticket, entree, pr, ci) {
       url: ci.url,
       reprise: faites + 1,
       reprisesMax: max,
-      brancheMiseAJour: (entree.misesAJourBranche ?? 0) > 0,
+      apresMiseAJourDeBranche: (entree.misesAJourBranche ?? 0) > 0,
     }),
     changements: { reprises: faites + 1 },
   });
@@ -1460,7 +1461,7 @@ function mettreAJourBranche(action, { valeurs, env, home, dryRun }) {
         {
           evenement: "echec",
           ticket,
-          detail: `mise à jour de la branche de la PR #${pr} : ${tronquer(erreur.stderr?.toString().trim() || erreur.message)}`,
+          detail: `mise à jour de la branche de la PR #${pr} : ${tronquer(explicationRefusMiseAJour(erreur.stderr?.toString().trim() || erreur.message))}`,
         },
       ],
     };

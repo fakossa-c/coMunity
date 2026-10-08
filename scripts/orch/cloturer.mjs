@@ -34,6 +34,7 @@ import {
   envGh,
   executer,
   executerCommande,
+  explicationRefusMiseAJour,
   lireEtat,
   lireValeurs,
   modifierEntree,
@@ -280,6 +281,16 @@ function planMiseAJourBranche(situation, valeurs) {
     return {
       refus: [
         `La branche de la PR #${pr.numero} (ticket #${ticket}) a déjà été mise à jour ${faites} fois avec ${branche} (maximum ${valeurs.misesAJourBrancheMax}) et reste en retard : la mettre à jour et la fusionner à la main.`,
+      ],
+      actions: [],
+    };
+  }
+  // Le compteur vit dans l'entrée d'état du ticket : sans elle (ticket lancé à la main), la borne
+  // ne tiendrait pas et la mise à jour pourrait se répéter sans fin.
+  if (!situation.entreeEtat) {
+    return {
+      refus: [
+        `La PR #${pr.numero} est en retard sur ${branche}, mais le ticket #${ticket} n'est pas suivi par l'état de la boucle : le nombre de mises à jour ne peut pas être compté. La mettre à jour à la main (\`gh pr update-branch ${pr.numero}\`), attendre le contrôle du nouveau commit de tête, puis relancer la clôture.`,
       ],
       actions: [],
     };
@@ -559,13 +570,21 @@ export function executerAction(action, { sources, env, valeurs }) {
       return;
     }
     case "mettreAJourBranche":
-      gh(
-        ...argsMiseAJourBranche({
-          depot: valeurs.depot,
-          pr: action.pr,
-          tete: action.tete,
-        }),
-      );
+      try {
+        gh(
+          ...argsMiseAJourBranche({
+            depot: valeurs.depot,
+            pr: action.pr,
+            tete: action.tete,
+          }),
+        );
+      } catch (erreur) {
+        throw new Error(
+          explicationRefusMiseAJour(
+            erreur.stderr?.toString().trim() || erreur.message,
+          ),
+        );
+      }
       return;
     case "majDevelop": {
       const courante = brancheCourante(action.racine);

@@ -244,6 +244,14 @@ export function argsMiseAJourBranche({ depot, pr, tete }) {
   ];
 }
 
+/** Le message d'un refus de `argsMiseAJourBranche`, avec sa cause probable quand GitHub répond que
+ * le commit de tête attendu n'est plus celui de la branche (la session a poussé depuis la lecture). */
+export function explicationRefusMiseAJour(message) {
+  return /expected head sha/i.test(message)
+    ? `${message} (le commit de tête a changé depuis la vérification : la session a poussé, la prochaine lecture reprend le nouveau commit)`
+    : message;
+}
+
 /** Lance un programme sans shell et rend sa sortie standard. */
 export function executer(programme, args, { cwd, env } = {}) {
   return execFileSync(programme, args, {
