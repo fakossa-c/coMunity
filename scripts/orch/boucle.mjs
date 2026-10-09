@@ -34,7 +34,12 @@ import {
   trouverSession,
 } from "./cloturer.mjs";
 import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
-import { brancheTicket, dossierWorktree, main as lancer } from "./lancer.mjs";
+import {
+  brancheTicket,
+  dossierWorktree,
+  main as lancer,
+  MODE_PERMISSION,
+} from "./lancer.mjs";
 import { enRetardSeulement, main as verifierPr } from "./verifier-pr.mjs";
 import {
   notificationDEvenement,
@@ -245,9 +250,9 @@ export function reponseA(question, commentaires, { proprietaire }) {
 const ETIQUETTE_QUESTION = "needs-info";
 const ETIQUETTE_RENDU = "ready-for-human";
 const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
-// Une session `done`, `stopped`, `failed` ou introuvable ne travaille plus : son résultat est sur le
-// tracker (ou, sans PR ni label, elle est à reprendre).
-const ETATS_SESSION_FINIE = ["done", "stopped", "failed"];
+// Une session `done`, `idle` (tour fini, en attente d'un message), `stopped`, `failed` ou introuvable
+// ne travaille plus : son résultat est sur le tracker (ou, sans PR ni label, elle est à reprendre).
+const ETATS_SESSION_FINIE = ["done", "idle", "stopped", "failed"];
 
 const parNumero = (a, b) => a.numero - b.numero;
 
@@ -609,6 +614,16 @@ export function decider(situation) {
       attend,
     } = etatDeSession(sessions, entree);
     rapport.enVol.push({ ...identite, session: etatSession });
+    // La question posée puis répondue (label retiré) se reprend avant tout : une session dont le tour
+    // s'est terminé sur une question est `blocked` ou `idle` pour `claude agents`, pas coincée.
+    const reprise =
+      pr === null && (terminee || bloquee)
+        ? repriseApresQuestion(situation, t.numero, entree)
+        : null;
+    if (reprise) {
+      actions.push(reprise);
+      continue;
+    }
     // Une PR prête à fusionner passe avant une saisie attendue : la clôture arrête la session.
     const prPrete =
       pr?.etat === "MERGED" ||
@@ -633,8 +648,6 @@ export function decider(situation) {
       continue;
     }
 
-    const reprise =
-      pr === null ? repriseApresQuestion(situation, t.numero, entree) : null;
     if (pr?.etat === "MERGED") {
       actions.push({ type: "cloturer", ticket: t.numero, pr: pr.numero });
       aCloturer.add(t.numero);
@@ -659,9 +672,7 @@ export function decider(situation) {
             : `PR #${pr.numero} : vérification manquante`,
         });
       }
-    } else if (reprise) {
-      actions.push(reprise);
-    } else if (etatSession === "done") {
+    } else if (["done", "idle"].includes(etatSession)) {
       actions.push({
         type: "rendreHumain",
         ticket: t.numero,
@@ -1131,6 +1142,14 @@ export function prRetenue(prs) {
   return retenue ? { numero: retenue.number, etat: retenue.state } : null;
 }
 
+/** La question d'une session qui a fini son tour (ou attend une saisie) sans PR se relit dans les
+ * commentaires du ticket : le label a pu être retiré avec une réponse. */
+export function doitRelireQuestion({ pr, commentairesLus, entree, sessions }) {
+  if (pr || commentairesLus) return false;
+  const { terminee, bloquee } = etatDeSession(sessions, entree);
+  return terminee || bloquee;
+}
+
 /** La PR d'un ticket est-elle à vérifier ce tour ? Ouverte, sur un ticket ouvert qu'aucun label ne
  * met de côté, une fois la session terminée. */
 export function doitVerifier({ ticket, entree, pr, sessions }) {
@@ -1369,9 +1388,12 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
     // La question d'une session qui a fini son tour sans PR se relit dans les commentaires : le
     // label a pu être retiré avec une réponse.
     if (
-      !retenue &&
-      !commentaires[t.numero] &&
-      etatDeSession(sessions, entree).terminee
+      doitRelireQuestion({
+        pr: retenue,
+        commentairesLus: Boolean(commentaires[t.numero]),
+        entree,
+        sessions,
+      })
     ) {
       commentaires[t.numero] = lireCommentaires(gh, depot, t.numero);
     }
@@ -1642,6 +1664,7 @@ function sessionEnCours(id) {
 async function reprendreOuRelancer(action, contexte) {
   const { ticket, motif } = action;
   const { valeurs, env, dryRun, racine } = contexte;
+  const lancerCommande = contexte.executer ?? executer;
   const relance = action.type === "relancer";
   const dossier = dossierWorktree(racine, valeurs, ticket);
   if (dryRun) {
@@ -1663,11 +1686,13 @@ async function reprendreOuRelancer(action, contexte) {
     idSession = lecture.sortie.match(/Session \S+ lancée \((\w+)\)/)?.[1];
   } else {
     try {
-      const sessions = json(executer("claude", ["agents", "--json", "--all"]));
+      const sessions = json(
+        lancerCommande("claude", ["agents", "--json", "--all"]),
+      );
       const complete = sessions.find((s) => s.id === action.session)?.sessionId;
       if (!complete) throw new Error(`session ${action.session} introuvable`);
       idSession = idDepuisSortieBg(
-        executer(
+        lancerCommande(
           "claude",
           [
             "--bg",
@@ -1734,7 +1759,7 @@ async function reprendreOuRelancer(action, contexte) {
 
 /** Fait une action du tour. `memoire.echecsCloture` compte les clôtures qui échouent d'affilée :
  * à la troisième, le ticket est rendu plutôt que réessayé (et commenté) à chaque tour. */
-async function executerAction(action, { dryRun }, contexte) {
+export async function executerAction(action, { dryRun }, contexte) {
   const { ticket } = action;
   const options = { ...contexte, dryRun };
   switch (action.type) {
