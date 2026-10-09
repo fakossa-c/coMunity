@@ -21,6 +21,7 @@ import {
   idDepuisSortieBg,
   lireEtat,
   lireValeurs,
+  MARQUE_BOUCLE,
   modifierEntree,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
@@ -35,6 +36,11 @@ import {
 import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import { brancheTicket, dossierWorktree, main as lancer } from "./lancer.mjs";
 import { enRetardSeulement, main as verifierPr } from "./verifier-pr.mjs";
+import {
+  notificationDEvenement,
+  notificationsDuRapport,
+  notifieurSlack,
+} from "./slack.mjs";
 
 // L'heure de démarrage de la machine se déduit de l'uptime, à quelques secondes près.
 const TOLERANCE_DEMARRAGE_S = 120;
@@ -144,8 +150,6 @@ export function ligneJournal({ evenement, ticket, detail }, maintenant) {
 
 // --- Questions : lecture des commentaires -----------------------------------------------------
 
-// La boucle signe ses commentaires ; ils ne sont ni une question ni une réponse.
-const MARQUE_BOUCLE = "**Boucle de livraison**";
 // La portée tient seule sur sa ligne (« Portée : ticket »), éventuellement en gras ou en citation :
 // une réponse qui la cite dans une phrase n'est pas une question.
 const MOTIF_PORTEE =
@@ -153,6 +157,19 @@ const MOTIF_PORTEE =
 
 const delaBoucle = (c) => c.corps.trimStart().startsWith(MARQUE_BOUCLE);
 const apres = (iso, reference) => new Date(iso) > new Date(reference);
+
+/** Les commentaires du propriétaire, du plus ancien au plus récent, sans ceux de la boucle sauf
+ * `boucleComprise`. */
+const duProprietaire = (
+  commentaires,
+  proprietaire,
+  { boucleComprise = false } = {},
+) =>
+  commentaires
+    .filter(
+      (c) => c.auteur === proprietaire && (boucleComprise || !delaBoucle(c)),
+    )
+    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe));
 
 /** La question que la session a posée sur son ticket : le dernier commentaire du propriétaire, posté
  * depuis le début de la session, qui déclare « Portée : ticket » ou « Portée : spec ». Le compte de
@@ -164,16 +181,12 @@ export function lireQuestion(
   commentaires,
   { proprietaire, depuis, repli = false },
 ) {
-  const duProprietaire = commentaires
-    .filter(
-      (c) =>
-        c.auteur === proprietaire && !delaBoucle(c) && !apres(depuis, c.creeLe),
-    )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe));
-  const declaree = duProprietaire
-    .filter((c) => MOTIF_PORTEE.test(c.corps))
-    .at(-1);
-  const question = declaree ?? (repli ? duProprietaire[0] : undefined);
+  const candidats = duProprietaire(
+    commentaires.filter((c) => !apres(depuis, c.creeLe)),
+    proprietaire,
+  );
+  const declaree = candidats.filter((c) => MOTIF_PORTEE.test(c.corps)).at(-1);
+  const question = declaree ?? (repli ? candidats[0] : undefined);
   if (!question) return null;
   return {
     id: question.id,
@@ -185,19 +198,41 @@ export function lireQuestion(
   };
 }
 
+/** La question d'un ticket passé `needs-info`, pour Slack : { url, portee, corps } ou null. Avec
+ * une session suivie, seuls les commentaires postés depuis son démarrage comptent ; une question
+ * sans portée déclarée vaut quand même (doute : spec). */
+export function questionDuTicket(situation, ticket) {
+  const commentaires = situation.commentaires?.[ticket] ?? [];
+  const entree = situation.etat?.tickets?.[String(ticket)];
+  const question = lireQuestion(commentaires, {
+    proprietaire: situation.bornes.proprietaire,
+    depuis: entree?.demarreA ?? new Date(0).toISOString(),
+    repli: true,
+  });
+  if (!question) return null;
+  return {
+    url: question.url,
+    portee: question.portee,
+    corps: commentaires.find((c) => c.id === question.id)?.corps ?? "",
+  };
+}
+
+/** L'explication d'un ticket rendu, pour Slack : le dernier commentaire du propriétaire (la
+ * session ou la boucle), ou null. */
+export function explicationDuTicket(commentaires, proprietaire) {
+  return (
+    duProprietaire(commentaires, proprietaire, { boucleComprise: true }).at(-1)
+      ?.corps ?? null
+  );
+}
+
 /** La réponse à une question : le dernier commentaire du propriétaire posté après elle (ni la
  * boucle, ni une autre question). `autresComptes` compte les commentaires d'autres comptes depuis la
  * question : le message de reprise les présente comme des données. */
 export function reponseA(question, commentaires, { proprietaire }) {
   const depuis = commentaires.filter((c) => apres(c.creeLe, question.creeLe));
-  const reponse = depuis
-    .filter(
-      (c) =>
-        c.auteur === proprietaire &&
-        !delaBoucle(c) &&
-        !MOTIF_PORTEE.test(c.corps),
-    )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
+  const reponse = duProprietaire(depuis, proprietaire)
+    .filter((c) => !MOTIF_PORTEE.test(c.corps))
     .at(-1);
   return {
     reponse: reponse ?? null,
@@ -755,7 +790,7 @@ export function formaterRapport(rapport) {
 // Après une clôture, un ticket est peut-être libéré : on relit tout de suite plutôt que d'attendre
 // l'intervalle. Le plafond évite qu'une boucle de clôtures ne tienne le processus sans fin.
 const TOURS_IMMEDIATS_MAX = 10;
-const EVENEMENTS_QUI_DURENT = ["attente", "echec", "erreur"];
+const EVENEMENTS_QUI_DURENT = ["attente", "echec", "erreur", "slack"];
 
 /** Fait tourner les tours jusqu'à l'arrêt. Les ports portent tout ce qui touche le monde :
  *
@@ -767,6 +802,8 @@ const EVENEMENTS_QUI_DURENT = ["attente", "echec", "erreur"];
  *    executer(action, { dryRun }) : fait l'action, rend { ok, evenements }
  *    journal(ligne)        : une ligne de journal
  *    afficher(texte)       : le rapport du tour, à l'écran
+ *    notifier(notification) : poste dans Slack, rend { ok, raison } ; null ou absent sans webhook
+ *    lireCommentaires(ticket) : (facultatif) les commentaires d'un ticket, lus pour une annonce
  *  }
  *
  * Rend le code de sortie : 0 (fini, ou interrompu par Ctrl-C), 2 (checkout principal sale). */
@@ -783,22 +820,54 @@ export async function boucle({
     detail: `${libelleMode}${dryRun ? " (répétition : rien n'est modifié)" : ""}`,
   });
 
-  // Ce qui dure (attente, échec, erreur) se dit une fois, pas à chaque tour.
+  // Ce qui dure (attente, échec, erreur, envoi Slack en échec) se dit une fois, pas à chaque tour.
   const dernierDetail = new Map();
   const noterSiNouveau = (evenement) => {
     if (EVENEMENTS_QUI_DURENT.includes(evenement.evenement)) {
       const cle = `${evenement.evenement}:${evenement.ticket ?? ""}`;
-      if (dernierDetail.get(cle) === evenement.detail) return;
+      if (dernierDetail.get(cle) === evenement.detail) return false;
       dernierDetail.set(cle, evenement.detail);
     }
     noter(evenement);
+    return true;
+  };
+
+  // Slack : le port manque sans webhook, et rien ne part en répétition. Un envoi en échec se
+  // journalise (une fois par raison) sans arrêter la boucle. Un ticket rendu par la boucle est
+  // annoncé tout de suite ; le rapport du tour suivant, qui le liste, ne le redit pas.
+  const titres = {};
+  const rendusAnnonces = new Set();
+  const notifier = async (notification) => {
+    if (!notification || !ports.notifier || dryRun) return;
+    if (notification.type === "rendu") rendusAnnonces.add(notification.ticket);
+    let resultat;
+    try {
+      resultat = await ports.notifier(notification);
+    } catch (erreur) {
+      resultat = { ok: false, raison: erreur.message };
+    }
+    if (resultat?.ok === false) {
+      noterSiNouveau({
+        evenement: "slack",
+        detail: `envoi en échec : ${resultat.raison}`,
+      });
+    } else {
+      dernierDetail.delete("slack:");
+    }
+  };
+  // Une ligne de journal nouvelle s'annonce aussi dans Slack, quand elle s'y dit.
+  const annoncer = async (evenement, action) => {
+    if (noterSiNouveau(evenement)) {
+      await notifier(notificationDEvenement(evenement, { action, titres }));
+    }
   };
   let dernierRapport = null;
+  let rapportPrecedent = null;
   let toursImmediats = 0;
 
   for (;;) {
     if (ports.arretDemande()) {
-      noter({
+      await annoncer({
         evenement: "arret",
         detail:
           "interrompu : les sessions en vol continuent, relancer la boucle pour reprendre",
@@ -806,11 +875,13 @@ export async function boucle({
       return 0;
     }
 
+    let situation;
     let resultat;
     try {
-      resultat = decider(await ports.lireSituation());
+      situation = await ports.lireSituation();
+      resultat = decider(situation);
     } catch (erreur) {
-      noterSiNouveau({
+      await annoncer({
         evenement: "erreur",
         detail: `lecture : ${erreur.message}`,
       });
@@ -820,15 +891,39 @@ export async function boucle({
     }
 
     dernierDetail.delete("erreur:");
+    for (const t of situation.tickets) titres[t.numero] = t.titre;
     const texte = formaterRapport(resultat.rapport);
     ports.afficher(texte);
     if (texte !== dernierRapport) {
       noter({ evenement: "rapport", detail: texte.replaceAll("\n", " | ") });
       dernierRapport = texte;
     }
+    for (const notification of notificationsDuRapport({
+      rapport: resultat.rapport,
+      precedent: rapportPrecedent,
+      libelleMode,
+      dejaAnnonces: rendusAnnonces,
+      questionDe: (ticket) => questionDuTicket(situation, ticket),
+      // L'explication d'un ticket rendu se lit à l'annonce, une fois, jamais à chaque tour.
+      explicationDe: (ticket) =>
+        explicationDuTicket(
+          situation.commentaires?.[ticket] ??
+            ports.lireCommentaires?.(ticket) ??
+            [],
+          situation.bornes.proprietaire,
+        ),
+    })) {
+      await notifier(notification);
+    }
+    rapportPrecedent = resultat.rapport;
+    for (const ticket of rendusAnnonces) {
+      if (!resultat.rapport.rendus.some((r) => r.ticket === ticket)) {
+        rendusAnnonces.delete(ticket);
+      }
+    }
 
     if (resultat.arret) {
-      noter({
+      await annoncer({
         evenement: "arret",
         detail: `${resultat.arret.motif} : ${resultat.arret.raison}`,
       });
@@ -846,9 +941,20 @@ export async function boucle({
       // Une session qu'on n'a pas pu arrêter peut tourner encore : rien d'autre n'est fait sur son
       // ticket (ni relance dans son worktree, ni retour à l'utilisateur) avant le tour suivant.
       if (arretsRates.has(action.ticket)) continue;
-      const { ok, evenements } = await ports.executer(action, { dryRun });
+      let execution;
+      try {
+        execution = await ports.executer(action, { dryRun });
+      } catch (erreur) {
+        // L'exception arrête la boucle (code 1 par `main`) : le journal et Slack le disent avant.
+        await annoncer({
+          evenement: "arret",
+          detail: `erreur sur ${action.type} #${action.ticket} : ${erreur.message}`,
+        });
+        throw erreur;
+      }
+      const { ok, evenements } = execution;
       for (const evenement of evenements) {
-        noterSiNouveau(evenement);
+        await annoncer(evenement, action);
       }
       if (!ok && action.type === "arreterSession")
         arretsRates.add(action.ticket);
@@ -1704,8 +1810,28 @@ async function executerAction(action, { dryRun }, contexte) {
 
 // --- Commande ---------------------------------------------------------------------------------
 
-const USAGE =
-  "Usage : node scripts/orch/boucle.mjs (--spec <n> | --tickets a,b,c | --tous) [--dry-run] [--etat <dossier>]";
+const USAGE = [
+  "Usage : node scripts/orch/boucle.mjs (--spec <n> | --tickets a,b,c | --tous) [--dry-run] [--etat <dossier>]",
+  "        node scripts/orch/boucle.mjs --essai-slack   poste un message d'essai dans le canal Slack",
+].join("\n");
+
+/** `--essai-slack` : un message de vérification dans le canal, sans verrou ni lecture du tracker,
+ * pour contrôler le branchement avant la première salve. */
+async function essaiSlack(valeurs) {
+  if (!valeurs.webhookSlack) {
+    console.error(
+      "Aucune valeur `webhookSlack` dans .claude/orchestration.local.json : rien à essayer.",
+    );
+    return 1;
+  }
+  const resultat = await notifieurSlack(valeurs)({ type: "essai" });
+  if (resultat.ok) {
+    console.log("Message d'essai posté dans le canal Slack.");
+    return 0;
+  }
+  console.error(`Envoi en échec : ${resultat.raison}`);
+  return 1;
+}
 
 /** Ctrl-C (ou SIGTERM) demande l'arrêt : la boucle finit l'action en cours puis s'arrête, les
  * sessions de fond continuent. Un deuxième signal sort tout de suite. */
@@ -1735,7 +1861,8 @@ function ecouterArret() {
 }
 
 /** Les ports de la boucle sur le vrai monde : git, claude, GitHub, les scripts des tickets
- * précédents, le journal sur disque (sauf en répétition) et l'écran. */
+ * précédents, le journal sur disque (sauf en répétition), l'écran, et Slack quand la machine a un
+ * webhook. */
 export function portsReels({
   mode,
   valeurs,
@@ -1768,6 +1895,18 @@ export function portsReels({
       }
     },
     afficher: (texte) => process.stdout.write(`${texte}\n`),
+    notifier: notifieurSlack(valeurs),
+    lireCommentaires: (ticket) => {
+      try {
+        return lireCommentaires(
+          (...args) => executer("gh", args, { env }),
+          valeurs.depot,
+          ticket,
+        );
+      } catch {
+        return [];
+      }
+    },
   };
 }
 
@@ -1780,8 +1919,14 @@ export async function main(argv) {
       tous: { type: "boolean", default: false },
       "dry-run": { type: "boolean", default: false },
       etat: { type: "string" },
+      "essai-slack": { type: "boolean", default: false },
     },
   });
+  const ici = dirname(fileURLToPath(import.meta.url));
+  const sources = racineCheckoutCourant(ici);
+  const valeurs = lireValeurs(sources);
+  if (options["essai-slack"]) return essaiSlack(valeurs);
+
   const mode = modeDepuisOptions(options);
   if (!mode) {
     console.error(USAGE);
@@ -1790,10 +1935,7 @@ export async function main(argv) {
   // Le dossier d'état d'un essai remplace l'état réel pour tous les scripts appelés.
   if (options.etat) process.env.ORCH_DOSSIER_ETAT = options.etat;
 
-  const ici = dirname(fileURLToPath(import.meta.url));
-  const sources = racineCheckoutCourant(ici);
   const racine = racineCheckoutPrincipal(ici);
-  const valeurs = lireValeurs(sources);
   const home = homedir();
   const env = envGh(valeurs.compteGh);
   const dryRun = options["dry-run"];

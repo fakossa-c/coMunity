@@ -99,6 +99,15 @@ describe("fusionnerValeurs", () => {
     expect(valeurs.servicesLourdsEnParallele).toBe(2);
   });
 
+  it("lit l'URL du webhook Slack dans le fichier local, nulle sans lui", () => {
+    expect(fusionnerValeurs(projet, null).webhookSlack).toBeNull();
+    expect(
+      fusionnerValeurs(projet, {
+        webhookSlack: "https://hooks.slack.com/services/T/B/x",
+      }).webhookSlack,
+    ).toBe("https://hooks.slack.com/services/T/B/x");
+  });
+
   it("ne laisse pas le fichier local réécrire une valeur du projet", () => {
     const valeurs = fusionnerValeurs(projet, { brancheIntegration: "main" });
     expect(valeurs.brancheIntegration).toBe("develop");
