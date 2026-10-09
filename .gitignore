@@ -55,6 +55,9 @@ next-env.d.ts
 # Divers
 z-prompt
 
+# captures d'écran collées à la racine pour une session : sinon le checkout n'est plus propre et la boucle s'arrête
+/image*.png
+
 # valeurs d'orchestration propres à une machine
 /.claude/orchestration.local.json
 
