@@ -21,7 +21,7 @@ Une app par résidence. Les voisins proposent des activités, s'y inscrivent en 
 
 **Ligne éditoriale** (ticket #190, validée le 30/09/2026). Tout texte nouveau ou modifié la suit, emails d'Auth compris.
 
-1. **Les mots du glossaire** (`CONTEXT.md`). Conseil syndical, résident, pseudo, activité, organisateur, espace commun, annonce. « Syndic » ne nomme que le mandataire et l'onglet « Syndic » de la barre du bas. coMunity plutôt que « la plateforme », « l'application » plutôt que « l'app », « email » plutôt que « e-mail ».
+1. **Les mots du glossaire** (`GLOSSARY.md`). Conseil syndical, résident, pseudo, activité, organisateur, espace commun, annonce. « Syndic » ne nomme que le mandataire et l'onglet « Syndic » de la barre du bas. coMunity plutôt que « la plateforme », « l'application » plutôt que « l'app », « email » plutôt que « e-mail ».
 2. **Des mots de voisin, pas de machine.** Ni champ, valide, opération, lien public, position, recharger, dupliquer, réinitialiser : on dit ce que la personne voit et fait (« Une photo ne convient pas. Choisissez-en une autre. », « Nouvelle date », « Réutiliser »).
 3. **Court.** Un titre en deux à cinq mots. Une aide en une phrase. Un sous-titre dit pourquoi venir ici, jamais ce que le titre dit déjà (« Ma copro » : « Les lieux où se retrouver et les règles de vie commune »).
 4. **Un bouton dit ce qu'il fait** : un verbe et son objet (« Envoyer mon avis »). « Enregistrer » seul sur un formulaire d'une page. Les feuilles de confirmation gardent leur sortie nommée.
