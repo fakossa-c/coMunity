@@ -1290,6 +1290,12 @@ describe("doitVerifier", () => {
     sessions: [session(217, "done")],
   };
 
+  it("vérifie aussi la PR d'une session idle", () => {
+    expect(doitVerifier({ ...base, sessions: [session(217, "idle")] })).toBe(
+      true,
+    );
+  });
+
   it("vérifie la PR ouverte d'un ticket dont la session est terminée", () => {
     expect(doitVerifier(base)).toBe(true);
   });
@@ -2046,6 +2052,18 @@ describe("decider : statut de la session croisé avec ce que le tracker dit", ()
       });
     });
   }
+
+  it("blocked avec un simple commentaire de progression du propriétaire (sans « Portée ») : arrêtée et rendue, pas reprise", () => {
+    const resultat = cas("blocked", {
+      commentaires: { 217: [commentaire(2, "Point d'étape : j'avance.")] },
+    });
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+  });
+
+  it("blocked dont la question déclare sa portée et a reçu une réponse : reprise", () => {
+    const resultat = cas("blocked", { commentaires: AVEC_QUESTION });
+    expect(types(resultat)).toEqual(["reprendre"]);
+  });
 
   it("idle sans PR ni label : la même anomalie que done", () => {
     const [idle] = cas("idle").actions;

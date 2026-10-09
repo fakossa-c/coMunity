@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   bloqueursDepuisCorps,
+  candidatsHorsTableau,
   decider,
   estMigration,
   fichiersCommuns,
@@ -566,6 +567,42 @@ describe("decider : recouvrement de fichiers", () => {
     expect(ticket(r, 213).lancable).toBe(false);
     expect(raisons(r, 213)).toContain("#212");
     expect(ticket(r, 214).lancable).toBe(true);
+  });
+});
+
+describe("candidatsHorsTableau", () => {
+  const depot = { depot: "fakossa-c/coMunity" };
+  const issues = new Map([
+    [212, issue(212)],
+    [213, issue(213)],
+    [214, issue(214, { etat: "CLOSED" })],
+  ]);
+  const tableaux = { 212: "2\n", 213: "", 214: "" };
+
+  it("rend les candidats ouverts dont les projets n'incluent pas le tableau n° 2", () => {
+    const requetes = [];
+    const gh = (...args) => {
+      requetes.push(args.join(" "));
+      return tableaux[args.join(" ").match(/number:(\d+)/)[1]];
+    };
+    expect(
+      candidatsHorsTableau(gh, depot, issues, [212, 213, 214], () => {}),
+    ).toEqual([213]);
+    expect(requetes).toHaveLength(2);
+    expect(requetes[0]).toContain('owner:"fakossa-c", name:"coMunity"');
+  });
+
+  it("une lecture impossible n'exclut pas le ticket : elle avertit", () => {
+    const avertissements = [];
+    const gh = () => {
+      throw new Error("scope manquant\nsuite");
+    };
+    expect(
+      candidatsHorsTableau(gh, depot, issues, [212], (m) =>
+        avertissements.push(m),
+      ),
+    ).toEqual([]);
+    expect(avertissements[0]).toMatch(/#212.*scope manquant/);
   });
 });
 
