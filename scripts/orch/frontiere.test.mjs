@@ -873,3 +873,56 @@ describe("numeroDepuisNomTicket", () => {
     expect(numeroDepuisNomTicket("orch-comunity")).toBeNull();
   });
 });
+
+describe("decider : lancements à reprendre", () => {
+  const libres = {
+    issues: [
+      issue(212),
+      issue(213, { corps: corps({ fichiers: ["src/b.ts"] }) }),
+    ],
+    candidats: [212, 213],
+  };
+
+  it("compte le ticket dont le lancement est à reprendre dans le service lourd, même sans conteneur démarré", () => {
+    const resultat = decider(
+      situation({
+        ...libres,
+        lancementsAReprendre: [200],
+      }),
+      valeurs,
+    );
+    expect(resultat.aLancer).toEqual([]);
+    expect(resultat.budget.service).toBe(0);
+    expect(raisons(resultat, 212)).toMatch(/Supabase lourd/);
+  });
+
+  it("ne compte pas deux fois le Supabase déjà démarré de ce ticket", () => {
+    const resultat = decider(
+      situation({
+        ...libres,
+        supabases: ["comunity-ticket-200"],
+        lancementsAReprendre: [200],
+      }),
+      { ...valeurs, servicesLourdsEnParallele: 2 },
+    );
+    expect(resultat.budget.service).toBe(1);
+  });
+
+  it("compte sa session dans la mémoire", () => {
+    const resultat = decider(
+      situation({
+        ...libres,
+        memoireDisponibleMo: 4096,
+        lancementsAReprendre: [200, 201],
+      }),
+      { ...valeurs, servicesLourdsEnParallele: 5 },
+    );
+    expect(resultat.budget.memoire).toBe(0);
+    expect(raisons(resultat, 212)).toMatch(/mémoire insuffisante/);
+  });
+
+  it("ne change rien sans lancement à reprendre", () => {
+    const resultat = decider(situation(libres), valeurs);
+    expect(resultat.aLancer).toEqual([212]);
+  });
+});

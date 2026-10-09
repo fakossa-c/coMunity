@@ -4,6 +4,7 @@ import {
   construirePrompt,
   decider,
   decrire,
+  etapeReprenable,
   main,
   numerosDepuisOption,
   specDepuisCorps,
@@ -492,5 +493,135 @@ describe("decider : relance dans une nouvelle session", () => {
       valeurs,
     );
     expect(resultat.refus).toEqual([expect.stringMatching(/fermé/)]);
+  });
+});
+
+describe("decider : reprise d'un lancement qui a échoué (--reprendre-a)", () => {
+  // Le ticket est déjà pris : assigné, worktree et branche existent, le service n'a pas démarré.
+  const reprise = {
+    ...situation,
+    ticket: { ...situation.ticket, assignes: ["fakossa-c"] },
+    worktreeExiste: true,
+    brancheExiste: true,
+    reprise: { etape: "demarrerService" },
+  };
+
+  it("reprend à l'étape en échec : service, variables locales, prompt, session", () => {
+    const resultat = decider(reprise, valeurs);
+    expect(resultat.refus).toEqual([]);
+    expect(types(resultat)).toEqual([
+      "demarrerService",
+      "variablesLocales",
+      "ecrirePrompt",
+      "lancerSession",
+      "enregistrerSession",
+      "verifierSession",
+    ]);
+  });
+
+  it("ne réassigne pas, ne recrée ni worktree ni branche, ne réinstalle rien", () => {
+    const resultat = decider(reprise, valeurs);
+    for (const refait of [
+      "assigner",
+      "statut",
+      "recuperer",
+      "creerWorktree",
+      "isoler",
+      "installer",
+    ]) {
+      expect(types(resultat)).not.toContain(refait);
+    }
+  });
+
+  it("accepte l'arbre sale du checkout principal : le ticket est déjà pris", () => {
+    const resultat = decider({ ...reprise, arbreSale: true }, valeurs);
+    expect(resultat.refus).toEqual([]);
+  });
+
+  it("envoie le prompt du premier lancement, sans le texte de reprise, et enregistre une session neuve", () => {
+    const resultat = decider(reprise, valeurs);
+    const ecriture = resultat.actions.find((a) => a.type === "ecrirePrompt");
+    expect(ecriture.contenu).not.toContain("## Reprise");
+    expect(ecriture.contenu).toContain("Ticket #210");
+    const enregistrement = resultat.actions.find(
+      (a) => a.type === "enregistrerSession",
+    );
+    expect(enregistrement.relance).toBeUndefined();
+  });
+
+  it("reprend plus loin quand l'échec était plus loin", () => {
+    const resultat = decider(
+      { ...reprise, reprise: { etape: "lancerSession" } },
+      valeurs,
+    );
+    expect(types(resultat)).toEqual([
+      "lancerSession",
+      "enregistrerSession",
+      "verifierSession",
+    ]);
+  });
+
+  it("refuse sans worktree à reprendre", () => {
+    const resultat = decider({ ...reprise, worktreeExiste: false }, valeurs);
+    expect(resultat.refus).toEqual([
+      expect.stringMatching(/worktree à reprendre/),
+    ]);
+    expect(resultat.actions).toEqual([]);
+  });
+
+  it("reprend sans worktree une étape d'avant sa création : statut, récupération, création", () => {
+    for (const etape of ["statut", "recuperer", "creerWorktree"]) {
+      const resultat = decider(
+        {
+          ...reprise,
+          worktreeExiste: false,
+          brancheExiste: false,
+          reprise: { etape },
+        },
+        valeurs,
+      );
+      expect(resultat.refus).toEqual([]);
+      expect(types(resultat)[0]).toBe(etape);
+    }
+  });
+
+  it("refuse un ticket fermé", () => {
+    const resultat = decider(
+      { ...reprise, ticket: { ...reprise.ticket, etat: "CLOSED" } },
+      valeurs,
+    );
+    expect(resultat.refus).toEqual([expect.stringMatching(/fermé/)]);
+  });
+
+  it("refuse une étape qu'on ne reprend pas", () => {
+    for (const etape of ["assigner", "enregistrerSession", "n-importe-quoi"]) {
+      const resultat = decider({ ...reprise, reprise: { etape } }, valeurs);
+      expect(resultat.refus).toEqual([expect.stringContaining(etape)]);
+      expect(resultat.actions).toEqual([]);
+    }
+  });
+});
+
+describe("etapeReprenable", () => {
+  it("reprend toute étape faite après la prise du ticket et avant le lancement de la session", () => {
+    for (const etape of [
+      "statut",
+      "recuperer",
+      "creerWorktree",
+      "isoler",
+      "installer",
+      "demarrerService",
+      "variablesLocales",
+      "ecrirePrompt",
+      "lancerSession",
+    ]) {
+      expect(etapeReprenable(etape)).toBe(true);
+    }
+  });
+
+  it("ne reprend pas l'assignation (rien n'est pris) ni ce qui suit le lancement de la session (une session peut tourner)", () => {
+    for (const etape of ["assigner", "enregistrerSession", "verifierSession"]) {
+      expect(etapeReprenable(etape)).toBe(false);
+    }
   });
 });

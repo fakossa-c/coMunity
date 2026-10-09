@@ -162,6 +162,7 @@ const bornes = {
   dureeMaxMs: 180 * MINUTE,
   inactiviteMs: 30 * MINUTE,
   reprisesCiMax: 2,
+  reprisesLancementMax: 2,
   misesAJourBrancheMax: 3,
   echecsMax: 3,
   attenteMs: 10 * MINUTE,
@@ -761,6 +762,50 @@ function portsDuMonde(
             ],
           };
         }
+        case "reprendreLancement":
+          if (monde.repriseReussit === false) {
+            const echecs = monde.entrees[n].lancement.echecs + 1;
+            monde.entrees[n] = {
+              nom: `ticket-${n}`,
+              lancement: { ...monde.entrees[n].lancement, echecs },
+            };
+            return {
+              ok: false,
+              evenements: [
+                {
+                  evenement: "echec",
+                  ticket: n,
+                  detail: `lancement : port pris (échec ${echecs})`,
+                },
+              ],
+            };
+          }
+          monde.entrees[n] = { session: `s${n}`, nom: `ticket-${n}` };
+          monde.sessions[n] = "working";
+          return {
+            ok: true,
+            evenements: [
+              {
+                evenement: "reprise-lancement",
+                ticket: n,
+                detail: action.etape,
+              },
+            ],
+          };
+        case "abandonnerLancement":
+          monde.arretsService.push(n);
+          delete monde.entrees[n];
+          monde.tickets[n].etiquettes.push("ready-for-human");
+          monde.commentairesRendus = {
+            ...monde.commentairesRendus,
+            [n]: action.explication,
+          };
+          return {
+            ok: true,
+            evenements: [
+              { evenement: "anomalie", ticket: n, detail: action.explication },
+            ],
+          };
         case "arreterSession":
           if (monde.arretImpossible) {
             return {
@@ -1125,6 +1170,31 @@ describe("evenementsLancement", () => {
     });
     expect(resultat.pris).toBe(true);
     expect(resultat.ok).toBe(false);
+  });
+
+  it("un échec à l'étape du service est à reprendre : le ticket n'est pas rendu", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 1,
+      sortie: "",
+      erreurs:
+        "Échec à l'étape 7 (demarrerService) : failed to bind host port\nÉtapes faites : assigner, statut.",
+    });
+    expect(resultat.pris).toBe(true);
+    expect(resultat.reprenable).toBe(true);
+    expect(resultat.evenements[0].detail).toMatch(/repris au tour suivant/);
+  });
+
+  it("un échec après le lancement de la session n'est pas à reprendre : une session peut tourner", () => {
+    const resultat = evenementsLancement({
+      ticket: 218,
+      code: 1,
+      sortie: "",
+      erreurs:
+        "Échec à l'étape 11 (enregistrerSession) : disque plein\nSession déjà lancée : abcd1234",
+    });
+    expect(resultat.pris).toBe(true);
+    expect(resultat.reprenable).toBe(false);
   });
 
   it("un échec à l'assignation elle-même ne prend rien", () => {
@@ -2632,6 +2702,7 @@ describe("bornesDepuisValeurs", () => {
       dureeMaxMs: 180 * MINUTE,
       inactiviteMs: 30 * MINUTE,
       reprisesCiMax: 2,
+      reprisesLancementMax: 2,
       misesAJourBrancheMax: 3,
       echecsMax: 3,
       attenteMs: 10 * MINUTE,
@@ -3279,5 +3350,158 @@ describe("notifications Slack de la boucle", () => {
     const ports = portsDuMonde(monde, { slack: true });
     expect(await lancerBoucle(ports, { dryRun: true })).toBe(0);
     expect(ports.notifications).toEqual([]);
+  });
+});
+
+// --- Lancement à reprendre (ticket #247) ------------------------------------------------------
+
+/** L'entrée d'un ticket pris dont le lancement a échoué : pas de session, l'étape à reprendre. */
+const lancementEnEchec = (numero, surcharge = {}) => ({
+  nom: `ticket-${numero}`,
+  lancement: {
+    etape: "demarrerService",
+    echecs: 1,
+    erreur:
+      "failed to bind host port 0.0.0.0:55664/tcp: address already in use",
+    ...surcharge,
+  },
+});
+
+describe("decider : lancement à reprendre", () => {
+  const sansSession = (numero, surcharge) =>
+    situation({
+      tickets: [ticket(numero)],
+      etat: {
+        version: 1,
+        tickets: { [numero]: lancementEnEchec(numero, surcharge) },
+      },
+      sessions: [],
+    });
+
+  it("reprend le lancement à l'étape en échec, sans toucher au reste", () => {
+    const resultat = decider(sansSession(217));
+    expect(resultat.actions).toEqual([
+      { type: "reprendreLancement", ticket: 217, etape: "demarrerService" },
+    ]);
+    expect(resultat.arret).toBeNull();
+  });
+
+  it("reprend à l'étape que l'échec précédent a notée", () => {
+    const resultat = decider(sansSession(217, { etape: "variablesLocales" }));
+    expect(resultat.actions[0]).toMatchObject({
+      type: "reprendreLancement",
+      etape: "variablesLocales",
+    });
+  });
+
+  it("le range parmi les tickets en vol du rapport, avec ce qu'il attend", () => {
+    const { rapport } = decider(sansSession(217));
+    expect(rapport.enVol).toEqual([
+      { ticket: 217, titre: "Ticket 217", session: "lancement à reprendre" },
+    ]);
+  });
+
+  it("n'est pas relancé par la frontière : le ticket est déjà pris", () => {
+    const resultat = decider(
+      situation({
+        tickets: [ticket(217)],
+        etat: { version: 1, tickets: { 217: lancementEnEchec(217) } },
+        sessions: [],
+        frontiere: {
+          aLancer: [217],
+          tickets: [
+            { numero: 217, titre: "Ticket 217", lancable: true, raisons: [] },
+          ],
+        },
+      }),
+    );
+    expect(types(resultat)).toEqual(["reprendreLancement"]);
+  });
+
+  it("reprend encore tant que les reprises ne dépassent pas le maximum", () => {
+    // reprisesLancementMax = 2 : le lancement initial, puis deux reprises.
+    const resultat = decider(sansSession(217, { echecs: 2 }));
+    expect(types(resultat)).toEqual(["reprendreLancement"]);
+  });
+
+  it("abandonne après le maximum de reprises, avec l'erreur dans l'explication", () => {
+    const resultat = decider(sansSession(217, { echecs: 3 }));
+    expect(resultat.actions).toHaveLength(1);
+    expect(resultat.actions[0]).toMatchObject({
+      type: "abandonnerLancement",
+      ticket: 217,
+    });
+    expect(resultat.actions[0].explication).toContain("address already in use");
+    expect(resultat.actions[0].explication).toContain("demarrerService");
+  });
+
+  it("une session enregistrée par la reprise remet le ticket sur le chemin ordinaire", () => {
+    const resultat = decider(
+      situation({
+        etat: { version: 1, tickets: { 217: entree(217) } },
+        sessions: [session(217, "working")],
+      }),
+    );
+    expect(types(resultat)).toEqual([]);
+    expect(resultat.rapport.enVol).toEqual([
+      { ticket: 217, titre: "Ticket 217", session: "working" },
+    ]);
+  });
+});
+
+describe("boucle : lancement à reprendre", () => {
+  /** Le monde du ticket 1, pris mais sans session ; `reprise` dit si chaque reprise réussit. */
+  const mondeEnEchec = (echecs = 1) => {
+    const monde = creerMonde({
+      tickets: { 1: { titre: "Un", etat: "OPEN", etiquettes: [] } },
+      bloqueurs: {},
+      entrees: { 1: lancementEnEchec(1, { echecs }) },
+      sessions: {},
+      specs: { 1: 208 },
+    });
+    monde.arretsService = [];
+    return monde;
+  };
+
+  it("reprend le lancement au tour suivant, puis le ticket suit son cours jusqu'à la clôture", async () => {
+    const monde = mondeEnEchec();
+    const ports = portsDuMonde(monde, { apresAttente: toutesTerminent });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "reprise-lancement #1",
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+    expect(monde.entrees[1]).toBeUndefined();
+  });
+
+  it("rend le ticket après les reprises épuisées : Supabase arrêté, entrée retirée, erreur en commentaire", async () => {
+    const monde = mondeEnEchec(3);
+    const ports = portsDuMonde(monde, {
+      apresAttente: (m) => {
+        m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toContain("anomalie #1");
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+    expect(monde.arretsService).toEqual([1]);
+    expect(monde.entrees[1]).toBeUndefined();
+    expect(monde.commentairesRendus[1]).toContain("address already in use");
+  });
+
+  it("une reprise qui échoue de nouveau garde le ticket à reprendre, puis le rend", async () => {
+    const monde = mondeEnEchec(1);
+    monde.repriseReussit = false;
+    const ports = portsDuMonde(monde, {
+      apresAttente: parEtapes([() => {}, () => {}, () => {}]),
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const evts = evenements(ports.lignes);
+    expect(evts.filter((e) => e === "echec #1")).toHaveLength(2);
+    expect(evts).toContain("anomalie #1");
+    expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+    expect(monde.entrees[1]).toBeUndefined();
   });
 });

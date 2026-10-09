@@ -17,6 +17,7 @@ import {
   ecrireJson,
   envGh,
   executer,
+  executerCommande,
   explicationRefusMiseAJour,
   idDepuisSortieBg,
   lireEtat,
@@ -37,6 +38,7 @@ import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import {
   brancheTicket,
   dossierWorktree,
+  etapeReprenable,
   main as lancer,
   MODE_PERMISSION,
 } from "./lancer.mjs";
@@ -449,6 +451,23 @@ function reprisePossible(situation, ticket, entree, etatSession) {
   };
 }
 
+/** Un ticket pris dont le lancement a échoué avant la session (service qui ne démarre pas, par
+ * exemple) : le lancement reprend à l'étape notée, `reprisesLancementMax` fois au plus après le
+ * premier échec ; ensuite le ticket est rendu avec l'erreur, son Supabase arrêté et son entrée
+ * retirée de l'état. */
+function lancementARepartir(situation, ticket, entree) {
+  const { etape, echecs, erreur } = entree.lancement;
+  const max = situation.bornes.reprisesLancementMax;
+  if (echecs > max) {
+    return {
+      type: "abandonnerLancement",
+      ticket,
+      explication: `Le lancement de la session ${entree.nom} a échoué ${echecs} fois (dont ${max} reprises), à l'étape ${etape} : ${erreur} Le ticket est assigné et « In Progress », son worktree et sa branche existent, sans session : reprendre le lancement à la main (\`node scripts/orch/lancer.mjs ${ticket} --reprendre-a ${etape}\`) ou démarrer la session soi-même.`,
+    };
+  }
+  return { type: "reprendreLancement", ticket, etape };
+}
+
 /** CI rouge sur la PR : la session est reprise avec le lien du run, `reprisesCiMax` fois au plus ;
  * ensuite le ticket est rendu avec le lien. */
 function repriseCiRouge(situation, ticket, entree, pr, ci) {
@@ -614,6 +633,12 @@ export function decider(situation) {
     }
 
     vus.add(t.numero);
+    if (entree.lancement) {
+      // Pris, mais le lancement a échoué avant la session : rien à lire côté sessions ni PR.
+      rapport.enVol.push({ ...identite, session: "lancement à reprendre" });
+      actions.push(lancementARepartir(situation, t.numero, entree));
+      continue;
+    }
     const {
       etat: etatSession,
       terminee,
@@ -754,7 +779,10 @@ export function decider(situation) {
   const aLancer = arret
     ? []
     : (situation.frontiere?.aLancer ?? []).filter(
-        (n) => !misDeCote.has(n) && gelePar(n) === undefined,
+        (n) =>
+          !misDeCote.has(n) &&
+          gelePar(n) === undefined &&
+          !etat.tickets[String(n)],
       );
   const occupes = enVolOuverts.filter((n) => !aCloturer.has(n));
   for (const numero of aLancer) {
@@ -1026,6 +1054,8 @@ const tronquer = (texte) =>
   texte.length > DETAIL_MAX ? `${texte.slice(0, DETAIL_MAX)}…` : texte;
 const etapeEnEchec = (erreurs) =>
   Number(erreurs.match(/Échec à l'étape (\d+)/)?.[1]) || null;
+const typeEtapeEnEchec = (erreurs) =>
+  erreurs.match(/Échec à l'étape \d+ \((\w+)\)/)?.[1] ?? null;
 
 /** Les lignes de journal d'un lancement, et si le ticket est pris (assigné) malgré un échec.
  * Dépend des messages de lancer.mjs : « Session <nom> lancée (<id>) » et « Échec à l'étape <n> »,
@@ -1047,14 +1077,18 @@ export function evenementsLancement({ ticket, code, sortie, erreurs }) {
       ],
     };
   }
+  const pris = (etapeEnEchec(erreurs) ?? 0) >= 2;
+  // Une étape d'après la prise du ticket et d'avant la session : lancer.mjs l'a notée dans l'état.
+  const reprenable = pris && etapeReprenable(typeEtapeEnEchec(erreurs));
   return {
     ok: false,
-    pris: (etapeEnEchec(erreurs) ?? 0) >= 2,
+    pris,
+    reprenable,
     evenements: [
       {
         evenement: "echec",
         ticket,
-        detail: `lancement : ${tronquer(erreurs)}`,
+        detail: `lancement : ${tronquer(erreurs)}${reprenable ? " (sera repris au tour suivant)" : ""}`,
       },
     ],
   };
@@ -1196,6 +1230,7 @@ export function bornesDepuisValeurs(valeurs) {
     dureeMaxMs: valeurs.dureeMaxSessionMinutes * 60_000,
     inactiviteMs: valeurs.delaiInactiviteMinutes * 60_000,
     reprisesCiMax: valeurs.reprisesMax,
+    reprisesLancementMax: valeurs.reprisesMax,
     misesAJourBrancheMax: valeurs.misesAJourBrancheMax,
     echecsMax: valeurs.echecsSessionMax,
     attenteMs: valeurs.attenteRepriseMinutes * 60_000,
@@ -1374,7 +1409,8 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
     if (t.etat === "OPEN" && t.etiquettes.includes(ETIQUETTE_QUESTION)) {
       commentaires[t.numero] = lireCommentaires(gh, depot, t.numero);
     }
-    if (!entree) continue;
+    // Un lancement à reprendre n'a ni session ni PR à lire.
+    if (!entree || entree.lancement) continue;
     const session = sessionDuTicket(sessions, entree);
     const transcript = lireTranscript(session, home);
     transcripts[t.numero] = transcript.existe;
@@ -1557,6 +1593,39 @@ const repetition = (ticket, detail) => ({
   ok: true,
   evenements: [{ evenement: "repetition", ticket, detail }],
 });
+
+/** Les reprises du lancement sont épuisées : le Supabase du worktree s'arrête, l'entrée quitte
+ * l'état, puis le ticket est rendu avec l'erreur. L'arrêt qui échoue se dit mais n'empêche pas de
+ * rendre le ticket. */
+async function abandonnerLancement(action, contexte) {
+  const { ticket, explication } = action;
+  const { valeurs, home, racine, dryRun } = contexte;
+  if (dryRun) {
+    return repetition(ticket, `abandonnerait le lancement : ${explication}`);
+  }
+  const evenements = [];
+  try {
+    executerCommande(valeurs.commandes.arret, {
+      cwd: dossierWorktree(racine, valeurs, ticket),
+    });
+  } catch (erreur) {
+    evenements.push({
+      evenement: "echec",
+      ticket,
+      detail: `arrêt du Supabase du worktree : ${tronquer(erreur.message)}`,
+    });
+  }
+  const fichier = cheminsEtat({ home, projet: valeurs.projet }).fichier;
+  const etat = lireEtat(fichier);
+  const tickets = { ...etat.tickets };
+  delete tickets[String(ticket)];
+  ecrireJson(fichier, { ...etat, tickets });
+  const rendu = await rendreAuHumain(
+    { ticket, explication, sansLeveeParPr: true },
+    contexte,
+  );
+  return { ok: true, evenements: [...evenements, ...rendu.evenements] };
+}
 
 /** Écrit dans l'état ce que l'action change (compteurs, heure de reprise). */
 function ecrireEtatApres(action, { valeurs, home, session }) {
@@ -1790,8 +1859,9 @@ export async function executerAction(action, { dryRun }, contexte) {
       const lecture = await capturer(() => lancer(args));
       if (dryRun) return evenementsDeRepetition(ticket, lecture);
       const resultat = evenementsLancement({ ticket, ...lecture });
-      if (!resultat.ok && resultat.pris) {
-        // Assigné et « In Progress » mais sans session : plus aucun autre tour ne le reprendra.
+      if (!resultat.ok && resultat.pris && !resultat.reprenable) {
+        // Assigné et « In Progress » mais sans session ni étape à reprendre : plus aucun autre tour ne
+        // le reprendra.
         const rendu = await rendreAuHumain(
           {
             ticket,
@@ -1803,6 +1873,41 @@ export async function executerAction(action, { dryRun }, contexte) {
       }
       return resultat;
     }
+    case "reprendreLancement": {
+      const args = [String(ticket), "--reprendre-a", action.etape];
+      if (dryRun) {
+        return repetition(
+          ticket,
+          `reprendrait le lancement à l'étape ${action.etape}`,
+        );
+      }
+      const lecture = await capturer(() => lancer(args));
+      // lancer.mjs a noté l'échec de la reprise (ou enregistré la session) dans l'état.
+      if (lecture.code === 0) {
+        return {
+          ok: true,
+          evenements: [
+            {
+              evenement: "reprise-lancement",
+              ticket,
+              detail: `lancement repris à l'étape ${action.etape} : ${lecture.sortie.match(/Session \S+ lancée \((\w+)\)/)?.[0] ?? "session lancée"}`,
+            },
+          ],
+        };
+      }
+      return {
+        ok: false,
+        evenements: [
+          {
+            evenement: "echec",
+            ticket,
+            detail: `reprise du lancement (étape ${action.etape}) : ${tronquer(lecture.erreurs || lecture.sortie)}`,
+          },
+        ],
+      };
+    }
+    case "abandonnerLancement":
+      return abandonnerLancement(action, options);
     case "cloturer": {
       const lecture = await capturer(() =>
         cloturer([String(ticket), ...(dryRun ? ["--dry-run"] : [])]),
