@@ -4,6 +4,7 @@ import {
   construirePrompt,
   decider,
   decrire,
+  main,
   numerosDepuisOption,
   specDepuisCorps,
   worktreeEnregistre,
@@ -40,7 +41,7 @@ const modele = [
   "```",
   "Ticket #{{ticket}} ({{titre}}) du dépôt {{depot}}, spec #{{specNumero}} : {{specLien}}.",
   "Tickets en parallèle : {{enParallele}}.",
-  "{{glossaire}} est le glossaire. Orchestrateur : {{orchestrateur}}.",
+  "{{glossaire}} est le glossaire.",
   "Worktree {{dossier}}, branche {{brancheTicket}} depuis {{brancheIntegration}}. Arrêt : {{commandeArret}}.",
   "```",
   "Fin du gabarit.",
@@ -58,7 +59,6 @@ const situation = {
   worktreeExiste: false,
   brancheExiste: false,
   enParallele: [],
-  orchestrateur: "orch-comunity",
   racine: join("/depot", "coMunity"),
   home: "/home/ubuntu",
   modelePrompt: modele,
@@ -325,6 +325,24 @@ describe("construirePrompt", () => {
     ).toThrow(/inconnue/);
   });
 
+  it("n'a plus de variable orchestrateur : un gabarit qui la cite est refusé", () => {
+    expect(() =>
+      decider(
+        {
+          ...situation,
+          modelePrompt: "```\nTicket #{{ticket}}, {{orchestrateur}}.\n```",
+        },
+        valeurs,
+      ),
+    ).toThrow(/orchestrateur/);
+  });
+
+  it("n'a plus d'option --orchestrateur", async () => {
+    await expect(
+      main(["210", "--orchestrateur", "orch-comunity"]),
+    ).rejects.toThrow(/orchestrateur/);
+  });
+
   it("ne remplit que les {{variables}} : un <…> reste tel quel", () => {
     const contenu = construirePrompt(
       "```\nTicket #{{ticket}}, branche <n>, base <commande inédite>.\n```",
@@ -348,7 +366,6 @@ function base() {
     specLien: "https://github.com/fakossa-c/coMunity/issues/208",
     glossaire: "GLOSSARY.md",
     enParallele: "#205",
-    orchestrateur: "orch-comunity",
     dossier: "/depot/coMunity/.claude/worktrees/ticket-210",
     brancheTicket: "ticket-210",
     brancheIntegration: "develop",
