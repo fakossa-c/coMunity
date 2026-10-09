@@ -490,6 +490,65 @@ describe("decider : recouvrement de fichiers", () => {
     expect(raisons(r, 212)).toContain("worktree ticket-215");
   });
 
+  describe("ticket rendu (ready-for-human) resté dans le fichier d'état", () => {
+    const rendu = (surcharge = {}) =>
+      issue(221, {
+        etiquettes: ["ready-for-human"],
+        corps: corps({ fichiers: ["src/a.ts"] }),
+        ...surcharge,
+      });
+
+    it("sans session ni worktree, il n'est plus en vol : un ticket aux mêmes fichiers est lançable", () => {
+      const r = decider(
+        situation({
+          issues: [issue(212), rendu()],
+          enVol: [{ ticket: 221, origine: "état" }],
+        }),
+        valeurs,
+      );
+      expect(ticket(r, 212).lancable).toBe(true);
+    });
+
+    it("avec une session qui tourne, il reste en vol", () => {
+      const r = decider(
+        situation({
+          issues: [issue(212), rendu()],
+          enVol: [
+            { ticket: 221, origine: "état" },
+            { ticket: 221, origine: "session" },
+          ],
+        }),
+        valeurs,
+      );
+      expect(ticket(r, 212).lancable).toBe(false);
+      expect(raisons(r, 212)).toContain("ticket #221 en vol");
+    });
+
+    it("avec son worktree encore là, il garde ses fichiers", () => {
+      const r = decider(
+        situation({
+          issues: [issue(212), rendu()],
+          enVol: [{ ticket: 221, origine: "état" }],
+          worktrees: [{ ticket: 221, nom: "ticket-221" }],
+        }),
+        valeurs,
+      );
+      expect(ticket(r, 212).lancable).toBe(false);
+      expect(raisons(r, 212)).toContain("worktree ticket-221");
+    });
+
+    it("sans le label ready-for-human, un ticket de l'état sans session reste en vol", () => {
+      const r = decider(
+        situation({
+          issues: [issue(212), rendu({ etiquettes: [] })],
+          enVol: [{ ticket: 221, origine: "état" }],
+        }),
+        valeurs,
+      );
+      expect(ticket(r, 212).lancable).toBe(false);
+    });
+  });
+
   it("deux candidats qui se recouvrent : le plus petit numéro part, l'autre attend", () => {
     const r = decider(
       situation({
@@ -507,6 +566,22 @@ describe("decider : recouvrement de fichiers", () => {
     expect(ticket(r, 213).lancable).toBe(false);
     expect(raisons(r, 213)).toContain("#212");
     expect(ticket(r, 214).lancable).toBe(true);
+  });
+});
+
+describe("decider : ticket hors du tableau de suivi", () => {
+  it("un candidat absent du tableau est exclu avec la raison « hors tableau »", () => {
+    const r = decider(situation({ horsTableau: [212] }), valeurs);
+    expect(ticket(r, 212).lancable).toBe(false);
+    expect(raisons(r, 212)).toContain("hors tableau");
+    expect(r.aLancer).toEqual([]);
+  });
+
+  it("un candidat sur le tableau, ou dont la présence n'a pas pu être lue, n'est pas exclu", () => {
+    expect(ticket(decider(situation(), valeurs), 212).lancable).toBe(true);
+    expect(
+      ticket(decider(situation({ horsTableau: [] }), valeurs), 212).lancable,
+    ).toBe(true);
   });
 });
 
