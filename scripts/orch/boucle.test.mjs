@@ -11,6 +11,7 @@ import {
   commentairesDepuisGh,
   decider,
   decisionVerrou,
+  doitRedemarrer,
   doitRelireQuestion,
   doitVerifier,
   etatApres,
@@ -21,6 +22,7 @@ import {
   leveeAnomalie,
   ligneJournal,
   lireQuestion,
+  planRedemarrage,
   prendreVerrou,
   prRetenue,
   questionDuTicket,
@@ -629,6 +631,21 @@ function portsDuMonde(
         }
       : {}),
     journal: (ligne) => lignes.push(ligne),
+    // Les fichiers de la PR d'un ticket clos, lus à la demande après sa clôture.
+    fichiersDeLaPr: async (numero) => {
+      if (monde.fichiersIllisibles) throw new Error("gh a répondu 502");
+      return monde.fichiersDesPr?.[numero] ?? ["src/app/page.tsx"];
+    },
+    redemarrer: async () => {
+      monde.redemarrages = (monde.redemarrages ?? 0) + 1;
+      return monde.redemarrageImpossible
+        ? {
+            ok: false,
+            commande: "node scripts/orch/boucle.mjs --spec 208",
+            raison: "tmux est introuvable",
+          }
+        : { ok: true };
+    },
     // Lus à la demande, pour une annonce : jamais dans la situation du tour.
     lireCommentaires: (n) => monde.commentairesParDemande?.[n] ?? [],
     maintenant: () => new Date("2026-10-08T21:00:00.000Z"),
@@ -3143,6 +3160,200 @@ describe("boucle : PR en retard sur develop", () => {
     ]);
     expect(monde.misesAJour).toEqual([1, 1, 1]);
     expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+  });
+});
+
+// --- Redémarrage après une PR qui modifie scripts/orch ----------------------------------------
+
+describe("doitRedemarrer", () => {
+  it("redémarre quand la PR touche un fichier de scripts/orch", () => {
+    expect(
+      doitRedemarrer(["src/app/page.tsx", "scripts/orch/boucle.mjs"]),
+    ).toBe(true);
+    expect(doitRedemarrer(["scripts/orch/boucle.test.mjs"])).toBe(true);
+    expect(doitRedemarrer(["scripts\\orch\\slack.mjs"])).toBe(true);
+  });
+
+  it("ne redémarre pas pour une PR qui ne touche pas scripts/orch", () => {
+    expect(doitRedemarrer(["src/app/page.tsx", "CLAUDE.md"])).toBe(false);
+    expect(doitRedemarrer(["scripts/isoler-supabase-worktree.mjs"])).toBe(
+      false,
+    );
+    expect(doitRedemarrer(["scripts/orchestre/autre.mjs"])).toBe(false);
+    expect(doitRedemarrer([])).toBe(false);
+  });
+});
+
+describe("planRedemarrage", () => {
+  const commun = {
+    node: "/usr/bin/node",
+    script: "/repo/scripts/orch/boucle.mjs",
+    args: ["--spec", "208"],
+    cwd: "/repo",
+    sortie: "/etat/boucle.out",
+  };
+
+  it("sous tmux, ouvre la nouvelle boucle dans la même session, sortie dans boucle.out", () => {
+    const plan = planRedemarrage({
+      ...commun,
+      plateforme: "linux",
+      env: { TMUX: "/tmp/tmux-1000/default,1,0", TMUX_PANE: "%3" },
+      tty: false,
+    });
+    expect(plan).toEqual({
+      type: "tmux",
+      panneau: "%3",
+      cwd: "/repo",
+      commande:
+        "exec '/usr/bin/node' '/repo/scripts/orch/boucle.mjs' '--spec' '208' >> '/etat/boucle.out' 2>&1",
+    });
+  });
+
+  it("sous Windows sans terminal, détache un processus caché", () => {
+    expect(
+      planRedemarrage({
+        ...commun,
+        plateforme: "win32",
+        env: {},
+        tty: false,
+      }),
+    ).toEqual({
+      type: "detache",
+      commande: [
+        "/usr/bin/node",
+        "/repo/scripts/orch/boucle.mjs",
+        "--spec",
+        "208",
+      ],
+      cwd: "/repo",
+      sortie: "/etat/boucle.out",
+    });
+  });
+
+  it("hors tmux sous Linux, ou dans un terminal Windows, laisse la main avec la commande de relance", () => {
+    for (const [plateforme, env, tty] of [
+      ["linux", {}, true],
+      ["linux", {}, false],
+      ["win32", {}, true],
+    ]) {
+      const plan = planRedemarrage({ ...commun, plateforme, env, tty });
+      expect(plan.type).toBe("manuel");
+      expect(plan.commande).toBe("node scripts/orch/boucle.mjs --spec 208");
+    }
+  });
+
+  it("garde le mode et les options d'origine, `--etat` compris", () => {
+    const plan = planRedemarrage({
+      ...commun,
+      args: ["--tickets", "5,6", "--etat", "/essai"],
+      plateforme: "linux",
+      env: {},
+      tty: true,
+    });
+    expect(plan.commande).toBe(
+      "node scripts/orch/boucle.mjs --tickets 5,6 --etat /essai",
+    );
+  });
+});
+
+describe("boucle : redémarrage après une PR qui modifie scripts/orch", () => {
+  const monde1Fini = (surcharge = {}) =>
+    monde1({
+      sessions: { 1: "done" },
+      prs: { 1: { numero: 501, etat: "OPEN" } },
+      verdicts: { 1: { fusionnable: true, raisons: [] } },
+      ...surcharge,
+    });
+
+  it("se relance après la clôture quand la PR touche scripts/orch, le dit au journal et dans Slack, et rend la main", async () => {
+    const monde = monde1Fini({
+      fichiersDesPr: { 501: ["scripts/orch/boucle.mjs", "CLAUDE.md"] },
+    });
+    const ports = portsDuMonde(monde, { slack: true });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "fusion #1",
+      "cloture #1",
+      "redemarrage #1",
+    ]);
+    expect(ports.lignes.join("\n")).toMatch(
+      /redemarrage #1 .*PR #501.*scripts\/orch.*spec #208/,
+    );
+    expect(monde.redemarrages).toBe(1);
+    expect(monde.attentes).toBe(0);
+    expect(ports.notifications.map((n) => n.type)).toEqual([
+      "demarrage",
+      "cloture",
+      "redemarrage",
+    ]);
+  });
+
+  it("ne redémarre pas quand la PR ne touche pas scripts/orch", async () => {
+    const monde = monde1Fini({
+      fichiersDesPr: { 501: ["src/app/page.tsx", "docs/adr/0001.md"] },
+    });
+    const ports = portsDuMonde(monde, { slack: true });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "fusion #1",
+      "cloture #1",
+      "arret termine",
+    ]);
+    expect(monde.redemarrages).toBeUndefined();
+  });
+
+  it("ne redémarre pas en répétition", async () => {
+    const monde = monde1Fini({
+      fichiersDesPr: { 501: ["scripts/orch/boucle.mjs"] },
+    });
+    const ports = portsDuMonde(monde);
+    expect(await lancerBoucle(ports, { dryRun: true })).toBe(0);
+    expect(monde.redemarrages).toBeUndefined();
+  });
+
+  it("s'arrête avec la commande de relance quand le redémarrage est impossible", async () => {
+    const monde = monde1Fini({
+      fichiersDesPr: { 501: ["scripts/orch/boucle.mjs"] },
+      redemarrageImpossible: true,
+    });
+    const ports = portsDuMonde(monde, { slack: true });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "fusion #1",
+      "cloture #1",
+      "redemarrage #1",
+      "arret redemarrage",
+    ]);
+    const arret = ports.notifications.find((n) => n.type === "arret");
+    expect(arret.detail).toContain("node scripts/orch/boucle.mjs --spec 208");
+  });
+
+  it("dit que les fichiers de la PR sont illisibles et continue sans redémarrer", async () => {
+    const monde = monde1Fini({ fichiersIllisibles: true });
+    const ports = portsDuMonde(monde);
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(evenements(ports.lignes)).toEqual([
+      "fusion #1",
+      "cloture #1",
+      "echec #1",
+      "arret termine",
+    ]);
+    expect(monde.redemarrages).toBeUndefined();
+  });
+
+  it("ne redémarre pas quand l'arrêt est demandé : l'arrêt prime", async () => {
+    const monde = monde1Fini({
+      fichiersDesPr: { 501: ["scripts/orch/boucle.mjs"] },
+    });
+    const ports = portsDuMonde(monde);
+    const executer = ports.executer;
+    ports.executer = async (...args) => {
+      const resultat = await executer(...args);
+      monde.arret = true;
+      return resultat;
+    };
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(monde.redemarrages).toBeUndefined();
   });
 });
 

@@ -103,6 +103,20 @@ describe("notificationDEvenement", () => {
     ).toEqual({ type: "arret", detail: "termine : plus rien à faire" });
   });
 
+  it("annonce un redémarrage de la boucle avec son détail", () => {
+    expect(
+      notificationDEvenement({
+        evenement: "redemarrage",
+        ticket: 252,
+        detail: "la PR #260 modifie scripts/orch",
+      }),
+    ).toEqual({
+      type: "redemarrage",
+      ticket: 252,
+      detail: "la PR #260 modifie scripts/orch",
+    });
+  });
+
   it("se tait sur le rapport, les attentes, les répétitions, les vérifications, les mises à jour de branche et les reprises", () => {
     for (const evenement of [
       "rapport",
@@ -294,6 +308,21 @@ describe("texteSlack", () => {
       { depot: DEPOT },
     );
     expect(sans).toMatch(/[Rr]ien n'attend/);
+  });
+
+  it("dit le redémarrage de la boucle avec son détail", () => {
+    expect(
+      texteSlack(
+        {
+          type: "redemarrage",
+          ticket: 252,
+          detail: "la PR #260 modifie scripts/orch",
+        },
+        { depot: DEPOT },
+      ),
+    ).toBe(
+      "🔄 Boucle relancée avec le nouveau code : la PR #260 modifie scripts/orch",
+    );
   });
 
   it("donne le lien de la PR d'une clôture et le détail d'un lancement, d'un échec, d'une erreur et d'un arrêt", () => {
