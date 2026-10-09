@@ -53,7 +53,6 @@ const ETIQUETTE_MIGRATION = "migration";
 /** Code de sortie d'une clôture suspendue : la branche est mise à jour, la fusion attend le contrôle
  * du nouveau commit de tête. Ni un succès (le ticket n'est pas clos) ni un échec. */
 export const CODE_CLOTURE_SUSPENDUE = 3;
-const ETATS_DE_SESSION_FINIS = ["done", "failed", "stopped"];
 // Ce qui se voit d'un résident ou de la base : le reste est de l'outillage, de la config ou des docs.
 const CHEMINS_DU_PRODUIT = /^(?:src|supabase|public)\//;
 
@@ -248,7 +247,9 @@ export function decider(situation, valeurs) {
     });
   }
 
-  if (session && !ETATS_DE_SESSION_FINIS.includes(session.etat)) {
+  // Une session `done` ou `idle` garde son processus ouvert dans le worktree et fait refuser le
+  // retrait : toute session encore listée s'arrête, quel que soit son état.
+  if (session) {
     actions.push({ type: "arreterSession", id: session.id });
   }
   if (situation.worktreeExiste) {

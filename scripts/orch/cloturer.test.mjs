@@ -100,6 +100,7 @@ describe("decider : un ticket dont la PR est fusionnable", () => {
       "statut",
       "fermerTicket",
       "commenterTicket",
+      "arreterSession",
       "arreterService",
       "retirerWorktree",
       "supprimerSession",
@@ -578,6 +579,7 @@ describe("decider : reprise après un échec partiel", () => {
       ),
     );
     expect(t).toEqual([
+      "arreterSession",
       "arreterService",
       "retirerWorktree",
       "supprimerSession",
