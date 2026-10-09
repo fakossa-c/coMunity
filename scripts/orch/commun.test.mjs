@@ -8,6 +8,7 @@ import {
   etatVide,
   fusionnerValeurs,
   idDepuisSortieBg,
+  lancementEnEchec,
   modifierEntree,
   remplacerSession,
 } from "./commun.mjs";
@@ -319,5 +320,67 @@ describe("idDepuisSortieBg", () => {
     expect(() =>
       idDepuisSortieBg("Workspace not trusted. Run `claude` once."),
     ).toThrow(/Workspace not trusted/);
+  });
+});
+
+describe("lancementEnEchec", () => {
+  it("note le ticket pris sans session, avec l'étape à reprendre et l'erreur", () => {
+    const etat = lancementEnEchec(etatVide(), 247, {
+      nom: "ticket-247",
+      etape: "demarrerService",
+      erreur: "address already in use",
+    });
+    expect(etat.tickets[247]).toEqual({
+      nom: "ticket-247",
+      lancement: {
+        etape: "demarrerService",
+        echecs: 1,
+        erreur: "address already in use",
+      },
+    });
+    expect(etat.tickets[247].session).toBeUndefined();
+  });
+
+  it("compte un échec de plus à chaque reprise ratée, et suit l'étape où elle a échoué", () => {
+    const premier = lancementEnEchec(etatVide(), 247, {
+      nom: "ticket-247",
+      etape: "demarrerService",
+      erreur: "port pris",
+    });
+    const second = lancementEnEchec(premier, 247, {
+      nom: "ticket-247",
+      etape: "variablesLocales",
+      erreur: "env:local en échec",
+    });
+    expect(second.tickets[247].lancement).toEqual({
+      etape: "variablesLocales",
+      echecs: 2,
+      erreur: "env:local en échec",
+    });
+  });
+
+  it("ne modifie pas l'état reçu", () => {
+    const etat = etatVide();
+    lancementEnEchec(etat, 247, {
+      nom: "ticket-247",
+      etape: "isoler",
+      erreur: "x",
+    });
+    expect(etat).toEqual(etatVide());
+  });
+
+  it("disparaît quand la session est enregistrée : l'entrée repart avec des compteurs neufs", () => {
+    const echec = lancementEnEchec(etatVide(), 247, {
+      nom: "ticket-247",
+      etape: "demarrerService",
+      erreur: "x",
+    });
+    const apres = ajouterSession(echec, 247, {
+      id: "abcd1234",
+      nom: "ticket-247",
+      demarreA: "2026-10-09T16:00:00.000Z",
+    });
+    expect(apres.tickets[247].lancement).toBeUndefined();
+    expect(apres.tickets[247].session).toBe("abcd1234");
   });
 });
