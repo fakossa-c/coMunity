@@ -49,10 +49,13 @@ const COMMANDES_DU_PROJET = [
   "migrationDistante",
   "lienPreview",
 ];
-// Une machine sans fichier local reste utilisable : un seul service lourd, mémoire prudente.
+// Une machine sans fichier local reste utilisable : un seul service lourd, mémoire prudente, pas
+// de Slack.
 const VALEURS_DE_MACHINE = {
   memoireParSessionMo: 2048,
   servicesLourdsEnParallele: 1,
+  // L'URL du webhook entrant du canal Slack de la boucle (spec #239) : un secret, jamais versionné.
+  webhookSlack: null,
 };
 
 /** Les valeurs du projet complétées par celles de la machine. `local` est le contenu du fichier
