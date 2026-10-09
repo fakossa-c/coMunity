@@ -59,87 +59,19 @@ const lienIssue = (valeurs, numero) =>
 // --- Prompt -----------------------------------------------------------------------------------
 
 const MOTIF_VARIABLE = String.raw`\{\{(\w+)\}\}`;
-const echapper = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-// Le gabarit PROMPT-SESSION.md du skill est encore écrit avec des `<…>` à remplir à la main. Cette
-// table les remplit, pour que le lancement serve avant sa réécriture en `{{variable}}` (spec #208,
-// étape 7) : retirer la table avec ce format.
-function ancienFormat(v) {
-  return new Map([
-    [
-      "2. Gate étape 3 : t'assigner le ticket, puis dans ce dossier : installer les dépendances, <procédure d'isolation Docker du projet>, <démarrer le service si feu vert>.",
-      "2. Gate étape 3 : faite par le lancement (ticket assigné et « In Progress », dépendances installées, Supabase isolé, démarré et variables locales écrites) : ne rien refaire.",
-    ],
-    [
-      "<« feu vert pour ton service dès maintenant » | « un seul service à la fois et il est pris : fais d'abord tout ce qui n'en a pas besoin, puis envoie « #<n> : besoin du service » et attends la réponse »>",
-      "feu vert pour ton service : le lancement l'a déjà démarré, ne le relance pas",
-    ],
-    [
-      "<commande de lien de preview du projet, par exemple `vercel link --yes --project <projet>`>",
-      `\`${v.commandeLienPreview}\``,
-    ],
-    [
-      "<procédure d'isolation Docker du projet>",
-      "constater que le lancement a déjà isolé Supabase et installé les dépendances, sans rien refaire",
-    ],
-    [
-      "<démarrer le service si feu vert>",
-      "constater que le service est déjà démarré",
-    ],
-    ["<commande de migration distante>", `\`${v.commandeMigration}\``],
-    ["<commande du tracker>", `gh issue view ${v.ticket}`],
-    ["<commande stop>", v.commandeArret],
-    ["<nom de l'orchestrateur>", v.orchestrateur],
-    ["<orchestrateur>", v.orchestrateur],
-    ["<liste ou « aucun »>", v.enParallele],
-    ["<branche d'intégration>", v.brancheIntegration],
-    ["<fichiers>", "ceux de la section `## Fichiers` de leurs tickets"],
-    ["<dossier>", v.dossier],
-    // Le titre de l'issue que la session ouvre, pas celui du ticket.
-    ["issue #m ouverte : <titre>", "issue #m ouverte : « titre de l'issue »"],
-    ["<titre>", v.titre],
-    ["<nom>", v.depot],
-    ["<n>", String(v.ticket)],
-    ["CONTEXT.md", v.glossaire],
-  ]);
-}
 
 /** Le prompt de la session : le premier bloc ``` du gabarit (ou le gabarit entier), variables
  * `{{nom}}` remplacées. Une variable inconnue lève une erreur : un prompt à trous ne part pas. */
 export function construirePrompt(modele, variables) {
   const bloc = modele.match(/```[^\n]*\n([\s\S]*?)\n```/)?.[1] ?? modele;
-  const ancien = ancienFormat(variables);
-  const cles = [...ancien.keys()]
-    .sort((a, b) => b.length - a.length)
-    .map(echapper);
-  const motif = new RegExp([MOTIF_VARIABLE, ...cles].join("|"), "g");
-  let ancienUtilise = false;
   // Une seule passe, et une fonction de remplacement : la valeur insérée n'est jamais relue
-  // (un titre qui contient `<n>` ou `$&` reste tel quel).
-  let prompt = bloc.replace(motif, (trouve, nom) => {
-    if (nom === undefined) {
-      ancienUtilise = true;
-      return ancien.get(trouve);
-    }
+  // (un titre qui contient `{{ticket}}` ou `$&` reste tel quel).
+  return bloc.replace(new RegExp(MOTIF_VARIABLE, "g"), (_, nom) => {
     if (!(nom in variables)) {
       throw new Error(`Variable inconnue dans PROMPT-SESSION.md : {{${nom}}}`);
     }
     return String(variables[nom]);
   });
-  // Un gabarit à l'ancien format garde un `<…>` qu'aucune valeur ne remplit : le prompt ne part pas.
-  const trou = ancienUtilise && prompt.match(/<[^<>\n]+>/)?.[0];
-  if (trou)
-    throw new Error(
-      `Gabarit PROMPT-SESSION.md : ${trou} n'est rempli par aucune valeur`,
-    );
-  // L'ancien gabarit n'a pas de place pour la spec : elle ferme le prompt plutôt que de manquer.
-  if (
-    variables.specNumero !== "aucune" &&
-    !prompt.includes(variables.specLien)
-  ) {
-    prompt += `\n\nSpec parente : spec #${variables.specNumero}, ${variables.specLien}.`;
-  }
-  return prompt;
 }
 
 /** Ce que la session relancée lit en plus du prompt du premier lancement : le travail déjà fait est

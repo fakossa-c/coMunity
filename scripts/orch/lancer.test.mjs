@@ -325,65 +325,17 @@ describe("construirePrompt", () => {
     ).toThrow(/inconnue/);
   });
 
-  it("remplit le gabarit actuel du skill, encore écrit avec des <…>", () => {
-    const ancien = [
-      "```",
-      "Tu es la session du ticket #<n> (<titre>) du dépôt <nom>, orchestrée par la session `<nom de l'orchestrateur>`. Tickets en parallèle : <liste ou « aucun »>.",
-      "- Worktree `<dossier>`, branche `ticket-<n>`, créé depuis `<branche d'intégration>` à jour.",
-      "- CONTEXT.md est le glossaire.",
-      "```",
-    ].join("\n");
-    const contenu = construirePrompt(ancien, base());
-    expect(contenu).toContain("ticket #210 (");
-    expect(contenu).toContain("du dépôt coMunity");
-    expect(contenu).toContain("`orch-comunity`");
-    expect(contenu).toContain("Tickets en parallèle : #205.");
-    expect(contenu).toContain("branche `ticket-210`");
-    expect(contenu).toContain("depuis `develop`");
-    expect(contenu).not.toMatch(/<[^>]+>/);
-  });
-
-  it("ajoute la spec au prompt quand le gabarit n'a pas de place pour elle", () => {
+  it("ne remplit que les {{variables}} : un <…> reste tel quel", () => {
     const contenu = construirePrompt(
-      "```\nTicket #<n> (<titre>).\n```",
+      "```\nTicket #{{ticket}}, branche <n>, base <commande inédite>.\n```",
       base(),
     );
-    expect(contenu).toContain("spec #208");
-    expect(contenu).toContain(base().specLien);
+    expect(contenu).toBe("Ticket #210, branche <n>, base <commande inédite>.");
   });
 
-  it("n'ajoute pas la spec une seconde fois quand le gabarit la cite déjà", () => {
-    const contenu = construirePrompt("```\nSpec : {{specLien}}\n```", base());
-    expect(contenu.split(base().specLien)).toHaveLength(2);
-  });
-
-  it("n'ajoute rien quand le ticket n'a pas de spec", () => {
-    const contenu = construirePrompt("```\nTicket #<n>.\n```", {
-      ...base(),
-      specNumero: "aucune",
-      specLien: "aucun",
-    });
+  it("ne dit rien de la spec quand le gabarit ne la cite pas", () => {
+    const contenu = construirePrompt("```\nTicket #{{ticket}}.\n```", base());
     expect(contenu).toBe("Ticket #210.");
-  });
-
-  it("refuse un gabarit à l'ancien format qui garde un <…> qu'aucune valeur ne remplit", () => {
-    expect(() =>
-      construirePrompt(
-        "```\nTicket #<n>, base <commande inédite>.\n```",
-        base(),
-      ),
-    ).toThrow(/<commande inédite>/);
-  });
-
-  it("dit que la prise du ticket et l'installation sont déjà faites, au lieu de les demander", () => {
-    const ancien = [
-      "```",
-      "2. Gate étape 3 : t'assigner le ticket, puis dans ce dossier : installer les dépendances, <procédure d'isolation Docker du projet>, <démarrer le service si feu vert>.",
-      "```",
-    ].join("\n");
-    const contenu = construirePrompt(ancien, base());
-    expect(contenu).toMatch(/faite par le lancement/);
-    expect(contenu).not.toMatch(/t'assigner/);
   });
 });
 
