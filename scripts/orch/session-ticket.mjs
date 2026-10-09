@@ -35,6 +35,45 @@ export const marqueurFrais = (marqueur, commitTete) =>
   marqueur.commit === commitTete &&
   marqueur.arbreSale === false;
 
+// --- Parties de la suite -----------------------------------------------------------------------
+
+/** Le fichier des parties vertes du commit de tête, ignoré par git comme le marqueur. */
+export const FICHIER_PARTIES = ".claude/test-parties.json";
+
+/** Les parties de `npm test`, chacune sous la limite de 10 minutes d'une commande de session
+ * (ticket #233) : les deux projets navigateur, qui prennent 9 minutes ou plus chacun, sont coupés en
+ * deux moitiés (`--shard`). `npm test` en une fois les enchaîne ; une session les lance une à une
+ * avec `npm run test:partie -- <nom>`, qui enregistre le succès de la partie. */
+export const PARTIES_DE_TEST = [
+  { nom: "format", commande: "npm run format:check" },
+  { nom: "unitaires", commande: "npm run test:unit" },
+  { nom: "base", commande: "npm run test:db" },
+  ...["mobile", "ordinateur"].flatMap((nom) =>
+    [1, 2].map((moitie) => ({
+      nom: `${nom}-${moitie}`,
+      commande: `npx playwright test --project=${nom === "mobile" ? "mobile" : "desktop"} --shard=${moitie}/2`,
+    })),
+  ),
+];
+
+/** La commande de session qui lance une partie et enregistre son succès. */
+export const commandeDeLaPartie = (nom) => `npm run test:partie -- ${nom}`;
+
+/** L'état des parties après le succès de `nom` sur `commit` : un autre commit repart de zéro. */
+export const enregistrerPartie = (etat, { nom, commit, ecritA }) => ({
+  commit,
+  parties: {
+    ...(etat?.commit === commit ? etat.parties : {}),
+    [nom]: ecritA,
+  },
+});
+
+/** Les noms des parties pas encore vertes sur `commitTete`, dans l'ordre de la suite. */
+export const partiesManquantes = (etat, commitTete) => {
+  const vertes = etat?.commit === commitTete ? (etat.parties ?? {}) : {};
+  return PARTIES_DE_TEST.map(({ nom }) => nom).filter((nom) => !vertes[nom]);
+};
+
 // --- Disque et git ---------------------------------------------------------------------------
 
 const git = (dossier, ...args) =>
@@ -62,6 +101,15 @@ export function contexteGit(dossier) {
     commitTete: git(dossier, "rev-parse", "HEAD"),
     arbreSale: git(dossier, "status", "--porcelain") !== "",
   };
+}
+
+/** Les parties vertes enregistrées dans le worktree `racine`, ou null si le fichier manque. */
+export function lireParties(racine) {
+  try {
+    return JSON.parse(readFileSync(join(racine, FICHIER_PARTIES), "utf8"));
+  } catch {
+    return null;
+  }
 }
 
 /** Le marqueur du worktree `racine`, ou null s'il manque ou s'il est illisible. */

@@ -63,3 +63,5 @@ z-prompt
 
 # marqueur du dernier npm test vert (écrit par posttest, lu par le hook de fin de tour)
 /.claude/test-vert.json
+# parties de la suite vertes sur le commit de tête (écrit par test:partie, lu par le hook de fin de tour)
+/.claude/test-parties.json
