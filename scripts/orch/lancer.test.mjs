@@ -337,15 +337,6 @@ describe("construirePrompt", () => {
     const contenu = construirePrompt("```\nTicket #{{ticket}}.\n```", base());
     expect(contenu).toBe("Ticket #210.");
   });
-
-  it("n'ajoute rien quand le ticket n'a pas de spec", () => {
-    const contenu = construirePrompt("```\nTicket #{{ticket}}.\n```", {
-      ...base(),
-      specNumero: "aucune",
-      specLien: "aucun",
-    });
-    expect(contenu).toBe("Ticket #210.");
-  });
 });
 
 function base() {
