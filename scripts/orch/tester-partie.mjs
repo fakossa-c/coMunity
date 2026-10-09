@@ -1,8 +1,8 @@
 // Lance une partie de la suite de tests et enregistre son succès pour le commit de tête (ticket
 // #233). Une session de ticket ne peut pas lancer `npm test` en une commande (14 à 17 minutes, pour
-// 10 permises) : elle lance les cinq parties l'une après l'autre,
-//   npm run test:partie -- <format|unitaires|base|mobile|ordinateur>
-// et la cinquième verte sur le même commit écrit le marqueur que lit le hook de fin de tour
+// 10 permises) : elle lance les parties l'une après l'autre,
+//   npm run test:partie -- <format|unitaires|base|mobile-1|mobile-2|ordinateur-1|ordinateur-2>
+// et la dernière verte sur le même commit écrit le marqueur que lit le hook de fin de tour
 // (hook-fin-de-tour.mjs), comme `npm test` via son script `posttest`.
 //
 // L'arbre doit être propre : un succès sur des modifications non commitées ne prouve rien du commit.
@@ -72,7 +72,9 @@ if (process.argv[1]?.endsWith("tester-partie.mjs")) {
       join(avant.racine, FICHIER_MARQUEUR),
       marqueurDeTest({ commit: avant.commitTete, arbreSale: false, ecritA }),
     );
-    console.log("Les cinq parties sont vertes sur ce commit : marqueur écrit.");
+    console.log(
+      "Toutes les parties sont vertes sur ce commit : marqueur écrit.",
+    );
   } else {
     console.log(`Partie « ${nom} » verte. Reste : ${manquantes.join(", ")}.`);
   }

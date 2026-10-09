@@ -86,7 +86,7 @@ describe("verdict de fin de tour", () => {
 
   it("refuse sans test vert enregistré et nomme la commande de chaque partie", () => {
     const raison = verdict({ ...pret, marqueur: null });
-    for (const nom of ["format", "unitaires", "base", "mobile", "ordinateur"]) {
+    for (const nom of ["format", "base", "mobile-2", "ordinateur-1"]) {
       expect(raison).toContain(`npm run test:partie -- ${nom}`);
     }
   });
@@ -100,13 +100,13 @@ describe("verdict de fin de tour", () => {
         parties: { format: "t", unitaires: "t", base: "t" },
       },
     });
-    expect(raison).toContain("npm run test:partie -- mobile");
-    expect(raison).toContain("npm run test:partie -- ordinateur");
+    expect(raison).toContain("npm run test:partie -- mobile-1");
+    expect(raison).toContain("npm run test:partie -- ordinateur-2");
     expect(raison).not.toContain("test:partie -- format");
     expect(raison).not.toContain("test:partie -- base");
   });
 
-  it("repart des cinq parties quand les vertes datent d'un autre commit", () => {
+  it("repart de toutes les parties quand les vertes datent d'un autre commit", () => {
     const raison = verdict({
       ...pret,
       marqueur: null,

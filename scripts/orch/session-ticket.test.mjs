@@ -99,21 +99,31 @@ describe("parties de la suite de tests", () => {
   const noms = PARTIES_DE_TEST.map((partie) => partie.nom);
   const ecritA = "2026-10-09T12:00:00.000Z";
 
-  it("compte les cinq parties de `npm test`", () => {
+  it("coupe en deux chaque projet navigateur, pour tenir sous 10 minutes", () => {
     expect(noms).toEqual([
       "format",
       "unitaires",
       "base",
-      "mobile",
-      "ordinateur",
+      "mobile-1",
+      "mobile-2",
+      "ordinateur-1",
+      "ordinateur-2",
     ]);
+    const commande = (nom) =>
+      PARTIES_DE_TEST.find((partie) => partie.nom === nom).commande;
+    expect(commande("mobile-2")).toBe(
+      "npx playwright test --project=mobile --shard=2/2",
+    );
+    expect(commande("ordinateur-1")).toBe(
+      "npx playwright test --project=desktop --shard=1/2",
+    );
   });
 
   it("nomme la commande qui lance et enregistre une partie", () => {
     expect(commandeDeLaPartie("base")).toBe("npm run test:partie -- base");
   });
 
-  it("les cinq parties manquent tant que rien n'est enregistré", () => {
+  it("toutes les parties manquent tant que rien n'est enregistré", () => {
     expect(partiesManquantes(null, "abc123")).toEqual(noms);
   });
 
@@ -133,8 +143,10 @@ describe("parties de la suite de tests", () => {
     }
     expect(partiesManquantes(etat, "abc123")).toEqual([
       "unitaires",
-      "mobile",
-      "ordinateur",
+      "mobile-1",
+      "mobile-2",
+      "ordinateur-1",
+      "ordinateur-2",
     ]);
   });
 
@@ -155,7 +167,7 @@ describe("parties de la suite de tests", () => {
     );
   });
 
-  it("n'a plus de partie manquante quand les cinq sont vertes sur la tête", () => {
+  it("n'a plus de partie manquante quand toutes sont vertes sur la tête", () => {
     let etat = null;
     for (const nom of noms) {
       etat = enregistrerPartie(etat, { nom, commit: "abc123", ecritA });

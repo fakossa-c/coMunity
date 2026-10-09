@@ -40,15 +40,20 @@ export const marqueurFrais = (marqueur, commitTete) =>
 /** Le fichier des parties vertes du commit de tête, ignoré par git comme le marqueur. */
 export const FICHIER_PARTIES = ".claude/test-parties.json";
 
-/** Les cinq parties de `npm test`, chacune sous la limite de 10 minutes d'une commande de session
- * (ticket #233). `npm test` en une fois les enchaîne ; une session les lance une à une avec
- * `npm run test:partie -- <nom>`, qui enregistre le succès de la partie. */
+/** Les parties de `npm test`, chacune sous la limite de 10 minutes d'une commande de session
+ * (ticket #233) : les deux projets navigateur, qui prennent 9 minutes ou plus chacun, sont coupés en
+ * deux moitiés (`--shard`). `npm test` en une fois les enchaîne ; une session les lance une à une
+ * avec `npm run test:partie -- <nom>`, qui enregistre le succès de la partie. */
 export const PARTIES_DE_TEST = [
   { nom: "format", commande: "npm run format:check" },
   { nom: "unitaires", commande: "npm run test:unit" },
   { nom: "base", commande: "npm run test:db" },
-  { nom: "mobile", commande: "npx playwright test --project=mobile" },
-  { nom: "ordinateur", commande: "npx playwright test --project=desktop" },
+  ...["mobile", "ordinateur"].flatMap((nom) =>
+    [1, 2].map((moitie) => ({
+      nom: `${nom}-${moitie}`,
+      commande: `npx playwright test --project=${nom === "mobile" ? "mobile" : "desktop"} --shard=${moitie}/2`,
+    })),
+  ),
 ];
 
 /** La commande de session qui lance une partie et enregistre son succès. */

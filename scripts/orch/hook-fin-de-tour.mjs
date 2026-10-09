@@ -59,7 +59,7 @@ export function verdict({
     manques.push("l'arbre git a des modifications non commitées");
   }
   // Chaque partie dure moins de 10 minutes : une session les lance une à une, l'enregistrement de
-  // la cinquième écrit le marqueur.
+  // la dernière écrit le marqueur.
   const aLancer = () =>
     partiesManquantes(parties, commitTete).map(
       (nom) => `  \`${commandeDeLaPartie(nom)}\``,
