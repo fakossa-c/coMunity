@@ -30,6 +30,8 @@ export function notificationDEvenement(
     case "lancement":
     case "echec":
       return { type: evenement, ticket, titre, detail };
+    case "redemarrage":
+      return { type: evenement, ticket, detail };
     case "cloture":
       if (detail === "déjà clôturé") return null;
       return { type: "cloture", ticket, titre, pr: action?.pr ?? null };
@@ -163,6 +165,8 @@ export function texteSlack(notification, { depot, projet } = {}) {
       return `⚠️ Échec sur ${lienTicket(n, depot)} : ${echapper(n.detail)}`;
     case "erreur":
       return `⚠️ Erreur de la boucle : ${echapper(n.detail)}`;
+    case "redemarrage":
+      return `🔄 Boucle relancée avec le nouveau code : ${echapper(n.detail)}`;
     case "arret":
       return `⏹️ Boucle arrêtée : ${echapper(n.detail)}`;
     case "essai":

@@ -1,14 +1,17 @@
 // La boucle de livraison (spec #208, ticket #216).
+import { spawn } from "node:child_process";
 import {
   appendFileSync,
+  closeSync,
   mkdirSync,
+  openSync,
   readFileSync,
   statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, uptime } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { format, parseArgs } from "node:util";
 import {
@@ -139,6 +142,147 @@ export function rendreVerrou({ fichier, pid }) {
   } catch {
     // Déjà rendu, ou illisible : rien à rendre.
   }
+}
+
+// --- Redémarrage ------------------------------------------------------------------------------
+//
+// La boucle charge `scripts/orch/*` une fois, au démarrage : après la fusion d'une PR qui les
+// modifie, elle tournerait avec l'ancien code jusqu'à une relance à la main (incident du
+// 2026-10-09, #246). Après la clôture d'un tel ticket, elle rend son verrou, ouvre une nouvelle
+// boucle avec la même commande, puis s'arrête. Les sessions de fond ne dépendent pas d'elle.
+
+const CHEMIN_DES_SCRIPTS = /^scripts\/orch\//;
+const ATTENTE_NOUVELLE_BOUCLE_MS = 10_000;
+
+/** La PR modifie-t-elle le code de la boucle ? `fichiers` : les chemins qu'elle touche. */
+export const doitRedemarrer = (fichiers) =>
+  fichiers.some((f) => CHEMIN_DES_SCRIPTS.test(f.replaceAll("\\", "/")));
+
+const entreGuillemets = (texte) =>
+  `'${String(texte).replaceAll("'", "'\\''")}'`;
+
+/** La commande qui relance la boucle à la main, depuis `cwd`. */
+export function commandeDeRelance({ script, args, cwd }) {
+  const chemin = relative(cwd, script).replaceAll("\\", "/");
+  return ["node", chemin.startsWith("..") ? script : chemin, ...args].join(" ");
+}
+
+/** Comment la boucle se relance, d'après où elle tourne. Pure.
+ *  - tmux (VM) : une fenêtre de plus dans la session qui l'abrite, qui survit à la fermeture de
+ *    l'ancienne : `orch --voir` et `orch --stop` retrouvent la nouvelle par le verrou ;
+ *  - Windows sans terminal (PowerShell, `orch`) : un processus détaché, caché, comme `orch` ;
+ *  - ailleurs (terminal ouvert, sans tmux) : rien de détachable sans cacher la boucle à qui la
+ *    regarde, donc `manuel` : la boucle s'arrête en donnant la commande de relance. */
+export function planRedemarrage({
+  plateforme,
+  env,
+  tty,
+  node,
+  script,
+  args,
+  cwd,
+  sortie,
+}) {
+  if (plateforme === "win32" && !tty) {
+    return { type: "detache", commande: [node, script, ...args], cwd, sortie };
+  }
+  if (plateforme !== "win32" && env.TMUX && env.TMUX_PANE) {
+    const commande = [node, script, ...args].map(entreGuillemets).join(" ");
+    return {
+      type: "tmux",
+      panneau: env.TMUX_PANE,
+      cwd,
+      commande: `exec ${commande} >> ${entreGuillemets(sortie)} 2>&1`,
+    };
+  }
+  return { type: "manuel", commande: commandeDeRelance({ script, args, cwd }) };
+}
+
+const pidDuVerrou = (fichier) => {
+  try {
+    return JSON.parse(readFileSync(fichier, "utf8")).pid;
+  } catch {
+    return null;
+  }
+};
+
+const pidVivant = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (erreur) {
+    return erreur.code === "EPERM";
+  }
+};
+
+/** Relance la boucle selon `plan` : le verrou est rendu d'abord (la nouvelle boucle le refuserait
+ * tant que celle-ci est vivante), puis la nouvelle est ouverte, et on attend qu'elle ait repris le
+ * verrou. Rend { ok } ou { ok: false, raison, commande } avec la commande de relance à la main. */
+export async function relancerBoucle({
+  plan,
+  fichierVerrou,
+  pid,
+  relance,
+  attenteMs = ATTENTE_NOUVELLE_BOUCLE_MS,
+}) {
+  if (plan.type === "manuel") {
+    return {
+      ok: false,
+      commande: plan.commande,
+      raison:
+        "elle ne tourne ni sous tmux ni détachée d'un terminal Windows : rien à ouvrir à sa place",
+    };
+  }
+  rendreVerrou({ fichier: fichierVerrou, pid });
+  try {
+    if (plan.type === "tmux") {
+      const session = executer("tmux", [
+        "display-message",
+        "-p",
+        "-t",
+        plan.panneau,
+        "#{session_name}",
+      ]).trim();
+      executer("tmux", [
+        "new-window",
+        "-d",
+        "-t",
+        `${session}:`,
+        "-c",
+        plan.cwd,
+        plan.commande,
+      ]);
+    } else {
+      mkdirSync(dirname(plan.sortie), { recursive: true });
+      const sortie = openSync(plan.sortie, "a");
+      try {
+        const [programme, ...arguments_] = plan.commande;
+        spawn(programme, arguments_, {
+          cwd: plan.cwd,
+          detached: true,
+          stdio: ["ignore", sortie, sortie],
+          windowsHide: true,
+        })
+          .on("error", () => {})
+          .unref();
+      } finally {
+        closeSync(sortie);
+      }
+    }
+  } catch (erreur) {
+    return { ok: false, commande: relance, raison: erreur.message };
+  }
+  const fin = Date.now() + attenteMs;
+  while (Date.now() < fin) {
+    const autre = pidDuVerrou(fichierVerrou);
+    if (autre && autre !== pid && pidVivant(autre)) return { ok: true };
+    await new Promise((reprise) => setTimeout(reprise, 250));
+  }
+  return {
+    ok: false,
+    commande: relance,
+    raison: `la nouvelle boucle n'a pas pris le verrou en ${attenteMs / 1000} s (sa sortie : boucle.out)`,
+  };
 }
 
 // --- Journal ----------------------------------------------------------------------------------
@@ -915,6 +1059,21 @@ export async function boucle({
   let rapportPrecedent = null;
   let toursImmediats = 0;
 
+  // Après une clôture : la PR fusionnée modifie-t-elle le code de la boucle ? Si ses fichiers ne
+  // se lisent pas, on le dit (la PR est fusionnée, on ne la relira pas) sans arrêter la boucle.
+  const prModifieLaBoucle = async (action) => {
+    try {
+      return doitRedemarrer(await ports.fichiersDeLaPr(action.pr));
+    } catch (erreur) {
+      await annoncer({
+        evenement: "echec",
+        ticket: action.ticket,
+        detail: `fichiers de la PR #${action.pr} illisibles (${erreur.message}) : si elle modifie scripts/orch, relancer la boucle à la main`,
+      });
+      return false;
+    }
+  };
+
   for (;;) {
     if (ports.arretDemande()) {
       await annoncer({
@@ -982,6 +1141,7 @@ export async function boucle({
 
     let cloture = false;
     let interrompu = false;
+    let aRedemarrer = null;
     const arretsRates = new Set();
     for (const action of resultat.actions) {
       if (ports.arretDemande()) {
@@ -1008,11 +1168,33 @@ export async function boucle({
       }
       if (!ok && action.type === "arreterSession")
         arretsRates.add(action.ticket);
-      if (ok && action.type === "cloturer") cloture = true;
+      if (ok && action.type === "cloturer") {
+        cloture = true;
+        if (!dryRun && ports.redemarrer && !aRedemarrer) {
+          aRedemarrer = (await prModifieLaBoucle(action)) ? action : null;
+        }
+      }
     }
 
     if (dryRun) return 0;
     if (interrompu) continue;
+    if (aRedemarrer && !ports.arretDemande()) {
+      await annoncer(
+        {
+          evenement: "redemarrage",
+          ticket: aRedemarrer.ticket,
+          detail: `la PR #${aRedemarrer.pr} modifie scripts/orch : la boucle repart avec le nouveau code (${libelleMode})`,
+        },
+        aRedemarrer,
+      );
+      const relance = await ports.redemarrer();
+      if (relance.ok) return 0;
+      await annoncer({
+        evenement: "arret",
+        detail: `redemarrage : la nouvelle boucle ne démarre pas (${relance.raison}). Relancer avec \`${relance.commande}\``,
+      });
+      return 0;
+    }
     if (cloture && toursImmediats < TOURS_IMMEDIATS_MAX) {
       toursImmediats += 1;
       continue;
@@ -2012,6 +2194,8 @@ export function portsReels({
   home,
   dryRun,
   fichierJournal,
+  fichierVerrou,
+  argv,
   signaux,
 }) {
   const contexte = {
@@ -2037,6 +2221,44 @@ export function portsReels({
     },
     afficher: (texte) => process.stdout.write(`${texte}\n`),
     notifier: notifieurSlack(valeurs),
+    fichiersDeLaPr: (numero) =>
+      executer(
+        "gh",
+        [
+          "api",
+          "--paginate",
+          `repos/${valeurs.depot}/pulls/${numero}/files`,
+          "--jq",
+          ".[].filename",
+        ],
+        { env },
+      )
+        .split("\n")
+        .filter(Boolean),
+    // Sans verrou (répétition), la boucle ne se relance jamais : le port manque.
+    ...(fichierVerrou && argv
+      ? {
+          redemarrer: () => {
+            const script = fileURLToPath(import.meta.url);
+            const cwd = process.cwd();
+            return relancerBoucle({
+              plan: planRedemarrage({
+                plateforme: process.platform,
+                env: process.env,
+                tty: Boolean(process.stdout.isTTY),
+                node: process.execPath,
+                script,
+                args: argv,
+                cwd,
+                sortie: join(dirname(fichierJournal), "boucle.out"),
+              }),
+              fichierVerrou,
+              pid: process.pid,
+              relance: commandeDeRelance({ script, args: argv, cwd }),
+            });
+          },
+        }
+      : {}),
     lireCommentaires: (ticket) => {
       try {
         return lireCommentaires(
@@ -2118,6 +2340,8 @@ export async function main(argv) {
     home,
     dryRun,
     fichierJournal,
+    fichierVerrou: dryRun ? null : fichierVerrou,
+    argv,
     signaux: ecouterArret(),
   });
   return boucle({
