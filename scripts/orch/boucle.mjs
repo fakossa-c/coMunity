@@ -253,6 +253,8 @@ const ETIQUETTES_A_PART = [ETIQUETTE_QUESTION, ETIQUETTE_RENDU];
 // Une session `done`, `idle` (tour fini, en attente d'un message), `stopped`, `failed` ou introuvable
 // ne travaille plus : son résultat est sur le tracker (ou, sans PR ni label, elle est à reprendre).
 const ETATS_SESSION_FINIE = ["done", "idle", "stopped", "failed"];
+// Une session qui a fini son tour proprement, sans PR ni label : anomalie, pas une interruption.
+const ETATS_TOUR_FINI = ["done", "idle"];
 
 const parNumero = (a, b) => a.numero - b.numero;
 
@@ -672,7 +674,7 @@ export function decider(situation) {
             : `PR #${pr.numero} : vérification manquante`,
         });
       }
-    } else if (["done", "idle"].includes(etatSession)) {
+    } else if (ETATS_TOUR_FINI.includes(etatSession)) {
       actions.push({
         type: "rendreHumain",
         ticket: t.numero,
@@ -1664,7 +1666,7 @@ function sessionEnCours(id) {
 async function reprendreOuRelancer(action, contexte) {
   const { ticket, motif } = action;
   const { valeurs, env, dryRun, racine } = contexte;
-  const lancerCommande = contexte.executer ?? executer;
+  const executerProgramme = contexte.executer ?? executer;
   const relance = action.type === "relancer";
   const dossier = dossierWorktree(racine, valeurs, ticket);
   if (dryRun) {
@@ -1687,12 +1689,12 @@ async function reprendreOuRelancer(action, contexte) {
   } else {
     try {
       const sessions = json(
-        lancerCommande("claude", ["agents", "--json", "--all"]),
+        executerProgramme("claude", ["agents", "--json", "--all"]),
       );
       const complete = sessions.find((s) => s.id === action.session)?.sessionId;
       if (!complete) throw new Error(`session ${action.session} introuvable`);
       idSession = idDepuisSortieBg(
-        lancerCommande(
+        executerProgramme(
           "claude",
           [
             "--bg",
