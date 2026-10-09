@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -25,6 +25,7 @@ import {
   planRedemarrage,
   prendreVerrou,
   prRetenue,
+  relancerBoucle,
   questionDuTicket,
   rendreApresEchecsDeCloture,
   rendreVerrou,
@@ -3252,6 +3253,85 @@ describe("planRedemarrage", () => {
     });
     expect(plan.commande).toBe(
       "node scripts/orch/boucle.mjs --tickets 5,6 --etat /essai",
+    );
+  });
+});
+
+describe("relancerBoucle", () => {
+  const dossier = () => mkdtempSync(join(tmpdir(), "relance-"));
+  const poserVerrou = (fichier, pid) =>
+    writeFileSync(fichier, JSON.stringify({ pid }));
+
+  it("rend le verrou, ouvre la nouvelle boucle détachée et rend la main quand elle a pris le verrou", async () => {
+    const d = dossier();
+    const fichierVerrou = join(d, "boucle.verrou.json");
+    poserVerrou(fichierVerrou, process.pid);
+    // La nouvelle boucle refuserait un verrou encore tenu : elle le voit libre avant de le prendre.
+    const nouvelle = join(d, "nouvelle.mjs");
+    writeFileSync(
+      nouvelle,
+      `import { existsSync, writeFileSync } from "node:fs";
+const libre = !existsSync(${JSON.stringify(fichierVerrou)});
+if (libre) writeFileSync(${JSON.stringify(fichierVerrou)}, JSON.stringify({ pid: process.pid }));
+setTimeout(() => {}, 1500);`,
+    );
+    const resultat = await relancerBoucle({
+      plan: {
+        type: "detache",
+        commande: [process.execPath, nouvelle],
+        cwd: d,
+        sortie: join(d, "boucle.out"),
+      },
+      fichierVerrou,
+      pid: process.pid,
+      relance: "node scripts/orch/boucle.mjs --spec 208",
+      attenteMs: 5000,
+    });
+    expect(resultat).toEqual({ ok: true });
+    expect(JSON.parse(readFileSync(fichierVerrou, "utf8")).pid).not.toBe(
+      process.pid,
+    );
+  });
+
+  it("dit que la nouvelle boucle ne s'est pas installée, avec la commande de relance", async () => {
+    const d = dossier();
+    const fichierVerrou = join(d, "boucle.verrou.json");
+    poserVerrou(fichierVerrou, process.pid);
+    const inerte = join(d, "inerte.mjs");
+    writeFileSync(inerte, "process.exit(0);");
+    const resultat = await relancerBoucle({
+      plan: {
+        type: "detache",
+        commande: [process.execPath, inerte],
+        cwd: d,
+        sortie: join(d, "boucle.out"),
+      },
+      fichierVerrou,
+      pid: process.pid,
+      relance: "node scripts/orch/boucle.mjs --spec 208",
+      attenteMs: 600,
+    });
+    expect(resultat.ok).toBe(false);
+    expect(resultat.commande).toBe("node scripts/orch/boucle.mjs --spec 208");
+    expect(resultat.raison).toMatch(/verrou/);
+  });
+
+  it("garde le verrou et ne lance rien quand la relance est manuelle", async () => {
+    const d = dossier();
+    const fichierVerrou = join(d, "boucle.verrou.json");
+    poserVerrou(fichierVerrou, process.pid);
+    const resultat = await relancerBoucle({
+      plan: { type: "manuel", commande: "node scripts/orch/boucle.mjs --tous" },
+      fichierVerrou,
+      pid: process.pid,
+      relance: "inutile",
+    });
+    expect(resultat).toMatchObject({
+      ok: false,
+      commande: "node scripts/orch/boucle.mjs --tous",
+    });
+    expect(JSON.parse(readFileSync(fichierVerrou, "utf8")).pid).toBe(
+      process.pid,
     );
   });
 });

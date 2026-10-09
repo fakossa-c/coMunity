@@ -2313,14 +2313,7 @@ export async function main(argv) {
       mode: libelleMode(mode),
       maintenant: new Date(),
       boot: Math.round(Date.now() / 1000 - uptime()),
-      pidVivant: (pid) => {
-        try {
-          process.kill(pid, 0);
-          return true;
-        } catch (erreur) {
-          return erreur.code === "EPERM";
-        }
-      },
+      pidVivant,
     });
     if (!verrou.ok) {
       console.error(verrou.raison);
