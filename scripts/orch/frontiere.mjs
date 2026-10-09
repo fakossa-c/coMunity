@@ -37,6 +37,9 @@ import {
 export { estMigration, recoupe };
 
 const ETIQUETTE_PRETE = "ready-for-agent";
+const ETIQUETTE_RENDU = "ready-for-human";
+// Le tableau de suivi (projet GitHub n° 2 du propriétaire), celui de scripts/statut-ticket.mjs.
+const NUMERO_TABLEAU = 2;
 // Une session `done` ou `stopped` ne travaille plus : sa PR, si elle existe, porte ses fichiers.
 const ETATS_SESSION_FINIE = ["done", "stopped"];
 
@@ -153,13 +156,25 @@ function occupations(situation, issues) {
       numero: pr.numero,
     });
   }
-  // Un ticket en vol qui a aussi son worktree ne fait qu'une occupation : même ticket, mêmes
-  // fichiers, une seule ligne dans la sortie.
-  const enVol = new Set(situation.enVol.map((v) => v.ticket));
   const worktrees = new Map(
     situation.worktrees
       .filter((w) => ouvert(w.ticket))
       .map((w) => [w.ticket, w.nom]),
+  );
+  // Un ticket rendu dont il ne reste que l'entrée du fichier d'état (ni session, ni worktree) ne
+  // travaille plus : son entrée attend une reprise à la main, elle ne retient pas ses fichiers.
+  const avecSession = new Set(
+    situation.enVol.filter((v) => v.origine === "session").map((v) => v.ticket),
+  );
+  const entreeOrpheline = (v) =>
+    v.origine === "état" &&
+    issues.get(v.ticket)?.etiquettes?.includes(ETIQUETTE_RENDU) &&
+    !avecSession.has(v.ticket) &&
+    !worktrees.has(v.ticket);
+  // Un ticket en vol qui a aussi son worktree ne fait qu'une occupation : même ticket, mêmes
+  // fichiers, une seule ligne dans la sortie.
+  const enVol = new Set(
+    situation.enVol.filter((v) => !entreeOrpheline(v)).map((v) => v.ticket),
   );
   for (const ticket of [...new Set([...enVol, ...worktrees.keys()])]) {
     if (!ouvert(ticket)) continue;
@@ -201,6 +216,11 @@ function raisonsDuTicket(candidat, situation, issues, occupees) {
   if (candidat.etat !== "OPEN") raisons.push("ticket fermé");
   if (candidat.assignes.length > 0) {
     raisons.push(`déjà assigné à ${candidat.assignes.join(", ")}`);
+  }
+  if (situation.horsTableau?.includes(candidat.numero)) {
+    raisons.push(
+      "hors tableau : le passage « In Progress » échouerait, l'ajouter au tableau de suivi d'abord",
+    );
   }
   raisons.push(...raisonsBloqueurs(candidat, situation, issues));
 
@@ -270,6 +290,7 @@ function budget(situation, valeurs) {
  *    prs          : [{ numero, titre, tickets, fichiers }]      PR ouvertes
  *    worktrees    : [{ ticket, nom }]                           worktrees de tickets présents
  *    enVol        : [{ ticket, origine }]                       fichier d'état et sessions
+ *    horsTableau  : [numéro]  (facultatif)                      candidats absents du tableau de suivi
  *    memoireDisponibleMo, supabases (projets démarrés, null si Docker injoignable) } */
 export function decider(situation, valeurs) {
   const issues = new Map(situation.issues.map((i) => [i.numero, i]));
@@ -382,6 +403,33 @@ export function memoireDisponibleMo() {
     if (ligne) return Math.floor(Number(ligne[1]) / 1024);
   }
   return Math.floor(freemem() / 1024 / 1024);
+}
+
+/** Les candidats ouverts absents du tableau de suivi. Un ticket dont la présence ne se lit pas
+ * (jeton sans accès aux projets, réseau) n'est pas exclu : la lecture le dit, le lancement tranche. */
+function candidatsHorsTableau(gh, valeurs, issues, candidats, avertir) {
+  const [proprietaire, depot] = valeurs.depot.split("/");
+  const absents = [];
+  for (const numero of candidats) {
+    if (issues.get(numero)?.etat !== "OPEN") continue;
+    try {
+      const sortie = gh(
+        "api",
+        "graphql",
+        "-f",
+        `query={ repository(owner:"${proprietaire}", name:"${depot}"){ issue(number:${numero}){ projectItems(first:10){ nodes{ project{ number } } } } } }`,
+        "--jq",
+        ".data.repository.issue.projectItems.nodes[].project.number",
+      );
+      const tableaux = sortie.split("\n").filter(Boolean).map(Number);
+      if (!tableaux.includes(NUMERO_TABLEAU)) absents.push(numero);
+    } catch (erreur) {
+      avertir(
+        `tableau de suivi illisible pour #${numero} (${erreur.message.split("\n")[0]}) : « hors tableau » non vérifié.`,
+      );
+    }
+  }
+  return absents;
 }
 
 function lire({ mode, valeurs, racine, env, home }) {
@@ -542,6 +590,14 @@ function lire({ mode, valeurs, racine, env, home }) {
   exiger([...worktrees, ...enVol].map((x) => x.ticket));
   exiger(prs.flatMap((pr) => pr.tickets));
 
+  const horsTableau = candidatsHorsTableau(
+    gh,
+    valeurs,
+    issues,
+    candidats,
+    avertir,
+  );
+
   let supabases = null;
   try {
     supabases = supabasesDemarres(
@@ -561,6 +617,7 @@ function lire({ mode, valeurs, racine, env, home }) {
     prs,
     worktrees,
     enVol,
+    horsTableau,
     memoireDisponibleMo: memoireDisponibleMo(),
     supabases,
   };
