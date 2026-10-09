@@ -1,7 +1,7 @@
 // Lance la session de fond d'un ticket, prête à travailler, en une commande (spec #208, ticket #210).
 //
 // Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207]
-//                                      [--orchestrateur <nom>] [--relancer --message <texte>]
+//                                      [--relancer --message <texte>]
 //
 // --relancer : nouvelle session pour un ticket déjà pris (la boucle, quand une session n'a plus de
 // transcript à reprendre ou s'est tue trop longtemps). Même worktree, même branche, même nom ; le
@@ -137,7 +137,6 @@ export function decider(situation, valeurs) {
       : "aucun",
     glossaire: valeurs.glossaire,
     enParallele: parallele || "aucun",
-    orchestrateur: situation.orchestrateur,
     dossier,
     brancheTicket: branche,
     brancheIntegration: valeurs.brancheIntegration,
@@ -303,7 +302,6 @@ function lire({ numero, options, racine, valeurs, env, home }) {
       existsSync(dossier) || worktreeEnregistre(worktrees, dossier),
     brancheExiste,
     enParallele: numerosDepuisOption(options["en-parallele"]),
-    orchestrateur: options.orchestrateur ?? `orch-${valeurs.projet}`,
     relance: options.relancer
       ? {
           message:
@@ -429,7 +427,7 @@ export async function executerAction(action, { racine, sources, env, suivi }) {
 }
 
 const USAGE =
-  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--orchestrateur <nom>] [--relancer --message <texte>]";
+  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--relancer --message <texte>]";
 
 export async function main(argv) {
   const { values: options, positionals } = parseArgs({
@@ -438,7 +436,6 @@ export async function main(argv) {
     options: {
       "dry-run": { type: "boolean", default: false },
       "en-parallele": { type: "string" },
-      orchestrateur: { type: "string" },
       relancer: { type: "boolean", default: false },
       message: { type: "string" },
     },
