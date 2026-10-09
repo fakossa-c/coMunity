@@ -64,4 +64,4 @@ Labels par défaut, inchangés : `needs-triage`, `needs-info`, `ready-for-agent`
 
 ### Domain docs
 
-Layout single-context : `CONTEXT.md` et `docs/adr/` à la racine. Voir `docs/agents/domain.md`.
+Layout single-context : `GLOSSARY.md` et `docs/adr/` à la racine. Voir `docs/agents/domain.md`.

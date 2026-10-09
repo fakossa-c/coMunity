@@ -18,7 +18,7 @@ const projet = {
   compteGh: "fakossa-c",
   brancheIntegration: "develop",
   dossierWorktrees: ".claude/worktrees",
-  glossaire: "CONTEXT.md",
+  glossaire: "GLOSSARY.md",
   commandes: {
     isolation: "node scripts/isoler-supabase-worktree.mjs",
     installation: "npm ci",

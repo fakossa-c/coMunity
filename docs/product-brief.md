@@ -1,6 +1,6 @@
 # coMunity - product brief
 
-Ce document dit pourquoi coMunity existe, pour qui, et comment savoir s'il marche. Le détail de ce que fait l'app est dans la spec #1, le vocabulaire dans `CONTEXT.md`, les décisions difficiles à défaire dans `docs/adr/`. L'avancement se suit sur les issues GitHub, jamais ici.
+Ce document dit pourquoi coMunity existe, pour qui, et comment savoir s'il marche. Le détail de ce que fait l'app est dans la spec #1, le vocabulaire dans `GLOSSARY.md`, les décisions difficiles à défaire dans `docs/adr/`. L'avancement se suit sur les issues GitHub, jamais ici.
 
 ## Problème
 

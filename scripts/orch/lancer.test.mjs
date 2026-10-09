@@ -15,7 +15,7 @@ const valeurs = {
   compteGh: "fakossa-c",
   brancheIntegration: "develop",
   dossierWorktrees: ".claude/worktrees",
-  glossaire: "CONTEXT.md",
+  glossaire: "GLOSSARY.md",
   commandes: {
     isolation: "node scripts/isoler-supabase-worktree.mjs",
     installation: "npm ci",
@@ -294,7 +294,7 @@ describe("construirePrompt", () => {
     expect(prompt()).toContain(
       "https://github.com/fakossa-c/coMunity/issues/208",
     );
-    expect(prompt()).toContain("CONTEXT.md est le glossaire");
+    expect(prompt()).toContain("GLOSSARY.md est le glossaire");
   });
 
   it("liste les tickets en parallèle, ou dit qu'il n'y en a aucun", () => {
@@ -346,7 +346,7 @@ function base() {
     depot: "coMunity",
     specNumero: 208,
     specLien: "https://github.com/fakossa-c/coMunity/issues/208",
-    glossaire: "CONTEXT.md",
+    glossaire: "GLOSSARY.md",
     enParallele: "#205",
     orchestrateur: "orch-comunity",
     dossier: "/depot/coMunity/.claude/worktrees/ticket-210",
