@@ -315,13 +315,18 @@ function actionDeReprise(
 
 /** La reprise d'une session qui a posé une question à laquelle le propriétaire a répondu (label
  * retiré), ou null. La question est le commentaire « Portée : … » de la session en cours. */
-function repriseApresQuestion(situation, ticket, entree) {
+function repriseApresQuestion(
+  situation,
+  ticket,
+  entree,
+  { repli = true } = {},
+) {
   const { proprietaire } = situation.bornes;
   const commentaires = situation.commentaires[ticket] ?? [];
   const question = lireQuestion(commentaires, {
     proprietaire,
     depuis: entree.demarreA,
-    repli: true,
+    repli,
   });
   if (!question || question.id === entree.questionRepondue) return null;
   const { reponse, autresComptes } = reponseA(question, commentaires, {
@@ -618,9 +623,13 @@ export function decider(situation) {
     rapport.enVol.push({ ...identite, session: etatSession });
     // La question posée puis répondue (label retiré) se reprend avant tout : une session dont le tour
     // s'est terminé sur une question est `blocked` ou `idle` pour `claude agents`, pas coincée.
+    // Une session en attente d'une saisie n'a pas fini son tour : seule une question qui déclare sa
+    // portée compte (un simple commentaire d'avancement n'est pas une question).
     const reprise =
       pr === null && (terminee || bloquee)
-        ? repriseApresQuestion(situation, t.numero, entree)
+        ? repriseApresQuestion(situation, t.numero, entree, {
+            repli: !bloquee,
+          })
         : null;
     if (reprise) {
       actions.push(reprise);

@@ -40,8 +40,9 @@ const ETIQUETTE_PRETE = "ready-for-agent";
 const ETIQUETTE_RENDU = "ready-for-human";
 // Le tableau de suivi (projet GitHub n° 2 du propriétaire), celui de scripts/statut-ticket.mjs.
 const NUMERO_TABLEAU = 2;
-// Une session `done` ou `stopped` ne travaille plus : sa PR, si elle existe, porte ses fichiers.
-const ETATS_SESSION_FINIE = ["done", "stopped"];
+// Une session `done`, `idle` (tour fini), `stopped` ou `failed` ne travaille plus : sa PR, si elle
+// existe, porte ses fichiers.
+const ETATS_SESSION_FINIE = ["done", "idle", "stopped", "failed"];
 
 // --- Lecture du texte des tickets -------------------------------------------------------------
 
@@ -407,7 +408,7 @@ export function memoireDisponibleMo() {
 
 /** Les candidats ouverts absents du tableau de suivi. Un ticket dont la présence ne se lit pas
  * (jeton sans accès aux projets, réseau) n'est pas exclu : la lecture le dit, le lancement tranche. */
-function candidatsHorsTableau(gh, valeurs, issues, candidats, avertir) {
+export function candidatsHorsTableau(gh, valeurs, issues, candidats, avertir) {
   const [proprietaire, depot] = valeurs.depot.split("/");
   const absents = [];
   for (const numero of candidats) {
