@@ -120,7 +120,7 @@ describe("verdict de fin de tour", () => {
 
   it("refuse un marqueur qui ne porte pas sur le commit de tête", () => {
     const raison = verdict({ ...pret, commitTete: "def4567890" });
-    expect(raison).toMatch(/commit abc123/);
+    expect(raison).toMatch(/commit def4567/);
     expect(raison).toContain("npm run test:partie -- format");
   });
 

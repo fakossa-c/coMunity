@@ -10,9 +10,12 @@
 import { readFileSync } from "node:fs";
 import { envGh, executer, lireValeurs } from "./commun.mjs";
 import {
+  commandeDeLaPartie,
   contexteGit,
   lireMarqueur,
+  lireParties,
   marqueurFrais,
+  partiesManquantes,
   ticketDuWorktree,
 } from "./session-ticket.mjs";
 
@@ -32,6 +35,7 @@ export function verdict({
   pr,
   commitTete,
   marqueur,
+  parties,
 }) {
   if (ticket === null) return null;
   // Plafond de Claude Code : après un refus de ce hook, le tour suivant doit pouvoir se terminer.
@@ -54,16 +58,22 @@ export function verdict({
   if (arbreSale) {
     manques.push("l'arbre git a des modifications non commitées");
   }
-  if (!marqueur) {
-    manques.push("aucun `npm test` vert enregistré : lance `npm test`");
-  } else if (marqueur.arbreSale === true) {
-    manques.push(
-      "le dernier `npm test` vert a tourné sur des modifications non commitées : commite, puis relance `npm test`",
+  // Chaque partie dure moins de 10 minutes : une session les lance une à une, l'enregistrement de
+  // la cinquième écrit le marqueur.
+  const aLancer = () =>
+    partiesManquantes(parties, commitTete).map(
+      (nom) => `  \`${commandeDeLaPartie(nom)}\``,
     );
-  } else if (!marqueurFrais(marqueur, commitTete)) {
-    manques.push(
-      `le dernier \`npm test\` vert porte sur le commit ${court(marqueur.commit ?? "")} et la tête est ${court(commitTete)} : relance \`npm test\``,
-    );
+  if (!marqueur || !marqueurFrais(marqueur, commitTete)) {
+    if (marqueur?.arbreSale === true && marqueur.commit === commitTete) {
+      manques.push(
+        "le dernier `npm test` vert a tourné sur des modifications non commitées : commite, puis relance les parties",
+      );
+    } else {
+      manques.push(
+        `les tests ne sont pas tous verts sur le commit ${court(commitTete)} ; lance chaque partie qui manque, l'une après l'autre (moins de 10 minutes chacune) :\n${aLancer().join("\n")}`,
+      );
+    }
   }
   if (manques.length === 0) return null;
 
@@ -131,6 +141,7 @@ if (process.argv[1]?.endsWith("hook-fin-de-tour.mjs")) {
       arbreSale: git.arbreSale,
       commitTete: git.commitTete,
       marqueur: lireMarqueur(git.racine),
+      parties: lireParties(git.racine),
     });
   } catch {
     process.exit(0); // hors dépôt ou entrée illisible : rien à garder
