@@ -598,11 +598,30 @@ function creerMonde(surcharge = {}) {
   };
 }
 
-function portsDuMonde(monde, { apresAttente = () => {}, erreurs = 0 } = {}) {
+function portsDuMonde(
+  monde,
+  { apresAttente = () => {}, erreurs = 0, slack = false, echecsSlack = 0 } = {},
+) {
   const lignes = [];
+  const notifications = [];
   let erreursRestantes = erreurs;
+  let echecsSlackRestants = echecsSlack;
   return {
     lignes,
+    notifications,
+    // Le port de notification n'existe que si la machine a un webhook Slack.
+    ...(slack
+      ? {
+          notifier: async (notification) => {
+            notifications.push(notification);
+            if (echecsSlackRestants > 0) {
+              echecsSlackRestants -= 1;
+              return { ok: false, raison: "réponse 404 no_service" };
+            }
+            return { ok: true };
+          },
+        }
+      : {}),
     journal: (ligne) => lignes.push(ligne),
     maintenant: () => new Date("2026-10-08T21:00:00.000Z"),
     afficher: () => {},
@@ -2864,5 +2883,179 @@ describe("boucle : PR en retard sur develop", () => {
     ]);
     expect(monde.misesAJour).toEqual([1, 1, 1]);
     expect(monde.tickets[1].etiquettes).toContain("ready-for-human");
+  });
+});
+
+// --- Notifications Slack ----------------------------------------------------------------------
+
+describe("notifications Slack de la boucle", () => {
+  const types = (ports) =>
+    ports.notifications.map(
+      (n) => `${n.type}${n.ticket ? ` #${n.ticket}` : ""}`,
+    );
+  const DEBUT = "2026-10-08T20:00:00.000Z";
+  const commentaire = (corps, id = "c1") => ({
+    id,
+    auteur: "fakossa-c",
+    corps,
+    creeLe: "2026-10-08T21:30:00.000Z",
+    url: `https://github.com/fakossa-c/coMunity/issues/1#issuecomment-${id}`,
+  });
+  /** Un ticket en vol, sa session `working` et active, sans PR. */
+  const enVol = () =>
+    creerMonde({
+      tickets: { 1: { titre: "Un", etat: "OPEN", etiquettes: [] } },
+      bloqueurs: {},
+      entrees: { 1: { session: "s1", nom: "ticket-1", demarreA: DEBUT } },
+      sessions: { 1: "working" },
+      transcripts: { 1: true },
+      activites: { 1: MAINTENANT.toISOString() },
+    });
+
+  it("annonce le démarrage avec ce qui attend déjà, chaque lancement, chaque clôture avec sa PR et l'arrêt, jamais le rapport", async () => {
+    // La question de 4 a une portée `ticket` : sans elle, le doute gèlerait les lancements.
+    const monde = creerMonde({
+      tickets: {
+        ...creerMonde().tickets,
+        4: { titre: "Quatre", etat: "OPEN", etiquettes: ["needs-info"] },
+      },
+      commentaires: {
+        4: [
+          commentaire("Quel libellé pour le bouton ?\n\nPortée : ticket", "c4"),
+        ],
+      },
+    });
+    const ports = portsDuMonde(monde, {
+      slack: true,
+      apresAttente: (m) => {
+        toutesTerminent(m);
+        if (m.tickets[3].etat === "CLOSED") m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    expect(types(ports)).toEqual([
+      "demarrage",
+      "lancement #1",
+      "lancement #2",
+      "cloture #1",
+      "cloture #2",
+      "lancement #3",
+      "cloture #3",
+      "arret",
+    ]);
+    expect(ports.notifications[0]).toMatchObject({
+      mode: "spec #208",
+      enAttenteDeReponse: [{ ticket: 4, titre: "Quatre" }],
+      rendus: [],
+    });
+    expect(ports.notifications[3]).toMatchObject({
+      ticket: 1,
+      titre: "Un",
+      pr: 501,
+    });
+    expect(ports.lignes.some((l) => l.includes(" slack "))).toBe(false);
+  });
+
+  it("annonce une question une seule fois, avec son texte et sa portée, quand le ticket passe needs-info", async () => {
+    const monde = enVol();
+    let tours = 0;
+    const ports = portsDuMonde(monde, {
+      slack: true,
+      apresAttente: (m) => {
+        tours += 1;
+        if (tours === 1) {
+          m.tickets[1].etiquettes.push("needs-info");
+          m.sessions[1] = "done";
+          m.commentaires[1] = [
+            commentaire("Quelle table pour les votes ?\n\nPortée : spec"),
+          ];
+        }
+        if (tours === 3) m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const questions = ports.notifications.filter((n) => n.type === "question");
+    expect(questions).toHaveLength(1);
+    expect(questions[0]).toMatchObject({
+      ticket: 1,
+      titre: "Un",
+      question: {
+        portee: "spec",
+        corps: expect.stringContaining("Quelle table"),
+        url: expect.stringContaining("issuecomment-c1"),
+      },
+      gele: { ticket: 1, spec: null },
+    });
+  });
+
+  it("annonce un ticket rendu par la session avec son explication, une seule fois", async () => {
+    const monde = enVol();
+    let tours = 0;
+    const ports = portsDuMonde(monde, {
+      slack: true,
+      apresAttente: (m) => {
+        tours += 1;
+        if (tours === 1) {
+          m.tickets[1].etiquettes.push("ready-for-human");
+          m.sessions[1] = "done";
+          m.commentaires[1] = [
+            commentaire("Impossible sans la clé Jev : je rends le ticket."),
+          ];
+        }
+        if (tours === 3) m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const rendus = ports.notifications.filter((n) => n.type === "rendu");
+    expect(rendus).toHaveLength(1);
+    expect(rendus[0]).toMatchObject({
+      ticket: 1,
+      titre: "Un",
+      explication: expect.stringContaining("Impossible sans la clé Jev"),
+    });
+  });
+
+  it("annonce une seule fois un ticket que la boucle rend elle-même", async () => {
+    const monde = creerMonde({
+      entrees: { 1: { session: "s1", nom: "ticket-1" } },
+      sessions: { 1: "done" },
+    });
+    let tours = 0;
+    const ports = portsDuMonde(monde, {
+      slack: true,
+      apresAttente: (m) => {
+        tours += 1;
+        if (tours === 2) m.arret = true;
+      },
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const rendus = ports.notifications.filter((n) => n.type === "rendu");
+    expect(rendus).toHaveLength(1);
+    expect(rendus[0]).toMatchObject({
+      ticket: 1,
+      titre: "Un",
+      explication: expect.stringContaining("sans PR ni label"),
+    });
+  });
+
+  it("journalise une fois un envoi Slack en échec et continue d'annoncer", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde, {
+      slack: true,
+      echecsSlack: 2,
+      apresAttente: toutesTerminent,
+    });
+    expect(await lancerBoucle(ports)).toBe(0);
+    const echecs = ports.lignes.filter((l) => l.includes(" slack "));
+    expect(echecs).toHaveLength(1);
+    expect(echecs[0]).toContain("no_service");
+    expect(types(ports)).toContain("cloture #3");
+  });
+
+  it("n'envoie rien dans Slack en répétition", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde, { slack: true });
+    expect(await lancerBoucle(ports, { dryRun: true })).toBe(0);
+    expect(ports.notifications).toEqual([]);
   });
 });
