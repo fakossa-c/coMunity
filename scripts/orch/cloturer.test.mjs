@@ -100,6 +100,7 @@ describe("decider : un ticket dont la PR est fusionnable", () => {
       "statut",
       "fermerTicket",
       "commenterTicket",
+      "arreterSession",
       "arreterService",
       "retirerWorktree",
       "supprimerSession",
@@ -192,14 +193,28 @@ describe("decider : un ticket dont la PR est fusionnable", () => {
     );
   });
 
-  it("n'arrête pas une session déjà terminée", () => {
-    for (const etat of ["done", "failed", "stopped"]) {
+  it("arrête aussi une session finie encore listée, avant de retirer le worktree", () => {
+    // Une session de fond `done` ou `idle` garde son processus dans le worktree : sans `claude
+    // stop`, le hook de retrait refuse (incident du 2026-10-09, #233).
+    for (const etat of ["working", "idle", "done", "failed", "stopped"]) {
       const t = types(
         decider(situation({ session: { id: "ab12cd34", etat } }), valeurs),
       );
-      expect(t).not.toContain("arreterSession");
-      expect(t).toContain("supprimerSession");
+      expect(t).toContain("arreterSession");
+      expect(t.indexOf("arreterSession")).toBeLessThan(
+        t.indexOf("retirerWorktree"),
+      );
+      expect(t.indexOf("retirerWorktree")).toBeLessThan(
+        t.indexOf("supprimerSession"),
+      );
     }
+  });
+
+  it("n'arrête rien quand la session n'est plus listée", () => {
+    const t = types(decider(situation({ session: null }), valeurs));
+    expect(t).not.toContain("arreterSession");
+    expect(t).not.toContain("supprimerSession");
+    expect(t).toContain("retirerWorktree");
   });
 });
 
@@ -564,6 +579,7 @@ describe("decider : reprise après un échec partiel", () => {
       ),
     );
     expect(t).toEqual([
+      "arreterSession",
       "arreterService",
       "retirerWorktree",
       "supprimerSession",
