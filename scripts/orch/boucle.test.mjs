@@ -11,8 +11,10 @@ import {
   commentairesDepuisGh,
   decider,
   decisionVerrou,
+  doitRelireQuestion,
   doitVerifier,
   etatApres,
+  executerAction,
   evenementsCloture,
   evenementsLancement,
   formaterRapport,
@@ -26,6 +28,8 @@ import {
   rendreVerrou,
   reponseA,
 } from "./boucle.mjs";
+import { cheminsEtat, ecrireJson, lireEtat } from "./commun.mjs";
+import { MODE_PERMISSION } from "./lancer.mjs";
 
 describe("decisionVerrou", () => {
   const moi = { pid: 4242 };
@@ -2004,6 +2008,170 @@ describe("decider : session en attente d'une saisie", () => {
       ),
     );
     expect(resultat.actions).toEqual([]);
+  });
+});
+
+describe("decider : statut de la session croisé avec ce que le tracker dit", () => {
+  const AVEC_QUESTION = { 217: [question217, reponse217] };
+  const cas = (state, surcharge = {}) =>
+    decider(sessionEnEtat(state, {}, surcharge));
+
+  for (const state of ["blocked", "idle", "done"]) {
+    describe(`session ${state}`, () => {
+      it("question répondue : reprise de la session, ni arrêt ni ticket rendu", () => {
+        const resultat = cas(state, { commentaires: AVEC_QUESTION });
+        expect(types(resultat)).toEqual(["reprendre"]);
+        expect(resultat.actions[0]).toMatchObject({
+          motif: "question",
+          session: "s217",
+        });
+        expect(resultat.actions[0].message).toContain(reponse217.url);
+      });
+
+      it("PR ouverte au contrôle vert : clôture", () => {
+        const resultat = cas(state, {
+          prs: { 217: prOuverte(217) },
+          verdicts: { 217: verdictVert },
+        });
+        expect(types(resultat)).toEqual(["cloturer"]);
+      });
+
+      it("ni question répondue ni PR", () => {
+        const resultat = cas(state);
+        expect(types(resultat)).toEqual(
+          state === "blocked"
+            ? ["arreterSession", "rendreHumain"]
+            : ["rendreHumain"],
+        );
+      });
+    });
+  }
+
+  it("idle sans PR ni label : la même anomalie que done", () => {
+    const [idle] = cas("idle").actions;
+    const [fini] = cas("done").actions;
+    expect(idle.explication).toMatch(/sans PR ni label/);
+    expect(idle.explication.replace("idle", "done")).toBe(fini.explication);
+  });
+
+  it("une réponse déjà reprise ne relance pas la session bloquée : elle est arrêtée", () => {
+    const resultat = decider(
+      sessionEnEtat(
+        "blocked",
+        { questionRepondue: 2 },
+        { commentaires: AVEC_QUESTION },
+      ),
+    );
+    expect(types(resultat)).toEqual(["arreterSession", "rendreHumain"]);
+  });
+
+  it("idle avec une PR ouverte au contrôle rouge : reprise sur CI rouge", () => {
+    const resultat = decider(ciRouge({ sessions: [session(217, "idle")] }));
+    expect(types(resultat)).toEqual(["reprendre"]);
+    expect(resultat.actions[0].motif).toBe("ci");
+  });
+
+  it("une session idle n'est plus au travail : ses bornes de durée ne s'appliquent pas", () => {
+    const resultat = decider(
+      sessionEnEtat("idle", {}, { prs: { 217: prOuverte(217) } }),
+    );
+    expect(types(resultat)).toEqual(["attendre"]);
+  });
+});
+
+describe("doitRelireQuestion", () => {
+  const base = {
+    pr: null,
+    commentairesLus: false,
+    entree: entree(217),
+  };
+  it("relit les commentaires d'une session finie, idle ou bloquée, sans PR", () => {
+    for (const state of ["done", "idle", "blocked"]) {
+      expect(
+        doitRelireQuestion({ ...base, sessions: [session(217, state)] }),
+      ).toBe(true);
+    }
+  });
+  it("ne les relit pas pour une session qui travaille, une PR existante ou une lecture déjà faite", () => {
+    expect(
+      doitRelireQuestion({ ...base, sessions: [session(217, "working")] }),
+    ).toBe(false);
+    expect(
+      doitRelireQuestion({
+        ...base,
+        pr: prOuverte(217),
+        sessions: [session(217, "idle")],
+      }),
+    ).toBe(false);
+    expect(
+      doitRelireQuestion({
+        ...base,
+        commentairesLus: true,
+        sessions: [session(217, "idle")],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("executerAction : reprise réelle avec des ports factices", () => {
+  const valeurs = {
+    projet: "essai",
+    depot: "fakossa-c/coMunity",
+    dossierWorktrees: ".claude/worktrees",
+    modeleSession: "sonnet",
+  };
+
+  it("lance `claude --bg --resume` avec le mode de permission, le nom et le message, puis note la reprise dans l'état", async () => {
+    const home = mkdtempSync(join(tmpdir(), "boucle-reprise-"));
+    const fichierEtat = cheminsEtat({ home, projet: valeurs.projet }).fichier;
+    ecrireJson(fichierEtat, {
+      version: 1,
+      tickets: { 217: entree(217) },
+    });
+    const appels = [];
+    const executer = (programme, args, options) => {
+      appels.push({ programme, args, options });
+      if (args[0] === "agents") {
+        return JSON.stringify([{ id: "s217", sessionId: "uuid-217" }]);
+      }
+      return "backgrounded · abcd1234 · ticket-217\n";
+    };
+    const action = {
+      type: "reprendre",
+      motif: "question",
+      ticket: 217,
+      session: "s217",
+      nom: "ticket-217",
+      message: "Réponse : voir le ticket.",
+      changements: { questionRepondue: 2 },
+    };
+    const contexte = {
+      valeurs,
+      env: {},
+      home,
+      racine: "/depot",
+      executer,
+      memoire: { echecsCloture: new Map(), echecsReprise: new Map() },
+    };
+    const resultat = await executerAction(action, { dryRun: false }, contexte);
+    expect(resultat.ok).toBe(true);
+    const reprise = appels.find((a) => a.args.includes("--resume"));
+    expect(reprise.args).toEqual(
+      expect.arrayContaining([
+        "--resume",
+        "uuid-217",
+        "-n",
+        "ticket-217",
+        "--permission-mode",
+        MODE_PERMISSION,
+        "Réponse : voir le ticket.",
+      ]),
+    );
+    const entreeNotee = lireEtat(fichierEtat).tickets[217];
+    expect(entreeNotee).toMatchObject({
+      session: "abcd1234",
+      questionRepondue: 2,
+    });
   });
 });
 
