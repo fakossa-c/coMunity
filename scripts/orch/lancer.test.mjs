@@ -569,6 +569,22 @@ describe("decider : reprise d'un lancement qui a échoué (--reprendre-a)", () =
     expect(resultat.actions).toEqual([]);
   });
 
+  it("reprend sans worktree une étape d'avant sa création : statut, récupération, création", () => {
+    for (const etape of ["statut", "recuperer", "creerWorktree"]) {
+      const resultat = decider(
+        {
+          ...reprise,
+          worktreeExiste: false,
+          brancheExiste: false,
+          reprise: { etape },
+        },
+        valeurs,
+      );
+      expect(resultat.refus).toEqual([]);
+      expect(types(resultat)[0]).toBe(etape);
+    }
+  });
+
   it("refuse un ticket fermé", () => {
     const resultat = decider(
       { ...reprise, ticket: { ...reprise.ticket, etat: "CLOSED" } },

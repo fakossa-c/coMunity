@@ -101,6 +101,8 @@ const ETAPES_REPRENABLES = [
   "lancerSession",
 ];
 
+const ETAPES_AVANT_WORKTREE = ["statut", "recuperer", "creerWorktree"];
+
 export const etapeReprenable = (type) => ETAPES_REPRENABLES.includes(type);
 
 // --- Décision ---------------------------------------------------------------------------------
@@ -123,9 +125,11 @@ export function decider(situation, valeurs) {
     );
   }
   if (relance || reprise) {
-    // Une relance ou une reprise continue un ticket déjà pris : son worktree et sa branche doivent
-    // exister.
-    if (!situation.worktreeExiste) {
+    // Une relance ou une reprise continue un ticket déjà pris : son worktree doit exister, sauf pour
+    // une reprise d'avant sa création.
+    const avantWorktree =
+      reprise && ETAPES_AVANT_WORKTREE.includes(reprise.etape);
+    if (!situation.worktreeExiste && !avantWorktree) {
       refus.push(
         `Aucun worktree à reprendre pour le ticket #${numero} : ${dossier}.`,
       );
@@ -455,6 +459,19 @@ export async function executerAction(action, { racine, sources, env, suivi }) {
   }
 }
 
+/** Écrit dans l'état l'étape à reprendre du ticket : la boucle la lit au tour suivant. */
+function noterLancementEnEchec({ home, valeurs, numero, etape, erreur }) {
+  const fichierEtat = cheminsEtat({ home, projet: valeurs.projet }).fichier;
+  ecrireJson(
+    fichierEtat,
+    lancementEnEchec(lireEtat(fichierEtat), numero, {
+      nom: brancheTicket(numero),
+      etape,
+      erreur,
+    }),
+  );
+}
+
 const USAGE =
   "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--relancer --message <texte>] [--reprendre-a <étape>]";
 
@@ -488,6 +505,17 @@ export async function main(argv) {
   const { refus, actions } = decider(situation, valeurs);
   if (refus.length > 0) {
     for (const raison of refus) console.error(`Refus : ${raison}`);
+    // Une reprise refusée compte comme un échec : sans cela la boucle la retenterait à chaque tour,
+    // sans jamais atteindre `reprisesMax`.
+    if (options["reprendre-a"] && etapeReprenable(options["reprendre-a"])) {
+      noterLancementEnEchec({
+        home,
+        valeurs,
+        numero,
+        etape: options["reprendre-a"],
+        erreur: `reprise refusée : ${refus.join(" ")}`,
+      });
+    }
     return 1;
   }
 
@@ -513,18 +541,13 @@ export async function main(argv) {
       // peut-être lancée) reste à reprendre à la main.
       const reprenable = !options.relancer && etapeReprenable(action.type);
       if (reprenable) {
-        const fichierEtat = cheminsEtat({
+        noterLancementEnEchec({
           home,
-          projet: valeurs.projet,
-        }).fichier;
-        ecrireJson(
-          fichierEtat,
-          lancementEnEchec(lireEtat(fichierEtat), numero, {
-            nom: brancheTicket(numero),
-            etape: action.type,
-            erreur: erreur.message,
-          }),
-        );
+          valeurs,
+          numero,
+          etape: action.type,
+          erreur: erreur.message,
+        });
       }
       console.error(
         `${suivi.idSession ? `Session déjà lancée : ${suivi.idSession} (claude attach ${suivi.idSession}). ` : ""}Étapes faites : ${
