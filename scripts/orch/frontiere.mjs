@@ -257,7 +257,11 @@ function raisonsDuTicket(candidat, situation, issues, occupees) {
 /** Les raisons de budget, communes à tous les tickets : mémoire et Supabase lourd. */
 function budget(situation, valeurs) {
   const parSession = valeurs.memoireParSessionMo;
-  const memoire = Math.floor(situation.memoireDisponibleMo / parSession);
+  // Un ticket dont le lancement est à reprendre n'a pas encore sa session : sa mémoire n'est pas
+  // prise, mais elle l'est dès la reprise. Son Supabase non plus n'est peut-être pas démarré.
+  const aReprendre = situation.lancementsAReprendre ?? [];
+  const memoire =
+    Math.floor(situation.memoireDisponibleMo / parSession) - aReprendre.length;
   const raisons = [];
   if (memoire < 1) {
     raisons.push(
@@ -269,9 +273,15 @@ function budget(situation, valeurs) {
     service = 0;
     raisons.push("Docker injoignable : Supabase lourd non vérifiable");
   } else {
+    const demarres = new Set(situation.supabases);
+    const attendus = aReprendre.filter(
+      (n) => !demarres.has(`${valeurs.projet}-ticket-${n}`),
+    );
     service = Math.max(
       0,
-      valeurs.servicesLourdsEnParallele - situation.supabases.length,
+      valeurs.servicesLourdsEnParallele -
+        situation.supabases.length -
+        attendus.length,
     );
     if (service < 1) {
       raisons.push(
@@ -292,6 +302,7 @@ function budget(situation, valeurs) {
  *    worktrees    : [{ ticket, nom }]                           worktrees de tickets présents
  *    enVol        : [{ ticket, origine }]                       fichier d'état et sessions
  *    horsTableau  : [numéro]  (facultatif)                      candidats absents du tableau de suivi
+ *    lancementsAReprendre : [numéro]  (facultatif)              tickets pris dont le lancement a échoué
  *    memoireDisponibleMo, supabases (projets démarrés, null si Docker injoignable) } */
 export function decider(situation, valeurs) {
   const issues = new Map(situation.issues.map((i) => [i.numero, i]));
@@ -573,9 +584,14 @@ function lire({ mode, valeurs, racine, env, home }) {
     .filter((nom) => numeroDepuisNomTicket(nom) !== null)
     .map((nom) => ({ ticket: numeroDepuisNomTicket(nom), nom }));
 
-  const enVol = Object.keys(
-    lireEtat(cheminsEtat({ home, projet: valeurs.projet }).fichier).tickets,
-  ).map((ticket) => ({ ticket: Number(ticket), origine: "état" }));
+  const etat = lireEtat(cheminsEtat({ home, projet: valeurs.projet }).fichier);
+  const enVol = Object.keys(etat.tickets).map((ticket) => ({
+    ticket: Number(ticket),
+    origine: "état",
+  }));
+  const lancementsAReprendre = Object.entries(etat.tickets)
+    .filter(([, entree]) => entree.lancement)
+    .map(([ticket]) => Number(ticket));
   try {
     for (const s of json(executer("claude", ["agents", "--json", "--all"]))) {
       const ticket = numeroDepuisNomTicket(s.name ?? "");
@@ -619,6 +635,7 @@ function lire({ mode, valeurs, racine, env, home }) {
     worktrees,
     enVol,
     horsTableau,
+    lancementsAReprendre,
     memoireDisponibleMo: memoireDisponibleMo(),
     supabases,
   };

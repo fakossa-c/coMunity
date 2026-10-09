@@ -31,6 +31,7 @@ import {
   executer,
   executerCommande,
   idDepuisSortieBg,
+  lancementEnEchec,
   lireEtat,
   lireValeurs,
   racineCheckoutCourant,
@@ -84,6 +85,24 @@ Ce n'est pas le premier lancement du ticket #${numero} : la branche ${branche} e
 ${message}`;
 }
 
+// Les étapes qu'une reprise sait refaire, dans l'ordre du lancement : toutes celles d'après la prise
+// du ticket (l'assignation ne se reprend pas, elle n'a rien pris), jusqu'au lancement de la session
+// compris. Après `lancerSession` une session peut tourner : l'enregistrer ou la vérifier de nouveau
+// ne se décide pas sans une personne.
+const ETAPES_REPRENABLES = [
+  "statut",
+  "recuperer",
+  "creerWorktree",
+  "isoler",
+  "installer",
+  "demarrerService",
+  "variablesLocales",
+  "ecrirePrompt",
+  "lancerSession",
+];
+
+export const etapeReprenable = (type) => ETAPES_REPRENABLES.includes(type);
+
 // --- Décision ---------------------------------------------------------------------------------
 
 /** Ce qu'il faut faire pour lancer le ticket, ou pourquoi on refuse. Pure : `situation` est déjà
@@ -95,10 +114,17 @@ export function decider(situation, valeurs) {
   const dossier = dossierWorktree(racine, valeurs, numero);
 
   const relance = situation.relance ?? null;
+  const reprise = situation.reprise ?? null;
   const refus = [];
   if (ticket.etat !== "OPEN") refus.push(`Le ticket #${numero} est fermé.`);
-  if (relance) {
-    // Une relance reprend un ticket déjà pris : son worktree et sa branche doivent exister.
+  if (reprise && !etapeReprenable(reprise.etape)) {
+    refus.push(
+      `L'étape ${reprise.etape} ne se reprend pas (étapes reprises : ${ETAPES_REPRENABLES.join(", ")}).`,
+    );
+  }
+  if (relance || reprise) {
+    // Une relance ou une reprise continue un ticket déjà pris : son worktree et sa branche doivent
+    // exister.
     if (!situation.worktreeExiste) {
       refus.push(
         `Aucun worktree à reprendre pour le ticket #${numero} : ${dossier}.`,
@@ -177,37 +203,39 @@ export function decider(situation, valeurs) {
       ],
     };
   }
-  return {
-    refus: [],
-    actions: [
-      { type: "assigner", ticket: numero, compte: valeurs.compteGh },
-      { type: "statut", ticket: numero, statut: "In Progress" },
-      { type: "recuperer", branche: valeurs.brancheIntegration },
-      {
-        type: "creerWorktree",
-        dossier,
-        branche,
-        base: `origin/${valeurs.brancheIntegration}`,
-      },
-      { type: "isoler", commande: commandes.isolation, dossier },
-      { type: "installer", commande: commandes.installation, dossier },
-      { type: "demarrerService", commande: commandes.demarrage, dossier },
-      {
-        type: "variablesLocales",
-        commande: commandes.variablesLocales,
-        dossier,
-      },
-      { type: "ecrirePrompt", fichier: fichierPrompt, contenu },
-      session,
-      {
-        type: "enregistrerSession",
-        ticket: numero,
-        nom: branche,
-        fichierEtat: chemins.fichier,
-      },
-      { type: "verifierSession", nom: branche },
-    ],
-  };
+  const complet = [
+    { type: "assigner", ticket: numero, compte: valeurs.compteGh },
+    { type: "statut", ticket: numero, statut: "In Progress" },
+    { type: "recuperer", branche: valeurs.brancheIntegration },
+    {
+      type: "creerWorktree",
+      dossier,
+      branche,
+      base: `origin/${valeurs.brancheIntegration}`,
+    },
+    { type: "isoler", commande: commandes.isolation, dossier },
+    { type: "installer", commande: commandes.installation, dossier },
+    { type: "demarrerService", commande: commandes.demarrage, dossier },
+    {
+      type: "variablesLocales",
+      commande: commandes.variablesLocales,
+      dossier,
+    },
+    { type: "ecrirePrompt", fichier: fichierPrompt, contenu },
+    session,
+    {
+      type: "enregistrerSession",
+      ticket: numero,
+      nom: branche,
+      fichierEtat: chemins.fichier,
+    },
+    { type: "verifierSession", nom: branche },
+  ];
+  // Une reprise refait ce qui reste depuis l'étape en échec, avec le prompt du premier lancement.
+  const debut = reprise
+    ? complet.findIndex((a) => a.type === reprise.etape)
+    : 0;
+  return { refus: [], actions: complet.slice(debut) };
 }
 
 /** Une ligne par action, pour --dry-run et le suivi de l'exécution. */
@@ -302,6 +330,7 @@ function lire({ numero, options, racine, valeurs, env, home }) {
       existsSync(dossier) || worktreeEnregistre(worktrees, dossier),
     brancheExiste,
     enParallele: numerosDepuisOption(options["en-parallele"]),
+    reprise: options["reprendre-a"] ? { etape: options["reprendre-a"] } : null,
     relance: options.relancer
       ? {
           message:
@@ -427,7 +456,7 @@ export async function executerAction(action, { racine, sources, env, suivi }) {
 }
 
 const USAGE =
-  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--relancer --message <texte>]";
+  "Usage : node scripts/orch/lancer.mjs <numéro> [--dry-run] [--en-parallele 205,207] [--relancer --message <texte>] [--reprendre-a <étape>]";
 
 export async function main(argv) {
   const { values: options, positionals } = parseArgs({
@@ -438,6 +467,7 @@ export async function main(argv) {
       "en-parallele": { type: "string" },
       relancer: { type: "boolean", default: false },
       message: { type: "string" },
+      "reprendre-a": { type: "string" },
     },
   });
   if (!/^\d+$/.test(positionals[0] ?? "")) {
@@ -478,13 +508,35 @@ export async function main(argv) {
       console.error(
         `\nÉchec à l'étape ${i + 1} (${action.type}) : ${erreur.message}`,
       );
+      // Le ticket est pris dès l'assignation : l'étape en échec est notée dans l'état, la boucle
+      // la reprend au tour suivant. Une étape qui ne se reprend pas (assignation, ou session
+      // peut-être lancée) reste à reprendre à la main.
+      const reprenable = !options.relancer && etapeReprenable(action.type);
+      if (reprenable) {
+        const fichierEtat = cheminsEtat({
+          home,
+          projet: valeurs.projet,
+        }).fichier;
+        ecrireJson(
+          fichierEtat,
+          lancementEnEchec(lireEtat(fichierEtat), numero, {
+            nom: brancheTicket(numero),
+            etape: action.type,
+            erreur: erreur.message,
+          }),
+        );
+      }
       console.error(
         `${suivi.idSession ? `Session déjà lancée : ${suivi.idSession} (claude attach ${suivi.idSession}). ` : ""}Étapes faites : ${
           actions
             .slice(0, i)
             .map((a) => a.type)
             .join(", ") || "aucune"
-        }. Le ticket est déjà pris dès l'étape 1 : reprendre à la main à partir de cette étape.`,
+        }. Le ticket est déjà pris dès l'étape 1 : ${
+          reprenable
+            ? `l'étape ${action.type} est notée dans l'état, la boucle la reprend au tour suivant (à la main : --reprendre-a ${action.type}).`
+            : "reprendre à la main à partir de cette étape."
+        }`,
       );
       return 1;
     }

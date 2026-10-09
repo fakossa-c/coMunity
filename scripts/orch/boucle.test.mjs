@@ -764,12 +764,10 @@ function portsDuMonde(
         }
         case "reprendreLancement":
           if (monde.repriseReussit === false) {
+            const echecs = monde.entrees[n].lancement.echecs + 1;
             monde.entrees[n] = {
               nom: `ticket-${n}`,
-              lancement: {
-                ...monde.entrees[n].lancement,
-                echecs: monde.entrees[n].lancement.echecs + 1,
-              },
+              lancement: { ...monde.entrees[n].lancement, echecs },
             };
             return {
               ok: false,
@@ -777,7 +775,7 @@ function portsDuMonde(
                 {
                   evenement: "echec",
                   ticket: n,
-                  detail: "lancement : port pris",
+                  detail: `lancement : port pris (échec ${echecs})`,
                 },
               ],
             };

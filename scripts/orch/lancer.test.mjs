@@ -555,7 +555,6 @@ describe("decider : reprise d'un lancement qui a échoué (--reprendre-a)", () =
       valeurs,
     );
     expect(types(resultat)).toEqual([
-      "ecrirePrompt",
       "lancerSession",
       "enregistrerSession",
       "verifierSession",

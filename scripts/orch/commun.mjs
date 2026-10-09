@@ -111,6 +111,21 @@ export function ajouterSession(etat, ticket, { id, nom, demarreA }) {
   };
 }
 
+/** Un nouvel état où `ticket`, pris par un lancement qui a échoué avant la session, porte l'étape à
+ * reprendre. Pas de session : l'entrée n'a que son nom et `lancement` ({ etape, echecs, erreur }).
+ * `echecs` compte le lancement initial et chaque reprise ratée. `ajouterSession` l'efface quand la
+ * reprise aboutit. */
+export function lancementEnEchec(etat, ticket, { nom, etape, erreur }) {
+  const echecs = (etat.tickets[String(ticket)]?.lancement?.echecs ?? 0) + 1;
+  return {
+    ...etat,
+    tickets: {
+      ...etat.tickets,
+      [String(ticket)]: { nom, lancement: { etape, echecs, erreur } },
+    },
+  };
+}
+
 /** Un nouvel état où `ticket` pointe sur une nouvelle session (reprise sans transcript, relance) :
  * les compteurs du ticket restent, l'attente d'une reprise tombe. */
 export function remplacerSession(etat, ticket, { id, nom, demarreA }) {
