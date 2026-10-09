@@ -4,6 +4,7 @@ import {
   envoyerSlack,
   notificationDEvenement,
   notificationsDuRapport,
+  notifieurSlack,
   texteSlack,
 } from "./slack.mjs";
 
@@ -44,7 +45,7 @@ describe("notificationDEvenement", () => {
     ).toBeNull();
   });
 
-  it("lit une anomalie comme un ticket rendu par la boucle, sauf une anomalie levée", () => {
+  it("lit une anomalie comme un ticket rendu par la boucle ; une anomalie levée ne se dit pas", () => {
     expect(
       notificationDEvenement(
         {
@@ -69,12 +70,7 @@ describe("notificationDEvenement", () => {
         },
         { titres },
       ),
-    ).toEqual({
-      type: "anomalie",
-      ticket: 12,
-      titre: "Douze",
-      detail: "levée : label needs-info posé entre-temps",
-    });
+    ).toBeNull();
   });
 
   it("annonce un échec, une erreur et un arrêt avec leur détail", () => {
@@ -397,5 +393,28 @@ describe("envoyerSlack", () => {
     expect(resultat.ok).toBe(false);
     expect(resultat.raison).toContain("fetch failed");
     expect(resultat.raison).not.toContain("secret");
+  });
+});
+
+describe("notifieurSlack", () => {
+  const valeurs = { depot: DEPOT, projet: "comunity" };
+
+  it("n'existe pas sans webhook", () => {
+    expect(notifieurSlack({ ...valeurs, webhookSlack: null })).toBeNull();
+  });
+
+  it("poste le texte de la notification sur le webhook de la machine", async () => {
+    const appels = [];
+    const fetchFn = async (url, options) => {
+      appels.push({ url, options });
+      return { ok: true, status: 200, text: async () => "ok" };
+    };
+    const notifier = notifieurSlack(
+      { ...valeurs, webhookSlack: "https://hooks.slack.com/services/T/B/x" },
+      { fetchFn },
+    );
+    expect(await notifier({ type: "essai" })).toEqual({ ok: true });
+    expect(appels[0].url).toBe("https://hooks.slack.com/services/T/B/x");
+    expect(JSON.parse(appels[0].options.body).text).toContain("comunity");
   });
 });

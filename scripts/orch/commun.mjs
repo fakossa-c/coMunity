@@ -22,6 +22,10 @@ import {
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
+/** La signature des commentaires que la boucle écrit sur les tickets : ni une question, ni une
+ * réponse (boucle.mjs), et retirée d'une citation Slack (slack.mjs). */
+export const MARQUE_BOUCLE = "**Boucle de livraison**";
+
 const VALEURS_DU_PROJET = [
   "projet",
   "depot",

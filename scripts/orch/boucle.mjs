@@ -21,6 +21,7 @@ import {
   idDepuisSortieBg,
   lireEtat,
   lireValeurs,
+  MARQUE_BOUCLE,
   modifierEntree,
   racineCheckoutCourant,
   racineCheckoutPrincipal,
@@ -36,10 +37,9 @@ import { main as frontiere, modeDepuisOptions } from "./frontiere.mjs";
 import { brancheTicket, dossierWorktree, main as lancer } from "./lancer.mjs";
 import { enRetardSeulement, main as verifierPr } from "./verifier-pr.mjs";
 import {
-  envoyerSlack,
   notificationDEvenement,
   notificationsDuRapport,
-  texteSlack,
+  notifieurSlack,
 } from "./slack.mjs";
 
 // L'heure de démarrage de la machine se déduit de l'uptime, à quelques secondes près.
@@ -150,8 +150,6 @@ export function ligneJournal({ evenement, ticket, detail }, maintenant) {
 
 // --- Questions : lecture des commentaires -----------------------------------------------------
 
-// La boucle signe ses commentaires ; ils ne sont ni une question ni une réponse.
-const MARQUE_BOUCLE = "**Boucle de livraison**";
 // La portée tient seule sur sa ligne (« Portée : ticket »), éventuellement en gras ou en citation :
 // une réponse qui la cite dans une phrase n'est pas une question.
 const MOTIF_PORTEE =
@@ -159,6 +157,19 @@ const MOTIF_PORTEE =
 
 const delaBoucle = (c) => c.corps.trimStart().startsWith(MARQUE_BOUCLE);
 const apres = (iso, reference) => new Date(iso) > new Date(reference);
+
+/** Les commentaires du propriétaire, du plus ancien au plus récent, sans ceux de la boucle sauf
+ * `boucleComprise`. */
+const duProprietaire = (
+  commentaires,
+  proprietaire,
+  { boucleComprise = false } = {},
+) =>
+  commentaires
+    .filter(
+      (c) => c.auteur === proprietaire && (boucleComprise || !delaBoucle(c)),
+    )
+    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe));
 
 /** La question que la session a posée sur son ticket : le dernier commentaire du propriétaire, posté
  * depuis le début de la session, qui déclare « Portée : ticket » ou « Portée : spec ». Le compte de
@@ -170,16 +181,12 @@ export function lireQuestion(
   commentaires,
   { proprietaire, depuis, repli = false },
 ) {
-  const duProprietaire = commentaires
-    .filter(
-      (c) =>
-        c.auteur === proprietaire && !delaBoucle(c) && !apres(depuis, c.creeLe),
-    )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe));
-  const declaree = duProprietaire
-    .filter((c) => MOTIF_PORTEE.test(c.corps))
-    .at(-1);
-  const question = declaree ?? (repli ? duProprietaire[0] : undefined);
+  const candidats = duProprietaire(
+    commentaires.filter((c) => !apres(depuis, c.creeLe)),
+    proprietaire,
+  );
+  const declaree = candidats.filter((c) => MOTIF_PORTEE.test(c.corps)).at(-1);
+  const question = declaree ?? (repli ? candidats[0] : undefined);
   if (!question) return null;
   return {
     id: question.id,
@@ -191,49 +198,31 @@ export function lireQuestion(
   };
 }
 
-const dernierDuProprietaire = (
-  commentaires,
-  proprietaire,
-  { boucleComprise = false } = {},
-) =>
-  commentaires
-    .filter(
-      (c) => c.auteur === proprietaire && (boucleComprise || !delaBoucle(c)),
-    )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
-    .at(-1) ?? null;
-
 /** La question d'un ticket passé `needs-info`, pour Slack : { url, portee, corps } ou null. Avec
- * une session en vol, c'est la question de la session (une session qui a oublié la portée l'a
- * quand même posée) ; sans session, le dernier commentaire du propriétaire. */
+ * une session suivie, seuls les commentaires postés depuis son démarrage comptent ; une question
+ * sans portée déclarée vaut quand même (doute : spec). */
 export function questionDuTicket(situation, ticket) {
   const commentaires = situation.commentaires?.[ticket] ?? [];
   const entree = situation.etat?.tickets?.[String(ticket)];
-  const proprietaire = situation.bornes.proprietaire;
-  const question = entree
-    ? lireQuestion(commentaires, {
-        proprietaire,
-        depuis: entree.demarreA ?? new Date(0).toISOString(),
-        repli: true,
-      })
-    : dernierDuProprietaire(commentaires, proprietaire);
+  const question = lireQuestion(commentaires, {
+    proprietaire: situation.bornes.proprietaire,
+    depuis: entree?.demarreA ?? new Date(0).toISOString(),
+    repli: true,
+  });
   if (!question) return null;
   return {
     url: question.url,
-    portee: question.portee ?? "spec",
+    portee: question.portee,
     corps: commentaires.find((c) => c.id === question.id)?.corps ?? "",
   };
 }
 
 /** L'explication d'un ticket rendu, pour Slack : le dernier commentaire du propriétaire (la
  * session ou la boucle), ou null. */
-export function explicationDuTicket(situation, ticket) {
+export function explicationDuTicket(commentaires, proprietaire) {
   return (
-    dernierDuProprietaire(
-      situation.commentaires?.[ticket] ?? [],
-      situation.bornes.proprietaire,
-      { boucleComprise: true },
-    )?.corps ?? null
+    duProprietaire(commentaires, proprietaire, { boucleComprise: true }).at(-1)
+      ?.corps ?? null
   );
 }
 
@@ -242,14 +231,8 @@ export function explicationDuTicket(situation, ticket) {
  * question : le message de reprise les présente comme des données. */
 export function reponseA(question, commentaires, { proprietaire }) {
   const depuis = commentaires.filter((c) => apres(c.creeLe, question.creeLe));
-  const reponse = depuis
-    .filter(
-      (c) =>
-        c.auteur === proprietaire &&
-        !delaBoucle(c) &&
-        !MOTIF_PORTEE.test(c.corps),
-    )
-    .sort((a, b) => new Date(a.creeLe) - new Date(b.creeLe))
+  const reponse = duProprietaire(depuis, proprietaire)
+    .filter((c) => !MOTIF_PORTEE.test(c.corps))
     .at(-1);
   return {
     reponse: reponse ?? null,
@@ -819,7 +802,8 @@ const EVENEMENTS_QUI_DURENT = ["attente", "echec", "erreur", "slack"];
  *    executer(action, { dryRun }) : fait l'action, rend { ok, evenements }
  *    journal(ligne)        : une ligne de journal
  *    afficher(texte)       : le rapport du tour, à l'écran
- *    notifier(notification) : (absent sans webhook) poste dans Slack, rend { ok, raison }
+ *    notifier(notification) : poste dans Slack, rend { ok, raison } ; null ou absent sans webhook
+ *    lireCommentaires(ticket) : (facultatif) les commentaires d'un ticket, lus pour une annonce
  *  }
  *
  * Rend le code de sortie : 0 (fini, ou interrompu par Ctrl-C), 2 (checkout principal sale). */
@@ -867,6 +851,8 @@ export async function boucle({
         evenement: "slack",
         detail: `envoi en échec : ${resultat.raison}`,
       });
+    } else {
+      dernierDetail.delete("slack:");
     }
   };
   // Une ligne de journal nouvelle s'annonce aussi dans Slack, quand elle s'y dit.
@@ -918,7 +904,14 @@ export async function boucle({
       libelleMode,
       dejaAnnonces: rendusAnnonces,
       questionDe: (ticket) => questionDuTicket(situation, ticket),
-      explicationDe: (ticket) => explicationDuTicket(situation, ticket),
+      // L'explication d'un ticket rendu se lit à l'annonce, une fois, jamais à chaque tour.
+      explicationDe: (ticket) =>
+        explicationDuTicket(
+          situation.commentaires?.[ticket] ??
+            ports.lireCommentaires?.(ticket) ??
+            [],
+          situation.bornes.proprietaire,
+        ),
     })) {
       await notifier(notification);
     }
@@ -948,7 +941,18 @@ export async function boucle({
       // Une session qu'on n'a pas pu arrêter peut tourner encore : rien d'autre n'est fait sur son
       // ticket (ni relance dans son worktree, ni retour à l'utilisateur) avant le tour suivant.
       if (arretsRates.has(action.ticket)) continue;
-      const { ok, evenements } = await ports.executer(action, { dryRun });
+      let execution;
+      try {
+        execution = await ports.executer(action, { dryRun });
+      } catch (erreur) {
+        // L'exception arrête la boucle (code 1 par `main`) : le journal et Slack le disent avant.
+        await annoncer({
+          evenement: "arret",
+          detail: `erreur sur ${action.type} #${action.ticket} : ${erreur.message}`,
+        });
+        throw erreur;
+      }
+      const { ok, evenements } = execution;
       for (const evenement of evenements) {
         await annoncer(evenement, action);
       }
@@ -1337,12 +1341,7 @@ async function lireSituation({ mode, valeurs, racine, env, home }) {
   const transcripts = {};
   for (const t of tickets) {
     const entree = etat.tickets[String(t.numero)];
-    // Les commentaires d'un ticket en attente de réponse portent sa question (portée, gel) ; ceux
-    // d'un ticket rendu, l'explication que Slack cite.
-    if (
-      t.etat === "OPEN" &&
-      t.etiquettes.some((e) => ETIQUETTES_A_PART.includes(e))
-    ) {
+    if (t.etat === "OPEN" && t.etiquettes.includes(ETIQUETTE_QUESTION)) {
       commentaires[t.numero] = lireCommentaires(gh, depot, t.numero);
     }
     if (!entree) continue;
@@ -1825,13 +1824,7 @@ async function essaiSlack(valeurs) {
     );
     return 1;
   }
-  const resultat = await envoyerSlack({
-    url: valeurs.webhookSlack,
-    texte: texteSlack(
-      { type: "essai" },
-      { depot: valeurs.depot, projet: valeurs.projet },
-    ),
-  });
+  const resultat = await notifieurSlack(valeurs)({ type: "essai" });
   if (resultat.ok) {
     console.log("Message d'essai posté dans le canal Slack.");
     return 0;
@@ -1902,16 +1895,18 @@ export function portsReels({
       }
     },
     afficher: (texte) => process.stdout.write(`${texte}\n`),
-    notifier: valeurs.webhookSlack
-      ? (notification) =>
-          envoyerSlack({
-            url: valeurs.webhookSlack,
-            texte: texteSlack(notification, {
-              depot: valeurs.depot,
-              projet: valeurs.projet,
-            }),
-          })
-      : null,
+    notifier: notifieurSlack(valeurs),
+    lireCommentaires: (ticket) => {
+      try {
+        return lireCommentaires(
+          (...args) => executer("gh", args, { env }),
+          valeurs.depot,
+          ticket,
+        );
+      } catch {
+        return [];
+      }
+    },
   };
 }
 

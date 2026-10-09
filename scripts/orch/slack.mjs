@@ -3,10 +3,15 @@
 // le réseau et reste mince. La boucle n'en dépend que par son port `notifier`, absent quand la
 // machine n'a pas de webhook (`webhookSlack` du fichier de valeurs local, jamais versionné).
 
+import { MARQUE_BOUCLE } from "./commun.mjs";
+
 /** Au-delà, une citation (question, explication) est coupée : un message se lit sur un téléphone. */
 export const LONGUEUR_CITATION_MAX = 1500;
 const DELAI_ENVOI_MS = 10_000;
-const SIGNATURE_BOUCLE = /^\*\*Boucle de livraison\*\*\s*:\s*/;
+const SIGNATURE_BOUCLE = new RegExp(
+  `^${MARQUE_BOUCLE.replaceAll("*", "\\*")}\\s*:\\s*`,
+);
+const INTROUVABLE = "introuvable dans les commentaires : lire le ticket.";
 
 // --- Décision ---------------------------------------------------------------------------------
 
@@ -14,8 +19,8 @@ const titreDe = (titres, ticket) => titres?.[ticket] ?? "";
 
 /** La notification que vaut une ligne de journal, ou null quand elle ne se dit pas dans Slack.
  * `action` est l'action qui a produit la ligne (sa PR pour une clôture), `titres` les titres des
- * tickets suivis. Une anomalie est presque toujours un ticket que la boucle rend : elle s'annonce
- * comme tel ; une anomalie levée (label ou PR apparus entre-temps) reste une anomalie. */
+ * tickets suivis. Une anomalie est un ticket que la boucle rend : elle s'annonce comme tel ; une
+ * anomalie levée (label ou PR apparus entre-temps) n'a rien changé et ne se dit pas. */
 export function notificationDEvenement(
   { evenement, ticket, detail },
   { action, titres } = {},
@@ -30,7 +35,7 @@ export function notificationDEvenement(
       return { type: "cloture", ticket, titre, pr: action?.pr ?? null };
     case "anomalie":
       return /^levée\b/.test(detail)
-        ? { type: "anomalie", ticket, titre, detail }
+        ? null
         : { type: "rendu", ticket, titre, explication: detail };
     case "erreur":
     case "arret":
@@ -145,23 +150,17 @@ export function texteSlack(notification, { depot, projet } = {}) {
       const gel = n.gele
         ? `\n⏸️ Lancements ${n.gele.spec === null ? "des tickets sans spec" : `de la spec #${n.gele.spec}`} gelés jusqu'à votre réponse.`
         : "";
-      const corps = q
-        ? citer(q.corps)
-        : "_Question introuvable dans les commentaires : lire le ticket._";
+      const corps = q ? citer(q.corps) : `_Question ${INTROUVABLE}_`;
       return `${entete}${gel}\n${corps}`;
     }
     case "rendu":
       return `✋ Ticket rendu (ready-for-human) : ${lienTicket(n, depot)}\n${
-        n.explication
-          ? citer(n.explication)
-          : "_Explication introuvable dans les commentaires : lire le ticket._"
+        n.explication ? citer(n.explication) : `_Explication ${INTROUVABLE}_`
       }`;
     case "cloture":
       return `✅ ${lienTicket(n, depot)} clos${n.pr ? `, ${lienPr(n.pr, depot)} fusionnée` : ""}.`;
     case "echec":
       return `⚠️ Échec sur ${lienTicket(n, depot)} : ${echapper(n.detail)}`;
-    case "anomalie":
-      return `⚠️ Anomalie sur ${lienTicket(n, depot)} : ${echapper(n.detail)}`;
     case "erreur":
       return `⚠️ Erreur de la boucle : ${echapper(n.detail)}`;
     case "arret":
@@ -203,3 +202,17 @@ export async function envoyerSlack({
     return { ok: false, raison: sansUrl(erreur?.message ?? erreur) };
   }
 }
+
+/** Le port `notifier` de la boucle pour les valeurs de la machine : null sans webhook. */
+export const notifieurSlack = (
+  { webhookSlack, depot, projet },
+  { fetchFn } = {},
+) =>
+  webhookSlack
+    ? (notification) =>
+        envoyerSlack({
+          url: webhookSlack,
+          texte: texteSlack(notification, { depot, projet }),
+          ...(fetchFn ? { fetchFn } : {}),
+        })
+    : null;

@@ -21,6 +21,7 @@ import {
   lireQuestion,
   prendreVerrou,
   prRetenue,
+  questionDuTicket,
   rendreApresEchecsDeCloture,
   rendreVerrou,
   reponseA,
@@ -623,6 +624,8 @@ function portsDuMonde(
         }
       : {}),
     journal: (ligne) => lignes.push(ligne),
+    // Lus à la demande, pour une annonce : jamais dans la situation du tour.
+    lireCommentaires: (n) => monde.commentairesParDemande?.[n] ?? [],
     maintenant: () => new Date("2026-10-08T21:00:00.000Z"),
     afficher: () => {},
     arretDemande: () => monde.arret,
@@ -2998,9 +3001,11 @@ describe("notifications Slack de la boucle", () => {
         if (tours === 1) {
           m.tickets[1].etiquettes.push("ready-for-human");
           m.sessions[1] = "done";
-          m.commentaires[1] = [
-            commentaire("Impossible sans la clé Jev : je rends le ticket."),
-          ];
+          m.commentairesParDemande = {
+            1: [
+              commentaire("Impossible sans la clé Jev : je rends le ticket."),
+            ],
+          };
         }
         if (tours === 3) m.arret = true;
       },
@@ -3050,6 +3055,37 @@ describe("notifications Slack de la boucle", () => {
     expect(echecs).toHaveLength(1);
     expect(echecs[0]).toContain("no_service");
     expect(types(ports)).toContain("cloture #3");
+  });
+
+  it("lit la portée déclarée d'une question posée sans session suivie", () => {
+    const s = situation({
+      etat: { version: 1, tickets: {} },
+      commentaires: {
+        4: [
+          commentaire("Quel libellé pour le bouton ?\n\nPortée : ticket", "c4"),
+        ],
+      },
+    });
+    expect(questionDuTicket(s, 4)).toMatchObject({
+      portee: "ticket",
+      corps: expect.stringContaining("Quel libellé"),
+      url: expect.stringContaining("issuecomment-c4"),
+    });
+    expect(questionDuTicket(s, 5)).toBeNull();
+  });
+
+  it("annonce l'arrêt quand une action lève une exception, avant de la laisser remonter", async () => {
+    const monde = creerMonde();
+    const ports = portsDuMonde(monde, { slack: true });
+    ports.executer = async () => {
+      throw new Error("gh a planté");
+    };
+    await expect(lancerBoucle(ports)).rejects.toThrow("gh a planté");
+    expect(types(ports)).toEqual(["demarrage", "arret"]);
+    expect(ports.notifications[1].detail).toContain("gh a planté");
+    expect(ports.lignes.at(-1)).toMatch(
+      /arret erreur sur lancer #1 : gh a planté/,
+    );
   });
 
   it("n'envoie rien dans Slack en répétition", async () => {
