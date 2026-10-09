@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  commandeDeLaPartie,
+  enregistrerPartie,
   marqueurDeTest,
   marqueurFrais,
+  PARTIES_DE_TEST,
+  partiesManquantes,
   ticketDuWorktree,
 } from "./session-ticket.mjs";
 
@@ -88,5 +92,79 @@ describe("marqueur du dernier npm test vert", () => {
   it("est périmé quand il manque ou qu'il est illisible", () => {
     expect(marqueurFrais(null, "abc123")).toBe(false);
     expect(marqueurFrais({}, "abc123")).toBe(false);
+  });
+});
+
+describe("parties de la suite de tests", () => {
+  const noms = PARTIES_DE_TEST.map((partie) => partie.nom);
+  const ecritA = "2026-10-09T12:00:00.000Z";
+
+  it("compte les cinq parties de `npm test`", () => {
+    expect(noms).toEqual([
+      "format",
+      "unitaires",
+      "base",
+      "mobile",
+      "ordinateur",
+    ]);
+  });
+
+  it("nomme la commande qui lance et enregistre une partie", () => {
+    expect(commandeDeLaPartie("base")).toBe("npm run test:partie -- base");
+  });
+
+  it("les cinq parties manquent tant que rien n'est enregistré", () => {
+    expect(partiesManquantes(null, "abc123")).toEqual(noms);
+  });
+
+  it("une partie enregistrée ne manque plus sur ce commit", () => {
+    const etat = enregistrerPartie(null, {
+      nom: "format",
+      commit: "abc123",
+      ecritA,
+    });
+    expect(partiesManquantes(etat, "abc123")).toEqual(noms.slice(1));
+  });
+
+  it("garde les parties déjà vertes sur le même commit", () => {
+    let etat = null;
+    for (const nom of ["format", "base"]) {
+      etat = enregistrerPartie(etat, { nom, commit: "abc123", ecritA });
+    }
+    expect(partiesManquantes(etat, "abc123")).toEqual([
+      "unitaires",
+      "mobile",
+      "ordinateur",
+    ]);
+  });
+
+  it("un nouveau commit invalide les parties vertes du précédent", () => {
+    const etat = enregistrerPartie(null, {
+      nom: "format",
+      commit: "abc123",
+      ecritA,
+    });
+    expect(partiesManquantes(etat, "def456")).toEqual(noms);
+    const suivant = enregistrerPartie(etat, {
+      nom: "base",
+      commit: "def456",
+      ecritA,
+    });
+    expect(partiesManquantes(suivant, "def456")).toEqual(
+      noms.filter((nom) => nom !== "base"),
+    );
+  });
+
+  it("n'a plus de partie manquante quand les cinq sont vertes sur la tête", () => {
+    let etat = null;
+    for (const nom of noms) {
+      etat = enregistrerPartie(etat, { nom, commit: "abc123", ecritA });
+    }
+    expect(partiesManquantes(etat, "abc123")).toEqual([]);
+  });
+
+  it("ignore un état illisible", () => {
+    expect(partiesManquantes({}, "abc123")).toEqual(noms);
+    expect(partiesManquantes({ commit: "abc123" }, "abc123")).toEqual(noms);
   });
 });

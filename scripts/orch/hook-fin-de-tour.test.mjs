@@ -14,6 +14,7 @@ const pret = {
   pr: true,
   commitTete: "abc123",
   marqueur: marqueurVert,
+  parties: null,
 };
 
 describe("verdict de fin de tour", () => {
@@ -83,20 +84,50 @@ describe("verdict de fin de tour", () => {
     expect(verdict({ ...pret, branche: "develop" })).toMatch(/develop/);
   });
 
-  it("refuse sans npm test vert enregistré", () => {
-    expect(verdict({ ...pret, marqueur: null })).toMatch(/npm test/);
+  it("refuse sans test vert enregistré et nomme la commande de chaque partie", () => {
+    const raison = verdict({ ...pret, marqueur: null });
+    for (const nom of ["format", "unitaires", "base", "mobile", "ordinateur"]) {
+      expect(raison).toContain(`npm run test:partie -- ${nom}`);
+    }
   });
 
-  it("refuse un npm test vert qui ne porte pas sur le commit de tête", () => {
-    expect(verdict({ ...pret, commitTete: "def4567890" })).toMatch(
-      /npm test.*commit/s,
-    );
+  it("ne nomme que les parties qui manquent sur le commit de tête", () => {
+    const raison = verdict({
+      ...pret,
+      marqueur: null,
+      parties: {
+        commit: "abc123",
+        parties: { format: "t", unitaires: "t", base: "t" },
+      },
+    });
+    expect(raison).toContain("npm run test:partie -- mobile");
+    expect(raison).toContain("npm run test:partie -- ordinateur");
+    expect(raison).not.toContain("test:partie -- format");
+    expect(raison).not.toContain("test:partie -- base");
   });
 
-  it("refuse un npm test vert lancé sur un arbre non commité", () => {
+  it("repart des cinq parties quand les vertes datent d'un autre commit", () => {
+    const raison = verdict({
+      ...pret,
+      marqueur: null,
+      parties: {
+        commit: "ancien1",
+        parties: { format: "t", unitaires: "t", base: "t" },
+      },
+    });
+    expect(raison).toContain("npm run test:partie -- format");
+  });
+
+  it("refuse un marqueur qui ne porte pas sur le commit de tête", () => {
+    const raison = verdict({ ...pret, commitTete: "def4567890" });
+    expect(raison).toMatch(/commit abc123/);
+    expect(raison).toContain("npm run test:partie -- format");
+  });
+
+  it("refuse un test vert lancé sur un arbre non commité", () => {
     expect(
       verdict({ ...pret, marqueur: { commit: "abc123", arbreSale: true } }),
-    ).toMatch(/npm test.*non commit/s);
+    ).toMatch(/non commit/);
   });
 
   it("énumère d'un coup tout ce qui manque", () => {
@@ -108,6 +139,6 @@ describe("verdict de fin de tour", () => {
     });
     expect(raison).toMatch(/PR/);
     expect(raison).toMatch(/non commit/);
-    expect(raison).toMatch(/npm test/);
+    expect(raison).toContain("npm run test:partie -- base");
   });
 });
