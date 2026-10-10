@@ -6,6 +6,9 @@ const variantes = {
   /** Action principale, en pêche pastel. */
   action:
     "min-h-bouton gap-2 px-5 bg-fond-action text-texte-action hover:bg-primary-fixed-dim",
+  /** Confirmer une demande (valider un compte) : vert pastel, jamais pour agir. */
+  confirmer:
+    "min-h-bouton gap-2 px-5 bg-fond-confirme text-texte-confirme hover:bg-secondary-fixed-dim",
   contour:
     "min-h-bouton gap-2 px-5 border-2 border-contour-action bg-fond-carte text-on-surface hover:bg-surface-container-low",
   /** Annuler, supprimer. */

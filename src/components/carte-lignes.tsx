@@ -2,9 +2,12 @@ import type { ReactNode } from "react";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-export type LigneCarte = {
+/** Tête de ligne : un pictogramme, ou, pour une liste de personnes, un avatar. Jamais les deux, jamais aucun. */
+type TeteLigne =
+  { icone: NomIcone; avatar?: never } | { avatar: ReactNode; icone?: never };
+
+export type LigneCarte = TeteLigne & {
   cle?: string;
-  icone: NomIcone;
   /** Libellé discret : « Email » */
   titre: string;
   /** Valeur en gras : « danielle.m@exemple.fr » */
@@ -27,14 +30,17 @@ export function CarteLignes({ lignes, libelle }: Props) {
       aria-label={libelle}
       className="flex flex-col divide-y-[1.5px] divide-bordure-carte rounded-lg border-[1.5px] border-bordure-carte bg-fond-carte desktop:divide-y desktop:divide-filet"
     >
-      {lignes.map(({ cle, icone, titre, detail, fin }) => (
+      {lignes.map(({ cle, icone, avatar, titre, detail, fin }) => (
         <li
           key={cle ?? titre}
           className="flex min-h-ligne flex-wrap items-center gap-space-sm px-4 py-2"
         >
-          <span className="text-on-surface-variant">
-            <Icone nom={icone} taille={24} />
-          </span>
+          {avatar ??
+            (icone && (
+              <span className="text-on-surface-variant">
+                <Icone nom={icone} taille={24} />
+              </span>
+            ))}
           <div className="flex min-w-0 flex-1 basis-36 flex-col">
             <span className="text-body-md text-on-surface-variant">
               {titre}

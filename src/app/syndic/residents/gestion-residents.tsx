@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Avatar } from "@/components/avatar";
 import { Bouton } from "@/components/bouton";
 import { CarteLignes } from "@/components/carte-lignes";
 import { Annonce } from "@/components/formulaire";
@@ -34,11 +35,18 @@ export function GestionResidents({ enAttente, valides }: Props) {
         }
         liste="Résidents en attente"
         residents={enAttente}
-        icone="hourglass_top"
+        avatar={() => <Avatar variante="attente" taille={52} />}
+        libelleLigne={(resident) =>
+          `${nomComplet(resident)} · compte à valider`
+        }
         onResultat={setResultat}
         actions={(resident, executer, enCours) => (
           <>
-            <Bouton disabled={enCours} onClick={() => executer("valide")}>
+            <Bouton
+              variante="confirmer"
+              disabled={enCours}
+              onClick={() => executer("valide")}
+            >
               <Icone nom="how_to_reg" className="size-6" />
               Valider
               <span className="sr-only">
@@ -69,7 +77,14 @@ export function GestionResidents({ enAttente, valides }: Props) {
         }
         liste="Résidents validés"
         residents={valides}
-        icone="how_to_reg"
+        avatar={(resident) => (
+          <Avatar
+            variante="neutre"
+            taille={52}
+            initiale={resident.prenom.trim().charAt(0).toUpperCase()}
+          />
+        )}
+        libelleLigne={nomComplet}
         onResultat={setResultat}
         actions={(resident, executer, enCours) => (
           <Confirmation
@@ -91,14 +106,18 @@ function Section({
   titre,
   liste,
   residents,
-  icone,
+  avatar,
+  libelleLigne,
   onResultat,
   actions,
 }: {
   titre: string;
   liste: string;
   residents: Resident[];
-  icone: NomIcone;
+  /** Cercle de tête de chaque ligne : l'initiale d'un résident validé, le sablier d'un compte en attente. */
+  avatar: (resident: Resident) => React.ReactNode;
+  /** Le libellé discret au-dessus de l'adresse. */
+  libelleLigne: (resident: Resident) => string;
   onResultat: (resultat: Resultat) => void;
   actions: (
     resident: Resident,
@@ -115,8 +134,8 @@ function Section({
           libelle={liste}
           lignes={residents.map((resident) => ({
             cle: resident.id,
-            icone,
-            titre: nomComplet(resident),
+            avatar: avatar(resident),
+            titre: libelleLigne(resident),
             detail: resident.email,
             fin: (
               <LigneActions
@@ -180,7 +199,7 @@ function Confirmation({
 
   if (!demandee) {
     return (
-      <Bouton variante="contour" onClick={() => setDemandee(true)}>
+      <Bouton variante="danger" onClick={() => setDemandee(true)}>
         <Icone nom={icone} className="size-6" />
         {libelle}
         <span className="sr-only"> : {nom}</span>

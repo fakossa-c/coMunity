@@ -1,4 +1,10 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type Browser,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 import {
   arriveeDuSyndic,
   modifierProfil,
@@ -229,4 +235,72 @@ test("l'espace syndic ne propose plus de code de résidence", async ({
   await expect(
     page.getByRole("link", { name: /Code de la résidence/ }),
   ).toHaveCount(0);
+});
+
+function styleCalcule(cible: Locator, propriete: string) {
+  return cible.evaluate(
+    (el, p) => getComputedStyle(el).getPropertyValue(p),
+    propriete,
+  );
+}
+
+test("sur l'écran Résidents, chaque rôle a sa couleur : valider en vert, retraits en rouge, avatars sans pêche", async ({
+  browser,
+  isMobile,
+}) => {
+  const enAttente = await nouveauResident("en_attente");
+  const valide = await nouveauResident("valide");
+  emails.push(enAttente.email, valide.email);
+  const syndic = await syndicSurLesResidents(browser);
+  const page = syndic.page;
+  const attente = ligne(page, "Résidents en attente", enAttente.email);
+  const valides = ligne(page, "Résidents validés", valide.email);
+
+  // « Valider » confirme : vert pastel, encre verte.
+  const valider = attente.getByRole("button", { name: /^Valider/ });
+  expect(await styleCalcule(valider, "background-color")).toBe(
+    "rgb(169, 244, 182)",
+  );
+  expect(await styleCalcule(valider, "color")).toBe("rgb(0, 33, 11)");
+
+  // « Refuser » et « Retirer l'accès » sont des gestes destructifs : contour et texte rouges.
+  for (const bouton of [
+    attente.getByRole("button", { name: /^Refuser/ }),
+    valides.getByRole("button", { name: /^Retirer l'accès/ }),
+  ]) {
+    expect(await styleCalcule(bouton, "color")).toBe("rgb(186, 26, 26)");
+    expect(await styleCalcule(bouton, "border-top-color")).toBe(
+      "rgb(186, 26, 26)",
+    );
+  }
+
+  // Le compte en attente se lit par sa forme (cercle pointillé), pas par une couleur.
+  await expect(attente).toContainText("Danielle Martin · compte à valider");
+  const avatarAttente = attente.getByRole("img", { name: "Compte en attente" });
+  expect(await styleCalcule(avatarAttente, "border-top-style")).toBe("dashed");
+  expect(await styleCalcule(avatarAttente, "background-color")).toBe(
+    "rgba(0, 0, 0, 0)",
+  );
+  expect((await avatarAttente.boundingBox())!.width).toBe(52);
+
+  // Un résident validé : cercle plein bleu clair avec son initiale.
+  const avatarValide = valides.getByText("D", { exact: true });
+  expect(await styleCalcule(avatarValide, "background-color")).toBe(
+    "rgb(223, 233, 252)",
+  );
+  expect(await styleCalcule(avatarValide, "color")).toBe("rgb(18, 28, 42)");
+  expect((await avatarValide.boundingBox())!.width).toBe(52);
+
+  // La rubrique active du menu est bleu clair, plus pêche (le menu est un tiroir sur mobile).
+  if (!isMobile) {
+    const rubrique = page.locator('a[aria-current="page"]:visible', {
+      hasText: "Résidents",
+    });
+    expect(await styleCalcule(rubrique, "background-color")).toBe(
+      "rgb(223, 233, 252)",
+    );
+    expect(await styleCalcule(rubrique, "font-weight")).toBe("800");
+    expect(await styleCalcule(rubrique, "color")).toBe("rgb(18, 28, 42)");
+  }
+  await syndic.appareil.close();
 });
