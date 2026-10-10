@@ -44,7 +44,35 @@
   "produit": {
     "chemins": ["src", "supabase", "public"],
     "utilisateurs": "résidents",
-    "utilisateursReels": false
+    "utilisateursReels": false,
+    "brancheProd": "main",
+    "comptesTest": [
+      {
+        "compte": "fakossa+test-syndic-syndic@gmail.com",
+        "role": "syndic",
+        "motDePasse": "identique à l'adresse du compte (scripts/demo-comptes.mjs)"
+      },
+      {
+        "compte": "fakossa+test-resident-danielle@gmail.com",
+        "role": "résident validé",
+        "motDePasse": "identique à l'adresse du compte (scripts/demo-comptes.mjs)"
+      },
+      {
+        "compte": "fakossa+test-resident-attente@gmail.com",
+        "role": "résident en attente",
+        "motDePasse": "identique à l'adresse du compte (scripts/demo-comptes.mjs)"
+      },
+      {
+        "compte": "fakossa+test-resident-refuse@gmail.com",
+        "role": "résident refusé",
+        "motDePasse": "identique à l'adresse du compte (scripts/demo-comptes.mjs)"
+      },
+      {
+        "compte": "fakossa+test-resident-retire@gmail.com",
+        "role": "résident retiré",
+        "motDePasse": "identique à l'adresse du compte (scripts/demo-comptes.mjs)"
+      }
+    ]
   },
   "preview": {
     "lien": "vercel link --yes --project comunity"
