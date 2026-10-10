@@ -52,7 +52,7 @@ const MISES_EN_PAGE = {
   },
 };
 
-/** Marge intérieure des pilules du haut ; resserrée sous 80 rem au-delà de trois onglets, pour tenir avec « Proposer » et l'avatar. */
+/** Marge intérieure des onglets du haut ; resserrée sous 80 rem au-delà de trois onglets, pour tenir avec « Proposer » et l'avatar. */
 const PADDING_HAUT = "px-6";
 const PADDING_HAUT_SERRE = "px-3.5 grand:px-6";
 
@@ -60,6 +60,10 @@ const PADDING_HAUT_SERRE = "px-3.5 grand:px-6";
 const LIEN_ACTIF_HAUT = "font-extrabold text-on-surface";
 const LIEN_INACTIF_HAUT =
   "font-bold text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
+/** Libellé du haut. Tous les onglets ont le trait (transparent hors actif) : rien ne bouge d'un onglet à l'autre ; le haut de 7 px = le bas de 4 px + le trait de 3 px garde le texte centré. */
+const LIBELLE_HAUT = "border-b-[3px] pt-[7px] pb-1";
+const TRAIT_ACTIF_HAUT = "border-primary";
+const TRAIT_INACTIF_HAUT = "border-transparent";
 
 /**
  * Onglets de l'application. `bas` : barre fixe du mobile, après le contenu ; pictogramme
@@ -112,7 +116,7 @@ export function BarreNavigation({
                   </>
                 ) : (
                   <span
-                    className={`border-b-[3px] py-1 ${estActif ? "border-primary" : "border-transparent"}`}
+                    className={`${LIBELLE_HAUT} ${estActif ? TRAIT_ACTIF_HAUT : TRAIT_INACTIF_HAUT}`}
                   >
                     {libelle}
                   </span>
