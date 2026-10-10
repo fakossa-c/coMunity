@@ -5,15 +5,7 @@
   "brancheIntegration": "develop",
   "dossierWorktrees": ".claude/worktrees",
   "glossaire": "GLOSSARY.md",
-  "commandes": {
-    "isolation": "node scripts/isoler-supabase-worktree.mjs",
-    "installation": "npm ci",
-    "demarrage": "npx supabase start",
-    "variablesLocales": "npm run env:local",
-    "arret": "npx supabase stop",
-    "migrationDistante": "npm run db:pousser",
-    "lienPreview": "vercel link --yes --project comunity"
-  },
+  "installation": "npm ci",
   "modeleSession": "sonnet",
   "controleCi": "Tests",
   "dureeMaxSessionMinutes": 180,
@@ -22,6 +14,45 @@
   "misesAJourBrancheMax": 3,
   "echecsSessionMax": 3,
   "attenteRepriseMinutes": 10,
-  "pousserMigrationsApresFusion": true,
-  "intervalleBoucleSecondes": 300
+  "intervalleBoucleSecondes": 300,
+  "partiesDeTest": {
+    "format": "npm run format:check",
+    "unitaires": "npm run test:unit",
+    "base": "npm run test:db",
+    "mobile-1": "npx playwright test --project=mobile --shard=1/2",
+    "mobile-2": "npx playwright test --project=mobile --shard=2/2",
+    "ordinateur-1": "npx playwright test --project=desktop --shard=1/2",
+    "ordinateur-2": "npx playwright test --project=desktop --shard=2/2"
+  },
+  "services": [
+    {
+      "nom": "supabase",
+      "lourd": true,
+      "isolation": "node scripts/isoler-supabase-worktree.mjs",
+      "demarrage": "npx supabase start",
+      "arret": "npx supabase stop",
+      "variablesLocales": "npm run env:local"
+    }
+  ],
+  "migrations": {
+    "label": "migration",
+    "chemins": ["supabase/migrations"],
+    "lister": "npm run db:pousser",
+    "appliquer": "npm run db:pousser -- --appliquer",
+    "apresFusion": true
+  },
+  "produit": {
+    "chemins": ["src", "supabase", "public"],
+    "utilisateurs": "résidents",
+    "utilisateursReels": false
+  },
+  "preview": {
+    "lien": "vercel link --yes --project comunity"
+  },
+  "tableau": {
+    "proprietaire": "fakossa-c",
+    "numero": 2,
+    "champ": "Status",
+    "options": { "aFaire": "Todo", "enCours": "In Progress", "fait": "Done" }
+  }
 }

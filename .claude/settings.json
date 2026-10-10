@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/orch/hook-pre-outil.mjs\""
+            "command": "node \"$HOME/.claude/skills/orchestrer-tickets/orch/hook-pre-outil.mjs\""
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/orch/hook-fin-de-tour.mjs\""
+            "command": "node \"$HOME/.claude/skills/orchestrer-tickets/orch/hook-fin-de-tour.mjs\""
           }
         ]
       }
