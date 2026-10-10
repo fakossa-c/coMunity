@@ -2,7 +2,7 @@ Barre du haut du cadre Journal, **sur ordinateur seulement** (à partir de 64 re
 
 - « Proposer » (`Bouton` action, pictogramme `add`) n'est pas dans la barre sur l'écran Proposer.
 - Un compte refusé ou retiré n'a ni onglets ni « Proposer », seulement l'avatar (déconnexion). Les écrans de connexion n'ont que le logo. Un visiteur voit « Se connecter » à la place de l'avatar.
-- L'onglet de la page courante est en pêche et en 800, avec `aria-current="page"` ; un écran secondaire n'en a aucun.
+- L'onglet de la page courante est en 800, souligné d'un trait terre cuite de 3 px, sans fond (le pêche est réservé à « Proposer »), avec `aria-current="page"` ; un écran secondaire n'en a aucun.
 - Le nom de la résidence n'y figure pas (les maquettes n'en ont pas) ; le mobile le garde.
 
 ```jsx

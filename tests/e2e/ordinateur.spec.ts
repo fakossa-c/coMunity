@@ -90,13 +90,46 @@ test("l'onglet de la page courante est repérable, et chaque onglet mène à sa 
   await expect(autre).not.toHaveAttribute("aria-current");
   expect(await styleCalcule(actif, "font-weight")).toBe("800");
   expect(await styleCalcule(autre, "font-weight")).toBe("700");
-  // Pilule pêche derrière l'onglet actif, transparente sinon.
+  // Aucun fond sur les onglets : le pêche reste à « Proposer ».
   expect(await styleCalcule(actif, "background-color")).toBe(
-    "rgb(255, 219, 208)",
+    "rgba(0, 0, 0, 0)",
   );
   expect(await styleCalcule(autre, "background-color")).toBe(
     "rgba(0, 0, 0, 0)",
   );
+  expect(
+    await styleCalcule(
+      page.getByRole("banner").getByRole("link", { name: "Proposer" }),
+      "background-color",
+    ),
+  ).toBe("rgb(255, 219, 208)");
+  // L'onglet actif : libellé foncé, trait terre cuite de 3 px dessous ; les autres
+  // gardent un trait transparent de même épaisseur, rien ne bouge d'un onglet à l'autre.
+  const libelleActif = actif.locator("span");
+  const libelleAutre = autre.locator("span");
+  expect(await styleCalcule(actif, "color")).toBe("rgb(18, 28, 42)");
+  expect(await styleCalcule(libelleActif, "border-bottom-width")).toBe("3px");
+  expect(await styleCalcule(libelleActif, "border-bottom-color")).toBe(
+    "rgb(143, 43, 0)",
+  );
+  expect(await styleCalcule(libelleAutre, "border-bottom-width")).toBe("3px");
+  expect(await styleCalcule(libelleAutre, "border-bottom-color")).toBe(
+    "rgba(0, 0, 0, 0)",
+  );
+  expect((await boite(libelleActif)).height).toBe(
+    (await boite(libelleAutre)).height,
+  );
+  // Le trait ne décentre pas le libellé : il reste aligné sur « Proposer » et l'avatar.
+  const decalageVertical = await actif.evaluate((lien) => {
+    const plage = document.createRange();
+    plage.selectNodeContents(lien.querySelector("span")!);
+    const texte = plage.getBoundingClientRect();
+    const boiteLien = lien.getBoundingClientRect();
+    return Math.abs(
+      (texte.top + texte.bottom) / 2 - (boiteLien.top + boiteLien.bottom) / 2,
+    );
+  });
+  expect(decalageVertical).toBeLessThanOrEqual(1);
 
   await autre.click();
   await expect(page).toHaveURL(/\/annonces$/);
