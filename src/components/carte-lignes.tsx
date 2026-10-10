@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { Icone } from "./icone";
 import type { NomIcone } from "./icones";
 
-export type LigneCarte = {
+/** Tête de ligne : un pictogramme, ou, pour une liste de personnes, un avatar. Jamais les deux, jamais aucun. */
+type TeteLigne =
+  { icone: NomIcone; avatar?: never } | { avatar: ReactNode; icone?: never };
+
+export type LigneCarte = TeteLigne & {
   cle?: string;
-  /** Pictogramme de tête. Absent quand `avatar` le remplace. */
-  icone?: NomIcone;
-  /** Avatar de tête, à la place du pictogramme : liste de personnes. */
-  avatar?: ReactNode;
   /** Libellé discret : « Email » */
   titre: string;
   /** Valeur en gras : « danielle.m@exemple.fr » */

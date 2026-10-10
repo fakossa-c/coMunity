@@ -1,18 +1,26 @@
 import { Icone } from "./icone";
 
-type Props = {
-  /** Absente pour `attente`, qui montre un sablier à la place. */
-  initiale?: string;
-  /**
-   * pêche : un voisin · marine : la personne connectée · neutre : un résident dans une liste de
-   * l'espace syndic · attente : un compte qui attend sa validation (cercle pointillé, sablier).
-   */
-  variante?: "peche" | "marine" | "neutre" | "attente";
+type Taille = {
   /** En px : 72 sur la page Profil, 52 dans le menu et les listes du syndic, 40 par défaut. */
   taille?: 40 | 52 | 72;
-  /** Adresse d'une photo : elle remplace l'initiale, qui reste la valeur par défaut. */
-  photo?: string;
 };
+
+type Props = Taille &
+  (
+    | {
+        /** pêche : un voisin · marine : la personne connectée · neutre : un résident dans une liste de l'espace syndic. */
+        variante?: "peche" | "marine" | "neutre";
+        initiale: string;
+        /** Adresse d'une photo : elle remplace l'initiale, qui reste la valeur par défaut. */
+        photo?: string;
+      }
+    | {
+        /** Un compte qui attend sa validation : cercle pointillé et sablier, sans initiale ni photo. */
+        variante: "attente";
+        initiale?: never;
+        photo?: never;
+      }
+  );
 
 const couleurs = {
   peche: "bg-fond-action text-texte-action",
