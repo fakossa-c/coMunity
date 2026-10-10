@@ -3,6 +3,7 @@ import Link from "next/link";
 import { classesBouton } from "@/components/bouton";
 import { EcranSecondaire, EcranSyndic } from "@/components/cadre";
 import { Etiquette } from "@/components/etiquette";
+import { Nouveau } from "@/components/nouveau";
 import { Annonce as Confirmation } from "@/components/formulaire";
 import { Icone } from "@/components/icone";
 import { TitrePage } from "@/components/titre-page";
@@ -96,9 +97,7 @@ export default async function AnnoncesDuSyndic({ searchParams }: Props) {
                       {annonce.epinglee && (
                         <Etiquette icone="keep">Épinglée</Etiquette>
                       )}
-                      {estNouvelle(annonce.publiee_le) && (
-                        <Etiquette>Nouveau</Etiquette>
-                      )}
+                      {estNouvelle(annonce.publiee_le) && <Nouveau />}
                       {expiree && (
                         <Etiquette ton="erreur" icone="event_busy">
                           Expirée

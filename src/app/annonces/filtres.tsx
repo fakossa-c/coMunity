@@ -22,6 +22,7 @@ export function Filtres({ filtre }: { filtre: FiltreAnnonce }) {
           <PuceFiltre
             key={id}
             categorie
+            neutre
             icone={icone}
             selectionnee={filtre === id}
             href={id === "toutes" ? "/annonces" : `/annonces?filtre=${id}`}

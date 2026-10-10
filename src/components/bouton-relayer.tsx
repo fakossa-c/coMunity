@@ -5,8 +5,8 @@ import { Icone } from "./icone";
 type Props = {
   /** Le texte pré-rempli dans WhatsApp. */
   message: string;
-  /** contour sur la fiche · action sur l'écran qui suit la publication, où c'est l'action principale */
-  variante?: Extract<VarianteBouton, "action" | "contour">;
+  /** contour sur la fiche d'une activité · neutre sur Annonces · action sur l'écran qui suit la publication, où c'est l'action principale */
+  variante?: Extract<VarianteBouton, "action" | "contour" | "neutre">;
 };
 
 /** « Relayer sur le groupe WhatsApp » : ouvre WhatsApp avec le message déjà écrit. */

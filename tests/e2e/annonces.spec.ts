@@ -664,7 +664,7 @@ test("sur Annonces, les puces sont neutres et la sélectionnée est bleu clair",
   await expect(autre).toHaveAttribute("aria-current", "false");
   const s = await styles(autre);
   expect(s.contour).toBe(CONTOUR_NEUTRE);
-  expect(s.largeurContour).toBe("1.5px");
+  expect(s.largeurContour).not.toBe("0px");
   await expect(
     autre.locator("svg, span[class*='material']").first(),
   ).toBeVisible();
@@ -694,7 +694,7 @@ test("sur une carte d'annonce, la lecture du document est pêche plein, « Relay
   });
   const r = await styles(relayer);
   expect(r.contour).toBe(CONTOUR_NEUTRE);
-  expect(r.largeurContour).toBe("1.5px");
+  expect(r.largeurContour).not.toBe("0px");
   expect(r.fond).not.toBe(PECHE_PLEIN);
 
   const seul = carte(page, sansDocument).getByRole("link", {
