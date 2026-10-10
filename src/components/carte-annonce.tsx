@@ -14,6 +14,7 @@ import { BoutonRelayer } from "./bouton-relayer";
 import { classesBouton } from "./bouton";
 import { Etiquette } from "./etiquette";
 import { Icone } from "./icone";
+import { Nouveau } from "./nouveau";
 
 type Props = {
   annonce: Annonce;
@@ -40,7 +41,7 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
         <Etiquette ton={type.ton} icone={type.icone}>
           {type.libelle}
         </Etiquette>
-        {estNouvelle(annonce.publiee_le) && <Etiquette>Nouveau</Etiquette>}
+        {estNouvelle(annonce.publiee_le) && <Nouveau />}
       </div>
       <p className="text-body-md text-on-surface-variant">
         {libellePublication(annonce.publiee_le)}
@@ -82,13 +83,16 @@ export function CarteAnnonce({ annonce, lien, urlDocument, children }: Props) {
             href={urlDocument}
             target="_blank"
             rel="noopener noreferrer"
-            className={classesBouton("contour")}
+            className={classesBouton("action")}
           >
             <Icone nom="description" />
             {libelleDocument(annonce.type)}
           </a>
         )}
-        <BoutonRelayer message={messageWhatsAppAnnonce(annonce, lien)} />
+        <BoutonRelayer
+          message={messageWhatsAppAnnonce(annonce, lien)}
+          variante="neutre"
+        />
       </div>
     </article>
   );

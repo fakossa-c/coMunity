@@ -8,6 +8,7 @@ import { classesBouton } from "@/components/bouton";
 import { EcranSecondaire } from "@/components/cadre";
 import { EncartPastel } from "@/components/encart-pastel";
 import { Etiquette } from "@/components/etiquette";
+import { Nouveau } from "@/components/nouveau";
 import { Icone } from "@/components/icone";
 import { PanneauInfos } from "@/components/panneau-infos";
 import {
@@ -91,9 +92,7 @@ export default async function PageAnnonce({ params }: Props) {
             <Etiquette ton={type.ton} icone={type.icone}>
               {type.libelle}
             </Etiquette>
-            {estNouvelle(annonce.publiee_le) && !expiree && (
-              <Etiquette>Nouveau</Etiquette>
-            )}
+            {estNouvelle(annonce.publiee_le) && !expiree && <Nouveau />}
           </div>
           <p className="text-body-md text-on-surface-variant">
             {libellePublication(annonce.publiee_le)}
@@ -132,13 +131,16 @@ export default async function PageAnnonce({ params }: Props) {
               href={urlFichierAnnonce(annonce.document_chemin)}
               target="_blank"
               rel="noopener noreferrer"
-              className={classesBouton("contour")}
+              className={classesBouton("action")}
             >
               <Icone nom="description" />
               {libelleDocument(annonce.type)}
             </a>
           )}
-          <BoutonRelayer message={messageWhatsAppAnnonce(annonce, lien)} />
+          <BoutonRelayer
+            message={messageWhatsAppAnnonce(annonce, lien)}
+            variante="neutre"
+          />
           <BoutonCopier
             texte={lien}
             libelle="Copier le lien"

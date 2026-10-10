@@ -622,3 +622,118 @@ test("sur ordinateur, la fiche d'une annonce met les infos et les boutons à dro
     fullPage: true,
   });
 });
+
+// Ticket #260 : sur Annonces, le pêche est réservé à l'action. Puces neutres, « Relayer » en contour
+// neutre, « Lire la convocation » en pêche plein, « Nouveau » en texte terre cuite avec un point.
+
+const BLEU_CLAIR = "rgb(223, 233, 252)"; // surface-container-high
+const CONTOUR_NEUTRE = "rgb(141, 113, 104)"; // outline
+const PECHE_PLEIN = "rgb(255, 219, 208)"; // fond-action
+const TERRE_CUITE = "rgb(143, 43, 0)"; // primary
+const TRANSPARENT = "rgba(0, 0, 0, 0)";
+
+async function styles(locator: ReturnType<Page["locator"]>) {
+  return locator.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return {
+      fond: s.backgroundColor,
+      contour: s.borderTopColor,
+      largeurContour: s.borderTopWidth,
+      texte: s.color,
+    };
+  });
+}
+
+test("sur Annonces, les puces sont neutres et la sélectionnée est bleu clair", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  await seConnecter(page, resident.email);
+  await page.goto("/annonces?filtre=sondages");
+
+  const puces = page.getByRole("navigation", { name: "Types d'annonce" });
+  const choisie = puces.getByRole("link", { name: "Sondages" });
+  await expect(choisie).toHaveAttribute("aria-current", "true");
+  expect((await styles(choisie)).fond).toBe(BLEU_CLAIR);
+  expect(await choisie.evaluate((el) => getComputedStyle(el).fontWeight)).toBe(
+    "800",
+  );
+
+  const autre = puces.getByRole("link", { name: "Assemblées" });
+  await expect(autre).toHaveAttribute("aria-current", "false");
+  const s = await styles(autre);
+  expect(s.contour).toBe(CONTOUR_NEUTRE);
+  expect(s.largeurContour).not.toBe("0px");
+  await expect(
+    autre.locator("svg, span[class*='material']").first(),
+  ).toBeVisible();
+});
+
+test("sur une carte d'annonce, la lecture du document est pêche plein, « Relayer » en contour neutre, et « Nouveau » un texte avec un point", async ({
+  page,
+}) => {
+  const resident = await nouveauResident("valide");
+  emails.push(resident.email);
+  const titre = titreUnique("Convocation neutre");
+  await nouvelleAnnonce({
+    type: "assemblee",
+    titre,
+    document_chemin: "fictif-260.pdf",
+  });
+  const sansDocument = titreUnique("Info neutre");
+  await nouvelleAnnonce({ titre: sansDocument });
+  await seConnecter(page, resident.email);
+  await page.goto("/annonces");
+
+  const avecDocument = carte(page, titre);
+  const lire = avecDocument.getByRole("link", { name: "Lire la convocation" });
+  expect((await styles(lire)).fond).toBe(PECHE_PLEIN);
+  const relayer = avecDocument.getByRole("link", {
+    name: "Relayer sur le groupe WhatsApp",
+  });
+  const r = await styles(relayer);
+  expect(r.contour).toBe(CONTOUR_NEUTRE);
+  expect(r.largeurContour).not.toBe("0px");
+  expect(r.fond).not.toBe(PECHE_PLEIN);
+
+  const seul = carte(page, sansDocument).getByRole("link", {
+    name: "Relayer sur le groupe WhatsApp",
+  });
+  expect((await styles(seul)).contour).toBe(CONTOUR_NEUTRE);
+
+  const nouveau = avecDocument.getByText("Nouveau", { exact: true });
+  const n = await styles(nouveau);
+  expect(n.fond).toBe(TRANSPARENT);
+  expect(n.texte).toBe(TERRE_CUITE);
+  expect(
+    await nouveau.evaluate((el) => getComputedStyle(el, "::before").width),
+  ).toBe("9px");
+  // La pastille de type garde sa couleur pêche (Assemblée).
+  const pastille = avecDocument.getByText("Assemblée générale", {
+    exact: true,
+  });
+  expect((await styles(pastille)).fond).toBe(PECHE_PLEIN);
+});
+
+test("sur la fiche d'une annonce, mêmes boutons et même « Nouveau »", async ({
+  page,
+}) => {
+  const annonce = await nouvelleAnnonce({
+    type: "assemblee",
+    titre: titreUnique("Fiche neutre"),
+    document_chemin: "fictif-260.pdf",
+  });
+  await page.goto(`/annonces/${annonce.identifiant_public}`);
+
+  const lire = page.getByRole("link", { name: "Lire la convocation" });
+  expect((await styles(lire)).fond).toBe(PECHE_PLEIN);
+  const relayer = page.getByRole("link", {
+    name: "Relayer sur le groupe WhatsApp",
+  });
+  expect((await styles(relayer)).contour).toBe(CONTOUR_NEUTRE);
+  const nouveau = page.getByText("Nouveau", { exact: true });
+  const n = await styles(nouveau);
+  expect(n.fond).toBe(TRANSPARENT);
+  expect(n.texte).toBe(TERRE_CUITE);
+});

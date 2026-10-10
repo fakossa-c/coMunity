@@ -11,6 +11,9 @@ const variantes = {
     "min-h-bouton gap-2 px-5 bg-fond-confirme text-texte-confirme hover:bg-secondary-fixed-dim",
   contour:
     "min-h-bouton gap-2 px-5 border-2 border-contour-action bg-fond-carte text-on-surface hover:bg-surface-container-low",
+  /** Geste secondaire d'un écran où le pêche est réservé à l'action (Annonces) : contour neutre. */
+  neutre:
+    "min-h-bouton gap-2 px-5 border-[1.5px] border-outline bg-fond-carte text-on-surface hover:bg-surface-container-low",
   /** Annuler, supprimer. */
   danger:
     "min-h-bouton gap-1.5 px-5 border-2 border-error bg-fond-carte text-error hover:bg-error-container",

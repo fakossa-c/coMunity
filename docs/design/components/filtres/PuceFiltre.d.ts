@@ -4,6 +4,8 @@ export interface PuceFiltreProps {
   selectionnee?: boolean;
   /** Puce de catégorie : pictogramme 24 px en terre cuite */
   categorie?: boolean;
+  /** Rendu neutre (bleu clair sélectionnée, contour `outline` sinon) : réservé à Annonces */
+  neutre?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
 }
