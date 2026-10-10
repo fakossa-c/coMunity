@@ -4,7 +4,7 @@ Barre de navigation du bas, trois onglets, quatre pour un membre actif du consei
 <BarreNavigation actif="activites" onChange={setEcran} />
 ```
 
-**Sur ordinateur** (cadre Journal), la barre du bas n'existe pas : les mêmes onglets sont dans la `BarreHaute`, le quatrième s'y appelant « Tableau de bord » (après Annonces), en pilules de libellé seul (48 px de haut, 24 px de marge, 17 px 700 ; 14 px de marge sous 80 rem quand ils sont quatre, pour tenir avec « Proposer » et l'avatar). Actif : pêche `--color-primary-fixed`, libellé en 800, `aria-current="page"`. Survol : fond bleu très clair. Transition de 0,35 s.
+**Sur ordinateur** (cadre Journal), la barre du bas n'existe pas : les mêmes onglets sont dans la `BarreHaute`, le quatrième s'y appelant « Tableau de bord » (après Annonces), en pilules de libellé seul (48 px de haut, 24 px de marge, 17 px 700 ; 14 px de marge sous 80 rem quand ils sont quatre, pour tenir avec « Proposer » et l'avatar). Actif : libellé `on-surface` en 800, souligné d'un trait de 3 px `--color-primary` sous le libellé seul, sans fond (les autres onglets gardent un trait transparent de même épaisseur, rien ne bouge), `aria-current="page"`. Survol : fond bleu très clair. Transition de 0,35 s.
 
 ```jsx
 <BarreNavigation actif="activites" emplacement="haut" />   {/* barre du haut, ordinateur */}
