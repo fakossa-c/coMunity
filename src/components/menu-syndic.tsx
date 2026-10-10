@@ -186,7 +186,7 @@ function ListeRubriques({
                       aria-current={estActif ? "page" : undefined}
                       aria-label={nom}
                       onClick={onChoisir}
-                      className={`relative flex min-h-cible items-center gap-3 rounded-full px-4 py-2 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal rail:mx-auto rail:w-14 rail:justify-center rail:px-0 ${estActif ? "bg-fond-action font-extrabold text-texte-action" : "font-bold text-on-surface-variant hover:bg-surface-container hover:text-on-surface"}`}
+                      className={`relative flex min-h-cible items-center gap-3 rounded-full px-4 py-2 font-headline text-label-lg transition-colors duration-(--duree-courte) ease-journal rail:mx-auto rail:w-14 rail:justify-center rail:px-0 ${estActif ? "bg-surface-container-high font-extrabold text-on-surface" : "font-bold text-on-surface-variant hover:bg-surface-container hover:text-on-surface"}`}
                     >
                       <Icone nom={rubrique.icone} plein={estActif} />
                       <span className="min-w-0 flex-1 break-words rail:sr-only">

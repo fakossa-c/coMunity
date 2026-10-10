@@ -293,7 +293,7 @@ test("sur l'écran Résidents, chaque rôle a sa couleur : valider en vert, retr
 
   // La rubrique active du menu est bleu clair, plus pêche (le menu est un tiroir sur mobile).
   if (!isMobile) {
-    const rubrique = page.locator('a[aria-current="page"]', {
+    const rubrique = page.locator('a[aria-current="page"]:visible', {
       hasText: "Résidents",
     });
     expect(await styleCalcule(rubrique, "background-color")).toBe(
