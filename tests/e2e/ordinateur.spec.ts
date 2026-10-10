@@ -119,6 +119,17 @@ test("l'onglet de la page courante est repérable, et chaque onglet mène à sa 
   expect((await boite(libelleActif)).height).toBe(
     (await boite(libelleAutre)).height,
   );
+  // Le trait ne décentre pas le libellé : il reste aligné sur « Proposer » et l'avatar.
+  const decalageVertical = await actif.evaluate((lien) => {
+    const plage = document.createRange();
+    plage.selectNodeContents(lien.querySelector("span")!);
+    const texte = plage.getBoundingClientRect();
+    const boiteLien = lien.getBoundingClientRect();
+    return Math.abs(
+      (texte.top + texte.bottom) / 2 - (boiteLien.top + boiteLien.bottom) / 2,
+    );
+  });
+  expect(decalageVertical).toBeLessThanOrEqual(1);
 
   await autre.click();
   await expect(page).toHaveURL(/\/annonces$/);
