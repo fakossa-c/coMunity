@@ -46,6 +46,7 @@
     "utilisateurs": "résidents",
     "utilisateursReels": false,
     "brancheProd": "main",
+    "lienProd": "https://comunity-beta.vercel.app/",
     "comptesTest": [
       {
         "compte": "fakossa+test-syndic-syndic@gmail.com",
