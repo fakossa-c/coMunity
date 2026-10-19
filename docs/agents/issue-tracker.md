@@ -18,8 +18,8 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 
 Issues are also tracked on the GitHub Project **coMunity** (`https://github.com/users/fakossa-c/projects/2`, a user project of `fakossa-c`). Its `Status` field has three columns: `Todo`, `In Progress`, `Done`. Assigning an issue does **not** move it, so:
 
-- **Take a ticket** (gate step 3 of the shared method rules): assign yourself, then, from the project folder, `node "$HOME/.claude/skills/orchestrer-tickets/orch/statut-ticket.mjs" <number> "In Progress"`.
-- **Close a ticket**: `node "$HOME/.claude/skills/orchestrer-tickets/orch/statut-ticket.mjs" <number> Done` before or after `gh issue close`.
+- **Take a ticket** (gate step 3 of the shared method rules): assign yourself, then, from the project folder, `node "$HOME/Projets perso/boucle/skills/orchestrer-tickets/orch/statut-ticket.mjs" <number> "In Progress"`.
+- **Close a ticket**: `node "$HOME/Projets perso/boucle/skills/orchestrer-tickets/orch/statut-ticket.mjs" <number> Done` before or after `gh issue close`.
 - **New ticket**: created issues land in `Todo` once added to the board.
 
 The script is the shared delivery loop's: it reads the board from `tableau` in `.claude/orchestration.json` and uses the token of `compteGh` from that file (`gh auth token -u fakossa-c`).

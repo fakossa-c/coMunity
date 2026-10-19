@@ -1,5 +1,6 @@
 {
   "projet": "comunity",
+  "boucle": 1,
   "depot": "fakossa-c/coMunity",
   "compteGh": "fakossa-c",
   "brancheIntegration": "develop",
