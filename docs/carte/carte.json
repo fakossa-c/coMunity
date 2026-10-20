@@ -432,7 +432,7 @@
    "heat": "#ba1a1a",
    "ok": "#236b3b",
    "wait": "#9b5300",
-   "shadow": "0 10px 30px rgba(18, 28, 42, .14)"
+   "shadow": "0 8px 24px -4px rgba(24, 34, 48, .35)"
   },
   "sombre": {
    "bg": "#121c2a",
@@ -450,7 +450,7 @@
    "heat": "#ffb4ab",
    "ok": "#8ed79c",
    "wait": "#ffb77d",
-   "shadow": "0 10px 30px rgba(0, 0, 0, .45)"
+   "shadow": "0 8px 24px -4px rgba(0, 0, 0, .6)"
   }
  },
  "lexique": {
@@ -616,7 +616,7 @@
   "contrat_module_nom": "Contrat du module",
   "contrat_module_dit": "Ce que le module promet, dans le même ordre que le contrat d'une étape. Chaque invariant nomme la contrainte de base ou le test qui le fait respecter.",
   "contrat_module_version": "Le numéro change quand une promesse du module change.",
-  "col_backlog": "Backlog",
+  "col_backlog": "À venir",
   "col_encours": "En cours",
   "col_fait": "Fait",
   "col_acorriger": "À corriger",
@@ -691,7 +691,7 @@
   "res_absent": "Cette évolution n'explique pas encore ce qu'elle change pour les résidents.",
   "demande": "Ce qui est demandé",
   "fichiers_touches": "Fichiers touchés",
-  "noeuds_touches": "Noeuds touchés",
+  "noeuds_touches": "Étapes touchées",
   "sa_spec": "Sa spécification",
   "ses_tickets": "Ses évolutions",
   "compte_un": " · {faits} fait sur {total}",
@@ -732,7 +732,7 @@
   "ajouts": "Ajouts",
   "ajouts_dit": "Écrits par Claude à votre demande, à partir de la fiche. À vérifier avant d'en faire une règle.",
   "ajout_sur": "Sur : {question}",
-  "ajout_valide": "Validée, dans le dépôt de coMunity",
+  "ajout_valide": "Validée, gardée avec le catalogue",
   "retirer": "Retirer",
   "retrait_echec": "La suppression a échoué.",
   "erreur_not_granted": "Vous n'avez pas autorisé Claude pour cette page.",

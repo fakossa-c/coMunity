@@ -22,7 +22,7 @@
    "heat": "#ba1a1a",
    "ok": "#236b3b",
    "wait": "#9b5300",
-   "shadow": "0 10px 30px rgba(18, 28, 42, .14)"
+   "shadow": "0 8px 24px -4px rgba(24, 34, 48, .35)"
   },
   "sombre": {
    "bg": "#121c2a",
@@ -40,7 +40,7 @@
    "heat": "#ffb4ab",
    "ok": "#8ed79c",
    "wait": "#ffb77d",
-   "shadow": "0 10px 30px rgba(0, 0, 0, .45)"
+   "shadow": "0 8px 24px -4px rgba(0, 0, 0, .6)"
   }
  }
 }
