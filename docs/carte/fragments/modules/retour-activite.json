@@ -1,0 +1,62 @@
+{
+ "noeuds": [
+  {
+   "id": "module:retour-activite",
+   "type": "module",
+   "titre": "Le retour sur une activité",
+   "role": "Recueille la note et le commentaire d'un participant sur une activité terminée, et les rend à son organisateur et au conseil syndical.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/retour-activite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/formulaire-retour.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/retours.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260925160000_retour_activite.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  }
+ ],
+ "liens": [
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:retour-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "src/app/activites/[identifiant]/formulaire-retour.tsx"
+    },
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260925160000_retour_activite.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:retour-activite",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/activites/[identifiant]/formulaire-retour.tsx",
+     "importe": "src/app/activites/[identifiant]/actions.ts"
+    }
+   ]
+  }
+ ]
+}

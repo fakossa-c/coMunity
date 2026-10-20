@@ -1,0 +1,109 @@
+{
+ "noeuds": [
+  {
+   "id": "module:espaces-communs",
+   "type": "module",
+   "titre": "Les espaces communs",
+   "role": "Tient la liste des espaces communs de la résidence (horaires d'accès, contact, règles, équipements, photos), que le conseil syndical gère et où une activité peut se tenir.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/espaces-communs.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/espaces-communs/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/ma-copro/espaces/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/espaces-communs-copro.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/fiche-espace-commun.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/carte-espace-commun.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260926090000_espaces_communs.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  }
+ ],
+ "liens": [
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "src/lib/espaces-communs.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "supabase/migrations/20260926090000_espaces_communs.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:espaces-communs",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/lib/espaces-communs.ts",
+     "importe": "src/assistant/index.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:espaces-communs",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/syndic/espaces-communs/[id]/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/syndic/espaces-communs/nouveau/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/syndic/espaces-communs/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/ma-copro/espaces/[identifiant]/page.tsx",
+     "importe": "src/lib/session.ts"
+    }
+   ]
+  }
+ ]
+}

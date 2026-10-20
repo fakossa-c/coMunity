@@ -1,0 +1,180 @@
+{
+ "noeuds": [
+  {
+   "id": "module:proposition-moderation",
+   "type": "module",
+   "titre": "La proposition et la modération d'une activité",
+   "role": "Fait proposer une activité en quatre écrans, la fait relire par l'assistant Jev puis, s'il a une objection, par le conseil syndical, qui la publie, la refuse, la masque ou la rétablit.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/proposer/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/proposition-activite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/decision-moderation.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/moderation-activites.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/moderation/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/moderation-conseil.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/assistant/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130000_statuts_moderation.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130100_moderation_activites.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929200000_pre_moderation_jev.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  }
+ ],
+ "liens": [
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "src/app/proposer/actions.ts"
+    },
+    {
+     "noeud": "proposer",
+     "fichier": "src/lib/proposition-activite.ts"
+    },
+    {
+     "noeud": "proposer",
+     "fichier": "supabase/migrations/20260929200000_pre_moderation_jev.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "moderer",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "moderer",
+     "fichier": "src/assistant/jev-serveur.ts"
+    },
+    {
+     "noeud": "moderer",
+     "fichier": "src/lib/moderation-activites.ts"
+    },
+    {
+     "noeud": "moderer",
+     "fichier": "src/app/syndic/moderation/page.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "publier",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "publier",
+     "fichier": "supabase/migrations/20260929200000_pre_moderation_jev.sql"
+    },
+    {
+     "noeud": "publier",
+     "fichier": "supabase/migrations/20260929130100_moderation_activites.sql"
+    },
+    {
+     "noeud": "publier",
+     "fichier": "src/lib/decision-moderation.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "sinscrire",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "sinscrire",
+     "fichier": "supabase/migrations/20260929130100_moderation_activites.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/proposer/parcours.tsx",
+     "importe": "src/lib/espaces-communs.ts"
+    },
+    {
+     "fichier": "src/app/proposer/recapitulatif.tsx",
+     "importe": "src/lib/espaces-communs.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/proposer/recapitulatif.tsx",
+     "importe": "src/lib/inscription-activite.ts"
+    },
+    {
+     "fichier": "src/app/activites/[identifiant]/moderation-conseil.tsx",
+     "importe": "src/app/activites/[identifiant]/actions.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/syndic/moderation/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    }
+   ]
+  }
+ ]
+}
