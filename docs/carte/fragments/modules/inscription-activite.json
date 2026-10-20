@@ -4,7 +4,7 @@
    "id": "module:inscription-activite",
    "type": "module",
    "titre": "L'inscription à une activité",
-   "role": "Inscrit un résident validé à une activité publiée, avec les personnes qu'il accompagne et dans la limite des places, le laisse se désister, et dit qui participe.",
+   "role": "Inscrit un résident validé à une activité publiée, avec les personnes qu'il accompagne et dans la limite des places, le laisse annuler sa participation, et dit qui participe.",
    "emplacements": [
     {
      "depot": "fakossa-c/coMunity",
@@ -14,6 +14,11 @@
     {
      "depot": "fakossa-c/coMunity",
      "chemin": "supabase/migrations/20260925130000_inscription_activite.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130100_moderation_activites.sql",
      "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
     },
     {
@@ -34,7 +39,7 @@
    ],
    "contrat": {
     "but": "Qu'un résident validé prenne sa place à une activité publiée, avec ses accompagnants, sans jamais dépasser les places ni apparaître deux fois.",
-    "declencheur": "Le résident touche « Je participe » ou « Se désister » sur la fiche d'une activité.",
+    "declencheur": "Le résident touche « Je participe » ou « Annuler » (puis confirme) sur la fiche d'une activité.",
     "preconditions": [
      {
       "id": "compte-valide",
@@ -54,7 +59,7 @@
      }
     ],
     "entrees": "L'identifiant public de l'activité et le nombre d'accompagnants (0 par défaut).",
-    "sorties": "Une inscription, comptée dans la jauge de l'activité (le résident et ses accompagnants), ou un refus qui dit pourquoi. Se désister supprime l'inscription.",
+    "sorties": "Une inscription, comptée dans la jauge de l'activité (le résident et ses accompagnants), ou un refus qui dit pourquoi. Annuler sa participation supprime l'inscription.",
     "invariants": [
      {
       "id": "une-inscription-par-resident",
@@ -62,7 +67,7 @@
      },
      {
       "id": "jamais-au-dela-des-places",
-      "texte": "Jamais plus de personnes inscrites que de places, accompagnants compris, même quand deux résidents prennent la dernière place en même temps. Respecté par le verrou sur la ligne de l'activité dans s_inscrire (supabase/migrations/20260929130100_moderation_activites.sql), et testé par « une activité complète refuse une nouvelle inscription », « les accompagnants ne dépassent pas les places restantes » et « deux inscriptions simultanées sur la dernière place : une seule réussit » dans tests/db/inscription-activite.test.ts."
+      "texte": "Jamais plus de personnes inscrites que de places, accompagnants compris, même quand deux résidents prennent la dernière place en même temps. Respecté par le verrou sur la ligne de l'activité dans s_inscrire (supabase/migrations/20260929130100_moderation_activites.sql), et par le déclencheur activite_capacite_sous_inscrits, qui refuse de baisser la capacité sous les personnes inscrites (supabase/migrations/20260925170000_gestion_activite.sql) ; testé par « une activité complète refuse une nouvelle inscription », « les accompagnants ne dépassent pas les places restantes » et « deux inscriptions simultanées sur la dernière place : une seule réussit » dans tests/db/inscription-activite.test.ts, et « la capacité ne descend pas sous le nombre de personnes inscrites, accompagnants compris » dans tests/db/gestion-activite.test.ts."
      },
      {
       "id": "compte-non-valide-refuse",
@@ -97,6 +102,10 @@
      [
       "Il ne reste pas assez de places.",
       "« Il ne reste pas assez de places. »"
+     ],
+     [
+      "Le résident annule une participation qu'il n'a pas.",
+      "« Cette activité n'existe plus. »"
      ],
      [
       "Toute autre erreur.",

@@ -90,6 +90,30 @@
      "fichier": "supabase/migrations/20260923150000_residents.sql"
     }
    ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
   }
  ]
 }

@@ -21,7 +21,7 @@
    "titre": "Proposer",
    "court": "Un résident décrit son activité.",
    "contrat": {
-    "but": "Un résident, ou le conseil syndical, décrit une activité en quatre écrans (titre, catégorie et photos ; date et lieu ; places et confort ; récapitulatif) et la propose à la résidence.",
+    "but": "Un résident, ou le conseil syndical, décrit une activité en quatre écrans (titre, catégorie et photos ; date et lieu ; capacité et confort ; récapitulatif) et la propose à la résidence.",
     "declencheur": "Un compte validé ouvre « Proposer ».",
     "entrees": "Le titre, la catégorie, des photos si on en veut, la date et l'heure, un espace commun ou un lieu libre, le nombre de places.",
     "sorties": "Une activité enregistrée et mise en relecture : seuls son créateur et le conseil syndical la voient tant qu'elle n'est pas publiée.",
@@ -39,7 +39,7 @@
     "but": "Avant que les voisins la voient, l'activité est relue par l'assistant Jev ; s'il a une objection, le conseil syndical la lit avec la raison et décide.",
     "declencheur": "Une activité vient d'être proposée, ou son créateur vient de modifier une activité publiée.",
     "entrees": "L'activité en relecture et l'avis de l'assistant : sans objection, ou la raison de son objection.",
-    "sorties": "Une activité publiée sans objection, ou laissée en relecture avec sa raison, dans la liste « À relire » du conseil syndical.",
+    "sorties": "Une activité publiée sans objection, ou laissée en relecture avec sa raison dans la liste « À relire » du conseil syndical, qui la publie, la refuse (la masque avec un message), ou la rétablit.",
     "version": 1
    }
   },
@@ -66,7 +66,7 @@
    "titre": "S'inscrire",
    "court": "Un résident réserve sa place.",
    "contrat": {
-    "but": "Un résident validé réserve sa place à une activité publiée, avec les personnes qu'il accompagne, et peut se désister.",
+    "but": "Un résident validé réserve sa place à une activité publiée, avec les personnes qu'il accompagne, et peut annuler sa participation.",
     "declencheur": "Le résident touche « Je participe » sur la fiche d'une activité.",
     "entrees": "L'identifiant public de l'activité et le nombre d'accompagnants.",
     "sorties": "Une inscription, comptée dans la jauge de l'activité ; ou un refus qui dit pourquoi.",
