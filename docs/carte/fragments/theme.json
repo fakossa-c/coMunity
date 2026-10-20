@@ -1,0 +1,46 @@
+{
+ "theme": {
+  "polices": {
+   "href": "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
+   "display": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+   "body": "\"Atkinson Hyperlegible Next\", system-ui, sans-serif",
+   "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+  },
+  "clair": {
+   "bg": "#f8f9ff",
+   "surface": "#ffffff",
+   "canvas": "#eff3ff",
+   "dot": "#d9e3f6",
+   "ink": "#121c2a",
+   "muted": "#594139",
+   "line": "#e1bfb5",
+   "edge": "#8d7168",
+   "accent": "#8f2b00",
+   "accent-soft": "#ffdbd0",
+   "second": "#236b3b",
+   "third": "#783f00",
+   "heat": "#ba1a1a",
+   "ok": "#236b3b",
+   "wait": "#9b5300",
+   "shadow": "0 10px 30px rgba(18, 28, 42, .14)"
+  },
+  "sombre": {
+   "bg": "#121c2a",
+   "surface": "#1b2636",
+   "canvas": "#17212f",
+   "dot": "#3a4556",
+   "ink": "#ebf1ff",
+   "muted": "#d9c2ba",
+   "line": "#3a4556",
+   "edge": "#8d7168",
+   "accent": "#ffb59c",
+   "accent-soft": "#832700",
+   "second": "#8ed79c",
+   "third": "#ffb77d",
+   "heat": "#ffb4ab",
+   "ok": "#8ed79c",
+   "wait": "#ffb77d",
+   "shadow": "0 10px 30px rgba(0, 0, 0, .45)"
+  }
+ }
+}
