@@ -1,0 +1,23 @@
+{
+ "noeuds": [
+  {
+   "id": "decision:0001",
+   "type": "decision",
+   "titre": "Rôles et permissions sont des données, pas un enum",
+   "fichier": "docs/adr/0001-roles-et-permissions-en-donnees.md"
+  }
+ ],
+ "liens": [
+  {
+   "type": "justifie",
+   "de": "decision:0001",
+   "vers": "module:roles-et-permissions",
+   "statut": "inferee",
+   "preuve": [
+    {
+     "document": "docs/adr/0001-roles-et-permissions-en-donnees.md"
+    }
+   ]
+  }
+ ]
+}

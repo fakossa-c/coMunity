@@ -1,0 +1,233 @@
+{
+ "$schema_note": "Catalogue des modules de coMunity. Voir README.md du dossier docs/carte/ pour le format, la compilation et la règle de lecture.",
+ "version": 1,
+ "lu_dans_le_code": {
+  "date": "2026-10-20",
+  "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+ },
+ "couloirs": [
+  {
+   "id": "activite",
+   "titre": "La vie d'une activité",
+   "couleur": "boucle"
+  }
+ ],
+ "noeuds": [
+  {
+   "id": "proposer",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 1,
+   "titre": "Proposer",
+   "court": "Un résident décrit son activité.",
+   "contrat": {
+    "but": "Un résident, ou le conseil syndical, décrit une activité en quatre écrans (titre, catégorie et photos ; date et lieu ; capacité et confort ; récapitulatif) et la propose à la résidence.",
+    "declencheur": "Un compte validé ouvre « Proposer ».",
+    "entrees": "Le titre, la catégorie, des photos si on en veut, la date et l'heure, un espace commun ou un lieu libre, le nombre de places.",
+    "sorties": "Une activité enregistrée et mise en relecture : seuls son créateur et le conseil syndical la voient tant qu'elle n'est pas publiée.",
+    "version": 1
+   }
+  },
+  {
+   "id": "moderer",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 2,
+   "titre": "Modérer",
+   "court": "L'assistant puis le conseil syndical relisent.",
+   "contrat": {
+    "but": "Avant que les voisins la voient, l'activité est relue par l'assistant Jev ; s'il a une objection, le conseil syndical la lit avec la raison et décide.",
+    "declencheur": "Une activité vient d'être proposée, ou son créateur vient de modifier une activité publiée.",
+    "entrees": "L'activité en relecture et l'avis de l'assistant : sans objection, ou la raison de son objection.",
+    "sorties": "Une activité publiée sans objection, ou laissée en relecture avec sa raison dans la liste « À relire » du conseil syndical, qui la publie, la refuse (la masque avec un message), ou la rétablit.",
+    "version": 1
+   }
+  },
+  {
+   "id": "publier",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 3,
+   "titre": "Publier",
+   "court": "L'activité devient visible de tous.",
+   "contrat": {
+    "but": "L'activité devient visible de tous les résidents, avec sa fiche et son lien à partager.",
+    "declencheur": "L'assistant n'a pas d'objection, ou le conseil syndical publie ou rétablit l'activité.",
+    "entrees": "Une activité en relecture ou masquée.",
+    "sorties": "Une activité publiée, ouverte aux inscriptions et présente dans le catalogue des activités à venir.",
+    "version": 1
+   }
+  },
+  {
+   "id": "sinscrire",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 4,
+   "titre": "S'inscrire",
+   "court": "Un résident réserve sa place.",
+   "contrat": {
+    "but": "Un résident validé réserve sa place à une activité publiée, avec les personnes qu'il accompagne, et peut annuler sa participation.",
+    "declencheur": "Le résident touche « Je participe » sur la fiche d'une activité.",
+    "entrees": "L'identifiant public de l'activité et le nombre d'accompagnants.",
+    "sorties": "Une inscription, comptée dans la jauge de l'activité ; ou un refus qui dit pourquoi.",
+    "version": 1
+   }
+  },
+  {
+   "id": "se-retrouver",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 5,
+   "titre": "Se retrouver",
+   "court": "Où, quand et avec qui.",
+   "contrat": {
+    "but": "Les inscrits savent où, quand et avec qui : la fiche de l'activité donne le lieu, les consignes de l'espace commun et la liste des participants.",
+    "declencheur": "Un résident ouvre la fiche d'une activité publiée.",
+    "entrees": "Une activité publiée et ses inscrits.",
+    "sorties": "Les participants (pseudo, photo, accompagnants) et le lieu, lisibles par les comptes qui consultent la résidence.",
+    "version": 1
+   }
+  },
+  {
+   "id": "retour",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 6,
+   "titre": "Donner son retour",
+   "court": "Une note et un commentaire.",
+   "contrat": {
+    "but": "Un participant dit comment s'est passée une activité terminée, par une note et un commentaire que l'organisateur et le conseil syndical lisent.",
+    "declencheur": "L'activité est terminée et un participant ouvre sa fiche.",
+    "entrees": "Une note et un commentaire.",
+    "sorties": "Un retour enregistré, un par participant (mis à jour s'il y revient) ; la note moyenne et les commentaires, pour l'organisateur et le conseil syndical.",
+    "version": 1
+   }
+  }
+ ],
+ "liens": [
+  {
+   "type": "flux",
+   "de": "proposer",
+   "vers": "moderer"
+  },
+  {
+   "type": "flux",
+   "de": "moderer",
+   "vers": "publier"
+  },
+  {
+   "type": "flux",
+   "de": "publier",
+   "vers": "sinscrire"
+  },
+  {
+   "type": "flux",
+   "de": "sinscrire",
+   "vers": "se-retrouver"
+  },
+  {
+   "type": "flux",
+   "de": "se-retrouver",
+   "vers": "retour"
+  }
+ ],
+ "parcours": [
+  {
+   "id": "une-activite",
+   "niveau": "racine",
+   "titre": "Une activité, de sa proposition à ses retours",
+   "texte": "Les six moments de la vie d'une activité. Chaque étape cite les modules qu'elle utilise : celles de « S'inscrire » répondent à « qu'est-ce qui intervient dans l'inscription à une activité ? ».",
+   "trajet": [
+    "proposer",
+    "moderer",
+    "publier",
+    "sinscrire",
+    "se-retrouver",
+    "retour"
+   ],
+   "besoins": [
+    "activite"
+   ]
+  }
+ ],
+ "vue": {
+  "positions": {
+   "proposer": [
+    0,
+    0
+   ],
+   "moderer": [
+    400,
+    0
+   ],
+   "publier": [
+    800,
+    0
+   ],
+   "sinscrire": [
+    1200,
+    0
+   ],
+   "se-retrouver": [
+    1600,
+    0
+   ],
+   "retour": [
+    2000,
+    0
+   ]
+  },
+  "fleches": {
+   "proposer>moderer": [
+    [
+     260,
+     66
+    ],
+    [
+     400,
+     66
+    ]
+   ],
+   "moderer>publier": [
+    [
+     660,
+     66
+    ],
+    [
+     800,
+     66
+    ]
+   ],
+   "publier>sinscrire": [
+    [
+     1060,
+     66
+    ],
+    [
+     1200,
+     66
+    ]
+   ],
+   "sinscrire>se-retrouver": [
+    [
+     1460,
+     66
+    ],
+    [
+     1600,
+     66
+    ]
+   ],
+   "se-retrouver>retour": [
+    [
+     1860,
+     66
+    ],
+    [
+     2000,
+     66
+    ]
+   ]
+  }
+ }
+}

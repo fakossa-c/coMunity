@@ -1,0 +1,864 @@
+{
+ "$schema_note": "Catalogue des modules de coMunity. Voir README.md du dossier docs/carte/ pour le format, la compilation et la règle de lecture.",
+ "version": 1,
+ "lu_dans_le_code": {
+  "date": "2026-10-20",
+  "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+ },
+ "couloirs": [
+  {
+   "id": "activite",
+   "titre": "La vie d'une activité",
+   "couleur": "boucle"
+  }
+ ],
+ "noeuds": [
+  {
+   "id": "proposer",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 1,
+   "titre": "Proposer",
+   "court": "Un résident décrit son activité.",
+   "contrat": {
+    "but": "Un résident, ou le conseil syndical, décrit une activité en quatre écrans (titre, catégorie et photos ; date et lieu ; capacité et confort ; récapitulatif) et la propose à la résidence.",
+    "declencheur": "Un compte validé ouvre « Proposer ».",
+    "entrees": "Le titre, la catégorie, des photos si on en veut, la date et l'heure, un espace commun ou un lieu libre, le nombre de places.",
+    "sorties": "Une activité enregistrée et mise en relecture : seuls son créateur et le conseil syndical la voient tant qu'elle n'est pas publiée.",
+    "version": 1
+   }
+  },
+  {
+   "id": "moderer",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 2,
+   "titre": "Modérer",
+   "court": "L'assistant puis le conseil syndical relisent.",
+   "contrat": {
+    "but": "Avant que les voisins la voient, l'activité est relue par l'assistant Jev ; s'il a une objection, le conseil syndical la lit avec la raison et décide.",
+    "declencheur": "Une activité vient d'être proposée, ou son créateur vient de modifier une activité publiée.",
+    "entrees": "L'activité en relecture et l'avis de l'assistant : sans objection, ou la raison de son objection.",
+    "sorties": "Une activité publiée sans objection, ou laissée en relecture avec sa raison dans la liste « À relire » du conseil syndical, qui la publie, la refuse (la masque avec un message), ou la rétablit.",
+    "version": 1
+   }
+  },
+  {
+   "id": "publier",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 3,
+   "titre": "Publier",
+   "court": "L'activité devient visible de tous.",
+   "contrat": {
+    "but": "L'activité devient visible de tous les résidents, avec sa fiche et son lien à partager.",
+    "declencheur": "L'assistant n'a pas d'objection, ou le conseil syndical publie ou rétablit l'activité.",
+    "entrees": "Une activité en relecture ou masquée.",
+    "sorties": "Une activité publiée, ouverte aux inscriptions et présente dans le catalogue des activités à venir.",
+    "version": 1
+   }
+  },
+  {
+   "id": "sinscrire",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 4,
+   "titre": "S'inscrire",
+   "court": "Un résident réserve sa place.",
+   "contrat": {
+    "but": "Un résident validé réserve sa place à une activité publiée, avec les personnes qu'il accompagne, et peut annuler sa participation.",
+    "declencheur": "Le résident touche « Je participe » sur la fiche d'une activité.",
+    "entrees": "L'identifiant public de l'activité et le nombre d'accompagnants.",
+    "sorties": "Une inscription, comptée dans la jauge de l'activité ; ou un refus qui dit pourquoi.",
+    "version": 1
+   }
+  },
+  {
+   "id": "se-retrouver",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 5,
+   "titre": "Se retrouver",
+   "court": "Où, quand et avec qui.",
+   "contrat": {
+    "but": "Les inscrits savent où, quand et avec qui : la fiche de l'activité donne le lieu, les consignes de l'espace commun et la liste des participants.",
+    "declencheur": "Un résident ouvre la fiche d'une activité publiée.",
+    "entrees": "Une activité publiée et ses inscrits.",
+    "sorties": "Les participants (pseudo, photo, accompagnants) et le lieu, lisibles par les comptes qui consultent la résidence.",
+    "version": 1
+   }
+  },
+  {
+   "id": "retour",
+   "type": "etape",
+   "couloir": "activite",
+   "ordre": 6,
+   "titre": "Donner son retour",
+   "court": "Une note et un commentaire.",
+   "contrat": {
+    "but": "Un participant dit comment s'est passée une activité terminée, par une note et un commentaire que l'organisateur et le conseil syndical lisent.",
+    "declencheur": "L'activité est terminée et un participant ouvre sa fiche.",
+    "entrees": "Une note et un commentaire.",
+    "sorties": "Un retour enregistré, un par participant (mis à jour s'il y revient) ; la note moyenne et les commentaires, pour l'organisateur et le conseil syndical.",
+    "version": 1
+   }
+  },
+  {
+   "id": "module:espaces-communs",
+   "type": "module",
+   "titre": "Les espaces communs",
+   "role": "Tient la liste des espaces communs de la résidence (horaires d'accès, contact, règles, équipements, photos), que le conseil syndical gère et où une activité peut se tenir.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/espaces-communs.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/espaces-communs/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/ma-copro/espaces/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/espaces-communs-copro.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/fiche-espace-commun.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/carte-espace-commun.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260926090000_espaces_communs.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  },
+  {
+   "id": "module:inscription-activite",
+   "type": "module",
+   "titre": "L'inscription à une activité",
+   "role": "Inscrit un résident validé à une activité publiée, avec les personnes qu'il accompagne et dans la limite des places, le laisse annuler sa participation, et dit qui participe.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/inscription-activite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260925130000_inscription_activite.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130100_moderation_activites.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/actions.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/bloc-inscription.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/participants.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ],
+   "contrat": {
+    "but": "Qu'un résident validé prenne sa place à une activité publiée, avec ses accompagnants, sans jamais dépasser les places ni apparaître deux fois.",
+    "declencheur": "Le résident touche « Je participe » ou « Annuler » (puis confirme) sur la fiche d'une activité.",
+    "preconditions": [
+     {
+      "id": "compte-valide",
+      "texte": "Le compte est validé par le conseil syndical : un compte en attente, refusé ou retiré ne s'inscrit pas."
+     },
+     {
+      "id": "activite-publiee",
+      "texte": "L'activité est publiée : en relecture ou masquée, elle est « introuvable » ; annulée, ses inscriptions sont fermées."
+     },
+     {
+      "id": "accompagnants-positifs",
+      "texte": "Le nombre d'accompagnants est de 0 ou plus."
+     },
+     {
+      "id": "places-restantes",
+      "texte": "Quand l'activité a une capacité, le résident et ses accompagnants tiennent dans les places restantes ; sans capacité, rien ne limite les places ni les accompagnants."
+     }
+    ],
+    "entrees": "L'identifiant public de l'activité et le nombre d'accompagnants (0 par défaut).",
+    "sorties": "Une inscription, comptée dans la jauge de l'activité (le résident et ses accompagnants), ou un refus qui dit pourquoi. Annuler sa participation supprime l'inscription.",
+    "invariants": [
+     {
+      "id": "une-inscription-par-resident",
+      "texte": "Jamais deux inscriptions d'un même résident à une même activité : s'inscrire de nouveau met à jour le nombre d'accompagnants. Respecté par la contrainte unique (activite_id, resident_id) de supabase/migrations/20260925130000_inscription_activite.sql, et testé par « réinscrire met à jour le nombre d'accompagnants plutôt que de dupliquer » dans tests/db/inscription-activite.test.ts."
+     },
+     {
+      "id": "jamais-au-dela-des-places",
+      "texte": "Jamais plus de personnes inscrites que de places, accompagnants compris, même quand deux résidents prennent la dernière place en même temps. Respecté par le verrou sur la ligne de l'activité dans s_inscrire (supabase/migrations/20260929130100_moderation_activites.sql), et par le déclencheur activite_capacite_sous_inscrits, qui refuse de baisser la capacité sous les personnes inscrites (supabase/migrations/20260925170000_gestion_activite.sql) ; testé par « une activité complète refuse une nouvelle inscription », « les accompagnants ne dépassent pas les places restantes » et « deux inscriptions simultanées sur la dernière place : une seule réussit » dans tests/db/inscription-activite.test.ts, et « la capacité ne descend pas sous le nombre de personnes inscrites, accompagnants compris » dans tests/db/gestion-activite.test.ts."
+     },
+     {
+      "id": "compte-non-valide-refuse",
+      "texte": "Un compte qui n'est pas validé ne s'inscrit jamais. Respecté par peut_participer dans s_inscrire (supabase/migrations/20260929130100_moderation_activites.sql), et testé par « un résident en attente ne peut pas s'inscrire » dans tests/db/inscription-activite.test.ts."
+     },
+     {
+      "id": "activite-fermee-refusee",
+      "texte": "Une activité mise de côté par la modération ou annulée ne reçoit jamais d'inscription. Respecté par s_inscrire (supabase/migrations/20260929130100_moderation_activites.sql), et testé par « refuse toute nouvelle inscription » dans tests/db/moderation-activites.test.ts et « on ne s'inscrit plus à une activité annulée » dans tests/db/gestion-activite.test.ts."
+     }
+    ],
+    "erreurs": [
+     [
+      "Personne n'est connecté.",
+      "Redirection vers la connexion, qui ramène sur la fiche de l'activité."
+     ],
+     [
+      "Le compte n'est pas validé.",
+      "« Vous pourrez vous inscrire dès que le conseil syndical aura validé votre compte. »"
+     ],
+     [
+      "Le nombre d'accompagnants est négatif.",
+      "« Indiquez un nombre d'accompagnants de 0 ou plus. »"
+     ],
+     [
+      "L'activité n'existe pas, est en relecture ou masquée.",
+      "« Cette activité n'existe plus. »"
+     ],
+     [
+      "L'activité est annulée.",
+      "« Cette activité est annulée : les inscriptions sont fermées. »"
+     ],
+     [
+      "Il ne reste pas assez de places.",
+      "« Il ne reste pas assez de places. »"
+     ],
+     [
+      "Le résident annule une participation qu'il n'a pas.",
+      "« Cette activité n'existe plus. »"
+     ],
+     [
+      "Toute autre erreur.",
+      "« L'inscription n'a pas pu être enregistrée. Réessayez dans un instant. »"
+     ]
+    ],
+    "version": 1
+   }
+  },
+  {
+   "id": "module:proposition-moderation",
+   "type": "module",
+   "titre": "La proposition et la modération d'une activité",
+   "role": "Fait proposer une activité en quatre écrans, la fait relire par l'assistant Jev puis, s'il a une objection, par le conseil syndical, qui la publie, la refuse, la masque ou la rétablit.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/proposer/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/proposition-activite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/decision-moderation.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/moderation-activites.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/moderation/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/moderation-conseil.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/assistant/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130000_statuts_moderation.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929130100_moderation_activites.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260929200000_pre_moderation_jev.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  },
+  {
+   "id": "module:retour-activite",
+   "type": "module",
+   "titre": "Le retour sur une activité",
+   "role": "Recueille la note et le commentaire d'un participant sur une activité terminée, et les rend à son organisateur et au conseil syndical.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/retour-activite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/formulaire-retour.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/activites/[identifiant]/retours.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260925160000_retour_activite.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  },
+  {
+   "id": "module:roles-et-permissions",
+   "type": "module",
+   "titre": "Les rôles et permissions",
+   "role": "Dit qui est la personne connectée et si son compte est validé, en attente, refusé ou retiré, décide de ce qu'elle peut consulter ou faire, et réserve l'espace syndic aux membres actifs du conseil syndical.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/session.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/profil.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/identite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/lecture-espace-syndic.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/acces.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/garde-compte.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/residents/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/membres/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260923150000_residents.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  },
+  {
+   "id": "decision:0001",
+   "type": "decision",
+   "titre": "Rôles et permissions sont des données, pas un enum",
+   "fichier": "docs/adr/0001-roles-et-permissions-en-donnees.md"
+  }
+ ],
+ "cas": [],
+ "explications": [],
+ "liens": [
+  {
+   "type": "flux",
+   "de": "proposer",
+   "vers": "moderer"
+  },
+  {
+   "type": "flux",
+   "de": "moderer",
+   "vers": "publier"
+  },
+  {
+   "type": "flux",
+   "de": "publier",
+   "vers": "sinscrire"
+  },
+  {
+   "type": "flux",
+   "de": "sinscrire",
+   "vers": "se-retrouver"
+  },
+  {
+   "type": "flux",
+   "de": "se-retrouver",
+   "vers": "retour"
+  },
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "src/lib/espaces-communs.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "supabase/migrations/20260926090000_espaces_communs.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:espaces-communs",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/lib/espaces-communs.ts",
+     "importe": "src/assistant/index.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:espaces-communs",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/syndic/espaces-communs/[id]/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/syndic/espaces-communs/nouveau/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/syndic/espaces-communs/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    },
+    {
+     "fichier": "src/app/ma-copro/espaces/[identifiant]/page.tsx",
+     "importe": "src/lib/session.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "sinscrire",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "sinscrire",
+     "fichier": "src/lib/inscription-activite.ts"
+    },
+    {
+     "noeud": "sinscrire",
+     "fichier": "supabase/migrations/20260925130000_inscription_activite.sql"
+    },
+    {
+     "noeud": "sinscrire",
+     "fichier": "src/app/activites/[identifiant]/actions.ts"
+    },
+    {
+     "noeud": "sinscrire",
+     "fichier": "src/app/activites/[identifiant]/bloc-inscription.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "src/app/activites/[identifiant]/participants.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260925130000_inscription_activite.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "src/app/proposer/actions.ts"
+    },
+    {
+     "noeud": "proposer",
+     "fichier": "src/lib/proposition-activite.ts"
+    },
+    {
+     "noeud": "proposer",
+     "fichier": "supabase/migrations/20260929200000_pre_moderation_jev.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "moderer",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "moderer",
+     "fichier": "src/assistant/jev-serveur.ts"
+    },
+    {
+     "noeud": "moderer",
+     "fichier": "src/lib/moderation-activites.ts"
+    },
+    {
+     "noeud": "moderer",
+     "fichier": "src/app/syndic/moderation/page.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "publier",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "publier",
+     "fichier": "supabase/migrations/20260929200000_pre_moderation_jev.sql"
+    },
+    {
+     "noeud": "publier",
+     "fichier": "supabase/migrations/20260929130100_moderation_activites.sql"
+    },
+    {
+     "noeud": "publier",
+     "fichier": "src/lib/decision-moderation.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "sinscrire",
+   "vers": "module:proposition-moderation",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "sinscrire",
+     "fichier": "supabase/migrations/20260929130100_moderation_activites.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:espaces-communs",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/proposer/parcours.tsx",
+     "importe": "src/lib/espaces-communs.ts"
+    },
+    {
+     "fichier": "src/app/proposer/recapitulatif.tsx",
+     "importe": "src/lib/espaces-communs.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/proposer/recapitulatif.tsx",
+     "importe": "src/lib/inscription-activite.ts"
+    },
+    {
+     "fichier": "src/app/activites/[identifiant]/moderation-conseil.tsx",
+     "importe": "src/app/activites/[identifiant]/actions.ts"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:proposition-moderation",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/syndic/moderation/page.tsx",
+     "importe": "src/app/syndic/acces.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:retour-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "src/app/activites/[identifiant]/formulaire-retour.tsx"
+    },
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260925160000_retour_activite.sql"
+    }
+   ]
+  },
+  {
+   "type": "depend_de",
+   "de": "module:retour-activite",
+   "vers": "module:inscription-activite",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "fichier": "src/app/activites/[identifiant]/formulaire-retour.tsx",
+     "importe": "src/app/activites/[identifiant]/actions.ts"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "moderer",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "moderer",
+     "fichier": "src/app/syndic/acces.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "sinscrire",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "sinscrire",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "justifie",
+   "de": "decision:0001",
+   "vers": "module:roles-et-permissions",
+   "statut": "inferee",
+   "preuve": [
+    {
+     "document": "docs/adr/0001-roles-et-permissions-en-donnees.md"
+    }
+   ]
+  }
+ ],
+ "parcours": [
+  {
+   "id": "une-activite",
+   "niveau": "racine",
+   "titre": "Une activité, de sa proposition à ses retours",
+   "texte": "Les six moments de la vie d'une activité. Chaque étape cite les modules qu'elle utilise : celles de « S'inscrire » répondent à « qu'est-ce qui intervient dans l'inscription à une activité ? ».",
+   "trajet": [
+    "proposer",
+    "moderer",
+    "publier",
+    "sinscrire",
+    "se-retrouver",
+    "retour"
+   ],
+   "besoins": [
+    "activite"
+   ]
+  }
+ ],
+ "vue": {
+  "racine": {
+   "positions": {
+    "proposer": [
+     0,
+     0
+    ],
+    "moderer": [
+     400,
+     0
+    ],
+    "publier": [
+     800,
+     0
+    ],
+    "sinscrire": [
+     1200,
+     0
+    ],
+    "se-retrouver": [
+     1600,
+     0
+    ],
+    "retour": [
+     2000,
+     0
+    ]
+   },
+   "fleches": {
+    "proposer>moderer": [
+     [
+      260,
+      66
+     ],
+     [
+      400,
+      66
+     ]
+    ],
+    "moderer>publier": [
+     [
+      660,
+      66
+     ],
+     [
+      800,
+      66
+     ]
+    ],
+    "publier>sinscrire": [
+     [
+      1060,
+      66
+     ],
+     [
+      1200,
+      66
+     ]
+    ],
+    "sinscrire>se-retrouver": [
+     [
+      1460,
+      66
+     ],
+     [
+      1600,
+      66
+     ]
+    ],
+    "se-retrouver>retour": [
+     [
+      1860,
+      66
+     ],
+     [
+      2000,
+      66
+     ]
+    ]
+   }
+  },
+  "details": {}
+ }
+}

@@ -1,0 +1,119 @@
+{
+ "noeuds": [
+  {
+   "id": "module:roles-et-permissions",
+   "type": "module",
+   "titre": "Les rôles et permissions",
+   "role": "Dit qui est la personne connectée et si son compte est validé, en attente, refusé ou retiré, décide de ce qu'elle peut consulter ou faire, et réserve l'espace syndic aux membres actifs du conseil syndical.",
+   "emplacements": [
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/session.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/profil.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/identite.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/lib/lecture-espace-syndic.ts",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/acces.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/components/garde-compte.tsx",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/residents/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "src/app/syndic/membres/",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    },
+    {
+     "depot": "fakossa-c/coMunity",
+     "chemin": "supabase/migrations/20260923150000_residents.sql",
+     "commit": "da71fe705966c59035fee2a7d61467b1145dada5"
+    }
+   ]
+  }
+ ],
+ "liens": [
+  {
+   "type": "utilise",
+   "de": "proposer",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "proposer",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "moderer",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "moderer",
+     "fichier": "src/app/syndic/acces.tsx"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "sinscrire",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "sinscrire",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "se-retrouver",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "se-retrouver",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  },
+  {
+   "type": "utilise",
+   "de": "retour",
+   "vers": "module:roles-et-permissions",
+   "statut": "declaree",
+   "preuve": [
+    {
+     "noeud": "retour",
+     "fichier": "supabase/migrations/20260923150000_residents.sql"
+    }
+   ]
+  }
+ ]
+}
